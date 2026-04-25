@@ -1,0 +1,168 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --background: 248 250 252;
+  --surface-glass: 255 255 255;
+  --card: 255 255 255;
+  --text-primary: 15 23 42;
+  --text-secondary: 100 116 139;
+  --border: 229 231 235;
+  --primary: 22 163 74;
+  --brand-purple: 79 70 229;
+  --primary-deep: 49 46 129;
+  --primary-electric: 124 58 237;
+  --gold: 250 204 21;
+  --gold-soft: 254 243 199;
+  --danger: 239 68 68;
+  --success: 34 197 94;
+  --success-soft: 220 252 231;
+  --warning: 245 158 11;
+  --info: 59 130 246;
+  --info-soft: 219 234 254;
+  --shadow-rgb: 15 23 42;
+  --glass-alpha: 0.9;
+  --app-gradient:
+    radial-gradient(circle at top left, rgba(79, 70, 229, 0.12), transparent 24%),
+    radial-gradient(circle at top right, rgba(250, 204, 21, 0.1), transparent 26%),
+    linear-gradient(180deg, #ffffff 0%, rgb(var(--background)) 100%);
+  --bg: rgb(var(--background));
+  --surface: rgb(var(--surface-glass));
+  --surface-strong: rgb(var(--card));
+  --text: rgb(var(--text-primary));
+  --muted: rgb(var(--text-secondary));
+  --line: rgba(var(--border), 1);
+  --brand: rgb(var(--brand-purple));
+  --brand-2: rgb(var(--gold));
+  --accent: rgb(var(--primary));
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --background: 2 6 23;
+  --surface-glass: 15 23 42;
+  --card: 15 23 42;
+  --text-primary: 248 250 252;
+  --text-secondary: 148 163 184;
+  --border: 255 255 255;
+  --primary: 34 197 94;
+  --brand-purple: 124 58 237;
+  --primary-deep: 79 70 229;
+  --primary-electric: 168 85 247;
+  --shadow-rgb: 2 6 23;
+  --glass-alpha: 0.84;
+  --app-gradient:
+    radial-gradient(circle at top left, rgba(124, 58, 237, 0.22), transparent 28%),
+    radial-gradient(circle at top right, rgba(250, 204, 21, 0.14), transparent 26%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.96) 0%, rgb(var(--background)) 100%);
+  --bg: rgb(var(--background));
+  --surface: rgb(var(--surface-glass));
+  --surface-strong: rgb(var(--card));
+  --text: rgb(var(--text-primary));
+  --muted: rgb(var(--text-secondary));
+  --line: rgba(var(--border), 0.18);
+  --brand: rgb(var(--brand-purple));
+  --brand-2: rgb(var(--gold));
+  --accent: rgb(var(--primary));
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--app-gradient);
+  color: rgb(var(--text-primary));
+  font-family: Inter, 'Segoe UI', system-ui, sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  transition: background 300ms ease, color 300ms ease;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.glass-surface {
+  background: rgba(var(--surface-glass), var(--glass-alpha));
+  border: 1px solid rgba(var(--border), 0.28);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 16px 38px rgba(var(--shadow-rgb), 0.12);
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+:root[data-theme='dark'] .bg-white {
+  background-color: rgb(var(--card)) !important;
+}
+
+:root[data-theme='dark'] .bg-white\/95 {
+  background-color: rgba(var(--card), 0.95) !important;
+}
+
+:root[data-theme='dark'] .bg-white\/90 {
+  background-color: rgba(var(--card), 0.9) !important;
+}
+
+:root[data-theme='dark'] .bg-white\/80 {
+  background-color: rgba(var(--card), 0.8) !important;
+}
+
+:root[data-theme='dark'] .bg-white\/70 {
+  background-color: rgba(var(--card), 0.7) !important;
+}
+
+:root[data-theme='dark'] .bg-white\/60 {
+  background-color: rgba(var(--card), 0.6) !important;
+}
+
+:root[data-theme='dark'] .bg-slate-100 {
+  background-color: rgba(var(--border), 0.1) !important;
+}
+
+:root[data-theme='dark'] .bg-slate-200 {
+  background-color: rgba(var(--border), 0.14) !important;
+}
+
+:root[data-theme='dark'] .text-slate-700 {
+  color: rgb(var(--text-secondary)) !important;
+}
+
+:root[data-theme='dark'] .text-amber-700 {
+  color: rgb(var(--gold)) !important;
+}
+
+:root[data-theme='dark'] .border-slate-100,
+:root[data-theme='dark'] .border-slate-200 {
+  border-color: rgba(var(--border), 0.14) !important;
+}
