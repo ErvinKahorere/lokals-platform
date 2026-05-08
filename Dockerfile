@@ -22,8 +22,9 @@ COPY lokals-backend/ /app/
 COPY scripts/ /app/scripts/
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction \
-    && php artisan optimize:clear || true
+    && php artisan optimize:clear || true \
+    && chmod +x /app/scripts/*.sh
 
 EXPOSE 10000
 
-CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"]
+CMD ["/app/scripts/start-render.sh"]
