@@ -25,15 +25,15 @@ class NewsApiTest extends TestCase
 
         NewsItem::query()->create([
             'news_source_id' => $source->id,
-            'title' => 'Windhoek clinic adds weekend support',
+            'title' => 'Okahandja clinic adds weekend support',
             'summary' => 'Weekend support is expanding.',
             'source_name' => 'The Namibian',
             'source_url' => 'https://www.namibian.com.na',
             'external_url' => 'https://www.namibian.com.na/story-1',
             'category' => 'health',
-            'town' => 'Windhoek',
-            'region' => 'Khomas',
-            'tags' => ['health', 'windhoek'],
+            'town' => 'Okahandja',
+            'region' => 'Otjozondjupa',
+            'tags' => ['health', 'okahandja'],
             'source_type' => 'publication',
             'published_at' => now(),
             'fetched_at' => now(),
@@ -55,11 +55,11 @@ class NewsApiTest extends TestCase
             'fetched_at' => now(),
         ]);
 
-        $response = $this->getJson('/api/v1/news?town=Windhoek&category=health');
+        $response = $this->getJson('/api/v1/news?town=Okahandja&category=health');
 
         $response
             ->assertOk()
-            ->assertJsonPath('data.0.title', 'Windhoek clinic adds weekend support')
+            ->assertJsonPath('data.0.title', 'Okahandja clinic adds weekend support')
             ->assertJsonCount(1, 'data');
     }
 
@@ -72,16 +72,16 @@ class NewsApiTest extends TestCase
             'is_active' => true,
         ]);
 
-        $windhoek = NewsItem::query()->create([
+        $okahandja = NewsItem::query()->create([
             'news_source_id' => $source->id,
-            'title' => 'Windhoek transport rush expected tonight',
+            'title' => 'Okahandja transport rush expected tonight',
             'summary' => 'Taxi and commute demand are rising tonight.',
             'source_name' => 'New Era',
             'source_url' => 'https://neweralive.na',
             'external_url' => 'https://neweralive.na/story-1',
             'category' => 'transport',
-            'town' => 'Windhoek',
-            'region' => 'Khomas',
+            'town' => 'Okahandja',
+            'region' => 'Otjozondjupa',
             'tags' => ['transport', 'commute'],
             'source_type' => 'publication',
             'published_at' => now()->subHour(),
@@ -105,14 +105,14 @@ class NewsApiTest extends TestCase
         ]);
 
         $user = User::factory()->create([
-            'default_town' => 'Windhoek',
-            'default_area' => 'CBD',
+            'default_town' => 'Okahandja',
+            'default_area' => 'Nau-Aib',
         ]);
 
         UserPreference::query()->create([
             'user_id' => $user->id,
-            'default_town' => 'Windhoek',
-            'default_area' => 'CBD',
+            'default_town' => 'Okahandja',
+            'default_area' => 'Nau-Aib',
             'interests' => ['transport'],
             'preferred_roles' => ['citizen'],
             'notification_preferences' => [],
@@ -124,7 +124,7 @@ class NewsApiTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertJsonPath('data.0.id', $windhoek->id)
+            ->assertJsonPath('data.0.id', $okahandja->id)
             ->assertJsonPath('data.0.feed_reason', 'near your town');
     }
 

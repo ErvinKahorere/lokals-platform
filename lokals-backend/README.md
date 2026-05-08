@@ -22,7 +22,7 @@ Laravel 12 API for the LOKALS Phase 1 MVP.
 ## Setup
 
 1. Copy `.env.example` to `.env`.
-2. Create a MySQL database named `lokals_backend`.
+2. Create a PostgreSQL database, or adjust `.env` to your local driver if you use a different database for development.
 3. Run `composer install`.
 4. Run `php artisan key:generate`.
 5. Run `php artisan migrate --seed`.
@@ -33,12 +33,11 @@ Laravel 12 API for the LOKALS Phase 1 MVP.
 
 ## Demo users
 
-- Super admin: `+264810000001` / `password`
-- Citizen: `+264810000002` / `password`
-- Provider barber: `+264810000003` / `password`
-- Provider doctor: `+264810000004` / `password`
-- Provider mechanic: `+264810000005` / `password`
-- Municipality admin: `+264810000006` / `password`
+- Super admin: `+264810001000` / `Password123!`
+- Town manager: `+264810001001` / `Password123!`
+- Citizen: `+264810001050` / `Password123!`
+- Business owner: `+264810001101` / `Password123!`
+- Service provider: `+264810002203` / `Password123!`
 
 ## Important endpoints
 
@@ -58,7 +57,7 @@ Laravel 12 API for the LOKALS Phase 1 MVP.
 curl -X POST http://127.0.0.1:8000/api/v1/auth/login \
   -H "Accept: application/json" \
   -H "Content-Type: application/json" \
-  -d "{\"phone\":\"+264810000002\",\"password\":\"password\"}"
+  -d "{\"phone\":\"+264810001050\",\"password\":\"Password123!\"}"
 ```
 
 ```bash

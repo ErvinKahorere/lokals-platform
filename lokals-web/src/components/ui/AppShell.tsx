@@ -33,12 +33,12 @@ const mobileLinks = [
 
 const businessRoles = ['seller', 'service_provider', 'business_owner', 'organization_admin', 'super_admin']
 const locationOptions = [
-  { town: 'Windhoek', area: 'CBD' },
-  { town: 'Windhoek', area: 'Katutura' },
-  { town: 'Windhoek', area: 'Khomasdal' },
-  { town: 'Swakopmund', area: 'Town Centre' },
-  { town: 'Walvis Bay', area: 'Narraville' },
-  { town: 'Oshakati', area: 'Central' },
+  { town: 'Okahandja', area: 'Central Okahandja' },
+  { town: 'Okahandja', area: 'Nau-Aib' },
+  { town: 'Okahandja', area: 'Five Rand' },
+  { town: 'Okahandja', area: 'Veddersdal' },
+  { town: 'Okahandja', area: 'Osona' },
+  { town: 'Okahandja', area: 'Okahandja Industrial Area' },
 ]
 
 const formatRole = (role?: string | null) =>
@@ -143,7 +143,7 @@ export function AppShell() {
       : isBusinessUser
         ? '/dashboard/business'
         : '/dashboard/profile'
-  const locationLabel = [currentUser?.default_area ?? preferencesQuery.data?.default_area, currentUser?.default_town ?? preferencesQuery.data?.default_town ?? currentUser?.location ?? 'Windhoek'].filter(Boolean).join(', ')
+  const locationLabel = [currentUser?.default_area ?? preferencesQuery.data?.default_area, currentUser?.default_town ?? preferencesQuery.data?.default_town ?? currentUser?.location ?? 'Okahandja'].filter(Boolean).join(', ')
   const profileMenu = useMemo(() => {
     const items = [
       { to: '/dashboard/profile', label: 'View Profile', icon: UserRound, show: Boolean(currentUser) },
@@ -295,7 +295,7 @@ export function AppShell() {
                   <p className="px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-lokals-muted">Switch location</p>
                   <div className="space-y-1">
                     {locationOptions.map((option) => {
-                      const active = option.town === (currentUser?.default_town ?? preferencesQuery.data?.default_town ?? 'Windhoek') && option.area === (currentUser?.default_area ?? preferencesQuery.data?.default_area ?? '')
+                      const active = option.town === (currentUser?.default_town ?? preferencesQuery.data?.default_town ?? 'Okahandja') && option.area === (currentUser?.default_area ?? preferencesQuery.data?.default_area ?? '')
                       return (
                         <button
                           key={`${option.town}-${option.area}`}
@@ -439,7 +439,7 @@ export function AppShell() {
             <p className="text-sm font-semibold text-lokals-charcoal">Stay connected</p>
             <div className="mt-3 space-y-2 text-sm text-lokals-muted">
               <p>support@lokals.app</p>
-              <p>Windhoek, Namibia</p>
+              <p>Okahandja, Namibia</p>
               <div className="flex flex-wrap items-center gap-2.5 pt-1">
                 {socialLinks.map(({ label, href, viewBox, path, tone }) => (
                   <a
@@ -487,7 +487,7 @@ export function AppShell() {
         </div>
         <div className="border-t border-lokals-border">
           <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 text-sm text-lokals-muted md:flex-row md:items-center md:justify-between md:px-6">
-            <p>© 2026 LOKALS. Built for local life.</p>
+            <p>(c) 2026 LOKALS. Built for local life.</p>
             <div className="flex items-center gap-4">
               <NavLink to="/settings" className="transition hover:text-lokals-purple">Privacy</NavLink>
               <NavLink to="/settings" className="transition hover:text-lokals-purple">Terms</NavLink>

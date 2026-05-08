@@ -46,7 +46,7 @@ export function LoginPage() {
           <div className="mt-8 grid gap-3">
             {[
               { icon: Phone, title: 'Phone-first sign in', body: 'Fast access with less typing.' },
-              { icon: MapPin, title: 'Location-aware home', body: 'Results adapt to Windhoek, your town, and your area.' },
+              { icon: MapPin, title: 'Location-aware home', body: 'Results adapt to Okahandja, your town, and your area.' },
               { icon: ArrowRight, title: 'Tap -> confirm -> act', body: 'Friction stays low across booking, selling, and reporting.' },
             ].map(({ icon: Icon, title, body }) => (
               <div key={title} className="rounded-[22px] border border-slate-100 bg-slate-50/90 p-4">
