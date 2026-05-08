@@ -31,7 +31,7 @@ class DatabaseSeeder extends Seeder
         }
 
         if (! $this->demoSeedingEnabled()) {
-            $this->command?->info('Skipping demo seed data. Set LOKALS_DEMO_SEED=true to enable demo seeding outside local/testing.');
+            $this->command?->info('Skipping demo seed data. Set SEED_DEMO_DATA=true to enable demo seeding outside local/testing.');
             return;
         }
 
@@ -53,7 +53,7 @@ class DatabaseSeeder extends Seeder
 
     private function demoSeedingEnabled(): bool
     {
-        $flag = env('LOKALS_DEMO_SEED');
+        $flag = env('SEED_DEMO_DATA', env('LOKALS_DEMO_SEED'));
 
         if ($flag === null) {
             return app()->environment(['local', 'testing']);
