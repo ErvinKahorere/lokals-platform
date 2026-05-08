@@ -22,10 +22,10 @@ This guide covers Docker deployment of the Laravel 12 backend on Render with:
 APP_NAME=LOKALS
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://lokals-api.onrender.com
+APP_URL=https://lokals-platform.onrender.com
 APP_KEY=
 
-FRONTEND_URL=https://lokals.vercel.app
+FRONTEND_URL=https://lokals-platform.vercel.app
 
 DB_CONNECTION=pgsql
 DB_HOST=
@@ -36,8 +36,8 @@ DB_PASSWORD=
 DB_SCHEMA=public
 DB_SSLMODE=prefer
 
-SANCTUM_STATEFUL_DOMAINS=lokals.vercel.app
-CORS_ALLOWED_ORIGINS=https://lokals.vercel.app,http://localhost:5173,http://127.0.0.1:5173
+SANCTUM_STATEFUL_DOMAINS=lokals-platform.vercel.app
+CORS_ALLOWED_ORIGINS=https://lokals-platform.vercel.app,http://localhost:5173,http://127.0.0.1:5173
 
 SESSION_DRIVER=file
 SESSION_DOMAIN=
@@ -94,7 +94,7 @@ Render free tier does not provide an interactive shell, so automatic startup mig
 
 ## Sanctum + Vercel Compatibility
 
-- CORS allows `FRONTEND_URL`, `http://localhost:5173`, and `http://127.0.0.1:5173`.
+- CORS allows `https://lokals-platform.vercel.app`, `FRONTEND_URL`, `http://localhost:5173`, and `http://127.0.0.1:5173`.
 - `supports_credentials` remains enabled.
 - Sanctum stateful domains are read from `SANCTUM_STATEFUL_DOMAINS`.
 - Session settings support secure cross-domain cookies for a Vercel frontend and Render backend.
@@ -119,7 +119,8 @@ Render free tier does not provide an interactive shell, so automatic startup mig
 ### CSRF or session issues from Vercel
 
 - Confirm `FRONTEND_URL` matches the deployed Vercel origin.
-- Confirm `SANCTUM_STATEFUL_DOMAINS=lokals.vercel.app` or your actual Vercel domain.
+- Confirm `FRONTEND_URL=https://lokals-platform.vercel.app`.
+- Confirm `SANCTUM_STATEFUL_DOMAINS=lokals-platform.vercel.app`.
 - Confirm `SESSION_SECURE_COOKIE=true`.
 - Confirm `SESSION_SAME_SITE=none`.
 
