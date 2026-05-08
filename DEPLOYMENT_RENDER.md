@@ -50,7 +50,14 @@ SESSION_SAME_SITE=none
 1. Render builds the repo-root Docker image.
 2. The Docker image copies the Laravel backend into `/app`.
 3. Composer dependencies are installed with `--no-dev --optimize-autoloader`.
-4. Laravel starts with:
+4. On container startup, Render automatically runs:
+
+```sh
+php artisan migrate --force
+php artisan storage:link || true
+```
+
+5. Laravel then starts with:
 
 ```sh
 php artisan serve --host=0.0.0.0 --port=$PORT
@@ -72,7 +79,7 @@ It performs:
 6. `php artisan config:cache`
 7. `php artisan route:cache`
 
-If you run it manually inside the Render shell, use it from the Laravel app root inside the container.
+Render free tier does not provide an interactive shell, so automatic startup migrations are the primary deployment path.
 
 ## PostgreSQL Notes
 
@@ -120,3 +127,8 @@ If you run it manually inside the Render shell, use it from the Laravel app root
 
 - Confirm `/api/health` responds successfully after boot.
 - Confirm the Render service points to the correct app and uses the injected `PORT`.
+
+### Migrations did not run
+
+- Confirm the container is using [scripts/start-render.sh](</E:/src/xamp/htdocs/Lokals v1/scripts/start-render.sh>) as its startup command.
+- Confirm the database environment variables are available at runtime.
