@@ -1,9 +1,10 @@
 import axios from 'axios'
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
 
-const apiBaseUrl = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
+const backendOrigin = (import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000').replace(/\/api(?:\/.*)?\/?$/, '')
+const apiBaseUrl = `${backendOrigin}/api`
 const appUrl = import.meta.env.VITE_APP_URL ?? window.location.origin
-const csrfBaseUrl = apiBaseUrl.replace(/\/api\/v1\/?$/, '')
+const csrfBaseUrl = backendOrigin
 const shouldUseSanctumCookieAuth = import.meta.env.VITE_USE_SANCTUM_COOKIE_AUTH === 'true'
 
 let csrfRequest: Promise<unknown> | null = null

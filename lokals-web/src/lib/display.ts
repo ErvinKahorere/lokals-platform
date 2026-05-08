@@ -179,6 +179,6 @@ export function resolveMediaUrl(path?: string | null) {
     return path
   }
 
-  const base = (import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1').replace(/\/api\/v1\/?$/, '')
+  const base = (import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000').replace(/\/api(?:\/.*)?\/?$/, '')
   return `${base}${path.startsWith('/') ? path : `/${path}`}`
 }
