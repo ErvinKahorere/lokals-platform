@@ -20,7 +20,7 @@ class WorkerProfileResource extends JsonResource
             'lat' => $this->lat,
             'lng' => $this->lng,
             'distance_km' => $this->when(isset($this->distance_km), $this->distance_km),
-            'user' => $this->user?->only(['id', 'name', 'phone']),
+            'user' => $this->user?->only(['id', 'name', 'phone', 'avatar', 'whatsapp', 'business_name', 'location', 'default_town', 'default_area']),
         ];
     }
 }

@@ -1,22 +1,12 @@
-# LOKALS Phase 1 MVP
+# LOKALS
 
-Production-ready MVP foundation for a mobile-first local life platform focused on Namibia and similar emerging-market contexts.
+LOKALS is a mobile-first local life platform focused on Namibia and similar emerging-market contexts.
 
-## Projects
+## Workspace
 
-- `lokals-backend` - Laravel 12 API with Sanctum, Spatie Permission, queued database notifications, seed data, booking logic, and role-based modules.
-- `lokals-web` - React + Vite + TypeScript web client with Tailwind CSS, TanStack Query, Zustand, and React Router.
-- `lokals-mobile` - Flutter mobile client with Riverpod, Dio, go_router, and shared_preferences.
-
-## Workspace structure
-
-```text
-Lokals v1/
-├── lokals-backend/
-├── lokals-web/
-├── lokals-mobile/
-└── README.md
-```
+- `lokals-backend`: Laravel 12 API
+- `lokals-web`: React + Vite + TypeScript
+- `lokals-mobile`: Flutter + Riverpod
 
 ## Quick start
 
@@ -28,6 +18,7 @@ composer install
 copy .env.example .env
 php artisan key:generate
 php artisan migrate --seed
+php artisan storage:link
 php artisan serve
 ```
 
@@ -48,6 +39,37 @@ flutter pub get
 flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api/v1
 ```
 
+## Production notes
+
+### Backend
+
+- Set `APP_DEBUG=false`
+- Set `APP_URL` to the public backend origin
+- Configure `SANCTUM_STATEFUL_DOMAINS` and CORS origins for the web app origin
+- Run `php artisan storage:link`
+- Run queue workers:
+
+```bash
+php artisan queue:work
+```
+
+- Run scheduled tasks:
+
+```bash
+php artisan schedule:work
+```
+
+### Web
+
+- Set `VITE_API_URL` to the public backend API origin
+- Run `npm run build` for a production bundle
+
+### Mobile
+
+- Android emulator backend: `http://10.0.2.2:8000/api/v1`
+- Physical device over USB: `adb reverse tcp:8000 tcp:8000`
+- Physical device over LAN: use the reachable backend host if USB reverse is unavailable
+
 ## Demo accounts
 
 - Super admin: `+264810000001` / `password`
@@ -56,20 +78,3 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api/v1
 - Provider doctor: `+264810000004` / `password`
 - Provider mechanic: `+264810000005` / `password`
 - Municipality admin: `+264810000006` / `password`
-
-## Core modules
-
-- Auth
-- Users and profiles
-- Follow system
-- Alerts and feed
-- City services
-- Marketplace
-- Jobs and workers
-- Delivery
-- Rides
-- SOS
-- Organizations directory
-- Notifications
-- Trust and safety
-- Service providers and bookings

@@ -11,7 +11,7 @@ class BookingPolicy
     {
         return $user->id === $booking->user_id
             || $user->id === $booking->serviceProvider?->user_id
-            || $user->hasAnyRole(['operator', 'municipality_admin', 'super_admin']);
+            || $user->hasAnyRole(['operator', 'municipality_admin', 'town_manager', 'super_admin']);
     }
 
     public function updateStatus(User $user, Booking $booking): bool

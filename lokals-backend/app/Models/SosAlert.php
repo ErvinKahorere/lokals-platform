@@ -13,7 +13,10 @@ class SosAlert extends Model
     protected $fillable = [
         'user_id',
         'message',
+        'emergency_type',
         'location',
+        'town',
+        'area',
         'lat',
         'lng',
         'status',

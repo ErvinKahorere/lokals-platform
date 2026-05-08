@@ -35,14 +35,14 @@ export function RoleSwitcher({
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="glass-surface inline-flex min-h-11 items-center gap-2 rounded-full border border-lokals-border px-3 py-2 text-sm font-semibold text-lokals-charcoal"
+        className="inline-flex min-h-11 items-center gap-2 rounded-full border border-lokals-border bg-white px-3 py-2 text-sm font-semibold text-lokals-charcoal shadow-card"
       >
-        <span className="rounded-full bg-lokals-purple px-2.5 py-1 text-xs font-semibold text-white">{formatRole(active)}</span>
+        <span className="rounded-full bg-lokals-green px-2.5 py-1 text-xs font-semibold text-white">{formatRole(active)}</span>
         {extraCount > 0 ? <span className="text-xs text-lokals-muted">+{extraCount}</span> : null}
         {switchRole.isPending ? <LoaderCircle className="h-4 w-4 animate-spin text-lokals-muted" /> : <ChevronDown className="h-4 w-4 text-lokals-muted" />}
       </button>
       {open ? (
-        <div className="glass-surface absolute right-0 top-[calc(100%+0.5rem)] z-40 min-w-56 rounded-[20px] border border-lokals-border p-2 shadow-soft-lg">
+        <div className="absolute right-0 top-[calc(100%+0.5rem)] z-40 min-w-56 rounded-[20px] border border-lokals-border bg-white p-2 shadow-soft-lg">
           <p className="px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-lokals-muted">Switch role</p>
           <div className="space-y-1">
             {visible.map((role) => {
@@ -57,7 +57,7 @@ export function RoleSwitcher({
                     setOpen(false)
                   }}
                   className={`flex w-full items-center justify-between rounded-2xl px-3 py-3 text-left text-sm font-medium transition ${
-                    isActive ? 'bg-lokals-purple text-white' : 'text-lokals-charcoal hover:bg-slate-100 dark:hover:bg-slate-800'
+                    isActive ? 'bg-lokals-green text-white' : 'text-lokals-charcoal hover:bg-slate-100'
                   }`}
                 >
                   <span>{formatRole(role)}</span>

@@ -37,10 +37,10 @@ class AlertCard extends StatelessWidget {
                 height: 40,
                 width: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.deepCharcoal,
+                  color: AppColors.purpleSoft,
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.notifications_active_outlined, color: Colors.white),
+                child: const Icon(Icons.notifications_active_outlined, color: AppColors.primaryPurple),
               ),
               const SizedBox(width: 12),
               Expanded(child: Text(title, style: AppTextStyles.h3)),
@@ -51,7 +51,13 @@ class AlertCard extends StatelessWidget {
           Text(body, style: AppTextStyles.bodyMuted),
           if (location != null) ...[
             const SizedBox(height: 8),
-            Text(location!, style: AppTextStyles.caption),
+            Row(
+              children: [
+                const Icon(Icons.place_outlined, size: 14, color: AppColors.mutedText),
+                const SizedBox(width: 4),
+                Expanded(child: Text(location!, style: AppTextStyles.caption)),
+              ],
+            ),
           ],
         ],
       ),

@@ -22,6 +22,12 @@ class AppTextStyles {
     color: AppColors.deepCharcoal,
   );
 
+  static const h4 = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w700,
+    color: AppColors.deepCharcoal,
+  );
+
   static const body = TextStyle(
     fontSize: 15,
     fontWeight: FontWeight.w500,
@@ -40,5 +46,12 @@ class AppTextStyles {
     fontSize: 12,
     fontWeight: FontWeight.w600,
     color: AppColors.mutedText,
+  );
+
+  static const eyebrow = TextStyle(
+    fontSize: 11,
+    fontWeight: FontWeight.w800,
+    color: AppColors.primaryPurple,
+    letterSpacing: 0.4,
   );
 }

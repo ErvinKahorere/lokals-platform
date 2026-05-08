@@ -12,6 +12,7 @@ class UserPreferenceResource extends JsonResource
         return [
             'default_town' => $this->default_town,
             'default_area' => $this->default_area,
+            'service_radius' => $this->user?->service_radius,
             'interests' => $this->interests ?? [],
             'preferred_roles' => $this->preferred_roles ?? [],
             'notification_preferences' => $this->notification_preferences ?? [],

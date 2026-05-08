@@ -1,17 +1,20 @@
-import { ArrowRight, Bell, BriefcaseBusiness, Home, Package, ShieldAlert, Sparkles, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { ArrowRight, BriefcaseBusiness, MapPin, ShoppingBag } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AlertCard, Button, Header, QueryState } from '../components/Ui'
-import { GlassCard } from '../components/glass/GlassCard'
+import { EventCard } from '../components/events/EventCard'
+import { HomeHeroCard } from '../components/home/HomeHeroCard'
+import { HomeQuickActions } from '../components/home/HomeQuickActions'
+import { HomeSection } from '../components/home/HomeSection'
+import { LocalUpdateCard } from '../components/home/LocalUpdateCard'
+import { RoleHomeCard } from '../components/home/RoleHomeCard'
+import { NewsFeedSection } from '../components/news/NewsFeedSection'
 import { NearbyServiceCard } from '../components/experience/NearbyServiceCard'
-import { NotificationBell } from '../components/experience/NotificationBell'
 import { OnboardingFlow } from '../components/experience/OnboardingFlow'
-import { QuickActionGrid } from '../components/experience/QuickActionGrid'
-import { RecentActivityCard } from '../components/experience/RecentActivityCard'
-import { SmartSuggestionCard } from '../components/experience/SmartSuggestionCard'
+import { Button } from '../components/ui/Button'
 import { SearchBar } from '../components/ui/SearchBar'
-import { useAccommodations, useAlertsFeed, useFeed, useMe, usePreferences, useProducts, useProviders, useSearchResults } from '../hooks/queries'
+import { useAlertsFeed, useEvents, useFeed, useFollowingFeed, useJobs, useMe, useNewsFeed, useNewsLocal, usePreferences, useProducts, useProviders, useSearchResults } from '../hooks/queries'
 import { getDisplayPrice } from '../lib/display'
+import { normalizePilotArea, PILOT_LOCATION_MESSAGE, PILOT_TOWN } from '../lib/pilot'
 import { useAuthStore } from '../store/auth'
 
 export function HomePage() {
@@ -20,66 +23,83 @@ export function HomePage() {
   const meQuery = useMe()
   const preferencesQuery = usePreferences()
   const [search, setSearch] = useState('')
-  const [showGuide, setShowGuide] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
-  const alerts = data?.alerts ?? []
-  const alertsFeedQuery = useAlertsFeed()
-  const searchResultsQuery = useSearchResults(search)
-  const providersQuery = useProviders()
-  const productsQuery = useProducts({ sort: 'popular' })
-  const accommodationsQuery = useAccommodations({ sort: 'popular' })
-  const providers = providersQuery.data?.data?.slice(0, 3) ?? []
-  const products = productsQuery.data?.data?.slice(0, 3) ?? []
-  const accommodations = accommodationsQuery.data?.data?.slice(0, 2) ?? []
   const currentUser = meQuery.data?.user ? ('data' in meQuery.data.user ? meQuery.data.user.data : meQuery.data.user) : user
-  const town = currentUser?.default_town ?? preferencesQuery.data?.default_town ?? 'Windhoek'
-  const area = currentUser?.default_area ?? preferencesQuery.data?.default_area
-  const activeRole = currentUser?.current_role ?? currentUser?.roles?.[0] ?? 'citizen'
-  const roleContentMap = {
-    citizen: {
-      title: 'Your city, ready to help',
-      description: 'Services, alerts, directory, and places to stay stay close to home.',
-      cta: { label: 'Find help', to: '/services' },
-    },
-    worker: {
-      title: 'Work nearby, without the noise',
-      description: 'Jobs, quick applications, and your recent activity stay easy to act on.',
-      cta: { label: 'Find work', to: '/jobs' },
-    },
-    seller: {
-      title: 'Your local selling space',
-      description: 'Products, promotions, and business activity are ready to manage.',
-      cta: { label: 'Open store', to: '/store' },
-    },
-    service_provider: {
-      title: 'Bookings and customer trust first',
-      description: 'Keep rates, availability, and incoming demand visible in one place.',
-      cta: { label: 'Manage business', to: '/dashboard/business' },
-    },
-    business_owner: {
-      title: 'Your business, easier to run',
-      description: 'Followers, services, products, and alerts live in one dashboard.',
-      cta: { label: 'Manage business', to: '/dashboard/business' },
-    },
-    organization_admin: {
-      title: 'Keep your organization clear and connected',
-      description: 'Announcements, directory trust, and public visibility stay easier to manage.',
-      cta: { label: 'Manage organization', to: '/dashboard/business' },
-    },
-    municipality_admin: {
-      title: 'Your city operations hub',
-      description: 'Reports, alerts, and service coverage stay visible without clutter.',
-      cta: { label: 'Open town manager', to: '/dashboard/municipality' },
-    },
-  }
-  const roleContent = roleContentMap[activeRole as keyof typeof roleContentMap] ?? {
-    title: 'Your city, your space',
-    description: 'Pick one clear action and keep moving.',
-    cta: { label: 'Explore', to: '/services' },
+  const town = PILOT_TOWN
+  const area = normalizePilotArea(currentUser?.default_area ?? preferencesQuery.data?.default_area)
+  const activeRole = currentUser?.current_role ?? currentUser?.roles?.[0] ?? 'guest'
+  const alertsFeedQuery = useAlertsFeed()
+  const followingFeedQuery = useFollowingFeed()
+  const newsLocalQuery = useNewsLocal({ town, area: area ?? undefined })
+  const newsFeedQuery = useNewsFeed(Boolean(currentUser))
+  const searchResultsQuery = useSearchResults(search)
+  const providersQuery = useProviders({ town, area: area ?? undefined })
+  const productsQuery = useProducts({ sort: 'popular', town, area: area ?? undefined })
+  const eventsQuery = useEvents({ town, area: area ?? undefined })
+  const jobsQuery = useJobs({ town, area: area ?? undefined })
+
+  const providers = providersQuery.data?.data?.slice(0, 4) ?? []
+  const products = productsQuery.data?.data?.slice(0, 3) ?? []
+  const events = eventsQuery.data?.data?.slice(0, 3) ?? []
+  const jobs = jobsQuery.data?.data?.slice(0, 3) ?? []
+  const localNews = (currentUser ? newsFeedQuery.data?.data : newsLocalQuery.data?.data)?.slice(0, 3) ?? []
+  const alerts = alertsFeedQuery.data?.data ?? data?.alerts ?? []
+
+  const roleCardKind = useMemo(() => {
+    if (!currentUser) return 'guest' as const
+    if (['seller', 'service_provider', 'business_owner'].includes(activeRole)) return 'business' as const
+    if (activeRole === 'worker') return 'worker' as const
+    if (activeRole === 'organization_admin') return 'organization' as const
+    return 'citizen' as const
+  }, [activeRole, currentUser])
+
+  const localUpdates = useMemo(() => {
+    const urgentAlerts = alerts.slice(0, 2).map((item: any) => ({
+      key: `alert-${item.id}`,
+      title: item.title,
+      source: item.location ?? 'Local alert',
+      type: 'alert' as const,
+      time: item.timestamp ?? item.published_at ?? 'Recent',
+      status: item.severity ?? item.priority ?? 'urgent',
+      to: '/alerts',
+      weight: 3,
+    }))
+
+    const followedUpdates = (followingFeedQuery.data?.data ?? []).slice(0, 2).map((item: any) => ({
+      key: `followed-${item.id}`,
+      title: item.title ?? item.name ?? item.body ?? 'Update from a followed organization',
+      source: item.category ?? item.location ?? 'Followed update',
+      type: 'followed' as const,
+      time: item.timestamp ?? item.created_at ?? 'Recent',
+      status: item.status ?? 'following',
+      to: '/activity',
+      weight: 2,
+    }))
+
+    const baseUpdateCount = urgentAlerts.length + followedUpdates.length
+    const newsUpdates = (baseUpdateCount >= 4 ? [] : localNews.slice(0, Math.max(0, 4 - baseUpdateCount))).map((item) => ({
+      key: `news-${item.id}`,
+      title: item.title,
+      source: item.source_name,
+      type: 'news' as const,
+      time: item.published_at ?? 'Recent',
+      status: item.category,
+      to: `/news/${item.id}`,
+      weight: 1,
+    }))
+
+    return [...urgentAlerts, ...followedUpdates, ...newsUpdates]
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, 5)
+  }, [alerts, followingFeedQuery.data?.data, localNews])
+
+  const searchTarget = (href: string) => {
+    const query = search.trim()
+    if (!query) return href
+    return `${href}?q=${encodeURIComponent(query)}`
   }
 
   useEffect(() => {
-    setShowGuide(window.localStorage.getItem('lokals-home-guide-dismissed') !== 'true')
     setShowOnboarding(window.localStorage.getItem('lokals-onboarding-complete') !== 'true')
   }, [])
 
@@ -91,195 +111,220 @@ export function HomePage() {
           window.localStorage.setItem('lokals-onboarding-complete', 'true')
         }} />
       ) : null}
-      <section className="glass-surface overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,rgba(49,46,129,0.95)_0%,rgba(79,70,229,0.92)_50%,rgba(124,58,237,0.9)_100%)] px-6 py-7 text-white shadow-soft-lg">
-        <Header
-          eyebrow={currentUser ? `Good day, ${currentUser.name}` : 'Good day'}
-          title={`Showing results for ${town}`}
-          description={area ? `${area} first. ${roleContent.description}` : roleContent.description}
-          actions={<div className="flex items-center gap-3"><NotificationBell count={alerts.length || 3} /><Link to={roleContent.cta.to}><Button>{roleContent.cta.label} <ArrowRight className="h-4 w-4" /></Button></Link></div>}
-        />
-        <div className="mt-4 inline-flex rounded-full bg-white/12 px-4 py-2 text-sm font-medium text-white/85">
-          {roleContent.title}
-        </div>
-        <div className="mt-5">
+
+      <section className="rounded-[28px] border border-lokals-border bg-white px-6 py-6 shadow-card">
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-sm font-medium text-lokals-muted">{currentUser ? `Good morning, ${currentUser.name} 👋` : 'Explore what is happening nearby'}</p>
+              <h1 className="mt-2 text-3xl font-semibold text-lokals-charcoal">What do you need in Okahandja today?</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-lokals-muted">
+                Search trusted services, daily essentials, events, jobs, and local updates around {[area, town].filter(Boolean).join(', ')}.
+              </p>
+              <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-lokals-green">{PILOT_LOCATION_MESSAGE}</p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-lokals-green-soft px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-lokals-green">
+                  {currentUser ? activeRole.replaceAll('_', ' ') : 'Guest'}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-lokals-charcoal">
+                  <MapPin className="h-3.5 w-3.5 text-lokals-green" />
+                  {[area, town].filter(Boolean).join(', ')}
+                </span>
+              </div>
+            </div>
+            {currentUser ? null : (
+              <Link to="/login" state={{ from: '/' }}>
+                <Button>Sign in for local updates</Button>
+              </Link>
+            )}
+          </div>
+
           <SearchBar
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             onValueSelect={setSearch}
-            placeholder="Search services, jobs, products..."
+            placeholder="Search services, businesses, news, events..."
             recentKey="home"
-            suggestions={['Barber nearby', 'Clinic open now', 'Jobs near me', 'Parcel delivery']}
+            suggestions={['Public services in Okahandja', 'Local businesses in Nau-Aib', 'Events this weekend', 'Okahandja council news', 'Jobs nearby']}
             shortcuts={[
-              { label: 'Get Help', value: 'service near me' },
-              { label: 'Shop', value: 'products nearby' },
-              { label: 'Stay', value: 'accommodation nearby' },
+              { label: 'Services', value: 'services near me' },
+              { label: 'Directory', value: 'businesses nearby' },
+              { label: 'Store', value: 'shop local products' },
+              { label: 'Events', value: 'events this weekend' },
+              { label: 'News', value: 'local news' },
+              { label: 'Jobs', value: 'jobs near me' },
             ]}
           />
-        </div>
-        {search.trim() ? (
-          <GlassCard className="mt-4 bg-white/20 text-white dark:bg-slate-900/40">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">Search results</p>
-            <div className="mt-3 grid gap-3 md:grid-cols-2">
-              {[
-                { label: 'Services', items: searchResultsQuery.data?.services ?? [], key: 'name', href: '/services' },
-                { label: 'Jobs', items: searchResultsQuery.data?.jobs ?? [], key: 'title', href: '/jobs' },
-                { label: 'Listings', items: searchResultsQuery.data?.listings ?? [], key: 'title', href: '/marketplace' },
-                { label: 'Directory', items: searchResultsQuery.data?.directory ?? [], key: 'name', href: '/directory' },
-                { label: 'Products', items: searchResultsQuery.data?.products ?? [], key: 'title', href: '/store' },
-                { label: 'Accommodation', items: searchResultsQuery.data?.accommodations ?? [], key: 'title', href: '/accommodation' },
-              ].map((section) => (
-                <div key={section.label} className="rounded-[20px] bg-white/10 p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-semibold">{section.label}</p>
-                    <Link to={section.href} className="text-xs font-semibold text-lokals-gold">Open</Link>
+
+          {search.trim() ? (
+            <div className="rounded-[24px] border border-lokals-border bg-lokals-surface p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-lokals-green">Search preview</p>
+              <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {[
+                  { label: 'Services', items: searchResultsQuery.data?.services ?? [], key: 'name', href: '/services' },
+                  { label: 'Directory', items: searchResultsQuery.data?.directory ?? [], key: 'name', href: '/directory' },
+                  { label: 'Store', items: searchResultsQuery.data?.products ?? [], key: 'title', href: '/store' },
+                  { label: 'Events', items: searchResultsQuery.data?.events ?? [], key: 'title', href: '/events' },
+                  { label: 'News', items: searchResultsQuery.data?.news ?? [], key: 'title', href: '/news' },
+                  { label: 'Jobs', items: searchResultsQuery.data?.jobs ?? [], key: 'title', href: '/jobs' },
+                ].map((section) => (
+                  <div key={section.label} className="rounded-[20px] bg-white p-4 shadow-card">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-semibold text-lokals-charcoal">{section.label}</p>
+                      <Link to={searchTarget(section.href)} className="text-xs font-semibold text-lokals-green">Open</Link>
+                    </div>
+                    <div className="mt-3 space-y-2 text-sm text-lokals-muted">
+                      {section.items.length === 0 ? <p>No matches yet.</p> : section.items.slice(0, 3).map((item: any) => <p key={`${section.label}-${item.id}`}>{item[section.key]}</p>)}
+                    </div>
                   </div>
-                  <div className="mt-3 space-y-2 text-sm text-white/80">
-                    {section.items.length === 0 ? <p>No matches yet.</p> : section.items.slice(0, 3).map((item: any) => <p key={`${section.label}-${item.id}`}>{item[section.key]}</p>)}
+                ))}
+              </div>
+              <p className="mt-4 text-xs text-lokals-muted">TODO: switch Home to a unified backend search feed once the `/search` endpoint fully returns news and event results across all clients.</p>
+            </div>
+          ) : null}
+        </div>
+      </section>
+
+      <HomeHeroCard />
+
+      <HomeQuickActions />
+
+      <RoleHomeCard kind={roleCardKind} />
+
+      <HomeSection
+        eyebrow="Local updates"
+        title="What is happening near you"
+        action={<Link to="/alerts" className="text-sm font-semibold text-lokals-green">View all updates</Link>}
+        isLoading={alertsFeedQuery.isLoading || (currentUser ? newsFeedQuery.isLoading : newsLocalQuery.isLoading) || followingFeedQuery.isLoading}
+        error={alertsFeedQuery.error ?? (currentUser ? newsFeedQuery.error : newsLocalQuery.error) ?? followingFeedQuery.error}
+        empty={localUpdates.length === 0}
+        emptyTitle="No alerts right now. You're all caught up."
+        emptyBody="Local alerts, followed updates, and local news will appear here."
+        onRetry={() => {
+          void alertsFeedQuery.refetch()
+          void followingFeedQuery.refetch()
+          void (currentUser ? newsFeedQuery.refetch() : newsLocalQuery.refetch())
+        }}
+      >
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {localUpdates.map((item) => (
+            <LocalUpdateCard key={item.key} title={item.title} source={item.source} type={item.type} time={item.time} status={item.status} to={item.to} />
+          ))}
+        </div>
+      </HomeSection>
+
+      <HomeSection
+        eyebrow="Nearby services"
+        title="Trusted providers around you"
+        action={<Link to="/services" className="text-sm font-semibold text-lokals-green">See all services</Link>}
+        isLoading={providersQuery.isLoading}
+        error={providersQuery.error}
+        empty={providers.length === 0}
+        emptyTitle="No nearby services yet."
+        emptyBody="We will show trusted local providers here as they become available."
+        onRetry={() => void providersQuery.refetch()}
+      >
+        <div className="grid gap-4 xl:grid-cols-3">
+          {providers.map((provider) => <NearbyServiceCard key={provider.id} provider={provider} />)}
+        </div>
+      </HomeSection>
+
+      <HomeSection
+        eyebrow="Events near you"
+        title="Upcoming events nearby"
+        action={<Link to="/events" className="text-sm font-semibold text-lokals-green">View events</Link>}
+        isLoading={eventsQuery.isLoading}
+        error={eventsQuery.error}
+        empty={events.length === 0}
+        emptyTitle="No events nearby yet."
+        emptyBody="Local events will show up here once organizers publish them."
+        onRetry={() => void eventsQuery.refetch()}
+      >
+        <div className="grid gap-4 xl:grid-cols-3">
+          {events.map((event) => <EventCard key={event.id} event={event} />)}
+        </div>
+      </HomeSection>
+
+      <HomeSection
+        eyebrow="Store deals"
+        title="Local products and offers"
+        action={<Link to="/store" className="text-sm font-semibold text-lokals-green">Open Store</Link>}
+        isLoading={productsQuery.isLoading}
+        error={productsQuery.error}
+        empty={products.length === 0}
+        emptyTitle="No store deals in your area today."
+        emptyBody="Local products and sale alerts will appear here."
+        onRetry={() => void productsQuery.refetch()}
+      >
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {products.map((product) => (
+            <Link key={product.id} to={`/store/${product.id}`} className="rounded-[24px] border border-lokals-border bg-white p-4 shadow-card transition hover:-translate-y-0.5">
+              <div className="flex items-start gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lokals-green-soft text-lokals-green">
+                  <ShoppingBag className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="line-clamp-2 font-semibold text-lokals-charcoal">{product.title}</p>
+                  <p className="mt-1 text-sm text-lokals-muted">{product.business?.name ?? product.user?.name ?? 'Local seller'}</p>
+                  <p className="mt-3 text-lg font-bold text-lokals-charcoal">{getDisplayPrice(product.sale_price ?? product.price)}</p>
+                  <p className="mt-1 text-xs text-lokals-muted">{product.area ?? product.town ?? PILOT_TOWN}</p>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </HomeSection>
+
+      <HomeSection
+        eyebrow={activeRole === 'worker' ? 'Work first' : 'Work opportunities'}
+        title="Jobs near you"
+        action={<Link to="/jobs" className="text-sm font-semibold text-lokals-green">View Work</Link>}
+        isLoading={jobsQuery.isLoading}
+        error={jobsQuery.error}
+        empty={jobs.length === 0}
+        emptyTitle="No nearby work opportunities right now."
+        emptyBody="We will show fresh local jobs here as they are posted."
+        onRetry={() => void jobsQuery.refetch()}
+      >
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {jobs.map((job) => (
+            <Link key={job.id} to={`/jobs/${job.id}`} className="rounded-[24px] border border-lokals-border bg-white p-4 shadow-card transition hover:-translate-y-0.5">
+              <div className="flex items-start gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-700">
+                  <BriefcaseBusiness className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="line-clamp-2 font-semibold text-lokals-charcoal">{job.title}</p>
+                  <p className="mt-2 text-sm text-lokals-muted">{job.location ?? [area, town].filter(Boolean).join(', ')}</p>
+                  <p className="mt-2 text-sm font-semibold text-lokals-charcoal">{job.compensation ? getDisplayPrice(job.compensation) : 'Pay not listed'}</p>
+                  <div className="mt-3 flex items-center justify-between text-xs text-lokals-muted">
+                    <span>{job.status ?? 'Open'}</span>
+                    <span>{job.applications_count ?? 0} applications</span>
                   </div>
                 </div>
-              ))}
-            </div>
-          </GlassCard>
-        ) : null}
-      </section>
-
-      {showGuide ? (
-        <section className="rounded-[24px] border border-lokals-border bg-white p-5 shadow-card">
-          <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-lokals-purple">First visit</p>
-              <h2 className="mt-2 text-xl font-semibold text-lokals-charcoal">What do you want to do today?</h2>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Link to="/services"><Button variant="secondary">Find a service</Button></Link>
-                <Link to="/jobs"><Button variant="secondary">Find work</Button></Link>
-                <Link to="/store"><Button variant="secondary">Shop</Button></Link>
               </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setShowGuide(false)
-                window.localStorage.setItem('lokals-home-guide-dismissed', 'true')
-              }}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-lokals-muted"
-              aria-label="Dismiss guide"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </section>
-      ) : null}
+            </Link>
+          ))}
+        </div>
+      </HomeSection>
 
-      <QuickActionGrid />
+      <NewsFeedSection
+        title="Local news"
+        eyebrow="Stay informed"
+        items={localNews}
+        isLoading={currentUser ? newsFeedQuery.isLoading : newsLocalQuery.isLoading}
+        error={currentUser ? newsFeedQuery.error : newsLocalQuery.error}
+      />
 
-      <section className="rounded-[24px] border border-lokals-border bg-white p-5 shadow-card">
-        <div className="flex items-center justify-between gap-3">
+      <div className="rounded-[24px] border border-lokals-border bg-white p-5 shadow-card">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-purple">Need help now?</p>
-            <h2 className="mt-1 text-2xl font-semibold text-lokals-charcoal">Start with the fastest local action.</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-green">More nearby</p>
+            <h2 className="mt-1 text-xl font-semibold text-lokals-charcoal">Explore more in your area</h2>
           </div>
-          <Link to="/services"><Button>Find service</Button></Link>
+          <Link to="/more"><Button variant="secondary">Open more <ArrowRight className="h-4 w-4" /></Button></Link>
         </div>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <SmartSuggestionCard title="Need a barber nearby?" body="Get help fast with provider cards built for call or booking in seconds." to="/services" icon={Sparkles} badge="Primary" />
-        <SmartSuggestionCard title="Directory help nearby" body="Clinics, police, pharmacies, and local services stay easy to reach." to="/directory" icon={ShieldAlert} badge="Trusted" />
-        <SmartSuggestionCard title="Jobs and workers nearby" body="Work stays one tap away when you need to earn or hire." to="/jobs" icon={BriefcaseBusiness} badge="Work" />
-        <SmartSuggestionCard title="Need a place to stay?" body="Browse rentals and short stays without leaving the app." to="/accommodation" icon={Home} badge="Stay" />
-      </section>
-
-      <section className="space-y-4 border-t border-slate-200/70 pt-6 dark:border-slate-800">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-purple">Nearby now</p>
-            <h2 className="mt-1 text-xl font-semibold text-lokals-charcoal">Nearby services</h2>
-          </div>
-          <Link to="/services" className="text-sm font-semibold text-lokals-green">See all</Link>
-        </div>
-        <QueryState isLoading={providersQuery.isLoading} error={providersQuery.error} empty={providers.length === 0}>
-          <div className="grid gap-4 xl:grid-cols-3">
-            {providers.map((provider) => <NearbyServiceCard key={provider.id} provider={provider} />)}
-          </div>
-        </QueryState>
-      </section>
-
-      <section className="space-y-4 border-t border-slate-200/70 pt-6 dark:border-slate-800">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-purple">Deals nearby</p>
-            <h2 className="mt-1 text-xl font-semibold text-lokals-charcoal">Store deals</h2>
-          </div>
-          <Link to="/store" className="text-sm font-semibold text-lokals-green">Open store</Link>
-        </div>
-        <QueryState isLoading={productsQuery.isLoading} error={productsQuery.error} empty={products.length === 0}>
-          <div className="grid gap-4 md:grid-cols-3">
-            {products.map((product) => (
-              <Link key={product.id} to={`/store/${product.id}`} className="rounded-[20px] border border-lokals-border bg-white p-4 shadow-card transition hover:-translate-y-0.5">
-                <p className="font-semibold text-lokals-charcoal">{product.title}</p>
-                <p className="mt-1 text-sm text-lokals-muted">{product.business?.name ?? product.user?.name ?? 'Local seller'}</p>
-                <p className="mt-3 text-lg font-bold text-lokals-charcoal">{getDisplayPrice(product.sale_price ?? product.price)}</p>
-              </Link>
-            ))}
-          </div>
-        </QueryState>
-      </section>
-
-      <section className="space-y-4 border-t border-slate-200/70 pt-6 dark:border-slate-800">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-purple">Stay nearby</p>
-            <h2 className="mt-1 text-xl font-semibold text-lokals-charcoal">Accommodation nearby</h2>
-          </div>
-          <Link to="/accommodation" className="text-sm font-semibold text-lokals-green">Browse stays</Link>
-        </div>
-        <QueryState isLoading={accommodationsQuery.isLoading} error={accommodationsQuery.error} empty={accommodations.length === 0}>
-          <div className="grid gap-4 md:grid-cols-2">
-            {accommodations.map((item) => (
-              <Link key={item.id} to={`/accommodation/${item.id}`} className="rounded-[20px] border border-lokals-border bg-white p-4 shadow-card transition hover:-translate-y-0.5">
-                <p className="font-semibold text-lokals-charcoal">{item.title}</p>
-                <p className="mt-1 text-sm text-lokals-muted">{item.area ?? item.town ?? 'Windhoek'}</p>
-                <p className="mt-3 text-lg font-bold text-lokals-charcoal">{getDisplayPrice(item.price)}</p>
-              </Link>
-            ))}
-          </div>
-        </QueryState>
-      </section>
-
-      <section className="space-y-4 border-t border-slate-200/70 pt-6 dark:border-slate-800">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-purple">Community</p>
-            <h2 className="mt-1 text-xl font-semibold text-lokals-charcoal">Alerts near you</h2>
-          </div>
-          <Link to="/activity" className="text-sm font-semibold text-lokals-purple">Open feed</Link>
-        </div>
-        <QueryState isLoading={alertsFeedQuery.isLoading} error={alertsFeedQuery.error} empty={(alertsFeedQuery.data?.data ?? []).length === 0}>
-          <div className="space-y-3">
-            {(alertsFeedQuery.data?.data ?? []).slice(0, 3).map((item) => (
-              <AlertCard key={item.id} alert={{ id: item.id, title: item.title, body: item.body, priority: item.severity ?? 'info', location: item.location }} />
-            ))}
-          </div>
-        </QueryState>
-      </section>
-
-      <section className="space-y-4 border-t border-slate-200/70 pt-6 dark:border-slate-800">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Bell className="h-5 w-5 text-lokals-charcoal" />
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-purple">Your updates</p>
-              <h2 className="mt-1 text-xl font-semibold text-lokals-charcoal">Recent activity</h2>
-            </div>
-          </div>
-          <Link to="/activity" className="text-sm font-semibold text-lokals-green">Open timeline</Link>
-        </div>
-        <div className="space-y-3">
-          <RecentActivityCard icon={Bell} title="Booking confirmed" body="Your last service request is ready for provider review." time="2 min ago" statusLabel="Bookings" />
-          <RecentActivityCard icon={BriefcaseBusiness} title="Job application sent" body="Your recent application was delivered with saved profile details." time="1 hour ago" statusLabel="Work" />
-          <RecentActivityCard icon={Package} title="Parcel request sent" body="Your delivery handoff details are ready for driver review." time="Today" statusLabel="Send" />
-        </div>
-      </section>
+      </div>
     </div>
   )
 }

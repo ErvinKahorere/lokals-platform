@@ -55,7 +55,39 @@ class AuthController extends Notifier<AuthState> {
         token: token,
         user: UserModel.fromJson(jsonDecode(userRaw) as Map<String, dynamic>),
       );
+      await hydrateCurrentUser();
     }
+  }
+
+  Future<void> hydrateCurrentUser() async {
+    if (state.token == null) {
+      return;
+    }
+
+    try {
+      final response = await ref.read(dioProvider).get<Map<String, dynamic>>('/me');
+      final payload = response.data!;
+      final userJson =
+          (payload['user'] as Map<String, dynamic>)['data']
+              as Map<String, dynamic>? ??
+          payload['user'] as Map<String, dynamic>;
+      final user = UserModel.fromJson(userJson);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user', jsonEncode(userJson));
+      state = state.copyWith(user: user, isLoading: false);
+    } on DioException {
+      // Keep the persisted session if the backend is temporarily unreachable.
+    }
+  }
+
+  Future<void> refreshCurrentUser() async {
+    await hydrateCurrentUser();
+  }
+
+  Future<void> _persistSession(String token, Map<String, dynamic> userJson) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('token', token);
+    await prefs.setString('user', jsonEncode(userJson));
   }
 
   Future<void> login(String phone, String password) async {
@@ -75,10 +107,7 @@ class AuthController extends Notifier<AuthState> {
           payload['user'] as Map<String, dynamic>;
       final user = UserModel.fromJson(userJson);
       final token = payload['token'] as String;
-      final prefs = await SharedPreferences.getInstance();
-
-      await prefs.setString('token', token);
-      await prefs.setString('user', jsonEncode(userJson));
+      await _persistSession(token, userJson);
 
       state = AuthState(token: token, user: user, isLoading: false);
     } on DioException {
@@ -119,10 +148,7 @@ class AuthController extends Notifier<AuthState> {
           payload['user'] as Map<String, dynamic>;
       final user = UserModel.fromJson(userJson);
       final token = payload['token'] as String;
-      final prefs = await SharedPreferences.getInstance();
-
-      await prefs.setString('token', token);
-      await prefs.setString('user', jsonEncode(userJson));
+      await _persistSession(token, userJson);
 
       state = AuthState(token: token, user: user, isLoading: false);
     } on DioException {
@@ -160,6 +186,13 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> logout() async {
+    try {
+      if (state.token != null) {
+        await ref.read(dioProvider).post('/auth/logout');
+      }
+    } on DioException {
+      // Clear local state even if the remote logout request fails.
+    }
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');
     await prefs.remove('user');

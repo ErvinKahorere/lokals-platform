@@ -19,3 +19,5 @@ React + Vite + TypeScript web app for the LOKALS Phase 1 MVP.
 
 - The app expects the Laravel backend at `http://127.0.0.1:8000/api/v1` by default.
 - Pages include public browsing, booking flow, user dashboard views, and simple admin management views.
+- Set `VITE_API_URL` in `.env` for staging or production.
+- Run `npm run build` before release validation.

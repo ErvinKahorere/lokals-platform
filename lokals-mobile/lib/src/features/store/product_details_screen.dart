@@ -1,65 +1,375 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/widgets/experience/contact_actions.dart';
+import '../../../shared/widgets/experience/save_button.dart';
 import '../../core/experience_helpers.dart';
+import '../../core/models.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../discovery/discovery_repository.dart';
+import 'product_card.dart';
 
-class ProductDetailsScreen extends ConsumerWidget {
+class ProductDetailsScreen extends ConsumerStatefulWidget {
   const ProductDetailsScreen({super.key, required this.productId});
 
   final String productId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final product = ref.watch(productDetailsProvider(productId));
+  ConsumerState<ProductDetailsScreen> createState() => _ProductDetailsScreenState();
+}
+
+class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
+  bool _followBusy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final productQuery = ref.watch(productDetailsProvider(widget.productId));
+    final productsQuery = ref.watch(storeProductsProvider);
+    final alertsQuery = ref.watch(saleAlertsProvider);
+    final followedOrganizationIds = ref.watch(followedOrganizationIdsProvider);
 
     return LokalsShell(
       title: 'Product details',
       showBack: true,
-      child: product.when(
-        data: (item) => ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            SectionTitle(
-              title: item.title,
-              subtitle: item.description ?? 'Local product listing.',
-            ),
-            const SizedBox(height: 16),
-            LokalsCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(getDisplayPrice(item.salePrice ?? item.price), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
-                  if (item.salePrice != null)
+      child: productQuery.when(
+        data: (item) {
+          final imageUrl = resolveMediaUrl(item.imageUrl);
+          final sellerName = item.businessName ?? item.userBusinessName ?? item.userName ?? 'Local seller';
+          final sellerPhone = item.businessPhone ?? item.userPhone;
+          final sellerWhatsapp = item.businessWhatsapp ?? item.userWhatsapp ?? sellerPhone;
+          final locationLabel = [item.area, item.town].whereType<String>().where((value) => value.isNotEmpty).join(', ');
+          final relatedProducts = (productsQuery.asData?.value ?? [])
+              .where((product) => product.id != item.id && (product.category == item.category || product.businessId == item.businessId))
+              .take(4)
+              .toList();
+          final sellerProducts = (productsQuery.asData?.value ?? [])
+              .where((product) => product.id != item.id && ((item.businessId != null && product.businessId == item.businessId) || (item.userId != null && product.userId == item.userId)))
+              .take(3)
+              .toList();
+          final sellerAlerts = (alertsQuery.asData?.value ?? [])
+              .where((alert) => item.businessId != null && alert.organizationId == item.businessId)
+              .take(2)
+              .toList();
+          final isFollowing = item.businessId != null && (followedOrganizationIds.asData?.value.contains(item.businessId) ?? false);
+          final messenger = ScaffoldMessenger.of(context);
+
+          Future<void> toggleFollow() async {
+            if (item.businessId == null) {
+              return;
+            }
+
+            setState(() => _followBusy = true);
+            try {
+              if (isFollowing) {
+                await ref.read(discoveryRepositoryProvider).unfollowOrganization(item.businessId!);
+                ref.invalidate(followedOrganizationIdsProvider);
+                if (!mounted) {
+                  return;
+                }
+                messenger.showSnackBar(const SnackBar(content: Text('Unfollowed')));
+              } else {
+                await ref.read(discoveryRepositoryProvider).followOrganization(item.businessId!);
+                ref.invalidate(followedOrganizationIdsProvider);
+                if (!mounted) {
+                  return;
+                }
+                messenger.showSnackBar(const SnackBar(content: Text('Following')));
+              }
+            } finally {
+              if (mounted) {
+                setState(() => _followBusy = false);
+              }
+            }
+          }
+
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+            children: [
+              AppCard(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Stack(
+                      children: [
+                        Container(
+                          height: 240,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: AppColors.neutralSoft,
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                            image: imageUrl != null
+                                ? DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover)
+                                : null,
+                          ),
+                          child: imageUrl == null
+                              ? const Center(
+                                  child: Icon(Icons.inventory_2_outlined, size: 48, color: AppColors.mutedText),
+                                )
+                              : null,
+                        ),
+                        Positioned(
+                          right: 12,
+                          top: 12,
+                          child: SaveButton(
+                            storageId: 'product:${item.id}',
+                            itemType: 'product',
+                            itemId: item.id,
+                            onChanged: (saved) {
+                              final label = saved ? 'Saved' : 'Removed from saved';
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(label)));
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                     Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Text(
-                        getDisplayPrice(item.price),
-                        style: const TextStyle(color: Color(0xFF64748B), decoration: TextDecoration.lineThrough),
+                      padding: const EdgeInsets.all(18),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              AppBadge(label: item.category ?? 'Product', tone: AppBadgeTone.info),
+                              AppBadge(label: _stockLabel(item.stockStatus), tone: _stockTone(item.stockStatus)),
+                              if (item.salePrice != null) const AppBadge(label: 'On sale', tone: AppBadgeTone.warning),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(item.title, style: AppTextStyles.h2.copyWith(fontSize: 28)),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Text(
+                                getDisplayPrice(item.salePrice ?? item.price),
+                                style: AppTextStyles.h2.copyWith(color: AppColors.primaryPurple),
+                              ),
+                              if (item.salePrice != null) ...[
+                                const SizedBox(width: 10),
+                                Text(
+                                  getDisplayPrice(item.price),
+                                  style: AppTextStyles.bodyMuted.copyWith(decoration: TextDecoration.lineThrough),
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              const Icon(Icons.place_outlined, size: 16, color: AppColors.mutedText),
+                              const SizedBox(width: 6),
+                              Text(locationLabel.isEmpty ? 'Windhoek' : locationLabel, style: AppTextStyles.bodyMuted),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                  const SizedBox(height: 12),
-                  Text(item.businessName ?? item.userName ?? 'Local seller'),
-                  const SizedBox(height: 8),
-                  Text(item.area ?? item.town ?? 'Windhoek', style: const TextStyle(color: Color(0xFF64748B))),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(child: PrimaryAction(label: 'Contact seller', onPressed: () {})),
-                      const SizedBox(width: 10),
-                      Expanded(child: AppButton(label: 'Save', variant: AppButtonVariant.secondary, onPressed: () {})),
-                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text('Description', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 12),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      (item.description?.trim().isNotEmpty ?? false)
+                          ? item.description!
+                          : 'Local seller listing with direct enquiry and flexible pickup or delivery options.',
+                      style: AppTextStyles.bodyMuted.copyWith(height: 1.5),
+                    ),
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        AppBadge(label: 'Condition: Good', tone: AppBadgeTone.info),
+                        AppBadge(label: 'Status: ${_stockLabel(item.stockStatus)}', tone: _stockTone(item.stockStatus)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text('Seller', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
                   ),
+                  if (item.businessId != null)
+                    AppButton(
+                      label: isFollowing ? 'Following' : 'Follow',
+                      expanded: false,
+                      variant: isFollowing ? AppButtonVariant.primary : AppButtonVariant.secondary,
+                      onPressed: _followBusy ? null : toggleFollow,
+                    ),
                 ],
               ),
-            ),
-          ],
-        ),
+              const SizedBox(height: 12),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundColor: AppColors.purpleSoftAlt,
+                          backgroundImage: resolveMediaUrl(item.businessLogoUrl ?? item.userAvatar) != null
+                              ? NetworkImage(resolveMediaUrl(item.businessLogoUrl ?? item.userAvatar)!)
+                              : null,
+                          child: resolveMediaUrl(item.businessLogoUrl ?? item.userAvatar) == null
+                              ? Text(
+                                  sellerName.characters.first.toUpperCase(),
+                                  style: AppTextStyles.h4.copyWith(color: AppColors.primaryPurple),
+                                )
+                              : null,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Flexible(child: Text(sellerName, style: AppTextStyles.h4)),
+                                  if (item.businessVerified) ...[
+                                    const SizedBox(width: 8),
+                                    const AppBadge(label: 'Verified', tone: AppBadgeTone.success),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(locationLabel.isEmpty ? 'Windhoek' : locationLabel, style: AppTextStyles.bodyMuted),
+                              const SizedBox(height: 4),
+                              const Text('Replies by call or WhatsApp for now.', style: AppTextStyles.caption),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    if (item.businessId != null)
+                      AppButton(
+                        label: 'View Seller Store',
+                        variant: AppButtonVariant.secondary,
+                        onPressed: () => context.push('/directory/${item.businessId}'),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              ContactActions(name: sellerName, phone: sellerPhone, whatsapp: sellerWhatsapp),
+              if (sellerProducts.isNotEmpty) ...[
+                const SizedBox(height: 18),
+                const Text('Recent from this seller', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 260,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemBuilder: (context, index) => SizedBox(
+                      width: 190,
+                      child: ProductCard(product: sellerProducts[index]),
+                    ),
+                    separatorBuilder: (context, index) => const SizedBox(width: 12),
+                    itemCount: sellerProducts.length,
+                  ),
+                ),
+              ],
+              if (sellerAlerts.isNotEmpty) ...[
+                const SizedBox(height: 18),
+                const Text('Active sale alerts', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 12),
+                ...sellerAlerts.map(
+                  (alert) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: AppCard(
+                      color: AppColors.warningSoft,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const AppBadge(label: 'Promotion', tone: AppBadgeTone.warning),
+                          const SizedBox(height: 10),
+                          Text(alert.title, style: AppTextStyles.h4),
+                          const SizedBox(height: 6),
+                          Text(alert.body, style: AppTextStyles.bodyMuted),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 18),
+              const Text('Related products', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 12),
+              if (relatedProducts.isEmpty)
+                const EmptyStateView(
+                  title: 'No related products yet.',
+                  body: 'More similar listings will appear here soon.',
+                )
+              else
+                _RelatedProductsGrid(items: relatedProducts),
+            ],
+          );
+        },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('Product unavailable: $error')),
+        error: (error, _) => const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: EmptyStateView(
+              title: 'Product unavailable',
+              body: 'We could not load this product right now.',
+            ),
+          ),
+        ),
       ),
+    );
+  }
+
+  static String _stockLabel(String? status) {
+    return switch (status) {
+      'limited' => 'Limited stock',
+      'out_of_stock' => 'Out of stock',
+      _ => 'In stock',
+    };
+  }
+
+  static AppBadgeTone _stockTone(String? status) {
+    return switch (status) {
+      'limited' => AppBadgeTone.warning,
+      'out_of_stock' => AppBadgeTone.danger,
+      _ => AppBadgeTone.success,
+    };
+  }
+}
+
+class _RelatedProductsGrid extends StatelessWidget {
+  const _RelatedProductsGrid({required this.items});
+
+  final List<ProductModel> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: items.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.7,
+      ),
+      itemBuilder: (context, index) => ProductCard(product: items[index]),
     );
   }
 }

@@ -1,127 +1,87 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../shared/widgets/experience/contact_actions.dart';
-import '../../core/experience_helpers.dart';
+import '../../../shared/widgets/worker_card.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../discovery/discovery_repository.dart';
 
-class WorkersScreen extends ConsumerWidget {
+class WorkersScreen extends ConsumerStatefulWidget {
   const WorkersScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WorkersScreen> createState() => _WorkersScreenState();
+}
+
+class _WorkersScreenState extends ConsumerState<WorkersScreen> {
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final workers = ref.watch(workersProvider);
-    final organizations = ref.watch(directoryProvider);
 
     return LokalsShell(
       title: 'Workers',
       child: workers.when(
-        data: (items) => ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            const SectionTitle(
-              title: 'Workers and local directory',
-              subtitle: 'Quick discovery for gigs, providers, and organizations.',
-            ),
-            const SizedBox(height: 14),
-            ...items.map(
-              (worker) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: GestureDetector(
-                  onTap: () => context.push('/workers/${worker.id}'),
-                  child: LokalsCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          worker.headline,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(worker.name ?? 'Local worker'),
-                        const SizedBox(height: 8),
-                        Text(
-                          '${worker.location ?? 'Local area'} - ${worker.rate != null ? 'N\$ ${worker.rate}' : 'Rate on request'}',
-                          style: const TextStyle(color: Colors.black54),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          worker.skills.isEmpty
-                              ? 'General assistance'
-                              : worker.skills.join(', '),
-                        ),
-                      ],
-                    ),
+        data: (items) {
+          final query = _searchController.text.trim().toLowerCase();
+          final filtered = items.where((worker) {
+            return query.isEmpty ||
+                worker.headline.toLowerCase().contains(query) ||
+                (worker.name?.toLowerCase().contains(query) ?? false) ||
+                worker.skills.any((skill) => skill.toLowerCase().contains(query));
+          }).toList();
+
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+            children: [
+              const SectionTitle(
+                title: 'Available workers',
+                subtitle: 'Browse local people who are ready to help with quick jobs and ongoing support.',
+              ),
+              const SizedBox(height: 16),
+              AppSearchBar(
+                controller: _searchController,
+                hintText: 'Search workers...',
+                recentKey: 'workers',
+                suggestions: const ['Cleaner', 'Painter', 'Driver', 'Tutor'],
+                shortcuts: const ['Available now', 'Verified', 'Near me'],
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 16),
+              if (filtered.isEmpty)
+                const EmptyStateView(
+                  title: 'No workers found nearby',
+                  body: 'Try another skill or area.',
+                )
+              else
+                ...filtered.map(
+                  (worker) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: WorkerCard(worker: worker),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const SectionTitle(title: 'Organizations'),
-            const SizedBox(height: 12),
-            organizations.when(
-              data: (items) => Column(
-                children: items
-                    .map(
-                      (item) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: LokalsCard(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  CircleAvatar(
-                                    child: Text(item.name.characters.first.toUpperCase()),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(item.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                                        const SizedBox(height: 4),
-                                        Text(item.category, style: const TextStyle(color: Color(0xFF64748B))),
-                                      ],
-                                    ),
-                                  ),
-                                  AppBadge(
-                                    label: item.isVerified ? 'Verified' : 'Directory',
-                                    tone: item.isVerified ? AppBadgeTone.success : AppBadgeTone.info,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                '${item.location ?? 'Local'} - ${getDisplayDistance(item.distanceKm, item.location)}',
-                                style: const TextStyle(color: Color(0xFF64748B)),
-                              ),
-                              const SizedBox(height: 12),
-                              ContactActions(name: item.name, phone: item.phone),
-                            ],
-                          ),
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
-              loading: () => const Padding(
-                padding: EdgeInsets.all(12),
-                child: CircularProgressIndicator(),
-              ),
-              error: (error, _) => Text('Directory failed: $error'),
-            ),
-          ],
-        ),
+            ],
+          );
+        },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) =>
-            Center(child: Text('Failed to load workers: $error')),
+        error: (error, _) => Center(
+          child: EmptyStateView(
+            title: 'Workers could not load',
+            body: 'Please retry in a moment.',
+            action: AppButton(
+              label: 'Retry',
+              expanded: false,
+              onPressed: () => ref.invalidate(workersProvider),
+            ),
+          ),
+        ),
       ),
     );
   }

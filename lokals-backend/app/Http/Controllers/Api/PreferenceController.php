@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserPreferenceResource;
+use App\Support\PilotLocation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -23,6 +24,11 @@ class PreferenceController extends Controller
 
         return response()->json([
             'preferences' => UserPreferenceResource::make($preference),
+            'pilot' => [
+                'town' => PilotLocation::town(),
+                'location_lock' => PilotLocation::isLocked(),
+                'areas' => PilotLocation::allowedAreas(),
+            ],
         ]);
     }
 
@@ -43,6 +49,7 @@ class PreferenceController extends Controller
                 'service_provider',
                 'driver',
                 'organization_representative',
+                'town_manager',
                 'municipality_admin',
                 'operator',
                 'super_admin',
@@ -51,18 +58,21 @@ class PreferenceController extends Controller
         ]);
 
         $user = $request->user();
+        $defaultTown = PilotLocation::profileTown($validated['default_town'] ?? $user->default_town);
+        $defaultArea = PilotLocation::normalizeArea($validated['default_area'] ?? $user->default_area);
+
         $user->update([
-            'default_town' => $validated['default_town'] ?? $user->default_town,
-            'default_area' => $validated['default_area'] ?? $user->default_area,
+            'default_town' => $defaultTown,
+            'default_area' => $defaultArea,
             'service_radius' => $validated['service_radius'] ?? $user->service_radius,
         ]);
 
         if (! empty($validated['preferred_roles'])) {
             $allowedRoles = collect($validated['preferred_roles'])
-                ->map(fn (string $role) => match ($role) {
-                    'business_owner' => 'seller',
-                    'organization_representative' => 'municipality_admin',
-                    default => $role,
+                ->flatMap(fn (string $role) => match ($role) {
+                    'business_owner' => ['seller'],
+                    'organization_representative', 'municipality_admin', 'town_manager' => ['municipality_admin', 'town_manager'],
+                    default => [$role],
                 })
                 ->unique()
                 ->values()
@@ -73,8 +83,8 @@ class PreferenceController extends Controller
         $preference = $user->preference()->updateOrCreate(
             ['user_id' => $user->id],
             [
-                'default_town' => $validated['default_town'] ?? $user->default_town,
-                'default_area' => $validated['default_area'] ?? $user->default_area,
+                'default_town' => $defaultTown,
+                'default_area' => $defaultArea,
                 'interests' => $validated['interests'] ?? [],
                 'preferred_roles' => $validated['preferred_roles'] ?? $user->getRoleNames()->values()->all(),
                 'notification_preferences' => $validated['notification_preferences'] ?? [],
@@ -84,6 +94,11 @@ class PreferenceController extends Controller
         return response()->json([
             'message' => 'Preferences updated.',
             'preferences' => UserPreferenceResource::make($preference),
+            'pilot' => [
+                'town' => PilotLocation::town(),
+                'location_lock' => PilotLocation::isLocked(),
+                'areas' => PilotLocation::allowedAreas(),
+            ],
         ]);
     }
 }

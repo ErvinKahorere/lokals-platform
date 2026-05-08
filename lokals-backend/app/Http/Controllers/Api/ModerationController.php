@@ -23,7 +23,7 @@ class ModerationController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        abort_unless($request->user()->hasAnyRole(['operator', 'municipality_admin', 'super_admin']), 403);
+        abort_unless($request->user()->hasAnyRole(['operator', 'municipality_admin', 'town_manager', 'super_admin']), 403);
 
         $query = ModerationFlag::query()->latest()->with('user');
 
@@ -55,7 +55,7 @@ class ModerationController extends Controller
 
     public function update(Request $request, ModerationFlag $moderationFlag): JsonResponse
     {
-        abort_unless($request->user()->hasAnyRole(['operator', 'municipality_admin', 'super_admin']), 403);
+        abort_unless($request->user()->hasAnyRole(['operator', 'municipality_admin', 'town_manager', 'super_admin']), 403);
 
         $validated = $request->validate([
             'status' => ['required', 'in:pending,reviewed,resolved,rejected'],

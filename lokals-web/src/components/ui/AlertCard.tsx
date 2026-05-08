@@ -7,7 +7,7 @@ export function AlertCard({ alert }: { alert: AlertItem }) {
   return (
     <Card>
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-charcoal text-white">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-50 text-lokals-purple">
           <BellRing className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">

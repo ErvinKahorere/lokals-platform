@@ -27,19 +27,19 @@ class AppButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = switch (variant) {
       AppButtonVariant.primary => FilledButton.styleFrom(
-        backgroundColor: AppColors.primaryGreen,
+        backgroundColor: AppColors.primaryPurple,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
       AppButtonVariant.secondary => FilledButton.styleFrom(
         backgroundColor: Colors.white,
-        foregroundColor: Theme.of(context).colorScheme.onSurface,
-        side: BorderSide(color: Theme.of(context).dividerColor),
+        foregroundColor: AppColors.primaryPurple,
+        side: BorderSide(color: AppColors.primaryPurple.withValues(alpha: 0.18)),
         elevation: 0,
       ),
       AppButtonVariant.accent => FilledButton.styleFrom(
-        backgroundColor: AppColors.accentGold,
-        foregroundColor: AppColors.deepCharcoal,
+        backgroundColor: AppColors.primaryGreen,
+        foregroundColor: Colors.white,
         elevation: 0,
       ),
       AppButtonVariant.danger => FilledButton.styleFrom(
@@ -53,6 +53,12 @@ class AppButton extends StatelessWidget {
       onPressed: isLoading ? null : onPressed,
       style: style.copyWith(
         minimumSize: const WidgetStatePropertyAll(Size.fromHeight(52)),
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        ),
+        textStyle: const WidgetStatePropertyAll(
+          TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+        ),
         shape: WidgetStatePropertyAll(
           RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.xl),

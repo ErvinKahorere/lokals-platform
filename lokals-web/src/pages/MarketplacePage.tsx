@@ -1,6 +1,7 @@
 import type { FormEvent } from 'react'
 import { useMemo, useState } from 'react'
 import { Camera, CheckCircle2, Sparkles } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 import { Badge, Button, EmptyState, Input, ListingCard, PageHeader, QueryState, SearchBar, SectionCard, Select, TextArea } from '../components/Ui'
 import { isDemoMode } from '../config/appMode'
 import { useCreateListing, useListings } from '../hooks/queries'
@@ -8,7 +9,8 @@ import { getDisplayPrice } from '../lib/display'
 import { useAuthStore } from '../store/auth'
 
 export function MarketplacePage() {
-  const [search, setSearch] = useState('')
+  const [searchParams] = useSearchParams()
+  const [search, setSearch] = useState(searchParams.get('q') ?? '')
   const [message, setMessage] = useState('')
   const [sortBy, setSortBy] = useState('distance')
   const [draft, setDraft] = useState({

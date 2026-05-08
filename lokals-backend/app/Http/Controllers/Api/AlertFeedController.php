@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Alert;
 use App\Models\Announcement;
 use App\Models\JobPost;
+use App\Support\PilotLocation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -17,6 +18,7 @@ class AlertFeedController extends Controller
 
         $alerts = Alert::query()
             ->where('is_active', true)
+            ->when(PilotLocation::isLocked(), fn ($query) => $query->where('town', PilotLocation::town()))
             ->latest()
             ->limit((int) $request->integer('limit', 8))
             ->get()
@@ -25,7 +27,10 @@ class AlertFeedController extends Controller
                 'source_type' => 'alert',
                 'title' => $alert->title,
                 'body' => $alert->body,
+                'type' => $alert->type,
                 'location' => $alert->location,
+                'town' => $alert->town,
+                'area' => $alert->area,
                 'severity' => $alert->priority,
                 'timestamp' => optional($alert->created_at)->toIso8601String(),
             ]);

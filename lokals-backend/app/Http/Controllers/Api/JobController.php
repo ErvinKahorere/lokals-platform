@@ -10,7 +10,9 @@ use App\Models\JobPost;
 use App\Notifications\SystemNotification as SystemNotificationRecord;
 use App\Services\InteractionGuardService;
 use App\Services\LocationService;
+use App\Support\PilotLocation;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -37,8 +39,24 @@ class JobController extends Controller
             $query->where('employment_type', $employmentType);
         }
 
+        if ($status = $request->string('status')->value()) {
+            $query->where('status', $status);
+        }
+
+        if ($skill = $request->string('skill')->value()) {
+            $query->whereJsonContains('skills', $skill);
+        }
+
         if ($location = $request->string('location')->value()) {
             $query->where('location', 'like', '%'.$location.'%');
+        }
+
+        if ($town = PilotLocation::requestTown($request)) {
+            $query->where('location', 'like', '%'.$town.'%');
+        }
+
+        if ($area = PilotLocation::requestArea($request)) {
+            $query->where('location', 'like', '%'.$area.'%');
         }
 
         $items = $query->get()->filter(function (JobPost $job) use ($request): bool {
@@ -72,6 +90,8 @@ class JobController extends Controller
     public function store(StoreJobRequest $request): JobResource
     {
         $validated = $request->validated();
+        $validated['employment_type'] ??= 'gig';
+        $validated['status'] ??= 'open';
         $job = $request->user()->jobPosts()->create($validated);
 
         return JobResource::make($job->load(['organization', 'user']));
@@ -81,9 +101,23 @@ class JobController extends Controller
     {
         $this->interactionGuardService->ensureUsersCanInteract($request->user(), $job->user);
 
-        $application = $job->applications()->firstOrCreate(
-            ['user_id' => $request->user()->id],
-            ['message' => $request->string('message')->value() ?: null]
+        if ($job->status !== 'open') {
+            throw ValidationException::withMessages([
+                'job' => 'This job is no longer open for applications.',
+            ]);
+        }
+
+        if ($job->applications()->where('user_id', $request->user()->id)->exists()) {
+            throw ValidationException::withMessages([
+                'application' => 'You have already applied for this job.',
+            ]);
+        }
+
+        $application = $job->applications()->create(
+            [
+                'user_id' => $request->user()->id,
+                'message' => $request->string('message')->value() ?: null,
+            ]
         );
 
         $job->user?->notify(new SystemNotificationRecord(

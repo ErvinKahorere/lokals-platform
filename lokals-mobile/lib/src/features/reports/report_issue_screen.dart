@@ -4,7 +4,9 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
+import '../auth/auth_controller.dart';
 import '../discovery/discovery_repository.dart';
+import 'my_reports_screen.dart';
 
 class ReportIssueScreen extends ConsumerStatefulWidget {
   const ReportIssueScreen({super.key});
@@ -15,15 +17,21 @@ class ReportIssueScreen extends ConsumerStatefulWidget {
 
 class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
   final _titleController = TextEditingController();
-  final _categoryController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController();
   XFile? _photo;
   bool _isBusy = false;
   String? _message;
+  String _category = 'water';
+  String _priority = 'medium';
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(authControllerProvider).user;
+    if (_locationController.text.isEmpty) {
+      _locationController.text = [user?.defaultArea, user?.defaultTown].whereType<String>().join(', ');
+    }
+
     return LokalsShell(
       title: 'Report issue',
       showBack: true,
@@ -32,18 +40,37 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
         children: [
           const SectionTitle(
             title: 'Report a city issue',
-            subtitle: 'Short forms keep civic reporting usable on slower connections.',
+            subtitle: 'Keep it short: category, what happened, and where it is.',
           ),
           const SizedBox(height: 16),
           LokalsCard(
             child: Column(
               children: [
-                LokalsTextField(controller: _titleController, label: 'Title'),
+                LokalsTextField(controller: _titleController, label: 'Short title'),
                 const SizedBox(height: 12),
-                LokalsTextField(
-                  controller: _categoryController,
-                  label: 'Category',
-                  hint: 'Pothole, water issue, streetlight...',
+                DropdownButtonFormField<String>(
+                  initialValue: _category,
+                  items: const [
+                    DropdownMenuItem(value: 'water', child: Text('Water')),
+                    DropdownMenuItem(value: 'electricity', child: Text('Electricity')),
+                    DropdownMenuItem(value: 'roads', child: Text('Roads')),
+                    DropdownMenuItem(value: 'waste', child: Text('Waste')),
+                    DropdownMenuItem(value: 'safety', child: Text('Safety')),
+                    DropdownMenuItem(value: 'other', child: Text('Other')),
+                  ],
+                  decoration: const InputDecoration(labelText: 'Category'),
+                  onChanged: (value) => setState(() => _category = value ?? 'water'),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: _priority,
+                  items: const [
+                    DropdownMenuItem(value: 'low', child: Text('Low')),
+                    DropdownMenuItem(value: 'medium', child: Text('Medium')),
+                    DropdownMenuItem(value: 'high', child: Text('High')),
+                  ],
+                  decoration: const InputDecoration(labelText: 'Priority'),
+                  onChanged: (value) => setState(() => _priority = value ?? 'medium'),
                 ),
                 const SizedBox(height: 12),
                 LokalsTextField(
@@ -79,15 +106,19 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
                     setState(() => _isBusy = true);
                     await ref.read(discoveryRepositoryProvider).createReport(
                           title: _titleController.text.trim(),
-                          category: _categoryController.text.trim(),
+                          category: _category,
                           description: _descriptionController.text.trim(),
                           location: _locationController.text.trim(),
+                          town: user?.defaultTown,
+                          area: user?.defaultArea,
+                          priority: _priority,
                           photo: _photo,
                         );
+                    ref.invalidate(myReportsProvider);
                     if (!mounted) return;
                     setState(() {
                       _isBusy = false;
-                      _message = 'Report submitted successfully.';
+                      _message = 'Report submitted.';
                     });
                   },
                 ),

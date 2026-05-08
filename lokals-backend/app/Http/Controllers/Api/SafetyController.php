@@ -28,7 +28,7 @@ class SafetyController extends Controller
 
     public function flags(Request $request): JsonResponse
     {
-        abort_unless($request->user()->hasAnyRole(['operator', 'municipality_admin', 'super_admin']), 403);
+        abort_unless($request->user()->hasAnyRole(['operator', 'municipality_admin', 'town_manager', 'super_admin']), 403);
 
         return response()->json(
             \App\Models\ModerationFlag::query()->latest()->paginate((int) $request->integer('per_page', 12))
@@ -37,7 +37,7 @@ class SafetyController extends Controller
 
     public function suspend(Request $request): JsonResponse
     {
-        abort_unless($request->user()->hasAnyRole(['operator', 'municipality_admin', 'super_admin']), 403);
+        abort_unless($request->user()->hasAnyRole(['operator', 'municipality_admin', 'town_manager', 'super_admin']), 403);
 
         $validated = $request->validate([
             'type' => ['required', 'in:listing,provider'],

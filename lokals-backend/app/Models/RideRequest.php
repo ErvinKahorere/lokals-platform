@@ -15,6 +15,9 @@ class RideRequest extends Model
         'driver_id',
         'pickup_location',
         'dropoff_location',
+        'ride_type',
+        'trip_purpose',
+        'notes',
         'status',
         'fare_estimate',
     ];

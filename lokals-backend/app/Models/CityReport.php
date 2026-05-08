@@ -16,11 +16,15 @@ class CityReport extends Model
         'title',
         'description',
         'location',
+        'town',
+        'area',
         'lat',
         'lng',
         'status',
         'priority',
         'photo_url',
+        'assigned_to',
+        'resolution_notes',
     ];
 
     protected function casts(): array

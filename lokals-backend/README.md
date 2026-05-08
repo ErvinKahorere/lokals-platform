@@ -26,8 +26,10 @@ Laravel 12 API for the LOKALS Phase 1 MVP.
 3. Run `composer install`.
 4. Run `php artisan key:generate`.
 5. Run `php artisan migrate --seed`.
-6. Run `php artisan serve`.
-7. Optional for queued notifications: run `php artisan queue:listen`.
+6. Run `php artisan storage:link`.
+7. Run `php artisan serve`.
+8. Optional for queued notifications: run `php artisan queue:work`.
+9. Optional for scheduled work and news refresh: run `php artisan schedule:work`.
 
 ## Demo users
 
@@ -77,3 +79,5 @@ curl -X POST http://127.0.0.1:8000/api/v1/bookings \
 - Booking notifications are stored in the database and queued.
 - `NotificationDispatchService` includes a TODO marker for future SMS and WhatsApp delivery.
 - Simple matching sorts providers by distance when `lat` and `lng` are passed.
+- API errors are standardized for validation (`422`), unauthenticated (`401`), forbidden (`403`), and not found (`404`) JSON responses.
+- Uploaded avatars, logos, listings, and product images are restricted to common image formats and file-size limits.

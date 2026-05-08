@@ -23,7 +23,7 @@ class StoreListingRequest extends FormRequest
             'lat' => ['nullable', 'numeric'],
             'lng' => ['nullable', 'numeric'],
             'metadata' => ['nullable', 'array'],
-            'image' => ['nullable', 'image', 'max:6144'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:6144'],
         ];
     }
 }

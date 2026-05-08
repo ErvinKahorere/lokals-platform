@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 
 class NotificationBell extends StatelessWidget {
-  const NotificationBell({super.key, this.count = 0, this.route = '/activity'});
+  const NotificationBell({super.key, this.count = 0, this.route = '/notifications'});
 
   final int count;
   final String route;
@@ -14,9 +14,27 @@ class NotificationBell extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        IconButton(
-          onPressed: () => context.go(route),
-          icon: const Icon(Icons.notifications_none_rounded),
+        Container(
+          margin: const EdgeInsets.only(top: 6, right: 4),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceWhite,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: IconButton(
+            onPressed: () => context.go(route),
+            icon: const Icon(
+              Icons.notifications_none_rounded,
+              color: AppColors.primaryPurple,
+            ),
+          ),
         ),
         if (count > 0)
           Positioned(
@@ -40,4 +58,3 @@ class NotificationBell extends StatelessWidget {
     );
   }
 }
-

@@ -8,6 +8,27 @@ String getDisplayPrice(String? price) {
   return 'N\$ $price';
 }
 
+String getServicePriceLabel({String? price, String? priceType}) {
+  if (price == null || price.isEmpty) {
+    return 'Contact for quote';
+  }
+
+  final amount = getDisplayPrice(price);
+
+  switch (priceType) {
+    case 'from':
+      return 'From $amount';
+    case 'hourly':
+      return '$amount / hour';
+    case 'daily':
+      return '$amount / day';
+    case 'quote':
+      return 'Contact for quote';
+    default:
+      return amount;
+  }
+}
+
 String getDisplayDistance(double? distanceKm, [String? fallbackLocation]) {
   if (distanceKm != null) {
     return '${distanceKm.toStringAsFixed(1)} km';
@@ -16,12 +37,16 @@ String getDisplayDistance(double? distanceKm, [String? fallbackLocation]) {
   return fallbackLocation ?? 'Nearby';
 }
 
-String getDisplayRating({bool verified = false, int? socialCount}) {
-  if (socialCount != null && socialCount > 0) {
-    return '${(4.6 + (socialCount / 100)).clamp(4.6, 4.9).toStringAsFixed(1)} ★';
+String getDisplayRating({bool verified = false, int? socialCount, double? rating}) {
+  if (rating != null) {
+    return rating.toStringAsFixed(1);
   }
 
-  return verified ? '4.8 ★' : '4.7 ★';
+  if (socialCount != null && socialCount > 0) {
+    return (4.6 + (socialCount / 100)).clamp(4.6, 4.9).toStringAsFixed(1);
+  }
+
+  return verified ? '4.8' : '4.7';
 }
 
 String getStatusLabel(String? status) {
@@ -41,8 +66,44 @@ String getCompletedLabel({int count = 0, String noun = 'jobs'}) {
   return '$safeCount $noun completed';
 }
 
-String getResponseTimeLabel() {
+String getResponseTimeLabel([String? override]) {
+  if (override != null && override.isNotEmpty) {
+    return override;
+  }
+
   return 'Responds fast';
+}
+
+String? formatWhatsAppNumber(String? phone) {
+  if (phone == null || phone.isEmpty) {
+    return null;
+  }
+
+  final digits = phone.replaceAll(RegExp(r'[^\d]'), '');
+  if (digits.isEmpty) {
+    return null;
+  }
+
+  if (digits.startsWith('264')) {
+    return digits;
+  }
+
+  if (digits.startsWith('0')) {
+    return '264${digits.substring(1)}';
+  }
+
+  return digits;
+}
+
+String? buildWhatsAppUrl(String? phone, {String? name, String? message}) {
+  final number = formatWhatsAppNumber(phone);
+  if (number == null) {
+    return null;
+  }
+
+  final greeting = name == null ? 'Hi' : 'Hi $name';
+  final text = Uri.encodeComponent(message ?? '$greeting, I found your profile on LOKALS and would like to enquire.');
+  return 'https://wa.me/$number?text=$text';
 }
 
 String? resolveMediaUrl(String? path) {

@@ -21,8 +21,8 @@ class ProductResource extends JsonResource
             'area' => $this->area,
             'stock_status' => $this->stock_status,
             'status' => $this->status,
-            'business' => $this->business?->only(['id', 'name', 'category', 'phone', 'whatsapp', 'logo_url']),
-            'user' => $this->user?->only(['id', 'name', 'phone', 'avatar', 'business_name']),
+            'business' => $this->business?->only(['id', 'name', 'category', 'phone', 'whatsapp', 'logo_url', 'is_verified', 'town', 'area', 'location']),
+            'user' => $this->user?->only(['id', 'name', 'phone', 'avatar', 'business_name', 'whatsapp', 'default_town', 'default_area', 'location']),
         ];
     }
 }

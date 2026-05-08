@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/api_client.dart';
 import '../../core/models.dart';
+import '../../config/app_config.dart';
 
 final discoveryRepositoryProvider = Provider<DiscoveryRepository>((ref) {
   return DiscoveryRepository(ref);
@@ -33,8 +34,16 @@ final deliveriesProvider = FutureProvider<List<DeliveryModel>>((ref) async {
   return ref.read(discoveryRepositoryProvider).fetchDeliveries();
 });
 
+final deliveryDetailsProvider = FutureProvider.family<DeliveryModel, String>((ref, id) async {
+  return ref.read(discoveryRepositoryProvider).fetchDelivery(id);
+});
+
 final ridesProvider = FutureProvider<List<RideModel>>((ref) async {
   return ref.read(discoveryRepositoryProvider).fetchRides();
+});
+
+final rideDetailsProvider = FutureProvider.family<RideModel, String>((ref, id) async {
+  return ref.read(discoveryRepositoryProvider).fetchRide(id);
 });
 
 final sosFeedProvider = FutureProvider<List<SosModel>>((ref) async {
@@ -49,8 +58,44 @@ final alertsFeedProvider = FutureProvider<List<AlertFeedModel>>((ref) async {
   return ref.read(discoveryRepositoryProvider).fetchAlertsFeed();
 });
 
+final followingFeedProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  return ref.read(discoveryRepositoryProvider).fetchFollowingFeed();
+});
+
+final followedOrganizationIdsProvider = FutureProvider<Set<int>>((ref) async {
+  return ref.read(discoveryRepositoryProvider).fetchFollowedOrganizationIds();
+});
+
+final newsProvider = FutureProvider.family<List<NewsItemModel>, Map<String, String>>((ref, params) async {
+  return ref.read(discoveryRepositoryProvider).fetchNews(params: params);
+});
+
+final newsTrendingProvider = FutureProvider<List<NewsItemModel>>((ref) async {
+  return ref.read(discoveryRepositoryProvider).fetchTrendingNews();
+});
+
+final newsFeedProvider = FutureProvider<List<NewsItemModel>>((ref) async {
+  return ref.read(discoveryRepositoryProvider).fetchPersonalizedNewsFeed();
+});
+
+final newsDetailsProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, id) async {
+  return ref.read(discoveryRepositoryProvider).fetchNewsItem(id);
+});
+
 final eventsProvider = FutureProvider<List<EventModel>>((ref) async {
   return ref.read(discoveryRepositoryProvider).fetchEvents();
+});
+
+final eventDetailsProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, id) async {
+  return ref.read(discoveryRepositoryProvider).fetchEvent(id);
+});
+
+final eventCalendarProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  return ref.read(discoveryRepositoryProvider).fetchEventCalendar();
+});
+
+final myTicketsProvider = FutureProvider<List<EventTicketModel>>((ref) async {
+  return ref.read(discoveryRepositoryProvider).fetchMyTickets();
 });
 
 final preferencesProvider = FutureProvider<UserPreferenceModel>((ref) async {
@@ -59,6 +104,10 @@ final preferencesProvider = FutureProvider<UserPreferenceModel>((ref) async {
 
 final storeProductsProvider = FutureProvider<List<ProductModel>>((ref) async {
   return ref.read(discoveryRepositoryProvider).fetchProducts();
+});
+
+final saleAlertsProvider = FutureProvider<List<SaleAlertModel>>((ref) async {
+  return ref.read(discoveryRepositoryProvider).fetchSaleAlerts();
 });
 
 final productDetailsProvider = FutureProvider.family<ProductModel, String>((ref, id) async {
@@ -77,10 +126,29 @@ final notificationsProvider = FutureProvider<List<NotificationItemModel>>((ref) 
   return ref.read(discoveryRepositoryProvider).fetchNotifications();
 });
 
+final activityFeedProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  return ref.read(discoveryRepositoryProvider).fetchActivityFeed();
+});
+
+final savedItemsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  return ref.read(discoveryRepositoryProvider).fetchSavedItems();
+});
+
+final searchResultsProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, query) async {
+  return ref.read(discoveryRepositoryProvider).fetchSearchResults(query);
+});
+
 class DiscoveryRepository {
   DiscoveryRepository(this.ref);
 
   final Ref ref;
+
+  Map<String, dynamic> _pilotParams([Map<String, dynamic>? params]) {
+    return <String, dynamic>{
+      'town': AppConfig.pilotTown,
+      ...?params,
+    };
+  }
 
   List<dynamic> _unwrapList(dynamic data) {
     if (data is Map<String, dynamic> && data['data'] is List<dynamic>) {
@@ -91,14 +159,14 @@ class DiscoveryRepository {
   }
 
   Future<List<ListingModel>> fetchListings() async {
-    final response = await ref.read(dioProvider).get('/marketplace');
+    final response = await ref.read(dioProvider).get('/marketplace', queryParameters: _pilotParams());
     return _unwrapList(response.data)
         .map((item) => ListingModel.fromJson(item as Map<String, dynamic>))
         .toList();
   }
 
   Future<List<JobModel>> fetchJobs() async {
-    final response = await ref.read(dioProvider).get('/jobs');
+    final response = await ref.read(dioProvider).get('/jobs', queryParameters: _pilotParams());
     return _unwrapList(response.data)
         .map((item) => JobModel.fromJson(item as Map<String, dynamic>))
         .toList();
@@ -112,7 +180,7 @@ class DiscoveryRepository {
   }
 
   Future<List<OrganizationModel>> fetchOrganizations() async {
-    final response = await ref.read(dioProvider).get('/directory');
+    final response = await ref.read(dioProvider).get('/directory', queryParameters: _pilotParams());
     return _unwrapList(response.data)
         .map((item) => OrganizationModel.fromJson(item as Map<String, dynamic>))
         .toList();
@@ -134,11 +202,29 @@ class DiscoveryRepository {
         .toList();
   }
 
+  Future<DeliveryModel> fetchDelivery(String id) async {
+    final response = await ref.read(dioProvider).get('/deliveries/$id');
+    final data = response.data;
+    final item = (data is Map<String, dynamic> && data['data'] != null)
+        ? data['data'] as Map<String, dynamic>
+        : data as Map<String, dynamic>;
+    return DeliveryModel.fromJson(item);
+  }
+
   Future<List<RideModel>> fetchRides() async {
     final response = await ref.read(dioProvider).get('/rides');
     return (response.data as List<dynamic>)
         .map((item) => RideModel.fromJson(item as Map<String, dynamic>))
         .toList();
+  }
+
+  Future<RideModel> fetchRide(String id) async {
+    final response = await ref.read(dioProvider).get('/rides/$id');
+    final data = response.data;
+    final item = (data is Map<String, dynamic> && data['data'] != null)
+        ? data['data'] as Map<String, dynamic>
+        : data as Map<String, dynamic>;
+    return RideModel.fromJson(item);
   }
 
   Future<List<SosModel>> fetchSos() async {
@@ -154,17 +240,133 @@ class DiscoveryRepository {
   }
 
   Future<List<AlertFeedModel>> fetchAlertsFeed() async {
-    final response = await ref.read(dioProvider).get('/alerts/feed');
+    final response = await ref.read(dioProvider).get('/alerts/feed', queryParameters: _pilotParams());
     return _unwrapList(response.data)
         .map((item) => AlertFeedModel.fromJson(item as Map<String, dynamic>))
         .toList();
   }
 
-  Future<List<EventModel>> fetchEvents() async {
-    final response = await ref.read(dioProvider).get('/events');
+  Future<List<Map<String, dynamic>>> fetchFollowingFeed() async {
+    final response = await ref.read(dioProvider).get('/following-feed');
+    return _unwrapList(response.data)
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList();
+  }
+
+  Future<Set<int>> fetchFollowedOrganizationIds() async {
+    try {
+      final response = await ref.read(dioProvider).get('/follow');
+      final items = _unwrapList(response.data);
+      return items
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .where((item) => (item['followable_type']?.toString().contains('Organization') ?? false) && item['followable_id'] is int)
+          .map((item) => item['followable_id'] as int)
+          .toSet();
+    } on DioException {
+      return <int>{};
+    }
+  }
+
+  Future<List<EventModel>> fetchEvents({Map<String, dynamic>? params}) async {
+    final response = await ref.read(dioProvider).get('/events', queryParameters: _pilotParams(params));
     return _unwrapList(response.data)
         .map((item) => EventModel.fromJson(item as Map<String, dynamic>))
         .toList();
+  }
+
+  Future<Map<String, dynamic>> fetchEvent(String id) async {
+    final response = await ref.read(dioProvider).get('/events/$id');
+    final data = response.data as Map<String, dynamic>;
+    return {
+      'data': EventModel.fromJson(data['data'] as Map<String, dynamic>),
+      'related': (data['related'] as List<dynamic>? ?? const [])
+          .map((item) => EventModel.fromJson(item as Map<String, dynamic>))
+          .toList(),
+      'calendar': data['calendar'] as Map<String, dynamic>?,
+    };
+  }
+
+  Future<List<Map<String, dynamic>>> fetchEventCalendar() async {
+    final response = await ref.read(dioProvider).get('/events/calendar', queryParameters: _pilotParams());
+    final items = _unwrapList(response.data);
+    return items.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+  }
+
+  Future<List<EventTicketModel>> fetchMyTickets() async {
+    final response = await ref.read(dioProvider).get('/my/tickets');
+    return _unwrapList(response.data)
+        .map((item) => EventTicketModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> saveEvent(int eventId) async {
+    await ref.read(dioProvider).post('/events/$eventId/save');
+  }
+
+  Future<void> removeSavedEvent(int eventId) async {
+    await ref.read(dioProvider).delete('/events/$eventId/save');
+  }
+
+  Future<void> createEventReminder({
+    required int eventId,
+    required String remindAt,
+    String channel = 'in_app',
+  }) async {
+    await ref.read(dioProvider).post('/events/$eventId/reminders', data: {
+      'remind_at': remindAt,
+      'channel': channel,
+    });
+  }
+
+  Future<EventTicketModel> reserveEventTicket({
+    required int eventId,
+    int? ticketTypeId,
+    String? holderName,
+    String? holderPhone,
+  }) async {
+    final response = await ref.read(dioProvider).post('/events/$eventId/tickets/reserve', data: {
+      'ticket_type_id': ticketTypeId,
+      'holder_name': holderName,
+      'holder_phone': holderPhone,
+    });
+    return EventTicketModel.fromJson((response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>);
+  }
+
+  Future<EventTicketModel> cancelEventTicket(int ticketId) async {
+    final response = await ref.read(dioProvider).post('/tickets/$ticketId/cancel');
+    return EventTicketModel.fromJson((response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>);
+  }
+
+  Future<List<NewsItemModel>> fetchNews({Map<String, String>? params}) async {
+    final response = await ref.read(dioProvider).get('/news/local', queryParameters: _pilotParams(params));
+    return _unwrapList(response.data)
+        .map((item) => NewsItemModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<NewsItemModel>> fetchTrendingNews() async {
+    final response = await ref.read(dioProvider).get('/news/trending', queryParameters: _pilotParams());
+    return _unwrapList(response.data)
+        .map((item) => NewsItemModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<NewsItemModel>> fetchPersonalizedNewsFeed() async {
+    final response = await ref.read(dioProvider).get('/news/feed', queryParameters: _pilotParams());
+    return _unwrapList(response.data)
+        .map((item) => NewsItemModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<Map<String, dynamic>> fetchNewsItem(String id) async {
+    final response = await ref.read(dioProvider).get('/news/$id');
+    final data = response.data as Map<String, dynamic>;
+    return {
+      'data': NewsItemModel.fromJson(data['data'] as Map<String, dynamic>),
+      'related': (data['related'] as List<dynamic>? ?? const [])
+          .map((item) => NewsItemModel.fromJson(item as Map<String, dynamic>))
+          .toList(),
+    };
   }
 
   Future<UserPreferenceModel> fetchPreferences() async {
@@ -183,9 +385,16 @@ class DiscoveryRepository {
   }
 
   Future<List<ProductModel>> fetchProducts() async {
-    final response = await ref.read(dioProvider).get('/store/products');
+    final response = await ref.read(dioProvider).get('/store/products', queryParameters: _pilotParams());
     return _unwrapList(response.data)
         .map((item) => ProductModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<SaleAlertModel>> fetchSaleAlerts() async {
+    final response = await ref.read(dioProvider).get('/store/sale-alerts', queryParameters: _pilotParams());
+    return _unwrapList(response.data)
+        .map((item) => SaleAlertModel.fromJson(item as Map<String, dynamic>))
         .toList();
   }
 
@@ -199,7 +408,7 @@ class DiscoveryRepository {
   }
 
   Future<List<AccommodationItemModel>> fetchAccommodations() async {
-    final response = await ref.read(dioProvider).get('/accommodations');
+    final response = await ref.read(dioProvider).get('/accommodations', queryParameters: _pilotParams());
     return _unwrapList(response.data)
         .map(
           (item) => AccommodationItemModel.fromJson(
@@ -225,13 +434,73 @@ class DiscoveryRepository {
         .toList();
   }
 
+  Future<Map<String, dynamic>> fetchActivityFeed() async {
+    final response = await ref.read(dioProvider).get('/activity');
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<Map<String, dynamic>> fetchSavedItems() async {
+    final response = await ref.read(dioProvider).get('/saved-items');
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<Map<String, dynamic>> fetchSearchResults(String query) async {
+    final response = await ref.read(dioProvider).get('/search', queryParameters: _pilotParams({
+      'q': query,
+    }));
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
   Future<void> markAllNotificationsRead() async {
     await ref.read(dioProvider).post('/notifications/mark-read');
+  }
+
+  Future<void> saveItem({
+    required String type,
+    required Object id,
+  }) async {
+    await ref.read(dioProvider).post('/saved-items', data: {
+      'type': type,
+      'id': id,
+    });
+  }
+
+  Future<void> removeSavedItem({
+    required String type,
+    required Object id,
+  }) async {
+    await ref.read(dioProvider).delete('/saved-items', data: {
+      'type': type,
+      'id': id,
+    });
+  }
+
+  Future<void> followOrganization(int organizationId) async {
+    await ref.read(dioProvider).post('/follow', data: {
+      'type': 'organization',
+      'id': organizationId,
+    });
+  }
+
+  Future<void> unfollowOrganization(int organizationId) async {
+    final response = await ref.read(dioProvider).get('/follow');
+    final items = _unwrapList(response.data)
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList();
+    final follow = items.cast<Map<String, dynamic>?>().firstWhere(
+      (item) => item != null && (item['followable_type']?.toString().contains('Organization') ?? false) && item['followable_id'] == organizationId,
+      orElse: () => null,
+    );
+
+    if (follow?['id'] != null) {
+      await ref.read(dioProvider).delete('/follow/${follow!['id']}');
+    }
   }
 
   Future<void> updateProfile({
     required String name,
     required String phone,
+    String? email,
     required String location,
     required String defaultTown,
     required String defaultArea,
@@ -241,10 +510,13 @@ class DiscoveryRepository {
     required String whatsapp,
     required String secondaryPhone,
     required String profileVisibility,
+    List<String> roles = const [],
+    List<String> interests = const [],
   }) async {
     await ref.read(dioProvider).put('/me', data: {
       'name': name,
       'phone': phone,
+      'email': email,
       'location': location,
       'default_town': defaultTown,
       'default_area': defaultArea,
@@ -254,6 +526,8 @@ class DiscoveryRepository {
       'whatsapp': whatsapp,
       'secondary_phone': secondaryPhone,
       'profile_visibility': profileVisibility,
+      'roles': roles,
+      'interests': interests,
     });
   }
 
@@ -308,7 +582,7 @@ class DiscoveryRepository {
     await ref.read(dioProvider).post('/listings', data: FormData.fromMap(data));
   }
 
-  Future<void> createProduct({
+  Future<ProductModel> createProduct({
     required String title,
     required String description,
     required String category,
@@ -331,7 +605,9 @@ class DiscoveryRepository {
       data['image'] = await MultipartFile.fromFile(image.path, filename: image.name);
     }
 
-    await ref.read(dioProvider).post('/store/products', data: FormData.fromMap(data));
+    final response = await ref.read(dioProvider).post('/store/products', data: FormData.fromMap(data));
+    final item = (response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? response.data as Map<String, dynamic>;
+    return ProductModel.fromJson(item);
   }
 
   Future<void> createAccommodation({
@@ -343,6 +619,11 @@ class DiscoveryRepository {
     required String price,
     required String bedrooms,
     required String bathrooms,
+    required String phone,
+    String? whatsapp,
+    String? pricePeriod,
+    List<String> amenities = const [],
+    List<String> rules = const [],
     XFile? image,
   }) async {
     final data = <String, dynamic>{
@@ -352,11 +633,23 @@ class DiscoveryRepository {
       'town': town,
       'area': area,
       'price': price,
-      'bedrooms': bedrooms,
-      'bathrooms': bathrooms,
-      'price_period': type == 'bnb' || type == 'short_stay' ? 'night' : type == 'property_sale' ? 'once' : 'month',
+      'price_period': pricePeriod ?? (type == 'bnb' || type == 'short_stay' ? 'night' : type == 'property_sale' ? 'once' : 'month'),
       'status': 'published',
+      'metadata': {
+        'contact_phone': phone,
+        'contact_whatsapp': (whatsapp != null && whatsapp.isNotEmpty) ? whatsapp : phone,
+        if (amenities.isNotEmpty) 'amenities': amenities,
+        if (rules.isNotEmpty) 'rules': rules,
+      },
     };
+
+    if (bedrooms.isNotEmpty) {
+      data['bedrooms'] = bedrooms;
+    }
+
+    if (bathrooms.isNotEmpty) {
+      data['bathrooms'] = bathrooms;
+    }
 
     if (image != null) {
       data['image'] = await MultipartFile.fromFile(image.path, filename: image.name);
@@ -365,10 +658,51 @@ class DiscoveryRepository {
     await ref.read(dioProvider).post('/accommodations', data: FormData.fromMap(data));
   }
 
-  Future<void> applyToJob(int jobId) async {
+  Future<void> applyToJob(int jobId, {String? message}) async {
     await ref.read(dioProvider).post('/jobs/$jobId/apply', data: {
-      'message': 'Interested in this role from the mobile app.',
+      'message': message ?? 'Interested in this role from the mobile app.',
     });
+  }
+
+  Future<JobModel> createJob({
+    required String title,
+    required String location,
+    String? description,
+    String? employmentType,
+    String? compensation,
+    List<String>? skills,
+  }) async {
+    final response = await ref.read(dioProvider).post('/jobs', data: {
+      'title': title,
+      'location': location,
+      'description': description,
+      'employment_type': employmentType,
+      'compensation': compensation,
+      'skills': skills,
+      'status': 'open',
+    });
+    final item = (response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? response.data as Map<String, dynamic>;
+    return JobModel.fromJson(item);
+  }
+
+  Future<WorkerModel> createWorkerProfile({
+    required String headline,
+    required List<String> skills,
+    required String location,
+    int? experienceYears,
+    String? hourlyRate,
+    bool isAvailable = true,
+  }) async {
+    final response = await ref.read(dioProvider).post('/worker-profile', data: {
+      'headline': headline,
+      'skills': skills,
+      'location': location,
+      'experience_years': experienceYears,
+      'hourly_rate': hourlyRate,
+      'is_available': isAvailable,
+    });
+    final item = (response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>? ?? response.data as Map<String, dynamic>;
+    return WorkerModel.fromJson(item);
   }
 
   Future<void> createReport({
@@ -376,6 +710,9 @@ class DiscoveryRepository {
     required String category,
     required String description,
     required String location,
+    String? town,
+    String? area,
+    String priority = 'medium',
     XFile? photo,
   }) async {
     final data = <String, dynamic>{
@@ -383,7 +720,9 @@ class DiscoveryRepository {
       'category': category,
       'description': description,
       'location': location,
-      'priority': 'medium',
+      'town': town,
+      'area': area,
+      'priority': priority,
     };
 
     if (photo != null) {
@@ -393,11 +732,70 @@ class DiscoveryRepository {
     await ref.read(dioProvider).post('/reports', data: FormData.fromMap(data));
   }
 
-  Future<void> createDelivery({
+  Future<List<ReportModel>> fetchMyReports() async {
+    final response = await ref.read(dioProvider).get('/my-reports');
+    final payload = response.data as Map<String, dynamic>;
+    final data = (payload['data'] as List<dynamic>? ?? const []);
+    return data.map((item) => ReportModel.fromJson(Map<String, dynamic>.from(item as Map))).toList();
+  }
+
+  Future<List<ReportModel>> fetchManagedReports({
+    String? status,
+    String? category,
+    String? priority,
+    String? area,
+  }) async {
+    final response = await ref.read(dioProvider).get('/reports', queryParameters: _pilotParams({
+      if (status != null && status.isNotEmpty) 'status': status,
+      if (category != null && category.isNotEmpty) 'category': category,
+      if (priority != null && priority.isNotEmpty) 'priority': priority,
+      if (area != null && area.isNotEmpty) 'area': area,
+    }));
+    final payload = response.data as Map<String, dynamic>;
+    final data = (payload['data'] as List<dynamic>? ?? const []);
+    return data.map((item) => ReportModel.fromJson(Map<String, dynamic>.from(item as Map))).toList();
+  }
+
+  Future<ReportModel> fetchReport(int reportId) async {
+    final response = await ref.read(dioProvider).get('/reports/$reportId');
+    final payload = response.data as Map<String, dynamic>;
+    final item = (payload['data'] as Map<String, dynamic>?) ?? payload;
+    return ReportModel.fromJson(item);
+  }
+
+  Future<ReportModel> updateReportStatus({
+    required int reportId,
+    required String status,
+    String? resolutionNotes,
+  }) async {
+    final response = await ref.read(dioProvider).patch('/reports/$reportId/status', data: {
+      'status': status,
+      if (resolutionNotes != null && resolutionNotes.isNotEmpty) 'resolution_notes': resolutionNotes,
+    });
+    final payload = response.data as Map<String, dynamic>;
+    final item = (payload['data'] as Map<String, dynamic>?) ?? payload;
+    return ReportModel.fromJson(item);
+  }
+
+  Future<void> createMunicipalAlert({
+    required String title,
+    required String body,
+    required String type,
+  }) async {
+    await ref.read(dioProvider).post('/alerts', data: {
+      'title': title,
+      'body': body,
+      'type': type,
+      'town': AppConfig.pilotTown,
+    });
+  }
+
+  Future<DeliveryModel> createDelivery({
     required String pickupAddress,
     required String dropoffAddress,
     required String itemDescription,
     required String parcelSize,
+    String? notes,
     XFile? photo,
     String? price,
   }) async {
@@ -407,34 +805,50 @@ class DiscoveryRepository {
       'parcel_description': itemDescription,
       'parcel_size': parcelSize,
       'estimated_price': price,
+      'notes': notes,
     };
 
     if (photo != null) {
       data['photo'] = await MultipartFile.fromFile(photo.path, filename: photo.name);
     }
 
-    await ref.read(dioProvider).post('/deliveries', data: FormData.fromMap(data));
+    final response = await ref.read(dioProvider).post('/deliveries', data: FormData.fromMap(data));
+    return DeliveryModel.fromJson((response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>);
   }
 
-  Future<void> createRide({
+  Future<RideModel> createRide({
     required String pickupLocation,
     required String dropoffLocation,
+    required String rideType,
+    String? tripPurpose,
+    String? notes,
     String? fareEstimate,
   }) async {
-    await ref.read(dioProvider).post('/rides', data: {
+    final response = await ref.read(dioProvider).post('/rides', data: {
       'pickup_location': pickupLocation,
       'dropoff_location': dropoffLocation,
+      'ride_type': rideType,
+      'trip_purpose': tripPurpose,
+      'notes': notes,
       'fare_estimate': fareEstimate,
     });
+    return RideModel.fromJson((response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>);
   }
 
-  Future<void> createSos({
+  Future<SosModel> createSos({
     required String message,
     required String location,
+    String? emergencyType,
+    String? town,
+    String? area,
   }) async {
-    await ref.read(dioProvider).post('/sos', data: {
+    final response = await ref.read(dioProvider).post('/sos', data: {
       'message': message,
       'location': location,
+      'emergency_type': emergencyType,
+      'town': town,
+      'area': area,
     });
+    return SosModel.fromJson((response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>);
   }
 }

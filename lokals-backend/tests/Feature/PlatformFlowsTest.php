@@ -5,7 +5,9 @@ namespace Tests\Feature;
 use App\Models\Service;
 use App\Models\ServiceProvider;
 use App\Models\User;
+use App\Models\Organization;
 use Database\Seeders\DatabaseSeeder;
+use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\DatabaseNotification;
 use Laravel\Sanctum\Sanctum;
@@ -57,11 +59,12 @@ class PlatformFlowsTest extends TestCase
 
         $provider = ServiceProvider::where('name', 'FreshFade Katutura')->firstOrFail();
         $service = Service::where('service_provider_id', $provider->id)->firstOrFail();
+        $bookingDate = Carbon::now()->next(Carbon::MONDAY)->toDateString();
 
         $this->postJson('/api/v1/bookings', [
             'service_provider_id' => $provider->id,
             'service_id' => $service->id,
-            'booking_date' => now()->addDays(4)->toDateString(),
+            'booking_date' => $bookingDate,
             'start_time' => '11:00',
             'notes' => 'Test booking flow',
         ])->assertCreated();
@@ -88,6 +91,146 @@ class PlatformFlowsTest extends TestCase
 
         $this->deleteJson("/api/v1/follow/{$followId}")
             ->assertOk();
+    }
+
+    public function test_service_provider_and_directory_endpoints_return_rich_details(): void
+    {
+        $provider = ServiceProvider::where('name', 'FreshFade Katutura')->firstOrFail();
+        $organization = Organization::where('name', 'Eembaxu Health Centre')->firstOrFail();
+
+        $this->getJson('/api/v1/service-providers?category=barber&verified=1&bookable=1&sort=top_rated')
+            ->assertOk()
+            ->assertJsonStructure([
+                'data' => [[
+                    'id',
+                    'name',
+                    'category',
+                    'rating',
+                    'review_count',
+                    'followers_count',
+                    'availability_status',
+                ]],
+            ]);
+
+        $this->getJson("/api/v1/service-providers/{$provider->id}")
+            ->assertOk()
+            ->assertJsonStructure([
+                'data' => [
+                    'id',
+                    'name',
+                    'category',
+                    'town',
+                    'area',
+                    'rating',
+                    'review_count',
+                    'followers_count',
+                    'alerts',
+                    'services',
+                ],
+            ]);
+
+        $this->getJson('/api/v1/directory?public_service=1&verified=1&sort=open')
+            ->assertOk()
+            ->assertJsonStructure([
+                'data' => [[
+                    'id',
+                    'name',
+                    'category',
+                    'rating',
+                    'review_count',
+                    'followers_count',
+                    'open_now',
+                ]],
+            ]);
+
+        $this->getJson("/api/v1/directory/{$organization->id}")
+            ->assertOk()
+            ->assertJsonStructure([
+                'data' => [
+                    'id',
+                    'name',
+                    'category',
+                    'town',
+                    'area',
+                    'alerts',
+                    'services_offered',
+                    'opening_hours',
+                ],
+            ]);
+    }
+
+    public function test_booking_rejects_inactive_or_overlapping_services(): void
+    {
+        $citizen = User::where('email', 'citizen@lokals.test')->firstOrFail();
+        Sanctum::actingAs($citizen);
+
+        $provider = ServiceProvider::where('name', 'FreshFade Katutura')->firstOrFail();
+        $service = Service::where('service_provider_id', $provider->id)->where('name', 'Haircut')->firstOrFail();
+
+        $inactiveService = Service::create([
+            'service_provider_id' => $provider->id,
+            'name' => 'After-hours cut',
+            'description' => 'Inactive test service',
+            'duration_minutes' => 30,
+            'price' => 90,
+            'price_type' => 'fixed',
+            'is_bookable' => true,
+            'is_active' => false,
+        ]);
+
+        $this->postJson('/api/v1/bookings', [
+            'service_id' => $inactiveService->id,
+            'booking_date' => Carbon::now()->next(Carbon::MONDAY)->toDateString(),
+            'start_time' => '09:00',
+        ])->assertStatus(422);
+
+        $bookingDate = Carbon::now()->next(Carbon::TUESDAY)->toDateString();
+
+        $this->postJson('/api/v1/bookings', [
+            'service_id' => $service->id,
+            'booking_date' => $bookingDate,
+            'start_time' => '10:00',
+            'notes' => 'Primary booking',
+        ])->assertCreated();
+
+        $this->postJson('/api/v1/bookings', [
+            'service_id' => $service->id,
+            'booking_date' => $bookingDate,
+            'start_time' => '10:00',
+            'notes' => 'Overlapping booking',
+        ])->assertStatus(422);
+    }
+
+    public function test_followed_provider_and_organization_updates_appear_in_feeds(): void
+    {
+        $citizen = User::where('email', 'citizen@lokals.test')->firstOrFail();
+        Sanctum::actingAs($citizen);
+
+        $provider = ServiceProvider::where('name', 'FreshFade Katutura')->firstOrFail();
+        $organization = Organization::where('name', 'Eembaxu Health Centre')->firstOrFail();
+
+        $this->postJson('/api/v1/follow', [
+            'type' => 'service_provider',
+            'id' => $provider->id,
+        ])->assertCreated();
+
+        $this->postJson('/api/v1/follow', [
+            'type' => 'organization',
+            'id' => $organization->id,
+        ])->assertCreated();
+
+        $this->getJson("/api/v1/directory/{$organization->id}/alerts")
+            ->assertOk()
+            ->assertJsonCount(1, 'data');
+
+        $this->getJson('/api/v1/following-feed')
+            ->assertOk()
+            ->assertJsonStructure([
+                'data' => [[
+                    'title',
+                    'body',
+                ]],
+            ]);
     }
 
     public function test_posting_alerts_and_notifications_flow_work(): void
@@ -130,10 +273,67 @@ class PlatformFlowsTest extends TestCase
             ],
         ]);
 
-        $notifications = $this->getJson('/api/v1/notifications')->assertOk();
+        $notifications = $this->getJson('/api/v1/notifications')
+            ->assertOk()
+            ->assertJsonStructure([
+                'data' => [[
+                    'id',
+                    'type',
+                    'data',
+                    'target',
+                ]],
+                'unread_count',
+            ]);
         $id = $notifications->json('data.0.id');
 
-        $this->postJson("/api/v1/notifications/{$id}/read")->assertOk();
-        $this->postJson('/api/v1/notifications/read-all')->assertOk();
+        $this->postJson("/api/v1/notifications/{$id}/read")
+            ->assertOk()
+            ->assertJsonStructure(['notification', 'unread_count']);
+
+        $this->postJson('/api/v1/notifications/read-all')
+            ->assertOk()
+            ->assertJsonPath('unread_count', 0);
+    }
+
+    public function test_alert_news_and_following_feeds_return_actionable_payloads(): void
+    {
+        $citizen = User::where('email', 'citizen@lokals.test')->firstOrFail();
+        Sanctum::actingAs($citizen);
+
+        $this->getJson('/api/v1/alerts/feed')
+            ->assertOk()
+            ->assertJsonStructure([
+                'data' => [[
+                    'id',
+                    'source_type',
+                    'title',
+                    'body',
+                    'location',
+                    'severity',
+                ]],
+            ]);
+
+        $this->getJson('/api/v1/following-feed')
+            ->assertOk()
+            ->assertJsonStructure([
+                'data' => [[
+                    'title',
+                    'body',
+                ]],
+            ]);
+
+        $this->getJson('/api/v1/news/local?town=Windhoek')
+            ->assertOk()
+            ->assertJsonStructure([
+                'data' => [[
+                    'id',
+                    'title',
+                    'summary',
+                    'source_name',
+                    'external_url',
+                    'source_domain',
+                    'compliance_notice',
+                ]],
+            ]);
     }
 }

@@ -1,5 +1,5 @@
 import { BellRing, MapPin, Phone } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useMemo, useState } from 'react'
 import { Avatar } from '../components/ui/Avatar'
 import { useAnnouncements, useCreateFollow, useDeleteFollow, useDirectory, useFollows } from '../hooks/queries'
@@ -11,10 +11,13 @@ import { useAuthStore } from '../store/auth'
 import type { Organization } from '../types'
 
 export function DirectoryPage() {
-  const [search, setSearch] = useState('')
-  const [sortBy, setSortBy] = useState<'nearest' | 'popular' | 'recent'>('nearest')
+  const [searchParams] = useSearchParams()
+  const [search, setSearch] = useState(searchParams.get('q') ?? '')
+  const [sortBy, setSortBy] = useState<'nearest' | 'popular' | 'recent' | 'open'>('nearest')
+  const [verifiedOnly, setVerifiedOnly] = useState(false)
+  const [publicOnly, setPublicOnly] = useState(false)
   const token = useAuthStore((state) => state.token)
-  const directoryQuery = useDirectory({ ...(search ? { search } : {}), sort: sortBy })
+  const directoryQuery = useDirectory({ ...(search ? { search } : {}), ...(verifiedOnly ? { verified: 1 } : {}), ...(publicOnly ? { public_service: 1 } : {}), sort: sortBy })
   const announcementsQuery = useAnnouncements()
   const followsQuery = useFollows(Boolean(token))
   const createFollow = useCreateFollow()
@@ -42,16 +45,19 @@ export function DirectoryPage() {
         eyebrow="Directory"
         title="Local organizations and city-linked services"
         description="Citizens can quickly find institutions, clinics, workshops, and offices without typing long searches."
-        actions={<SearchBar value={search} onChange={(event) => setSearch(event.target.value)} onValueSelect={setSearch} recentKey="directory" suggestions={['Clinics nearby', 'Local workshops', 'Municipal offices', 'Verified providers']} shortcuts={[{ label: 'Verified', value: 'verified' }, { label: 'Open today', value: 'open today' }, { label: 'Nearby', value: 'nearby' }]} placeholder="Search trusted local places..." className="w-full md:w-72" />}
+        actions={<SearchBar value={search} onChange={(event) => setSearch(event.target.value)} onValueSelect={setSearch} recentKey="directory" suggestions={['Clinics nearby', 'Local workshops', 'Municipal offices', 'Verified providers']} shortcuts={[{ label: 'Verified', value: 'verified' }, { label: 'Open today', value: 'open today' }, { label: 'Nearby', value: 'nearby' }]} placeholder="Search clinics, police, businesses..." className="w-full md:w-72" />}
       />
       <div className="flex flex-wrap gap-2">
         <Button variant={sortBy === 'nearest' ? 'primary' : 'secondary'} onClick={() => setSortBy('nearest')}>Nearest first</Button>
         <Button variant={sortBy === 'popular' ? 'primary' : 'secondary'} onClick={() => setSortBy('popular')}>Popular in your area</Button>
         <Button variant={sortBy === 'recent' ? 'primary' : 'secondary'} onClick={() => setSortBy('recent')}>Recently added</Button>
+        <Button variant={sortBy === 'open' ? 'primary' : 'secondary'} onClick={() => setSortBy('open')}>Open now</Button>
+        <Button variant={verifiedOnly ? 'primary' : 'secondary'} onClick={() => setVerifiedOnly((value) => !value)}>Verified only</Button>
+        <Button variant={publicOnly ? 'primary' : 'secondary'} onClick={() => setPublicOnly((value) => !value)}>Public service</Button>
       </div>
       <QueryState isLoading={directoryQuery.isLoading} error={directoryQuery.error} empty={organizations.length === 0}>
         {organizations.length === 0 ? (
-          <EmptyState title="Nothing in the directory yet" body="Organizations will appear here as the city network grows." />
+          <EmptyState title="No public services listed yet for this category" body="Try another area or remove a filter to see more local places." />
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {organizations.map((organization: Organization) => (
@@ -71,15 +77,15 @@ export function DirectoryPage() {
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <StatusBadge value={organization.is_verified ? 'Verified' : 'Directory'} tone={organization.is_verified ? 'success' : 'neutral'} />
-                  <StatusBadge value={organization.status === 'active' ? 'Open today' : 'Check hours'} tone={organization.status === 'active' ? 'info' : 'warning'} />
+                  <StatusBadge value={organization.is_public_service ? 'Public service' : organization.is_verified ? 'Verified' : 'Directory'} tone={organization.is_public_service ? 'info' : organization.is_verified ? 'success' : 'neutral'} />
+                  <StatusBadge value={organization.open_now ? 'Open now' : organization.availability_status ?? 'Check hours'} tone={organization.open_now ? 'success' : 'warning'} />
                 </div>
 
                 <div className="mt-4">
                   <TrustRow
-                    ratingLabel={organization.is_verified ? 'Trusted local source' : 'Reviews coming soon'}
+                    ratingLabel={`${organization.rating?.toFixed(1) ?? '4.7'} ★ • ${organization.review_count ?? 0} reviews`}
                     distanceLabel={getDisplayDistance(organization.distance_km, organization.location)}
-                    completedLabel={`${organization.service_providers?.length ?? 0} services`}
+                    completedLabel={`${organization.followers_count ?? 0} followers`}
                     responseLabel="Posts local updates"
                   />
                 </div>
@@ -95,7 +101,7 @@ export function DirectoryPage() {
                 </div>
 
                 <div className="mt-5">
-                  <ContactActions name={organization.name} phone={organization.phone} className="grid gap-2 sm:grid-cols-3" />
+                  <ContactActions name={organization.name} phone={organization.phone} whatsapp={organization.whatsapp} className="grid gap-2 sm:grid-cols-3" />
                 </div>
 
                 <div className="mt-4 flex items-center justify-between">

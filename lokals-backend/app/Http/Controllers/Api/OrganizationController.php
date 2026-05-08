@@ -8,6 +8,7 @@ use App\Models\Announcement;
 use App\Models\Follow;
 use App\Models\Organization;
 use App\Services\LocationService;
+use App\Support\PilotLocation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -20,7 +21,10 @@ class OrganizationController extends Controller
 
     public function index(Request $request): AnonymousResourceCollection
     {
-        $query = Organization::query()->withCount('followers')->latest();
+        $query = Organization::query()
+            ->with(['serviceProviders.services'])
+            ->withCount('followers')
+            ->latest();
 
         if ($search = $request->string('search')->value()) {
             $query->where(function ($builder) use ($search): void {
@@ -34,10 +38,16 @@ class OrganizationController extends Controller
             $query->where('category', $category);
         }
 
-        foreach (['town', 'area', 'subcategory'] as $filter) {
-            if ($value = $request->string($filter)->value()) {
-                $query->where($filter, $value);
-            }
+        if ($value = PilotLocation::requestTown($request)) {
+            $query->where('town', $value);
+        }
+
+        if ($value = PilotLocation::requestArea($request)) {
+            $query->where('area', $value);
+        }
+
+        if ($value = $request->string('subcategory')->value()) {
+            $query->where('subcategory', $value);
         }
 
         if ($request->boolean('public_service')) {
@@ -46,6 +56,10 @@ class OrganizationController extends Controller
 
         if ($request->boolean('verified')) {
             $query->where('is_verified', true);
+        }
+
+        if ($request->boolean('open_now')) {
+            $query->where('status', 'active');
         }
 
         $items = $query->get()->filter(function (Organization $organization) use ($request): bool {
@@ -69,6 +83,7 @@ class OrganizationController extends Controller
         $items = match ($sort) {
             'popular' => $items->sortByDesc('followers_count'),
             'recent' => $items->sortByDesc('created_at'),
+            'open' => $items->sortByDesc(fn (Organization $organization) => $organization->status === 'active'),
             default => $items->sortBy(fn (Organization $organization) => $organization->distance_km ?? PHP_FLOAT_MAX),
         };
         $items = $items->values();
@@ -80,7 +95,11 @@ class OrganizationController extends Controller
 
     public function show(Organization $organization): OrganizationResource
     {
-        return OrganizationResource::make($organization->load(['serviceProviders.services', 'services'])->loadCount('followers'));
+        return OrganizationResource::make(
+            $organization
+                ->load(['announcements', 'serviceProviders.services', 'services'])
+                ->loadCount('followers')
+        );
     }
 
     public function alerts(Organization $organization): JsonResponse

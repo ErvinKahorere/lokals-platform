@@ -18,6 +18,7 @@ class DeliveryRequest extends Model
         'dropoff_location',
         'item_description',
         'parcel_description',
+        'notes',
         'parcel_size',
         'status',
         'price',
@@ -37,5 +38,10 @@ class DeliveryRequest extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function driver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'driver_id');
     }
 }

@@ -28,11 +28,20 @@ class ServiceProviderController extends Controller
         $providers = $this->matchingService->matchProviders($request->only([
             'search',
             'category',
+            'subcategory',
             'location',
+            'town',
+            'area',
+            'verified',
+            'bookable',
+            'open_now',
+            'min_price',
+            'max_price',
             'day_of_week',
             'lat',
             'lng',
             'radius_km',
+            'sort',
             'per_page',
         ]));
 
@@ -42,7 +51,9 @@ class ServiceProviderController extends Controller
     public function show(ServiceProvider $serviceProvider): ServiceProviderResource
     {
         return ServiceProviderResource::make(
-            $serviceProvider->load(['organization', 'services', 'availabilitySlots'])
+            $serviceProvider
+                ->load(['organization.announcements', 'services', 'availabilitySlots'])
+                ->loadCount('followers')
         );
     }
 

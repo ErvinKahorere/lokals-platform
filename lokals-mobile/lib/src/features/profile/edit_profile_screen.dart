@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +7,9 @@ import '../../core/experience_helpers.dart';
 import '../../features/discovery/discovery_repository.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
+import '../auth/auth_controller.dart';
+import 'widgets/avatar_uploader.dart';
+import 'widgets/role_switcher.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -20,6 +21,7 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
   final _locationController = TextEditingController();
   final _townController = TextEditingController();
   final _areaController = TextEditingController();
@@ -32,10 +34,50 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   XFile? _avatarFile;
   bool _saving = false;
   bool _initialized = false;
+  List<String> _roles = [];
+  List<String> _interests = [];
+
+  static const _interestOptions = [
+    'Services',
+    'Jobs',
+    'Marketplace',
+    'Events',
+    'Accommodation',
+    'News',
+    'Alerts',
+  ];
+
+  static const _roleOptions = [
+    'citizen',
+    'worker',
+    'seller',
+    'service_provider',
+    'driver',
+    'organization_admin',
+    'town_manager',
+    'municipality_admin',
+  ];
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _locationController.dispose();
+    _townController.dispose();
+    _areaController.dispose();
+    _bioController.dispose();
+    _professionController.dispose();
+    _businessController.dispose();
+    _whatsAppController.dispose();
+    _secondaryPhoneController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(profileSummaryProvider);
+    final preferences = ref.watch(preferencesProvider).asData?.value;
 
     return LokalsShell(
       title: 'Edit profile',
@@ -45,6 +87,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           if (!_initialized) {
             _nameController.text = summary.user.name;
             _phoneController.text = summary.user.phone;
+            _emailController.text = summary.user.email ?? '';
             _locationController.text = summary.user.location ?? '';
             _townController.text =
                 summary.user.defaultTown ??
@@ -71,40 +114,61 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             _profileVisibility = summary.user.profileVisibility ??
                 summary.profile['profile_visibility']?.toString() ??
                 _profileVisibility;
+            _roles = List<String>.from(summary.user.roles);
+            _interests = List<String>.from(
+              (summary.user.currentRole != null &&
+                      summary.user.currentRole!.isNotEmpty &&
+                      summary.profile.isEmpty)
+                  ? const []
+                  : preferences?.interests ?? const [],
+            );
             _initialized = true;
           }
 
-          final avatarUrl = resolveMediaUrl(summary.user.avatar ?? summary.profile['avatar_url']?.toString());
+          final avatarUrl = resolveMediaUrl(
+            summary.user.avatar ?? summary.profile['avatar_url']?.toString(),
+          );
 
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
+              AvatarUploader(
+                name: summary.user.name,
+                networkUrl: avatarUrl,
+                avatarFile: _avatarFile,
+                isUploading: _saving,
+                onChoosePhoto: () async {
+                  final file = await _pickImageSource(context);
+                  if (file == null) {
+                    return;
+                  }
+                  setState(() => _avatarFile = file);
+                },
+              ),
+              const SizedBox(height: 16),
               AppCard(
                 variant: AppCardVariant.dashboard,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundImage: _avatarFile != null
-                          ? FileImage(File(_avatarFile!.path))
-                          : (avatarUrl != null ? NetworkImage(avatarUrl) : null),
-                      child: _avatarFile == null && avatarUrl == null
-                          ? Text(summary.user.name.characters.first.toUpperCase())
-                          : null,
+                    const SectionTitle(
+                      title: 'Personal details',
+                      subtitle: 'These details help LOKALS reuse your information across bookings, jobs, and marketplace actions.',
                     ),
+                    const SizedBox(height: 14),
+                    LokalsTextField(controller: _nameController, label: 'Name', hint: 'Your full name'),
                     const SizedBox(height: 12),
-                    AppButton(
-                      label: 'Choose photo',
-                      expanded: false,
-                      variant: AppButtonVariant.secondary,
-                      onPressed: () async {
-                        final file = await _pickImageSource(context);
-                        if (file == null) {
-                          return;
-                        }
-                        setState(() => _avatarFile = file);
-                      },
-                    ),
+                    LokalsTextField(controller: _phoneController, label: 'Phone', hint: 'Primary phone'),
+                    const SizedBox(height: 12),
+                    LokalsTextField(controller: _emailController, label: 'Email', hint: 'Optional email'),
+                    const SizedBox(height: 12),
+                    LokalsTextField(controller: _whatsAppController, label: 'WhatsApp', hint: 'WhatsApp number'),
+                    const SizedBox(height: 12),
+                    LokalsTextField(controller: _professionController, label: 'Profession', hint: 'Profession or role'),
+                    const SizedBox(height: 12),
+                    LokalsTextField(controller: _businessController, label: 'Business name', hint: 'Optional business name'),
+                    const SizedBox(height: 12),
+                    LokalsTextField(controller: _bioController, label: 'Bio', hint: 'Short intro', maxLines: 4),
                   ],
                 ),
               ),
@@ -112,12 +176,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               AppCard(
                 variant: AppCardVariant.dashboard,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    LokalsTextField(controller: _nameController, label: 'Name', hint: 'Your name'),
-                    const SizedBox(height: 12),
-                    LokalsTextField(controller: _phoneController, label: 'Phone', hint: 'Primary phone'),
-                    const SizedBox(height: 12),
-                    LokalsTextField(controller: _locationController, label: 'Location', hint: 'Town or suburb'),
+                    const SectionTitle(
+                      title: 'Location and visibility',
+                      subtitle: 'Set the town and area that should influence local results first.',
+                    ),
+                    const SizedBox(height: 14),
+                    LokalsTextField(controller: _locationController, label: 'Location label', hint: 'Katutura, Windhoek'),
                     const SizedBox(height: 12),
                     Row(
                       children: [
@@ -126,14 +192,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         Expanded(child: LokalsTextField(controller: _areaController, label: 'Area', hint: 'Area')),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    LokalsTextField(controller: _professionController, label: 'Profession', hint: 'Profession'),
-                    const SizedBox(height: 12),
-                    LokalsTextField(controller: _businessController, label: 'Business name', hint: 'Business name'),
-                    const SizedBox(height: 12),
-                    LokalsTextField(controller: _whatsAppController, label: 'WhatsApp', hint: 'WhatsApp number'),
-                    const SizedBox(height: 12),
-                    LokalsTextField(controller: _secondaryPhoneController, label: 'Secondary phone', hint: 'Optional backup number'),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       initialValue: _profileVisibility,
@@ -149,8 +207,71 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         setState(() => _profileVisibility = value);
                       },
                     ),
-                    const SizedBox(height: 12),
-                    LokalsTextField(controller: _bioController, label: 'Bio', hint: 'Short intro', maxLines: 4),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              AppCard(
+                variant: AppCardVariant.dashboard,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SectionTitle(
+                      title: 'Roles and interests',
+                      subtitle: 'Choose the roles and local interests that best match how you use LOKALS.',
+                    ),
+                    const SizedBox(height: 14),
+                    RoleSwitcher(
+                      roles: _roles.isEmpty ? const ['citizen'] : _roles,
+                      currentRole: summary.user.currentRole ??
+                          (_roles.isNotEmpty ? _roles.first : 'citizen'),
+                      onSelected: (role) {},
+                    ),
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: _roleOptions.map((role) {
+                        final selected = _roles.contains(role);
+                        return FilterChip(
+                          label: Text(formatRoleLabel(role)),
+                          selected: selected,
+                          onSelected: (_) {
+                            setState(() {
+                              if (selected) {
+                                _roles.remove(role);
+                              } else {
+                                _roles.add(role);
+                              }
+                              if (_roles.isEmpty) {
+                                _roles = ['citizen'];
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: _interestOptions.map((interest) {
+                        final selected = _interests.contains(interest);
+                        return FilterChip(
+                          label: Text(interest),
+                          selected: selected,
+                          onSelected: (_) {
+                            setState(() {
+                              if (selected) {
+                                _interests.remove(interest);
+                              } else {
+                                _interests.add(interest);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
                   ],
                 ),
               ),
@@ -168,6 +289,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         await repo.updateProfile(
                           name: _nameController.text,
                           phone: _phoneController.text,
+                          email: _emailController.text.trim().isEmpty
+                              ? null
+                              : _emailController.text.trim(),
                           location: _locationController.text,
                           defaultTown: _townController.text,
                           defaultArea: _areaController.text,
@@ -177,8 +301,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           whatsapp: _whatsAppController.text,
                           secondaryPhone: _secondaryPhoneController.text,
                           profileVisibility: _profileVisibility,
+                          roles: _roles,
+                          interests: _interests,
                         );
+                        await ref.read(authControllerProvider.notifier).refreshCurrentUser();
                         ref.invalidate(profileSummaryProvider);
+                        ref.invalidate(preferencesProvider);
                         if (!mounted) {
                           return;
                         }

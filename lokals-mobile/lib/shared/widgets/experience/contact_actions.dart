@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../src/services/contact_action_service.dart';
 import '../app_button.dart';
 import 'message_placeholder_sheet.dart';
 import 'quick_call_button.dart';
@@ -9,10 +10,14 @@ class ContactActions extends StatelessWidget {
     super.key,
     required this.name,
     this.phone,
+    this.whatsapp,
+    this.whatsappMessage,
   });
 
   final String name;
   final String? phone;
+  final String? whatsapp;
+  final String? whatsappMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -28,13 +33,14 @@ class ContactActions extends StatelessWidget {
         ),
         QuickCallButton(phone: phone),
         AppButton(
-          label: 'WhatsApp soon',
+          label: 'WhatsApp',
           variant: AppButtonVariant.secondary,
           expanded: false,
-          onPressed: () => showMessagePlaceholderSheet(context, name: name, phone: phone),
+          onPressed: whatsapp == null && phone == null
+              ? () => showMessagePlaceholderSheet(context, name: name, phone: whatsapp ?? phone)
+              : () => ContactActionService().openWhatsApp(context, phone: whatsapp ?? phone ?? '', name: name, message: whatsappMessage),
         ),
       ],
     );
   }
 }
-

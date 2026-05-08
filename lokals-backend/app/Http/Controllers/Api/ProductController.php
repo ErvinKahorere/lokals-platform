@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Models\Announcement;
 use App\Models\Product;
+use App\Support\PilotLocation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -25,15 +26,46 @@ class ProductController extends Controller
             });
         }
 
-        foreach (['category', 'town', 'area', 'status', 'stock_status'] as $filter) {
+        foreach (['category', 'status', 'stock_status', 'business_id', 'user_id'] as $filter) {
             if ($value = $request->string($filter)->value()) {
                 $query->where($filter, $value);
             }
         }
 
+        if ($value = PilotLocation::requestTown($request)) {
+            $query->where('town', $value);
+        }
+
+        if ($value = PilotLocation::requestArea($request)) {
+            $query->where('area', $value);
+        }
+
+        if ($request->boolean('sale_items')) {
+            $query->whereNotNull('sale_price')
+                ->whereColumn('sale_price', '<', 'price');
+        }
+
+        if ($request->boolean('verified_sellers')) {
+            $query->where(function ($builder): void {
+                $builder->whereHas('business', fn ($businessQuery) => $businessQuery->where('is_verified', true))
+                    ->orWhereHas('user.roles', fn ($roleQuery) => $roleQuery->whereIn('name', ['seller', 'business_owner', 'organization_admin', 'super_admin']));
+            });
+        }
+
+        if ($priceMin = $request->input('price_min')) {
+            $query->where('price', '>=', (float) $priceMin);
+        }
+
+        if ($priceMax = $request->input('price_max')) {
+            $query->where('price', '<=', (float) $priceMax);
+        }
+
         match ($request->string('sort')->value()) {
             'recent' => $query->latest(),
+            'newest' => $query->latest(),
             'popular' => $query->orderByDesc('sale_price')->orderByDesc('price'),
+            'price_low_high' => $query->orderBy('sale_price')->orderBy('price'),
+            'price_high_low' => $query->orderByDesc('sale_price')->orderByDesc('price'),
             default => $query->orderByDesc('created_at'),
         };
 
@@ -53,7 +85,7 @@ class ProductController extends Controller
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
             'sale_price' => ['nullable', 'numeric', 'min:0'],
-            'image' => ['nullable', 'image', 'max:5120'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'category' => ['nullable', 'string', 'max:255'],
             'town' => ['nullable', 'string', 'max:255'],
             'area' => ['nullable', 'string', 'max:255'],
@@ -81,7 +113,7 @@ class ProductController extends Controller
             'description' => ['nullable', 'string'],
             'price' => ['sometimes', 'numeric', 'min:0'],
             'sale_price' => ['nullable', 'numeric', 'min:0'],
-            'image' => ['nullable', 'image', 'max:5120'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'category' => ['nullable', 'string', 'max:255'],
             'town' => ['nullable', 'string', 'max:255'],
             'area' => ['nullable', 'string', 'max:255'],
@@ -103,6 +135,7 @@ class ProductController extends Controller
     {
         $alerts = Announcement::query()
             ->where('status', 'published')
+            ->when(PilotLocation::isLocked(), fn ($query) => $query->where('location', 'like', '%'.PilotLocation::town().'%'))
             ->where(function ($query): void {
                 $query->where('title', 'like', '%sale%')
                     ->orWhere('title', 'like', '%promo%')

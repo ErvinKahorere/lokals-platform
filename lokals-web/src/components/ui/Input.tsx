@@ -8,7 +8,7 @@ export function Input({
   return (
     <input
       className={clsx(
-        'min-h-11 w-full rounded-lokals-lg border border-lokals-border bg-lokals-surface px-4 py-3 text-sm text-lokals-charcoal outline-none ring-0 transition placeholder:text-lokals-muted focus:border-lokals-green focus:shadow-[0_0_0_4px_rgba(22,163,74,0.12)]',
+        'min-h-11 w-full rounded-lokals-lg border border-lokals-border bg-lokals-surface px-4 py-3 text-sm text-lokals-charcoal outline-none ring-0 transition duration-200 placeholder:text-lokals-muted focus:border-lokals-purple focus:shadow-[0_0_0_4px_rgba(124,58,237,0.12)]',
         className,
       )}
       {...props}
@@ -23,7 +23,7 @@ export function TextArea({
   return (
     <textarea
       className={clsx(
-        'min-h-24 w-full rounded-lokals-lg border border-lokals-border bg-lokals-surface px-4 py-3 text-sm text-lokals-charcoal outline-none ring-0 transition placeholder:text-lokals-muted focus:border-lokals-green focus:shadow-[0_0_0_4px_rgba(22,163,74,0.12)]',
+        'min-h-24 w-full rounded-lokals-lg border border-lokals-border bg-lokals-surface px-4 py-3 text-sm text-lokals-charcoal outline-none ring-0 transition duration-200 placeholder:text-lokals-muted focus:border-lokals-purple focus:shadow-[0_0_0_4px_rgba(124,58,237,0.12)]',
         className,
       )}
       {...props}
@@ -39,7 +39,7 @@ export function Select({
   return (
     <select
       className={clsx(
-        'min-h-11 w-full rounded-lokals-lg border border-lokals-border bg-lokals-surface px-4 py-3 text-sm text-lokals-charcoal outline-none ring-0 transition focus:border-lokals-green focus:shadow-[0_0_0_4px_rgba(22,163,74,0.12)]',
+        'min-h-11 w-full rounded-lokals-lg border border-lokals-border bg-lokals-surface px-4 py-3 text-sm text-lokals-charcoal outline-none ring-0 transition duration-200 focus:border-lokals-purple focus:shadow-[0_0_0_4px_rgba(124,58,237,0.12)]',
         className,
       )}
       {...props}

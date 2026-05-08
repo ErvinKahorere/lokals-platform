@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, Home, ShoppingBag, Sparkles, UserRound } from 'lucide-react'
+import { Compass, BellRing, Home, Sparkles, UserRound } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import clsx from 'clsx'
 import { useAuthStore } from '../../store/auth'
@@ -8,13 +8,13 @@ export function MobileBottomNav() {
   const items = [
     { to: '/', label: 'Home', icon: Home },
     { to: '/services', label: 'Services', icon: Sparkles },
-    { to: '/jobs', label: 'Work', icon: BriefcaseBusiness },
-    { to: '/store', label: 'Market', icon: ShoppingBag },
+    { to: '/alerts', label: 'Activity', icon: BellRing },
+    { to: '/more', label: 'Explore', icon: Compass },
     { to: token ? '/dashboard/profile' : '/login', label: 'Profile', icon: UserRound },
   ]
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-lokals-border bg-white/96 px-3 pb-safe pt-2 shadow-[0_-12px_32px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:bg-slate-950/94 md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-lokals-border bg-white/96 px-3 pb-safe pt-2 shadow-[0_-12px_32px_rgba(15,23,42,0.08)] backdrop-blur-xl md:hidden">
       <div className="grid grid-cols-5 gap-2">
         {items.map(({ to, label, icon: Icon }) => (
           <NavLink

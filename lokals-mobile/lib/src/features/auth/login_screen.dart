@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import 'auth_controller.dart';
@@ -18,6 +19,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _phoneController = TextEditingController(text: '+264810000002');
   final _passwordController = TextEditingController(text: 'password');
   String? _error;
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   String _buildLoginError(DioException error) {
     switch (error.type) {
@@ -44,10 +52,54 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          Center(child: Image.asset('assets/brand/lokals-logo.png', height: 44)),
+          const SizedBox(height: 16),
           const SectionTitle(
-            title: 'Minimal login, upgrade later',
+            title: 'Phone-first login',
             subtitle:
-                'Phone-first sign-in keeps onboarding short. Profiles grow only when needed.',
+                'Sign in quickly and keep local services, marketplace, events, and alerts close.',
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: AppColors.primaryPurple.withValues(alpha: 0.14)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x140F172A),
+                  blurRadius: 28,
+                  offset: Offset(0, 12),
+                ),
+              ],
+            ),
+            child: const Row(
+              children: [
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: Color(0xFFF3E8FF),
+                  child: Icon(Icons.place_outlined, color: AppColors.primaryPurple),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Your local life, ready to move',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Sign in once to book services, follow updates, and act faster nearby.',
+                        style: TextStyle(color: AppColors.mutedText),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           LokalsCard(
@@ -56,19 +108,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 LokalsTextField(
                   controller: _phoneController,
                   label: 'Phone',
+                  hint: '+264...',
                   keyboardType: TextInputType.phone,
                 ),
                 const SizedBox(height: 12),
                 LokalsTextField(
                   controller: _passwordController,
                   label: 'Password',
+                  hint: 'Enter your password',
                   obscureText: true,
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),
                   Text(
                     _error!,
-                    style: const TextStyle(color: Colors.red),
+                    style: const TextStyle(color: AppColors.danger),
                   ),
                 ],
                 const SizedBox(height: 16),
@@ -76,6 +130,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   label: 'Sign in',
                   isBusy: auth.isLoading,
                   onPressed: () async {
+                    if (!mounted) return;
                     setState(() {
                       _error = null;
                     });
@@ -86,9 +141,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             _phoneController.text.trim(),
                             _passwordController.text.trim(),
                           );
-                      if (!context.mounted) return;
+                      if (!mounted || !context.mounted) return;
                       context.go('/');
                     } on DioException catch (error) {
+                      if (!mounted) return;
                       setState(() {
                         _error = _buildLoginError(error);
                       });
@@ -123,7 +179,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   contentPadding: EdgeInsets.zero,
                   title: Text(account.label),
                   subtitle: Text(account.phone),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.primaryPurple),
                   onTap: () {
                     _phoneController.text = account.phone;
                     _passwordController.text = account.password;

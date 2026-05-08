@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_radius.dart';
+import '../../core/theme/app_text_styles.dart';
 
 class AppSearchBar extends StatefulWidget {
   const AppSearchBar({
@@ -82,21 +82,37 @@ class _AppSearchBarState extends State<AppSearchBar> {
               _persistRecent(widget.controller.text);
             }
           },
-          child: TextField(
-            controller: widget.controller,
-            onChanged: widget.onChanged,
-            decoration: InputDecoration(
-              hintText: widget.hintText,
-              prefixIcon: const Icon(Icons.search_rounded, color: AppColors.mutedText),
-              filled: true,
-              fillColor: AppColors.surfaceWhite,
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                borderSide: const BorderSide(color: AppColors.border),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.surfaceWhite,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: _focused ? AppColors.primaryPurple : AppColors.border,
               ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                borderSide: const BorderSide(color: AppColors.lokalsGreen),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: _focused ? 0.08 : 0.05),
+                  blurRadius: 22,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: TextField(
+              controller: widget.controller,
+              onChanged: widget.onChanged,
+              decoration: InputDecoration(
+                hintText: widget.hintText,
+                prefixIcon: Container(
+                  margin: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.purpleSoftAlt,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.search_rounded, color: AppColors.primaryPurple),
+                ),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
               ),
             ),
           ),
@@ -107,9 +123,9 @@ class _AppSearchBarState extends State<AppSearchBar> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              ...visibleSuggestions.map((item) => ActionChip(label: Text(item), onPressed: () => _selectValue(item))),
-              ..._recent.map((item) => ActionChip(avatar: const Icon(Icons.history_rounded, size: 16), label: Text(item), onPressed: () => _selectValue(item))),
-              ...widget.shortcuts.map((item) => ActionChip(label: Text(item), onPressed: () => _selectValue(item))),
+              ...visibleSuggestions.map((item) => ActionChip(label: Text(item, style: AppTextStyles.caption.copyWith(color: AppColors.deepCharcoal)), onPressed: () => _selectValue(item))),
+              ..._recent.map((item) => ActionChip(avatar: const Icon(Icons.history_rounded, size: 16, color: AppColors.primaryPurple), label: Text(item, style: AppTextStyles.caption.copyWith(color: AppColors.deepCharcoal)), onPressed: () => _selectValue(item))),
+              ...widget.shortcuts.map((item) => ActionChip(label: Text(item, style: AppTextStyles.caption.copyWith(color: AppColors.deepCharcoal)), onPressed: () => _selectValue(item))),
             ],
           ),
         ],

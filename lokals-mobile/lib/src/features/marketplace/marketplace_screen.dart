@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../config/app_config.dart';
-import '../../../shared/widgets/app_search_bar.dart';
 import '../../../shared/widgets/experience/smart_suggestion_card.dart';
 import '../../../shared/widgets/listing_card.dart';
 import '../../widgets/cards.dart';

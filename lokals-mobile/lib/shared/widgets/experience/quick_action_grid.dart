@@ -15,13 +15,14 @@ class QuickActionGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 12,
       mainAxisSpacing: 12,
-      childAspectRatio: 1.3,
+      childAspectRatio: 1.2,
       children: [
-        CategoryTile(icon: Icons.home_repair_service_outlined, label: 'Find Service', onTap: () => context.go('/services')),
-        CategoryTile(icon: Icons.work_outline, label: 'Find Work', onTap: () => context.go('/jobs'), color: AppColors.skySoft, iconColor: AppColors.info),
-        CategoryTile(icon: Icons.storefront_outlined, label: 'Shop', onTap: () => context.go('/store'), color: AppColors.goldSoft, iconColor: AppColors.deepCharcoal),
-        CategoryTile(icon: Icons.apartment_outlined, label: 'Stay', onTap: () => context.go('/accommodation')),
-        CategoryTile(icon: Icons.local_shipping_outlined, label: 'Send Parcel', onTap: () => context.go('/delivery'), color: const Color(0xFFE7F8EF), iconColor: AppColors.success),
+        CategoryTile(icon: Icons.local_taxi_outlined, label: 'Taxi Request', onTap: () => context.go('/ride'), color: AppColors.skySoft, iconColor: AppColors.info),
+        CategoryTile(icon: Icons.local_shipping_outlined, label: 'Delivery', onTap: () => context.go('/delivery'), color: AppColors.successSoft, iconColor: AppColors.success),
+        CategoryTile(icon: Icons.sos_outlined, label: 'SOS', onTap: () => context.go('/sos'), color: AppColors.dangerSoft, iconColor: AppColors.danger),
+        CategoryTile(icon: Icons.storefront_outlined, label: 'Marketplace', onTap: () => context.go('/marketplace'), color: AppColors.goldSoft, iconColor: AppColors.deepCharcoal),
+        CategoryTile(icon: Icons.event_outlined, label: 'Events', onTap: () => context.go('/events'), color: AppColors.infoSoft, iconColor: AppColors.info),
+        CategoryTile(icon: Icons.newspaper_outlined, label: 'News', onTap: () => context.go('/news'), color: const Color(0xFFF1F5F9), iconColor: AppColors.deepCharcoal),
       ],
     );
   }
