@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ServiceProvider;
+use App\Support\PilotLocation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -20,7 +21,8 @@ class MatchingService
     public function matchProviders(array $filters = []): LengthAwarePaginator
     {
         $query = ServiceProvider::query()
-            ->with(['services', 'availabilitySlots'])
+            ->with(['organization', 'services', 'availabilitySlots'])
+            ->withCount('followers')
             ->where('status', 'active');
 
         if ($search = $filters['search'] ?? null) {
@@ -35,8 +37,41 @@ class MatchingService
             $query->where('category', $category);
         }
 
+        if ($subcategory = $filters['subcategory'] ?? null) {
+            $query->whereHas('organization', fn (Builder $builder) => $builder->where('subcategory', $subcategory));
+        }
+
         if ($location = $filters['location'] ?? null) {
             $query->where('location', 'like', '%'.$location.'%');
+        }
+
+        $town = PilotLocation::isLocked() ? PilotLocation::town() : ($filters['town'] ?? null);
+        $area = PilotLocation::normalizeArea($filters['area'] ?? null);
+
+        if ($town) {
+            $query->whereHas('organization', fn (Builder $builder) => $builder->where('town', $town));
+        }
+
+        if ($area) {
+            $query->whereHas('organization', fn (Builder $builder) => $builder->where('area', $area));
+        }
+
+        if (! empty($filters['verified'])) {
+            $query->where('is_verified', true);
+        }
+
+        if (! empty($filters['bookable'])) {
+            $query->whereHas('services', fn (Builder $builder) => $builder
+                ->where('is_active', true)
+                ->where('is_bookable', true));
+        }
+
+        if (($minPrice = $filters['min_price'] ?? null) !== null) {
+            $query->whereHas('services', fn (Builder $builder) => $builder->where('price', '>=', $minPrice));
+        }
+
+        if (($maxPrice = $filters['max_price'] ?? null) !== null) {
+            $query->whereHas('services', fn (Builder $builder) => $builder->where('price', '<=', $maxPrice));
         }
 
         if (($availableDay = $filters['day_of_week'] ?? null) !== null) {
@@ -59,7 +94,18 @@ class MatchingService
                 $provider->lng,
             );
 
+            $provider->starting_price = $provider->services
+                ->where('is_active', true)
+                ->sortBy('price')
+                ->first()?->price;
+
             return $provider;
+        })->filter(function (ServiceProvider $provider) use ($filters): bool {
+            if (! empty($filters['open_now'])) {
+                return $provider->availabilitySlots->where('is_available', true)->isNotEmpty();
+            }
+
+            return true;
         })->filter(function (ServiceProvider $provider) use ($radiusKm): bool {
             if ($radiusKm === null) {
                 return true;
@@ -68,12 +114,14 @@ class MatchingService
             return $provider->distance_km !== null && $provider->distance_km <= $radiusKm;
         });
 
-        $items = match ($sort) {
+        $items = (match ($sort) {
             'recent' => $items->sortByDesc('created_at'),
-            'popular' => $items->sortByDesc(fn (ServiceProvider $provider) => $provider->services->count()),
+            'popular' => $items->sortByDesc(fn (ServiceProvider $provider) => ($provider->followers_count ?? 0) + $provider->services->count()),
             'open' => $items->sortByDesc(fn (ServiceProvider $provider) => $provider->availabilitySlots->where('is_available', true)->count()),
+            'top_rated' => $items->sortByDesc(fn (ServiceProvider $provider) => ($provider->followers_count ?? 0) + ($provider->is_verified ? 10 : 0)),
+            'price_low' => $items->sortBy(fn (ServiceProvider $provider) => $provider->starting_price ?? PHP_FLOAT_MAX),
             default => $items->sortBy(fn (ServiceProvider $provider) => $provider->distance_km ?? PHP_FLOAT_MAX),
-        }->values();
+        })->values();
 
         return $this->queryService->paginateCollection($items, $perPage);
     }

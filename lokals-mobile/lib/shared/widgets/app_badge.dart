@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radius.dart';
 
-enum AppBadgeTone { success, warning, danger, info, neutral, accent }
+enum AppBadgeTone { success, warning, danger, info, neutral, accent, brand }
 
 class AppBadge extends StatelessWidget {
   const AppBadge({
@@ -23,6 +23,7 @@ class AppBadge extends StatelessWidget {
       AppBadgeTone.danger => (AppColors.dangerSoft, AppColors.danger),
       AppBadgeTone.info => (AppColors.skySoft, AppColors.info),
       AppBadgeTone.accent => (AppColors.goldSoft, AppColors.deepCharcoal),
+      AppBadgeTone.brand => (AppColors.purpleSoft, AppColors.primaryPurple),
       AppBadgeTone.neutral => (const Color(0xFFF1F5F9), AppColors.mutedText),
     };
 
@@ -30,6 +31,9 @@ class AppBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: bg,
+        border: Border.all(
+          color: tone == AppBadgeTone.brand ? AppColors.purpleBorder : Colors.transparent,
+        ),
         borderRadius: BorderRadius.circular(AppRadius.hero),
       ),
       child: Text(

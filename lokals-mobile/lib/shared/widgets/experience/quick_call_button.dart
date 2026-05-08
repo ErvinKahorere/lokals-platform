@@ -16,7 +16,7 @@ class QuickCallButton extends StatelessWidget {
       expanded: false,
       onPressed: phone == null || phone!.isEmpty
           ? null
-          : () => const ContactActionService().showCallPlaceholder(context, phone!),
+          : () => ContactActionService().call(context, phone!),
     );
   }
 }

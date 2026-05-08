@@ -15,10 +15,17 @@ class Alert extends Model
         'type',
         'audience',
         'location',
+        'town',
+        'area',
         'priority',
         'starts_at',
         'ends_at',
         'is_active',
+        'is_public',
+        'created_by',
+        'channels',
+        'alertable_type',
+        'alertable_id',
     ];
 
     protected function casts(): array
@@ -27,6 +34,8 @@ class Alert extends Model
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'is_active' => 'bool',
+            'is_public' => 'bool',
+            'channels' => 'array',
         ];
     }
 }

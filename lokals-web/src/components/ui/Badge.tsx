@@ -15,12 +15,12 @@ export function Badge({
     warn: 'bg-amber-50 text-amber-700 border-amber-100',
     danger: 'bg-rose-50 text-rose-700 border-rose-100',
     info: 'bg-sky-50 text-sky-700 border-sky-100',
-    accent: 'bg-lokals-gold-soft text-lokals-charcoal border-yellow-100',
+    accent: 'bg-violet-50 text-lokals-purple-deep border-violet-100',
     neutral: 'bg-slate-50 text-slate-600 border-slate-200',
   }
 
   return (
-    <span className={clsx('inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold', styles[tone], className)}>
+    <span className={clsx('inline-flex min-h-7 items-center rounded-full border px-3 py-1 text-xs font-semibold', styles[tone], className)}>
       {children}
     </span>
   )

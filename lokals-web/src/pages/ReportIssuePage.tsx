@@ -17,13 +17,14 @@ export function ReportIssuePage() {
     payload.append('title', String(formData.get('title') ?? ''))
     payload.append('description', String(formData.get('description') ?? ''))
     payload.append('location', String(formData.get('location') ?? ''))
+    payload.append('town', 'Windhoek')
     payload.append('priority', String(formData.get('priority') ?? 'medium'))
     const photo = formData.get('photo')
     if (photo instanceof File && photo.size > 0) {
       payload.append('photo', photo)
     }
     await createReport.mutateAsync(payload)
-    setMessage('Issue reported successfully.')
+    setMessage('Report submitted.')
     event.currentTarget.reset()
     setPreview('')
   }
@@ -35,7 +36,14 @@ export function ReportIssuePage() {
         <form className="space-y-4" onSubmit={submit}>
           <Input name="title" placeholder="Short title" required />
           <div className="grid gap-4 md:grid-cols-2">
-            <Input name="category" placeholder="Pothole, water issue, streetlight..." required />
+            <Select name="category" defaultValue="water">
+              <option value="water">Water</option>
+              <option value="electricity">Electricity</option>
+              <option value="roads">Roads</option>
+              <option value="waste">Waste</option>
+              <option value="safety">Safety</option>
+              <option value="other">Other</option>
+            </Select>
             <Select name="priority" defaultValue="medium">
               <option value="low">Low</option>
               <option value="medium">Medium</option>

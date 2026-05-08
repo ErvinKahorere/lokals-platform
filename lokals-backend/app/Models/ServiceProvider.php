@@ -64,6 +64,11 @@ class ServiceProvider extends Model
         return $this->hasMany(Booking::class);
     }
 
+    public function followers(): MorphMany
+    {
+        return $this->morphMany(Follow::class, 'followable');
+    }
+
     public function moderationFlags(): MorphMany
     {
         return $this->morphMany(ModerationFlag::class, 'flaggable');

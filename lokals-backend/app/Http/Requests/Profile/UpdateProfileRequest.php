@@ -28,8 +28,6 @@ class UpdateProfileRequest extends FormRequest
             'default_town' => ['nullable', 'string', 'max:255'],
             'default_area' => ['nullable', 'string', 'max:255'],
             'service_radius' => ['nullable', 'integer', 'min:1', 'max:100'],
-            'roles' => ['nullable', 'array'],
-            'roles.*' => ['string', 'max:100'],
             'interests' => ['nullable', 'array'],
             'interests.*' => ['string', 'max:100'],
             'notification_preferences' => ['nullable', 'array'],

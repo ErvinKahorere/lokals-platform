@@ -9,6 +9,7 @@ use App\Http\Resources\UserResource;
 use App\Models\Profile;
 use App\Models\User;
 use App\Models\UserPreference;
+use App\Support\PilotLocation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -19,18 +20,17 @@ class AuthController extends Controller
     public function register(RegisterRequest $request): JsonResponse
     {
         $validated = $request->validated();
+        $defaultTown = PilotLocation::profileTown($validated['default_town'] ?? null);
+        $defaultArea = PilotLocation::normalizeArea($validated['default_area'] ?? null);
+        $requestedRoles = collect($validated['roles'] ?? ['citizen']);
         $user = User::create([
             ...$validated,
-            'default_town' => $validated['default_town'] ?? null,
-            'default_area' => $validated['default_area'] ?? null,
-            'current_role' => collect($validated['roles'] ?? ['citizen'])->first(),
+            'default_town' => $defaultTown,
+            'default_area' => $defaultArea,
+            'current_role' => $this->normalizeCurrentRole($requestedRoles->first() ?? 'citizen'),
         ]);
-        $roles = collect($validated['roles'] ?? ['citizen'])
-            ->map(fn (string $role) => match ($role) {
-                'business_owner' => 'seller',
-                'organization_representative' => 'municipality_admin',
-                default => $role,
-            })
+        $roles = $requestedRoles
+            ->flatMap(fn (string $role) => $this->expandRole($role))
             ->unique()
             ->values()
             ->all();
@@ -38,7 +38,7 @@ class AuthController extends Controller
 
         Profile::create([
             'user_id' => $user->id,
-            'location' => $request->string('location')->value() ?: collect([$validated['default_area'] ?? null, $validated['default_town'] ?? null])->filter()->implode(', '),
+            'location' => $request->string('location')->value() ?: collect([$defaultArea, $defaultTown])->filter()->implode(', '),
             'lat' => $request->input('lat'),
             'lng' => $request->input('lng'),
             'completed_fields' => ['name', 'phone'],
@@ -46,8 +46,8 @@ class AuthController extends Controller
 
         UserPreference::create([
             'user_id' => $user->id,
-            'default_town' => $validated['default_town'] ?? null,
-            'default_area' => $validated['default_area'] ?? null,
+            'default_town' => $defaultTown,
+            'default_area' => $defaultArea,
             'interests' => $validated['interests'] ?? [],
             'preferred_roles' => $validated['roles'] ?? ['citizen'],
             'notification_preferences' => [
@@ -99,14 +99,35 @@ class AuthController extends Controller
         ]);
 
         $user = $request->user()->load('roles');
-        abort_unless($user->hasRole($validated['role']), 403, 'You do not have access to this role.');
+        $role = $this->normalizeCurrentRole($validated['role']);
+        $allowedRoles = $this->expandRole($validated['role']);
+        abort_unless($user->hasAnyRole($allowedRoles), 403, 'You do not have access to this role.');
 
-        $user->update(['current_role' => $validated['role']]);
+        $user->update(['current_role' => $role]);
 
         return response()->json([
             'message' => 'Role switched successfully.',
-            'current_role' => $validated['role'],
+            'current_role' => $role,
             'user' => UserResource::make($user->fresh()->load(['profile', 'roles', 'preference'])),
         ]);
+    }
+
+    private function expandRole(string $role): array
+    {
+        return match ($role) {
+            'business_owner' => ['seller'],
+            'organization_representative' => ['municipality_admin', 'town_manager'],
+            'municipality_admin', 'town_manager' => ['municipality_admin', 'town_manager'],
+            default => [$role],
+        };
+    }
+
+    private function normalizeCurrentRole(string $role): string
+    {
+        return match ($role) {
+            'business_owner' => 'seller',
+            'organization_representative', 'municipality_admin', 'town_manager' => 'town_manager',
+            default => $role,
+        };
     }
 }

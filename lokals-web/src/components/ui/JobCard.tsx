@@ -15,6 +15,8 @@ export function JobCard({
   onApply?: () => void
   canApply?: boolean
 }) {
+  const skill = job.skills?.[0] ?? 'General help'
+
   return (
     <Card interactive variant="job">
       <div className="flex items-start justify-between gap-3">
@@ -27,20 +29,21 @@ export function JobCard({
             <p className="mt-1 line-clamp-2 text-sm text-lokals-muted">{job.description}</p>
           </div>
         </div>
-        <Badge tone="info">{job.employment_type}</Badge>
+        <Badge tone={job.status === 'open' ? 'success' : 'warn'}>{job.status === 'open' ? 'New' : job.status.replaceAll('_', ' ')}</Badge>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-lokals-muted">
         <span>{getDisplayDistance(job.distance_km, job.location)}</span>
         <span>{job.compensation ? getDisplayPrice(job.compensation) : 'Budget TBC'}</span>
         <span>Posted today</span>
+        <span>{skill}</span>
       </div>
       <div className="mt-5 flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-lokals-muted">Budget</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-lokals-muted">{job.employment_type.replaceAll('_', ' ')}</p>
           <p className="text-base font-semibold text-lokals-charcoal">{job.compensation ? getDisplayPrice(job.compensation) : 'Negotiable'}</p>
         </div>
         <div className="flex gap-2">
-          <Link to={`/jobs/${job.id}`} className="self-center text-sm font-semibold text-lokals-green">Details</Link>
+          <Link to={`/jobs/${job.id}`} className="self-center text-sm font-semibold text-lokals-purple">View</Link>
           {canApply ? <Button onClick={onApply}>Apply</Button> : null}
         </div>
       </div>

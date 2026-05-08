@@ -65,6 +65,11 @@ class Organization extends Model
         return $this->hasMany(Service::class);
     }
 
+    public function announcements(): HasMany
+    {
+        return $this->hasMany(Announcement::class);
+    }
+
     public function followers(): MorphMany
     {
         return $this->morphMany(Follow::class, 'followable');

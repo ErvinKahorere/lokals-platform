@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
+
 class LoadingSkeleton extends StatefulWidget {
   const LoadingSkeleton({super.key, this.height = 14, this.width = double.infinity});
 
@@ -37,7 +39,7 @@ class _LoadingSkeletonState extends State<LoadingSkeleton>
         height: widget.height,
         width: widget.width,
         decoration: BoxDecoration(
-          color: const Color(0xFFE2E8F0),
+          color: AppColors.border,
           borderRadius: BorderRadius.circular(999),
         ),
       ),

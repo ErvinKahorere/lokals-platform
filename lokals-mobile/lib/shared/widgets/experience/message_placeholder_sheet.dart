@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../src/services/contact_action_service.dart';
 import '../../../src/services/messaging_service.dart';
 import '../app_button.dart';
 
@@ -27,7 +28,10 @@ Future<void> showMessagePlaceholderSheet(
               AppButton(
                 label: 'Call instead',
                 expanded: true,
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  await ContactActionService().call(context, phone);
+                },
               ),
           ],
         ),

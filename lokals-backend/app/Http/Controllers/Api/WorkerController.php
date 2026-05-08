@@ -27,8 +27,16 @@ class WorkerController extends Controller
         if ($search = $request->string('search')->value()) {
             $query->where(function ($builder) use ($search): void {
                 $builder->where('headline', 'like', '%'.$search.'%')
-                    ->orWhereJsonContains('skills', $search);
+                    ->orWhereJsonContains('skills', $search)
+                    ->orWhereHas('user', function ($userQuery) use ($search): void {
+                        $userQuery->where('name', 'like', '%'.$search.'%')
+                            ->orWhere('profession', 'like', '%'.$search.'%');
+                    });
             });
+        }
+
+        if ($skill = $request->string('skill')->value()) {
+            $query->whereJsonContains('skills', $skill);
         }
 
         if ($location = $request->string('location')->value()) {

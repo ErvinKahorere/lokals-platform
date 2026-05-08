@@ -3,5 +3,5 @@ services:
     name: lokals-api
     env: docker
     plan: free
-    rootDir: lokals-backend
+    dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health

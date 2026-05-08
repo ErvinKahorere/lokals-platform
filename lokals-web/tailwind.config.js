@@ -7,7 +7,7 @@ export default {
       colors: {
         lokals: {
           green: 'rgb(var(--primary) / <alpha-value>)',
-          'green-soft': 'rgb(var(--primary) / <alpha-value>)',
+          'green-soft': 'rgb(var(--success-soft) / <alpha-value>)',
           purple: 'rgb(var(--brand-purple) / <alpha-value>)',
           'purple-deep': 'rgb(var(--primary-deep) / <alpha-value>)',
           'purple-electric': 'rgb(var(--primary-electric) / <alpha-value>)',
@@ -23,7 +23,7 @@ export default {
           muted: 'rgb(var(--text-secondary) / <alpha-value>)',
           border: 'rgb(var(--border) / <alpha-value>)',
           'sky-soft': 'rgb(var(--info-soft) / <alpha-value>)',
-          glass: 'rgb(var(--surface-glass) / <alpha-value>)',
+          glass: 'rgb(var(--card) / <alpha-value>)',
         },
       },
       borderRadius: {
@@ -34,10 +34,10 @@ export default {
         'lokals-hero': '24px',
       },
       boxShadow: {
-        card: '0 12px 34px rgba(var(--shadow-rgb), 0.12)',
-        soft: '0 10px 24px rgba(var(--shadow-rgb), 0.14)',
-        'soft-lg': '0 18px 50px rgba(var(--shadow-rgb), 0.22)',
-        brand: '0 16px 36px rgba(var(--primary), 0.28)',
+        card: '0 10px 24px rgba(var(--shadow-rgb), 0.06)',
+        soft: '0 10px 24px rgba(var(--shadow-rgb), 0.08)',
+        'soft-lg': '0 16px 34px rgba(var(--shadow-rgb), 0.10)',
+        brand: '0 14px 28px rgba(var(--primary), 0.18)',
         gold: '0 12px 30px rgba(var(--gold), 0.26)',
       },
       spacing: {

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/glass_panel.dart';
 
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({super.key, required this.onComplete});
@@ -13,96 +14,143 @@ class OnboardingFlow extends StatefulWidget {
 }
 
 class _OnboardingFlowState extends State<OnboardingFlow> {
-  int _index = 0;
-
-  static const _slides = [
-    (
-      Icons.location_city_outlined,
-      'Everything in your city.',
-      'One app for services, jobs, delivery, alerts, listings, and city life.',
-    ),
-    (
-      Icons.design_services_outlined,
-      'Find Help',
-      'Book services nearby instantly.',
-    ),
-    (
-      Icons.storefront_outlined,
-      'Earn & Sell',
-      'Get jobs and sell locally without long forms.',
-    ),
-    (
-      Icons.notifications_active_outlined,
-      'Stay Connected',
-      'Follow alerts and stay safe.',
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
-    final slide = _slides[_index];
-
     return Container(
-      color: Colors.black45,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: GlassPanel(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    CircleAvatar(
-                      radius: 28,
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      child: Icon(slide.$1, color: Colors.white),
-                    ),
-                    TextButton(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppColors.primaryPurple,
+            AppColors.deepPurple,
+          ],
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            left: -30,
+            top: 100,
+            child: Container(
+              width: 180,
+              height: 180,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.06),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            right: -50,
+            bottom: 140,
+            child: Container(
+              width: 220,
+              height: 220,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 130,
+            child: SizedBox(
+              height: 120,
+              child: CustomPaint(painter: _SkylinePainter()),
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 18, 24, 28),
+              child: Column(
+                children: [
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
                       onPressed: widget.onComplete,
-                      child: const Text('Skip'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Text(slide.$2, style: Theme.of(context).textTheme.headlineSmall),
-                const SizedBox(height: 8),
-                Text(slide.$3, style: Theme.of(context).textTheme.bodyMedium),
-                const SizedBox(height: 18),
-                Row(
-                  children: List.generate(
-                    _slides.length,
-                    (index) => Container(
-                      width: index == _index ? 28 : 10,
-                      height: 10,
-                      margin: const EdgeInsets.only(right: 8),
-                      decoration: BoxDecoration(
-                        color: index == _index
-                            ? Theme.of(context).colorScheme.primary
-                            : Theme.of(context).dividerColor,
-                        borderRadius: BorderRadius.circular(20),
+                      child: const Text(
+                        'Login',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                AppButton(
-                  label: _index == _slides.length - 1 ? 'Continue' : 'Next',
-                  onPressed: () {
-                    if (_index == _slides.length - 1) {
-                      widget.onComplete();
-                      return;
-                    }
-                    setState(() => _index += 1);
-                  },
-                ),
-              ],
+                  const Spacer(),
+                  Container(
+                    width: 104,
+                    height: 104,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                    ),
+                    padding: const EdgeInsets.all(22),
+                    child: Image.asset('assets/brand/lokals-icon.png'),
+                  ),
+                  const SizedBox(height: 22),
+                  Image.asset('assets/brand/lokals-logo.png', height: 42, color: Colors.white),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Everything in your city',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Services, jobs, transport, safety, shopping, and local updates in one simple app.',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.body.copyWith(
+                      color: Colors.white.withValues(alpha: 0.82),
+                    ),
+                  ),
+                  const Spacer(),
+                  AppButton(
+                    label: 'Get Started',
+                    variant: AppButtonVariant.secondary,
+                    onPressed: widget.onComplete,
+                  ),
+                  const SizedBox(height: 14),
+                  TextButton(
+                    onPressed: widget.onComplete,
+                    child: const Text(
+                      'Login',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
+}
+
+class _SkylinePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = Colors.white.withValues(alpha: 0.1);
+    final widths = [26.0, 38.0, 18.0, 28.0, 22.0, 34.0, 24.0, 42.0];
+    double x = 0;
+    for (var i = 0; i < widths.length; i++) {
+      final height = 26.0 + (i % 4) * 18;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(x, size.height - height, widths[i], height),
+          const Radius.circular(4),
+        ),
+        paint,
+      );
+      x += widths[i] + 10;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

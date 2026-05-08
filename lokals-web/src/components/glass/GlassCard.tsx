@@ -2,5 +2,5 @@ import clsx from 'clsx'
 import type { PropsWithChildren } from 'react'
 
 export function GlassCard({ children, className }: PropsWithChildren<{ className?: string }>) {
-  return <div className={clsx('glass-surface rounded-[24px] p-5', className)}>{children}</div>
+  return <div className={clsx('rounded-[24px] border border-lokals-border bg-white p-5 shadow-card', className)}>{children}</div>
 }

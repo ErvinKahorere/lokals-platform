@@ -20,6 +20,7 @@ class ActivityTimeline extends StatelessWidget {
                 body: item.body,
                 time: item.time,
                 status: item.status,
+                onTap: item.onTap,
               ),
             ),
           )
@@ -35,6 +36,7 @@ class ActivityTimelineItem {
     required this.body,
     required this.time,
     required this.status,
+    this.onTap,
   });
 
   final IconData icon;
@@ -42,5 +44,5 @@ class ActivityTimelineItem {
   final String body;
   final String time;
   final String status;
+  final VoidCallback? onTap;
 }
-

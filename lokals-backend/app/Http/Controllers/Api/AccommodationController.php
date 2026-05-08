@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AccommodationResource;
 use App\Models\Accommodation;
+use App\Support\PilotLocation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Storage;
@@ -19,14 +20,25 @@ class AccommodationController extends Controller
             $query->where(function ($builder) use ($search): void {
                 $builder->where('title', 'like', '%'.$search.'%')
                     ->orWhere('description', 'like', '%'.$search.'%')
-                    ->orWhere('type', 'like', '%'.$search.'%');
+                    ->orWhere('type', 'like', '%'.$search.'%')
+                    ->orWhere('location', 'like', '%'.$search.'%')
+                    ->orWhere('town', 'like', '%'.$search.'%')
+                    ->orWhere('area', 'like', '%'.$search.'%');
             });
         }
 
-        foreach (['type', 'town', 'area', 'price_period', 'status'] as $filter) {
+        foreach (['type', 'price_period', 'status', 'business_id', 'user_id'] as $filter) {
             if ($value = $request->string($filter)->value()) {
                 $query->where($filter, $value);
             }
+        }
+
+        if ($value = PilotLocation::requestTown($request)) {
+            $query->where('town', $value);
+        }
+
+        if ($value = PilotLocation::requestArea($request)) {
+            $query->where('area', $value);
         }
 
         if ($minPrice = $request->input('min_price')) {
@@ -41,9 +53,21 @@ class AccommodationController extends Controller
             $query->where('bedrooms', '>=', (int) $bedrooms);
         }
 
+        if ($bathrooms = $request->input('bathrooms')) {
+            $query->where('bathrooms', '>=', (int) $bathrooms);
+        }
+
+        if ($request->boolean('verified')) {
+            $query->whereHas('business', fn ($builder) => $builder->where('is_verified', true));
+        }
+
         match ($request->string('sort')->value()) {
-            'recent' => $query->latest(),
+            'price_low_high' => $query->orderBy('price'),
+            'price_high_low' => $query->orderByDesc('price'),
             'popular' => $query->orderByDesc('price'),
+            'recent',
+            'recently_added',
+            'newest' => $query->latest(),
             default => $query->latest(),
         };
 
@@ -63,17 +87,17 @@ class AccommodationController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
-            'price_period' => ['nullable', 'string', 'max:20'],
+            'price_period' => ['required', 'string', 'max:20'],
             'bedrooms' => ['nullable', 'integer', 'min:0', 'max:20'],
             'bathrooms' => ['nullable', 'integer', 'min:0', 'max:20'],
             'location' => ['nullable', 'string', 'max:255'],
-            'town' => ['nullable', 'string', 'max:255'],
-            'area' => ['nullable', 'string', 'max:255'],
+            'town' => ['required', 'string', 'max:255'],
+            'area' => ['required', 'string', 'max:255'],
             'lat' => ['nullable', 'numeric'],
             'lng' => ['nullable', 'numeric'],
             'status' => ['nullable', 'string', 'max:50'],
             'metadata' => ['nullable', 'array'],
-            'image' => ['nullable', 'image', 'max:5120'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         if ($request->hasFile('image')) {
@@ -96,7 +120,7 @@ class AccommodationController extends Controller
             'title' => ['sometimes', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'price' => ['sometimes', 'numeric', 'min:0'],
-            'price_period' => ['nullable', 'string', 'max:20'],
+            'price_period' => ['sometimes', 'string', 'max:20'],
             'bedrooms' => ['nullable', 'integer', 'min:0', 'max:20'],
             'bathrooms' => ['nullable', 'integer', 'min:0', 'max:20'],
             'location' => ['nullable', 'string', 'max:255'],
@@ -106,7 +130,7 @@ class AccommodationController extends Controller
             'lng' => ['nullable', 'numeric'],
             'status' => ['nullable', 'string', 'max:50'],
             'metadata' => ['nullable', 'array'],
-            'image' => ['nullable', 'image', 'max:5120'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         if ($request->hasFile('image')) {

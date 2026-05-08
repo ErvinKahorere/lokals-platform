@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -13,13 +14,19 @@ class JobCard extends StatelessWidget {
     super.key,
     required this.job,
     this.onApply,
+    this.onView,
   });
 
   final JobModel job;
   final VoidCallback? onApply;
+  final VoidCallback? onView;
 
   @override
   Widget build(BuildContext context) {
+    final budgetLabel = job.compensation != null ? getDisplayPrice(job.compensation) : 'Budget TBC';
+    final locationLabel = getDisplayDistance(job.distanceKm, job.location);
+    final statusLabel = job.status == 'open' ? 'New' : job.status.replaceAll('_', ' ');
+
     return AppCard(
       variant: AppCardVariant.job,
       child: Column(
@@ -29,16 +36,13 @@ class JobCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 50,
+                height: 50,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEDE9FE),
-                  borderRadius: BorderRadius.circular(14),
+                  color: AppColors.purpleSoftAlt,
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(
-                  Icons.work_outline_rounded,
-                  color: AppColors.primaryPurple,
-                ),
+                child: const Icon(Icons.work_outline_rounded, color: AppColors.primaryPurple),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -46,18 +50,13 @@ class JobCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(job.title, style: AppTextStyles.h3),
-                    const SizedBox(height: 8),
-                    Text(
-                      job.description,
-                      style: AppTextStyles.bodyMuted,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    const SizedBox(height: 6),
+                    Text(job.description, style: AppTextStyles.bodyMuted, maxLines: 2, overflow: TextOverflow.ellipsis),
                   ],
                 ),
               ),
               const SizedBox(width: 10),
-              AppBadge(label: job.employmentType, tone: AppBadgeTone.info),
+              AppBadge(label: statusLabel, tone: job.status == 'open' ? AppBadgeTone.info : AppBadgeTone.warning),
             ],
           ),
           const SizedBox(height: 12),
@@ -65,17 +64,36 @@ class JobCard extends StatelessWidget {
             spacing: 10,
             runSpacing: 10,
             children: [
-              _JobMeta(
-                label: job.compensation != null
-                    ? getDisplayPrice(job.compensation)
-                    : 'Budget TBC',
-              ),
-              _JobMeta(label: getDisplayDistance(job.distanceKm, job.location)),
-              const _JobMeta(label: 'Posted today'),
+              _JobMeta(label: budgetLabel),
+              _JobMeta(label: locationLabel),
+              const _JobMeta(label: 'Posted recently'),
             ],
           ),
+          if (job.skills.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(job.skills.take(3).join(', '), style: AppTextStyles.caption),
+          ],
           const SizedBox(height: 14),
-          if (onApply != null) AppButton(label: 'Apply', onPressed: onApply),
+          Row(
+            children: [
+              Expanded(
+                child: AppButton(
+                  label: 'View',
+                  variant: AppButtonVariant.secondary,
+                  onPressed: onView ?? () => context.push('/jobs/${job.id}'),
+                ),
+              ),
+              if (onApply != null) ...[
+                const SizedBox(width: 10),
+                Expanded(
+                  child: AppButton(
+                    label: 'Apply',
+                    onPressed: onApply,
+                  ),
+                ),
+              ],
+            ],
+          ),
         ],
       ),
     );
@@ -94,7 +112,7 @@ class _JobMeta extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Text(label, style: AppTextStyles.caption),
     );

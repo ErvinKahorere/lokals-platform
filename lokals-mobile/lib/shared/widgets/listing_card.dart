@@ -37,18 +37,25 @@ class ListingCard extends StatelessWidget {
                           fit: BoxFit.cover,
                         )
                       : Container(
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Color(0xFFE2E8F0), Color(0xFFCBD5E1)],
+                          color: AppColors.neutralSoft,
+                          child: const Center(
+                            child: Icon(
+                              Icons.storefront_rounded,
+                              color: AppColors.mutedText,
+                              size: 40,
                             ),
                           ),
                         ),
                 ),
               ),
-              const Positioned(
+              Positioned(
                 right: 8,
                 top: 8,
-                child: SaveButton(),
+                child: SaveButton(
+                  storageId: 'listing:${listing.id}',
+                  itemType: 'listing',
+                  itemId: listing.id,
+                ),
               ),
             ],
           ),
@@ -83,7 +90,7 @@ class ListingCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.only(top: 8),
                   decoration: const BoxDecoration(
-                    border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+                    border: Border(top: BorderSide(color: AppColors.border)),
                   ),
                   child: Text(
                     listing.location ?? 'Local',

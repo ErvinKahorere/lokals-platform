@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\OrganizationResource;
 use App\Models\Announcement;
 use App\Models\Booking;
+use App\Models\Event;
+use App\Models\EventTicket;
 use App\Models\Organization;
 use App\Models\Product;
 use App\Models\Service;
@@ -94,7 +96,7 @@ class BusinessController extends Controller
         abort_unless($organization->owner_user_id === $request->user()->id || $request->user()->hasAnyRole(['operator', 'super_admin']), 403);
 
         $request->validate([
-            'logo' => ['required', 'image', 'max:5120'],
+            'logo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         $path = $request->file('logo')->store('organization-logos', 'public');
@@ -157,6 +159,22 @@ class BusinessController extends Controller
             ->orWhereIn('organization_id', $businessIds)
             ->pluck('id');
 
+        $eventQuery = Event::query()
+            ->where('created_by', $request->user()->id)
+            ->orWhere(function ($query) use ($businessIds, $providerIds): void {
+                $query
+                    ->where(function ($inner) use ($businessIds): void {
+                        $inner->where('organizer_type', Organization::class)
+                            ->whereIn('organizer_id', $businessIds);
+                    })
+                    ->orWhere(function ($inner) use ($providerIds): void {
+                        $inner->where('organizer_type', ServiceProvider::class)
+                            ->whereIn('organizer_id', $providerIds);
+                    });
+            });
+
+        $eventIds = (clone $eventQuery)->pluck('id');
+
         return response()->json([
             'stats' => [
                 'followers' => $businesses->sum('followers_count'),
@@ -166,6 +184,9 @@ class BusinessController extends Controller
                 'products' => Product::query()->where('user_id', $request->user()->id)->count(),
                 'services' => Service::query()->whereIn('organization_id', $businessIds)->orWhereIn('service_provider_id', $providerIds)->count(),
                 'alerts_sent' => Announcement::query()->whereIn('organization_id', $businessIds)->count(),
+                'events' => $eventIds->count(),
+                'upcoming_events' => (clone $eventQuery)->where('starts_at', '>=', now())->count(),
+                'tickets_reserved' => EventTicket::query()->whereIn('event_id', $eventIds)->count(),
                 'profile_completion' => min(100, 40 + ($businesses->count() * 10) + (Service::query()->whereIn('organization_id', $businessIds)->count() * 5)),
             ],
             'businesses' => OrganizationResource::collection($businesses),
@@ -173,6 +194,7 @@ class BusinessController extends Controller
             'services' => Service::query()->whereIn('organization_id', $businessIds)->orWhereIn('service_provider_id', $providerIds)->latest()->limit(6)->get(),
             'bookings' => Booking::query()->whereIn('service_provider_id', $providerIds)->latest()->limit(6)->get(),
             'alerts' => Announcement::query()->whereIn('organization_id', $businessIds)->latest('published_at')->limit(6)->get(),
+            'events' => (clone $eventQuery)->withCount(['tickets as attendees_count', 'saves as saves_count'])->orderBy('starts_at')->limit(6)->get(),
         ]);
     }
 }

@@ -16,27 +16,21 @@ class ThemeController extends Notifier<ThemeMode> {
       Future<void>.microtask(_restore);
     }
 
-    return ThemeMode.system;
+    return ThemeMode.light;
   }
 
   Future<void> _restore() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_storageKey);
-    state = switch (raw) {
-      'light' => ThemeMode.light,
-      'dark' => ThemeMode.dark,
-      _ => ThemeMode.system,
-    };
+    state = ThemeMode.light;
+    await prefs.setString(_storageKey, 'light');
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
-    state = mode;
+    state = ThemeMode.light;
     final prefs = await SharedPreferences.getInstance();
-    final raw = switch (mode) {
-      ThemeMode.light => 'light',
-      ThemeMode.dark => 'dark',
-      ThemeMode.system => 'system',
-    };
-    await prefs.setString(_storageKey, raw);
+    if (mode != ThemeMode.light) {
+      // Light mode is the only supported mode for now.
+    }
+    await prefs.setString(_storageKey, 'light');
   }
 }

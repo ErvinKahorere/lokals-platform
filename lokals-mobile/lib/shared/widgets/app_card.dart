@@ -29,27 +29,29 @@ class AppCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final baseSurface = color ??
         switch (variant) {
-          AppCardVariant.defaultCard => theme.cardColor.withValues(alpha: 0.84),
-          AppCardVariant.service => theme.cardColor.withValues(alpha: 0.86),
-          AppCardVariant.marketplace => theme.cardColor.withValues(alpha: 0.82),
-          AppCardVariant.job => theme.cardColor.withValues(alpha: 0.84),
-          AppCardVariant.dashboard => theme.cardColor.withValues(alpha: 0.84),
-          AppCardVariant.emergency => const Color(0xCCFFF1F2),
+          AppCardVariant.defaultCard => theme.cardColor,
+          AppCardVariant.service => theme.cardColor,
+          AppCardVariant.marketplace => theme.cardColor,
+          AppCardVariant.job => theme.cardColor,
+          AppCardVariant.dashboard => theme.cardColor,
+          AppCardVariant.emergency => const Color(0xFFFFF5F5),
         };
     final borderColor = switch (variant) {
-      AppCardVariant.service => theme.colorScheme.primary.withValues(alpha: 0.18),
-      AppCardVariant.marketplace => theme.colorScheme.secondary.withValues(alpha: 0.24),
+      AppCardVariant.service => AppColors.primaryPurple.withValues(alpha: 0.16),
+      AppCardVariant.marketplace => theme.dividerColor,
+      AppCardVariant.job => AppColors.info.withValues(alpha: 0.18),
+      AppCardVariant.dashboard => AppColors.primaryPurple.withValues(alpha: 0.12),
       AppCardVariant.emergency => AppColors.danger.withValues(alpha: 0.22),
-      _ => theme.dividerColor.withValues(alpha: isDark ? 0.8 : 1),
+      _ => theme.dividerColor,
     };
     final shadowColor = switch (variant) {
-      AppCardVariant.service => theme.colorScheme.primary.withValues(alpha: 0.16),
-      AppCardVariant.marketplace => AppColors.deepPurple.withValues(alpha: 0.14),
+      AppCardVariant.service => Colors.black.withValues(alpha: 0.08),
+      AppCardVariant.marketplace => Colors.black.withValues(alpha: 0.06),
+      AppCardVariant.job => Colors.black.withValues(alpha: 0.08),
       AppCardVariant.emergency => AppColors.danger.withValues(alpha: 0.16),
-      _ => AppColors.deepPurple.withValues(alpha: isDark ? 0.26 : 0.10),
+      _ => Colors.black.withValues(alpha: 0.06),
     };
 
     return ClipRRect(
@@ -58,14 +60,14 @@ class AppCard extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOut,
         decoration: BoxDecoration(
-          color: baseSurface.withValues(alpha: variant == AppCardVariant.emergency ? 1 : 0.98),
+          color: baseSurface,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(color: borderColor),
           boxShadow: [
             BoxShadow(
               color: shadowColor,
               blurRadius: 24,
-              offset: const Offset(0, 12),
+              offset: const Offset(0, 10),
             ),
           ],
         ),

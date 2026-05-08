@@ -10,10 +10,13 @@ class MoreScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
+      ('Okahandja Portal', 'Town alerts, public services, and council updates', Icons.account_balance_outlined, '/okahandja'),
       ('Directory', 'Police, clinics, schools, businesses', Icons.business_outlined, '/directory'),
       ('Stay', 'Rentals, homes, short stays', Icons.apartment_outlined, '/accommodation'),
       ('Send Parcel', 'Pickup and drop-off requests', Icons.local_shipping_outlined, '/delivery'),
       ('Alerts & Activity', 'Recent updates and city notices', Icons.notifications_active_outlined, '/activity'),
+      ('News', 'Aggregated local stories and announcements', Icons.newspaper_outlined, '/news'),
+      ('Events', 'Local events, tickets, and reminders', Icons.event_outlined, '/events'),
       ('Settings', 'Location, theme, notifications', Icons.settings_outlined, '/settings'),
       ('SOS', 'Emergency support', Icons.sos_outlined, '/sos'),
     ];

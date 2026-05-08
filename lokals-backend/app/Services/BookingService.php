@@ -24,6 +24,12 @@ class BookingService
             ]);
         }
 
+        if (! $service->is_bookable) {
+            throw ValidationException::withMessages([
+                'service_id' => ['This service requires direct contact instead of instant booking.'],
+            ]);
+        }
+
         if ($provider->status !== 'active') {
             throw ValidationException::withMessages([
                 'service_provider_id' => ['This provider is not currently accepting bookings.'],
@@ -39,6 +45,19 @@ class BookingService
         if (! $this->checkAvailability($provider, $date, $time, $end->format('H:i'))) {
             throw ValidationException::withMessages([
                 'start_time' => ['This provider is not available at the selected time.'],
+            ]);
+        }
+
+        $slotTaken = Booking::query()
+            ->where('service_provider_id', $provider->id)
+            ->whereDate('booking_date', $date)
+            ->where('start_time', $start->format('H:i:s'))
+            ->whereNotIn('status', ['cancelled'])
+            ->exists();
+
+        if ($slotTaken) {
+            throw ValidationException::withMessages([
+                'start_time' => ['This time slot has already been taken. Please choose another one.'],
             ]);
         }
 
@@ -76,17 +95,20 @@ class BookingService
             return false;
         }
 
-        return ! Booking::query()
+        $conflictingBookings = Booking::query()
             ->where('service_provider_id', $provider->id)
-            ->where('booking_date', $date)
+            ->whereDate('booking_date', $date)
             ->whereNotIn('status', ['cancelled'])
-            ->where(function ($query) use ($normalizedStart, $normalizedEnd): void {
-                $query
-                    ->where(function ($inner) use ($normalizedStart, $normalizedEnd): void {
-                        $inner->where('start_time', '<', $normalizedEnd)
-                            ->where('end_time', '>', $normalizedStart);
-                    });
-            })
-            ->exists();
+            ->get();
+
+        $requestedStart = Carbon::createFromFormat('H:i:s', $normalizedStart);
+        $requestedEnd = Carbon::createFromFormat('H:i:s', $normalizedEnd);
+
+        return ! $conflictingBookings->contains(function (Booking $booking) use ($requestedStart, $requestedEnd): bool {
+            $existingStart = Carbon::createFromFormat('H:i:s', $booking->start_time);
+            $existingEnd = Carbon::createFromFormat('H:i:s', $booking->end_time);
+
+            return $existingStart < $requestedEnd && $existingEnd > $requestedStart;
+        });
     }
 }

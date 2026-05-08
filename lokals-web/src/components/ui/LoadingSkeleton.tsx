@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 
 export function LoadingSkeleton({ className }: { className?: string }) {
-  return <div className={clsx('animate-pulse rounded-full bg-lokals-border/45', className)} />
+  return <div className={clsx('animate-pulse rounded-full bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200', className)} />
 }
 
 export function SkeletonCard() {

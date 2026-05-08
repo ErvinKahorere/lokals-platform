@@ -1,7 +1,6 @@
 import { ArrowRight, BriefcaseBusiness, MapPin, ShieldAlert, Sparkles, X } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '../ui/Button'
-import { GlassPanel } from '../glass/GlassPanel'
 
 const slides = [
   { icon: MapPin, title: 'Everything in your city.', body: 'One app for services, jobs, delivery, alerts, listings, and city life.' },
@@ -16,22 +15,25 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
   const Icon = slide.icon
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm">
-      <GlassPanel className="w-full max-w-lg">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 p-4">
+      <section className="w-full max-w-lg rounded-[28px] border border-lokals-border bg-white p-6 shadow-soft-xl">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-lokals-purple text-white shadow-brand">
-            <Icon className="h-6 w-6" />
+          <div className="flex items-center gap-3">
+            <img src="/brand/lokals-icon.svg" alt="LOKALS" className="h-14 w-14" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-[16px] bg-lokals-green-soft text-lokals-green">
+              <Icon className="h-5 w-5" />
+            </div>
           </div>
-          <button aria-label="Skip onboarding" onClick={onComplete} className="flex h-10 w-10 items-center justify-center rounded-full bg-lokals-surface/70 text-lokals-muted">
+          <button aria-label="Skip onboarding" onClick={onComplete} className="flex h-10 w-10 items-center justify-center rounded-full bg-lokals-surface text-lokals-muted">
             <X className="h-4 w-4" />
           </button>
         </div>
-        <p className="mt-6 text-sm font-semibold uppercase tracking-[0.24em] text-lokals-purple">Welcome</p>
+        <p className="mt-6 text-sm font-semibold uppercase tracking-[0.24em] text-lokals-green">Welcome</p>
         <h2 className="mt-3 text-3xl font-semibold text-lokals-charcoal">{slide.title}</h2>
         <p className="mt-3 text-base text-lokals-muted">{slide.body}</p>
         <div className="mt-6 flex items-center gap-2">
           {slides.map((_, itemIndex) => (
-            <span key={itemIndex} className={`h-2.5 rounded-full transition-all ${itemIndex === index ? 'w-8 bg-lokals-purple' : 'w-2.5 bg-lokals-border'}`} />
+            <span key={itemIndex} className={`h-2.5 rounded-full transition-all ${itemIndex === index ? 'w-8 bg-lokals-green' : 'w-2.5 bg-lokals-border'}`} />
           ))}
         </div>
         <div className="mt-8 flex items-center justify-between gap-3">
@@ -46,7 +48,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
             {index === slides.length - 1 ? 'Continue' : <>Next <ArrowRight className="h-4 w-4" /></>}
           </Button>
         </div>
-      </GlassPanel>
+      </section>
     </div>
   )
 }

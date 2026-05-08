@@ -32,23 +32,34 @@ class CategoryTile extends StatelessWidget {
             color: AppColors.surfaceWhite,
             borderRadius: BorderRadius.circular(AppRadius.xl),
             border: Border.all(color: AppColors.border),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  height: 42,
-                  width: 42,
+                  height: 52,
+                  width: 52,
                   decoration: BoxDecoration(
                     color: color,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Icon(icon, color: iconColor),
                 ),
-                const SizedBox(height: 12),
-                Text(label, style: AppTextStyles.h3.copyWith(fontSize: 14)),
+                const SizedBox(height: 10),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.h3.copyWith(fontSize: 13),
+                ),
               ],
             ),
           ),

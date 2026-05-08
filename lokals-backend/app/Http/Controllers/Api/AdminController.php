@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Alert;
 use App\Models\Booking;
 use App\Models\CityReport;
+use App\Models\Event;
+use App\Models\EventTicket;
 use App\Models\JobPost;
 use App\Models\Listing;
 use App\Models\Organization;
@@ -24,6 +26,7 @@ class AdminController extends Controller
             'providers' => ServiceProvider::count(),
             'bookings' => Booking::count(),
             'listings' => Listing::count(),
+            'events' => Event::count(),
         ]);
     }
 
@@ -40,6 +43,8 @@ class AdminController extends Controller
             'active_alerts' => Alert::query()->where('is_active', true)->count(),
             'services_registered' => \App\Models\Service::count(),
             'products' => Product::count(),
+            'events' => Event::count(),
+            'event_tickets' => EventTicket::count(),
         ]);
     }
 
@@ -67,6 +72,7 @@ class AdminController extends Controller
                 'alerts_sent' => Alert::count(),
                 'services_registered' => ServiceProvider::count(),
                 'directory_entries' => Organization::count(),
+                'municipal_events' => Event::query()->where('category', 'municipal')->count(),
             ],
             'reports_by_status' => $reportsByStatus,
             'most_active_areas' => $areas,
@@ -84,6 +90,7 @@ class AdminController extends Controller
                 ->get(),
             'recent_reports' => CityReport::query()->latest()->limit(6)->get(['id', 'title', 'category', 'location', 'status', 'created_at']),
             'recent_alerts' => Alert::query()->latest()->limit(4)->get(['id', 'title', 'location', 'priority', 'created_at']),
+            'upcoming_events' => Event::query()->where('status', 'published')->where('starts_at', '>=', now())->orderBy('starts_at')->limit(6)->get(['id', 'title', 'category', 'town', 'area', 'starts_at']),
         ]);
     }
 }

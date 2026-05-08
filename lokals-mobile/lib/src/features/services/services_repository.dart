@@ -18,6 +18,10 @@ final providerDetailsProvider = FutureProvider.family<ProviderModel, String>((
   return ref.read(servicesRepositoryProvider).fetchProvider(id);
 });
 
+final followedProviderIdsProvider = FutureProvider<Set<int>>((ref) async {
+  return ref.read(servicesRepositoryProvider).fetchFollowedProviderIds();
+});
+
 class ServicesRepository {
   ServicesRepository(this.ref);
 
@@ -44,5 +48,45 @@ class ServicesRepository {
         : data as Map<String, dynamic>;
 
     return ProviderModel.fromJson(item);
+  }
+
+  Future<Set<int>> fetchFollowedProviderIds() async {
+    final dio = ref.read(dioProvider);
+    final response = await dio.get('/follow');
+    final data = response.data;
+    final list = (data is Map<String, dynamic> ? data['data'] : data) as List<dynamic>;
+
+    return list
+        .whereType<Map<String, dynamic>>()
+        .where(
+          (item) => (item['followable_type']?.toString().contains('ServiceProvider') ?? false),
+        )
+        .map((item) => item['followable_id'] as int)
+        .toSet();
+  }
+
+  Future<void> followProvider(int providerId) async {
+    await ref.read(dioProvider).post('/follow', data: {
+      'type': 'service_provider',
+      'id': providerId,
+    });
+  }
+
+  Future<void> unfollowProvider(int providerId) async {
+    final dio = ref.read(dioProvider);
+    final response = await dio.get('/follow');
+    final data = response.data;
+    final list = (data is Map<String, dynamic> ? data['data'] : data) as List<dynamic>;
+    final follow = list.whereType<Map<String, dynamic>>().firstWhere(
+      (item) =>
+          (item['followable_type']?.toString().contains('ServiceProvider') ?? false) &&
+          item['followable_id'] == providerId,
+      orElse: () => <String, dynamic>{},
+    );
+
+    final followId = follow['id'];
+    if (followId != null) {
+      await dio.delete('/follow/$followId');
+    }
   }
 }

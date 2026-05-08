@@ -1,11 +1,11 @@
-import { Building2, Clock3, MapPin } from 'lucide-react'
+import { Building2, Clock3, MapPin, ShieldAlert } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { Avatar } from '../components/ui/Avatar'
 import { Button, EmptyState, PageHeader, QueryState, SectionCard } from '../components/Ui'
 import { ContactActions } from '../components/experience/ContactActions'
 import { TrustRow } from '../components/experience/TrustRow'
 import { useCreateFollow, useDeleteFollow, useDirectoryAlerts, useDirectoryDetails, useFollows } from '../hooks/queries'
-import { getDisplayDistance, resolveMediaUrl } from '../lib/display'
+import { getDisplayDistance, getServicePriceLabel, resolveMediaUrl } from '../lib/display'
 import { useAuthStore } from '../store/auth'
 
 export function DirectoryDetailsPage() {
@@ -35,18 +35,19 @@ export function DirectoryDetailsPage() {
                   <p className="text-sm font-semibold uppercase tracking-[0.18em] text-lokals-green">{organization.category}</p>
                   <h2 className="mt-2 text-2xl font-semibold text-lokals-charcoal">{organization.name}</h2>
                   <p className="mt-2 inline-flex items-center gap-2 text-sm text-lokals-muted"><MapPin className="h-4 w-4" />{[organization.area, organization.town, organization.location].filter(Boolean).join(', ') || 'Windhoek'}</p>
-                  <p className="mt-2 inline-flex items-center gap-2 text-sm text-lokals-muted"><Clock3 className="h-4 w-4" />{organization.status === 'active' ? 'Open today' : 'Opening hours unavailable'}</p>
+                  <p className="mt-2 inline-flex items-center gap-2 text-sm text-lokals-muted"><Clock3 className="h-4 w-4" />{organization.open_now ? 'Open now' : organization.availability_status ?? 'Opening hours unavailable'}</p>
+                  {organization.emergency_contact ? <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-sm font-semibold text-red-600"><ShieldAlert className="h-4 w-4" />Emergency contact available</p> : null}
                 </div>
               </div>
               <div className="w-full md:w-[320px]">
                 <TrustRow
-                  ratingLabel={organization.is_verified ? 'Verified local source' : 'Reviews coming soon'}
+                  ratingLabel={`${organization.rating?.toFixed(1) ?? '4.7'} ★ • ${organization.review_count ?? 0} reviews`}
                   distanceLabel={getDisplayDistance(organization.distance_km, organization.location)}
-                  completedLabel={`${organization.service_providers?.length ?? 0} services listed`}
+                  completedLabel={`${organization.followers_count ?? 0} followers`}
                   responseLabel="Updates posted here"
                 />
                 <div className="mt-4">
-                  <ContactActions name={organization.name} phone={organization.phone} className="grid gap-2 sm:grid-cols-3" />
+                  <ContactActions name={organization.name} phone={organization.phone} whatsapp={organization.whatsapp} className="grid gap-2 sm:grid-cols-3" />
                 </div>
                 <div className="mt-3">
                   <Button variant={followId ? 'primary' : 'secondary'} className="w-full" disabled={!token || createFollow.isPending || deleteFollow.isPending} onClick={() => followId ? deleteFollow.mutate(followId) : createFollow.mutate({ type: 'organization', id: organization.id })}>
@@ -78,8 +79,8 @@ export function DirectoryDetailsPage() {
                             <p className="mt-1 text-sm text-lokals-muted">{service.description ?? 'Local service rate'}</p>
                           </div>
                           <div className="text-right">
-                            <p className="font-semibold text-lokals-charcoal">N${service.price}</p>
-                            <p className="text-xs text-lokals-muted">{service.price_type ?? 'fixed'}</p>
+                            <p className="font-semibold text-lokals-charcoal">{getServicePriceLabel(service)}</p>
+                            <p className="text-xs text-lokals-muted">{service.duration_minutes ? `${service.duration_minutes} mins` : (service.price_type ?? 'fixed')}</p>
                           </div>
                         </div>
                       </div>
@@ -114,7 +115,7 @@ export function DirectoryDetailsPage() {
               </div>
               <div className="mt-4 space-y-3">
                 {alerts.length === 0 ? (
-                  <EmptyState title="No alerts yet" body="New announcements from this source will appear here." />
+                  <EmptyState title="No alerts yet" body="Follow this profile to receive announcements and service updates here." />
                 ) : (
                   alerts.map((alert: any) => (
                     <div key={alert.id} className="rounded-[20px] border border-lokals-border p-4">

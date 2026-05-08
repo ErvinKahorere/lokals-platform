@@ -25,7 +25,7 @@ export function ListingDetailsPage() {
             <div className="relative aspect-[16/8] bg-[linear-gradient(135deg,#dbeafe,#f8fafc,#e2e8f0)]">
               {image ? <img src={image} alt={listing.title} className="h-full w-full object-cover" loading="lazy" /> : null}
               <div className="absolute right-4 top-4">
-                <SaveButton label={listing.title} />
+                <SaveButton label={listing.title} itemId={listing.id} itemType="listing" />
               </div>
             </div>
             <div className="p-5">

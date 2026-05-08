@@ -3,6 +3,7 @@ import type { Booking, Provider, Worker } from '../types'
 type TrustSource = {
   applications_count?: number | null
   is_verified?: boolean | null
+  rating?: number | null
 }
 
 export function getDisplayPrice(price?: string | number | null, currency = 'N$') {
@@ -22,19 +23,23 @@ export function getDisplayDistance(distance?: number | null, fallbackLocation?: 
 }
 
 export function getDisplayRating(source?: TrustSource) {
+  if (source && typeof source.rating === 'number') {
+    return source.rating.toFixed(1)
+  }
+
   if (!source) {
-    return '4.8 ★'
+    return '4.8'
   }
 
   if ('applications_count' in source && typeof source.applications_count === 'number') {
-    return source.applications_count > 0 ? `${Math.min(4.9, 4.6 + source.applications_count / 100).toFixed(1)} ★` : '4.8 ★'
+    return source.applications_count > 0 ? Math.min(4.9, 4.6 + source.applications_count / 100).toFixed(1) : '4.8'
   }
 
   if ('is_verified' in source && source.is_verified) {
-    return '4.8 ★'
+    return '4.8'
   }
 
-  return '4.7 ★'
+  return '4.7'
 }
 
 export function getProviderPhone(provider?: Partial<Provider>) {
@@ -74,6 +79,10 @@ export function getCompletedLabel(source?: Partial<Provider | Worker>) {
     return 'Bookings building'
   }
 
+  if ('followers_count' in source && typeof (source as Provider).followers_count === 'number') {
+    return `${Math.max(8, (source as Provider).followers_count ?? 0)} followers`
+  }
+
   if ('services' in source && Array.isArray(source.services) && source.services.length > 0) {
     return `${Math.max(8, source.services.length * 6)} jobs completed`
   }
@@ -90,7 +99,32 @@ export function getResponseTimeLabel(source?: Partial<Provider | Worker>) {
     return 'Reply status soon'
   }
 
+  if ('response_time_label' in source && typeof (source as Provider).response_time_label === 'string' && (source as Provider).response_time_label) {
+    return (source as Provider).response_time_label as string
+  }
+
   return 'Responds fast'
+}
+
+export function getServicePriceLabel(service?: { price?: string | number | null; price_type?: string | null }) {
+  if (!service?.price && service?.price !== 0) {
+    return 'Contact for quote'
+  }
+
+  const amount = getDisplayPrice(service.price)
+
+  switch (service.price_type) {
+    case 'from':
+      return `From ${amount}`
+    case 'hourly':
+      return `${amount} / hour`
+    case 'daily':
+      return `${amount} / day`
+    case 'quote':
+      return 'Contact for quote'
+    default:
+      return amount
+  }
 }
 
 export function getBookingActionLabel(booking: Booking) {
@@ -103,6 +137,37 @@ export function getBookingActionLabel(booking: Booking) {
   }
 
   return 'View details'
+}
+
+export function formatWhatsAppNumber(phone?: string | null) {
+  if (!phone) {
+    return null
+  }
+
+  const digits = phone.replace(/[^\d]/g, '')
+  if (!digits) {
+    return null
+  }
+
+  if (digits.startsWith('264')) {
+    return digits
+  }
+
+  if (digits.startsWith('0')) {
+    return `264${digits.slice(1)}`
+  }
+
+  return digits
+}
+
+export function getWhatsAppHref(phone?: string | null, name?: string, message?: string) {
+  const number = formatWhatsAppNumber(phone)
+  if (!number) {
+    return null
+  }
+
+  const whatsappMessage = encodeURIComponent(message ?? `Hi${name ? ` ${name}` : ''}, I found your profile on LOKALS and would like to enquire.`)
+  return `https://wa.me/${number}?text=${whatsappMessage}`
 }
 
 export function resolveMediaUrl(path?: string | null) {

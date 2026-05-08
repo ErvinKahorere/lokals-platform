@@ -3,19 +3,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../shared/widgets/alert_card.dart';
-import '../../../shared/widgets/app_search_bar.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/experience/nearby_service_card.dart';
-import '../../../shared/widgets/experience/notification_bell.dart';
-import '../../../shared/widgets/experience/quick_action_grid.dart';
-import '../../../shared/widgets/experience/recent_activity_card.dart';
-import '../../../shared/widgets/experience/smart_suggestion_card.dart';
+import '../../config/app_config.dart';
+import '../../core/models.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../auth/auth_controller.dart';
 import '../discovery/discovery_repository.dart';
-import 'onboarding_flow.dart';
+import '../events/event_card.dart';
+import '../news/news_feed_section.dart';
 import '../services/services_repository.dart';
+import 'onboarding_flow.dart';
+import 'widgets/home_hero_card.dart';
+import 'widgets/home_quick_actions.dart';
+import 'widgets/home_section.dart';
+import 'widgets/local_update_card.dart';
+import 'widgets/role_home_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -26,29 +31,26 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _searchController = TextEditingController();
-  bool _showGuide = false;
   bool _showOnboarding = false;
 
   @override
   void initState() {
     super.initState();
-    _loadGuide();
+    _loadOnboarding();
   }
 
-  Future<void> _loadGuide() async {
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
     setState(() {
-      _showGuide = prefs.getBool('lokals_home_guide_dismissed') != true;
       _showOnboarding = prefs.getBool('lokals_onboarding_complete') != true;
     });
-  }
-
-  Future<void> _dismissGuide() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('lokals_home_guide_dismissed', true);
-    if (!mounted) return;
-    setState(() => _showGuide = false);
   }
 
   Future<void> _completeOnboarding() async {
@@ -58,189 +60,398 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     setState(() => _showOnboarding = false);
   }
 
+  void _routeSearch(String value) {
+    final query = value.trim();
+    if (query.isEmpty) return;
+    context.go('/search?q=${Uri.encodeComponent(query)}');
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
     final user = auth.user;
-    final providers = ref.watch(servicesProvider);
-    final alertsFeed = ref.watch(alertsFeedProvider);
     final preferences = ref.watch(preferencesProvider);
+    final providers = ref.watch(servicesProvider);
+    final events = ref.watch(eventsProvider);
+    final alertsFeed = ref.watch(alertsFeedProvider);
+    final products = ref.watch(storeProductsProvider);
+    final jobs = ref.watch(jobsProvider);
+    final followingFeed = ref.watch(followingFeedProvider);
     final preferenceData = preferences.asData?.value;
-    final town = user?.defaultTown ?? preferenceData?.defaultTown ?? 'Windhoek';
-    final area = user?.defaultArea ?? preferenceData?.defaultArea;
+    final town = AppConfig.pilotTown;
+    final area = preferenceData?.defaultArea ?? user?.defaultArea;
+    final localNewsParams = {
+      'town': town,
+      ...?(area == null ? null : {'area': area}),
+    };
+    final newsFeed = ref.watch(auth.token == null ? newsProvider(localNewsParams) : newsFeedProvider);
+    final role = user?.currentRole ?? (user?.roles.isNotEmpty == true ? user!.roles.first : 'guest');
+
+    final localNews = newsFeed.asData?.value.take(3).toList() ?? const <NewsItemModel>[];
+    final providerItems = providers.asData?.value.take(4).toList() ?? const <ProviderModel>[];
+    final eventItems = events.asData?.value.take(3).toList() ?? const <EventModel>[];
+    final productItems = products.asData?.value.take(3).toList() ?? const <ProductModel>[];
+    final jobItems = jobs.asData?.value.take(3).toList() ?? const <JobModel>[];
+
+    final baseUpdates = [
+      ...(alertsFeed.asData?.value.take(2).map((item) => (
+            title: item.title,
+            source: item.location ?? 'Local alert',
+            type: 'alert',
+            route: '/alerts',
+            time: item.timestamp,
+            status: item.severity ?? 'urgent',
+            weight: 3,
+          )) ??
+          const []),
+      ...(followingFeed.asData?.value.take(2).map((item) => (
+            title: item['title']?.toString() ?? item['name']?.toString() ?? item['body']?.toString() ?? 'Followed organization update',
+            source: item['category']?.toString() ?? item['location']?.toString() ?? 'Followed update',
+            type: 'followed',
+            route: '/activity',
+            time: item['timestamp']?.toString() ?? item['created_at']?.toString(),
+            status: item['status']?.toString() ?? 'following',
+            weight: 2,
+          )) ??
+          const []),
+    ];
+    final remainingUpdateSlots = baseUpdates.length >= 4 ? 0 : 4 - baseUpdates.length;
+    final localUpdates = [
+      ...baseUpdates,
+      ...localNews.take(remainingUpdateSlots).map((item) => (
+            title: item.title,
+            source: item.sourceName,
+            type: 'news',
+            route: '/news/${item.id}',
+            time: item.publishedAt,
+            status: item.category,
+            weight: 1,
+          )),
+    ]..sort((a, b) => b.weight.compareTo(a.weight));
 
     return LokalsShell(
       title: 'LOKALS',
-      actions: const [NotificationBell(count: 3)],
       child: Stack(
         children: [
           ListView(
             padding: const EdgeInsets.all(20),
             children: [
-          Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              gradient: const LinearGradient(
-                colors: [Color(0xFF312E81), Color(0xFF4F46E5), Color(0xFF7C3AED)],
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  user == null ? 'Good day' : 'Good day, ${user.name}',
-                  style: const TextStyle(color: Colors.white70),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Showing results for $town',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  area == null
-                      ? 'What can you do in the next 3 seconds? Search, book, post, request a ride, sell an item, or open SOS.'
-                      : '$area first. What can you do in the next 3 seconds? Search, book, post, request a ride, sell an item, or open SOS.',
-                  style: TextStyle(color: Colors.white70),
-                ),
-                const SizedBox(height: 14),
-                AppSearchBar(
-                  controller: _searchController,
-                  hintText: 'Search services, jobs, products...',
-                  recentKey: 'home',
-                  suggestions: const ['Barber nearby', 'Clinic open now', 'Jobs near me', 'Parcel delivery'],
-                  shortcuts: const ['Get Help', 'Shop', 'Stay'],
-                ),
-              ],
-            ),
-          ),
-          if (_showGuide) ...[
-            const SizedBox(height: 18),
-            LokalsCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('What do you want to do today?', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-                            SizedBox(height: 6),
-                            Text('Choose one path and LOKALS will keep the next step obvious.'),
-                          ],
-                        ),
-                      ),
-                      IconButton(onPressed: _dismissGuide, icon: const Icon(Icons.close_rounded)),
-                    ],
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: AppColors.purpleSoftAlt,
+                    child: Text(
+                      user?.name.characters.first.toUpperCase() ?? 'L',
+                      style: AppTextStyles.h3.copyWith(color: AppColors.primaryPurple),
+                    ),
                   ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      AppButton(label: 'Find a service', expanded: false, variant: AppButtonVariant.secondary, onPressed: () => context.go('/services')),
-                      AppButton(label: 'Find work', expanded: false, variant: AppButtonVariant.secondary, onPressed: () => context.go('/jobs')),
-                      AppButton(label: 'Shop', expanded: false, variant: AppButtonVariant.secondary, onPressed: () => context.go('/store')),
-                    ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user == null ? 'Welcome to LOKALS' : 'Good morning, ${user.name} 👋',
+                          style: AppTextStyles.bodyMuted,
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'What do you need in Okahandja today?',
+                          style: TextStyle(
+                            fontSize: 29,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.deepCharcoal,
+                            height: 1.1,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
-          ],
-          const SizedBox(height: 18),
-          const SectionTitle(title: 'Quick actions'),
-          const SizedBox(height: 12),
-          const QuickActionGrid(),
-          const SizedBox(height: 18),
-          const SectionTitle(title: 'Smart suggestions'),
-          const SizedBox(height: 12),
-          GridView.count(
-            crossAxisCount: 1,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.5,
-            children: const [
-              SmartSuggestionCard(
-                title: 'Need a barber nearby?',
-                body: 'Browse trusted services, compare pricing, and call or book fast.',
-                icon: Icons.content_cut_rounded,
-                route: '/services',
-                badge: 'Primary',
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceWhite,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Text(
+                      [area, town].whereType<String>().join(', '),
+                      style: AppTextStyles.caption.copyWith(color: AppColors.deepCharcoal),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: AppColors.greenSoft,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      AppConfig.pilotLocationMessage,
+                      style: AppTextStyles.caption.copyWith(color: AppColors.primaryGreen),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: AppColors.purpleSoftAlt,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      user == null ? 'Guest' : role.replaceAll('_', ' '),
+                      style: AppTextStyles.caption.copyWith(color: AppColors.primaryPurple),
+                    ),
+                  ),
+                ],
               ),
-              SmartSuggestionCard(
-                title: 'Directory help nearby',
-                body: 'Clinics, police, schools, and trusted public services stay easy to reach.',
-                icon: Icons.local_hospital_outlined,
-                route: '/directory',
-                badge: 'Trusted',
+              const SizedBox(height: 14),
+              AppSearchBar(
+                controller: _searchController,
+                hintText: 'Search services, jobs, products...',
+                recentKey: 'home',
+                onValueSelected: _routeSearch,
+                suggestions: const [
+                  'Services near me',
+                  'Jobs in Okahandja',
+                  'Products nearby',
+                  'Events this weekend',
+                  'Local news',
+                ],
+                shortcuts: const ['Services', 'Jobs', 'Market', 'Events', 'News'],
               ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          const SectionTitle(title: 'Nearby services'),
-          const SizedBox(height: 12),
-          providers.when(
-            data: (items) => Column(
-              children: items.take(2).map((item) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: NearbyServiceCard(provider: item),
-              )).toList(),
-            ),
-            loading: () => const LoadingSkeleton(height: 160),
-            error: (error, _) => Text('Services unavailable: $error'),
-          ),
-          const SizedBox(height: 18),
-          const SectionTitle(title: 'Recent activity'),
-          const SizedBox(height: 12),
-          const RecentActivityCard(
-            icon: Icons.event_available_outlined,
-            title: 'Booking confirmed',
-            body: 'Your last appointment request is now with the provider.',
-            time: '2 min ago',
-            status: 'Bookings',
-          ),
-          const SizedBox(height: 12),
-          const RecentActivityCard(
-            icon: Icons.work_outline_rounded,
-            title: 'Job application sent',
-            body: 'Your worker details were reused to keep the flow quick.',
-            time: '1 hour ago',
-            status: 'Work',
-          ),
-          const SizedBox(height: 18),
-          alertsFeed.when(
-            data: (items) => items.isEmpty
-                ? const SizedBox.shrink()
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SectionTitle(title: 'Alerts near you'),
-                      const SizedBox(height: 12),
-                      ...items.take(2).map(
-                        (item) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: AlertCard(
-                            title: item.title,
-                            body: item.body,
-                            priority: item.severity ?? 'info',
-                            location: item.location,
-                          ),
+              if (user == null) ...[
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: AppButton(
+                    label: 'Sign in for your local feed',
+                    expanded: false,
+                    variant: AppButtonVariant.secondary,
+                    onPressed: () => context.go('/login'),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 18),
+              const HomeHeroCard(),
+              const SizedBox(height: 18),
+              const HomeQuickActions(),
+              const SizedBox(height: 18),
+              RoleHomeCard(role: role, isGuest: user == null),
+              const SizedBox(height: 18),
+              HomeSection(
+                eyebrow: 'Local updates',
+                title: 'What is happening near you',
+                actionLabel: 'View all updates',
+                onAction: () => context.go('/alerts'),
+                isLoading: alertsFeed.isLoading || newsFeed.isLoading || followingFeed.isLoading,
+                errorText: (alertsFeed.hasError || newsFeed.hasError || followingFeed.hasError)
+                    ? 'Please try again in a moment.'
+                    : null,
+                emptyTitle: localUpdates.isEmpty ? 'No alerts right now. You\'re all caught up.' : null,
+                emptyBody: localUpdates.isEmpty ? 'Local alerts, followed updates, and news will appear here.' : null,
+                onRetry: () {
+                  ref.invalidate(alertsFeedProvider);
+                  ref.invalidate(newsFeedProvider);
+                  ref.invalidate(followingFeedProvider);
+                },
+                child: Column(
+                  children: localUpdates.take(5).map((item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: LocalUpdateCard(
+                      title: item.title,
+                      source: item.source,
+                      type: item.type,
+                      route: item.route,
+                      time: item.time,
+                      status: item.status,
+                    ),
+                  )).toList(),
+                ),
+              ),
+              const SizedBox(height: 18),
+              HomeSection(
+                eyebrow: 'Nearby services',
+                title: 'Trusted providers around you',
+                actionLabel: 'See all services',
+                onAction: () => context.go('/services'),
+                isLoading: providers.isLoading,
+                errorText: providers.hasError ? 'Services unavailable right now.' : null,
+                emptyTitle: providerItems.isEmpty ? 'No nearby services yet.' : null,
+                emptyBody: providerItems.isEmpty ? 'Trusted local providers will appear here.' : null,
+                onRetry: () => ref.invalidate(servicesProvider),
+                child: Column(
+                  children: providerItems.map((item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: NearbyServiceCard(provider: item),
+                  )).toList(),
+                ),
+              ),
+              const SizedBox(height: 18),
+              HomeSection(
+                eyebrow: 'Events near you',
+                title: 'Upcoming events nearby',
+                actionLabel: 'View events',
+                onAction: () => context.go('/events'),
+                isLoading: events.isLoading,
+                errorText: events.hasError ? 'Events unavailable right now.' : null,
+                emptyTitle: eventItems.isEmpty ? 'No events nearby yet.' : null,
+                emptyBody: eventItems.isEmpty ? 'Upcoming local events will show up here.' : null,
+                onRetry: () => ref.invalidate(eventsProvider),
+                child: Column(
+                  children: eventItems.map((item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: EventCard(event: item),
+                  )).toList(),
+                ),
+              ),
+              const SizedBox(height: 18),
+              HomeSection(
+                eyebrow: 'Store deals',
+                title: 'Local products and offers',
+                actionLabel: 'Open Store',
+                onAction: () => context.go('/store'),
+                isLoading: products.isLoading,
+                errorText: products.hasError ? 'Store deals unavailable right now.' : null,
+                emptyTitle: productItems.isEmpty ? 'No store deals in your area today.' : null,
+                emptyBody: productItems.isEmpty ? 'Local products and sale alerts will appear here.' : null,
+                onRetry: () => ref.invalidate(storeProductsProvider),
+                child: Column(
+                  children: productItems.map((item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(24),
+                      onTap: () => context.go('/store/${item.id}'),
+                      child: AppCard(
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 52,
+                              height: 52,
+                              decoration: BoxDecoration(
+                                color: AppColors.greenSoft,
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              child: const Icon(Icons.shopping_bag_outlined, color: AppColors.lokalsGreen),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(item.title, style: const TextStyle(fontWeight: FontWeight.w700)),
+                                  const SizedBox(height: 4),
+                                  Text(item.businessName ?? item.userName ?? 'Local seller', style: const TextStyle(color: AppColors.mutedText)),
+                                  const SizedBox(height: 8),
+                                  Text(item.salePrice ?? item.price, style: const TextStyle(fontWeight: FontWeight.w800)),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-            loading: () => const LoadingSkeleton(height: 120),
-            error: (error, _) => Text('Alerts unavailable: $error'),
-          ),
+                    ),
+                  )).toList(),
+                ),
+              ),
+              const SizedBox(height: 18),
+              HomeSection(
+                eyebrow: role == 'worker' ? 'Work first' : 'Work opportunities',
+                title: 'Jobs near you',
+                actionLabel: 'View Work',
+                onAction: () => context.go('/jobs'),
+                isLoading: jobs.isLoading,
+                errorText: jobs.hasError ? 'Jobs unavailable right now.' : null,
+                emptyTitle: jobItems.isEmpty ? 'No nearby work opportunities right now.' : null,
+                emptyBody: jobItems.isEmpty ? 'Fresh local jobs will appear here.' : null,
+                onRetry: () => ref.invalidate(jobsProvider),
+                child: Column(
+                  children: jobItems.map((item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(24),
+                      onTap: () => context.go('/jobs'),
+                      child: AppCard(
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 52,
+                              height: 52,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEEF2FF),
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              child: const Icon(Icons.work_outline_rounded, color: Color(0xFF7C3AED)),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(item.title, style: const TextStyle(fontWeight: FontWeight.w700)),
+                                  const SizedBox(height: 4),
+                                  Text(item.location ?? [area, town].whereType<String>().join(', '), style: const TextStyle(color: AppColors.mutedText)),
+                                  const SizedBox(height: 8),
+                                  Text(item.compensation ?? 'Pay not listed', style: const TextStyle(fontWeight: FontWeight.w800)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )).toList(),
+                ),
+              ),
+              const SizedBox(height: 18),
+              newsFeed.when(
+                data: (items) => NewsFeedSection(
+                  title: 'Local news',
+                  subtitle: 'Aggregated local stories with clear source attribution.',
+                  items: items.take(3).toList(),
+                ),
+                loading: () => const LoadingSkeleton(height: 180),
+                error: (error, _) => const EmptyStateView(
+                  title: 'News unavailable',
+                  body: 'Please try again in a moment.',
+                ),
+              ),
+              const SizedBox(height: 18),
+              AppCard(
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Explore more in your area',
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                          ),
+                          SizedBox(height: 6),
+                          Text(
+                            'Browse more local services, shops, directory entries, and updates.',
+                            style: TextStyle(color: AppColors.mutedText),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    AppButton(
+                      label: 'More',
+                      expanded: false,
+                      variant: AppButtonVariant.secondary,
+                      onPressed: () => context.go('/more'),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
           if (_showOnboarding) Positioned.fill(child: OnboardingFlow(onComplete: _completeOnboarding)),

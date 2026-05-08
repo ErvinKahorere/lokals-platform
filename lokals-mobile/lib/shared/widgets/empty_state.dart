@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_text_styles.dart';
 import 'app_button.dart';
 import 'app_card.dart';
@@ -30,10 +31,10 @@ class EmptyState extends StatelessWidget {
               height: 56,
               width: 56,
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(20),
+                color: AppColors.primaryPurple.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
-              child: const Icon(Icons.inbox_outlined, color: AppColors.mutedText),
+              child: const Icon(Icons.inbox_outlined, color: AppColors.primaryPurple),
             ),
             const SizedBox(height: 16),
             Text(title, style: AppTextStyles.h3, textAlign: TextAlign.center),

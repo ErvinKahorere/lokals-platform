@@ -178,4 +178,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(PostDraft::class);
     }
+
+    public function hasTownManagerRole(): bool
+    {
+        return $this->hasAnyRole(['town_manager', 'municipality_admin']);
+    }
+
+    public function hasTownManagerAccess(): bool
+    {
+        return $this->hasAnyRole(['town_manager', 'municipality_admin', 'super_admin']);
+    }
 }

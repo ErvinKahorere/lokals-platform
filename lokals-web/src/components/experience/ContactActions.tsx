@@ -8,10 +8,14 @@ import { WhatsAppPlaceholderButton } from './WhatsAppPlaceholderButton'
 export function ContactActions({
   name,
   phone,
+  whatsapp,
+  whatsappMessage,
   className,
 }: {
   name: string
   phone?: string | null
+  whatsapp?: string | null
+  whatsappMessage?: string
   className?: string
 }) {
   const [open, setOpen] = useState(false)
@@ -24,10 +28,9 @@ export function ContactActions({
           Message
         </Button>
         <QuickCallButton phone={phone} />
-        <WhatsAppPlaceholderButton onClick={() => setOpen(true)} />
+        <WhatsAppPlaceholderButton onClick={() => setOpen(true)} phone={whatsapp ?? phone} name={name} message={whatsappMessage} />
       </div>
       <MessagePlaceholderModal open={open} title={`Contact ${name}`} phone={phone} onClose={() => setOpen(false)} />
     </>
   )
 }
-
