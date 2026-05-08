@@ -3,6 +3,8 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 
 class AppConfig {
+  static const productionApiBaseUrl =
+      'https://lokals-platform.onrender.com/api/v1';
   static const pilotTown = 'Okahandja';
   static const locationLock = true;
   static const pilotLocationMessage =
@@ -43,6 +45,10 @@ class AppConfig {
       return [_configuredApiBaseUrl];
     }
 
+    if (appMode == 'production') {
+      return const [productionApiBaseUrl];
+    }
+
     if (!kIsWeb && Platform.isAndroid) {
       return const [
         'http://10.0.2.2:8000/api/v1',
@@ -54,6 +60,7 @@ class AppConfig {
   }
 
   static const apiBaseUrlHelp =
+      'Production builds default to https://lokals-platform.onrender.com/api/v1. '
       'Android emulator should use http://10.0.2.2:8000/api/v1. '
       'Android over USB can use http://127.0.0.1:8000/api/v1 when adb reverse is enabled. '
       'Android phones on Wi-Fi should pass a reachable LAN host with API_BASE_URL, for example '

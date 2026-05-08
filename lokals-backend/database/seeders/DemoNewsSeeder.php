@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\NewsItem;
 use App\Models\NewsSource;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class DemoNewsSeeder extends Seeder
 {
@@ -15,7 +16,7 @@ class DemoNewsSeeder extends Seeder
             [
                 'website_url' => 'https://lokals-platform.onrender.com',
                 'feed_url' => 'https://lokals-platform.onrender.com/api/v1/news',
-                'source_type' => 'municipal',
+                'source_type' => 'municipality',
                 'town' => 'Okahandja',
                 'region' => 'Otjozondjupa',
                 'is_active' => true,
@@ -62,6 +63,12 @@ class DemoNewsSeeder extends Seeder
         ];
 
         foreach ($posts as $index => $post) {
+            $externalUrl = sprintf(
+                '%s#%s',
+                $source->website_url,
+                Str::slug($post['title']),
+            );
+
             NewsItem::query()->updateOrCreate(
                 ['title' => $post['title']],
                 [
@@ -70,7 +77,7 @@ class DemoNewsSeeder extends Seeder
                     'summary' => $post['summary'],
                     'source_name' => $source->name,
                     'source_url' => $source->website_url,
-                    'external_url' => $source->website_url,
+                    'external_url' => $externalUrl,
                     'image_url' => null,
                     'category' => $post['category'],
                     'town' => 'Okahandja',
@@ -81,7 +88,7 @@ class DemoNewsSeeder extends Seeder
                     'is_hidden' => false,
                     'published_at' => now()->subDays(5 - $index),
                     'fetched_at' => now()->subDays(5 - $index),
-                    'source_type' => 'municipal',
+                    'source_type' => 'municipality',
                 ],
             );
         }

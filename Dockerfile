@@ -1,6 +1,8 @@
 FROM php:8.3-cli
 
-RUN apt-get update && apt-get install -y \
+RUN echo 'Acquire::ForceIPv4 "true";' > /etc/apt/apt.conf.d/99force-ipv4
+
+RUN apt-get update --fix-missing && apt-get install -y \
     git \
     curl \
     unzip \
