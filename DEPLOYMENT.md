@@ -10,9 +10,9 @@ No UI, role, dashboard, or business-flow changes are required for this setup.
 
 ## Backend On Render
 
-1. Create a new Render Web Service from `lokals-backend`.
-2. Render will detect [render.yaml](</E:/src/xamp/htdocs/Lokals v1/render.yaml>) and [Dockerfile](</E:/src/xamp/htdocs/Lokals v1/lokals-backend/Dockerfile>).
-3. Set the root directory to `lokals-backend` if Render asks.
+1. Create a new Render Web Service from the repository root.
+2. Render will detect [render.yaml](</E:/src/xamp/htdocs/Lokals v1/render.yaml>) and the repo-root [Dockerfile](</E:/src/xamp/htdocs/Lokals v1/Dockerfile>).
+3. Keep the service pointed at the repository root so the Docker build can copy `lokals-backend` and `scripts`.
 4. Add the environment variables listed below.
 5. After the first deploy, run migrations as part of the deploy flow with [deploy-render.sh](</E:/src/xamp/htdocs/Lokals v1/lokals-backend/scripts/deploy-render.sh>) or your Render start/deploy command setup.
 6. Confirm health checks at `/api/health`.
@@ -23,19 +23,20 @@ No UI, role, dashboard, or business-flow changes are required for this setup.
 APP_NAME=LOKALS
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://lokals-api.onrender.com
-FRONTEND_URL=https://lokals.vercel.app
+APP_URL=https://lokals-platform.onrender.com
+FRONTEND_URL=https://lokals-platform.vercel.app
 DB_CONNECTION=pgsql
 DB_HOST=
 DB_PORT=5432
 DB_DATABASE=
 DB_USERNAME=
 DB_PASSWORD=
-SANCTUM_STATEFUL_DOMAINS=lokals.vercel.app
+SANCTUM_STATEFUL_DOMAINS=lokals-platform.vercel.app
 SESSION_DOMAIN=
 SESSION_DRIVER=file
 SESSION_SECURE_COOKIE=true
 SESSION_SAME_SITE=none
+SEED_DEMO_DATA=false
 ```
 
 ### Additional Recommended Backend Env
@@ -44,7 +45,7 @@ SESSION_SAME_SITE=none
 APP_KEY=
 DB_SCHEMA=public
 DB_SSLMODE=prefer
-CORS_ALLOWED_ORIGINS=https://lokals.vercel.app,http://localhost:5173,http://127.0.0.1:5173
+CORS_ALLOWED_ORIGINS=https://lokals-platform.vercel.app,http://localhost:5173,http://127.0.0.1:5173
 QUEUE_CONNECTION=database
 FILESYSTEM_DISK=local
 ```
@@ -73,13 +74,13 @@ If Render provides a connection string, you can also map it to `DB_URL` in Larav
 ### Required Frontend Env
 
 ```env
-VITE_API_URL=https://lokals-api.onrender.com
+VITE_API_URL=https://lokals-platform.onrender.com
 ```
 
 ### Optional Frontend Env
 
 ```env
-VITE_APP_URL=https://lokals.vercel.app
+VITE_APP_URL=https://lokals-platform.vercel.app
 VITE_USE_SANCTUM_COOKIE_AUTH=false
 ```
 

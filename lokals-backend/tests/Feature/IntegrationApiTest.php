@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Product;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -20,7 +21,7 @@ class IntegrationApiTest extends TestCase
 
     public function test_search_returns_grouped_results(): void
     {
-        $this->getJson('/api/v1/search?q=windhoek')
+        $this->getJson('/api/v1/search?q=okahandja')
             ->assertOk()
             ->assertJsonStructure([
                 'services',
@@ -36,7 +37,7 @@ class IntegrationApiTest extends TestCase
 
     public function test_activity_returns_unified_items(): void
     {
-        Sanctum::actingAs(User::where('email', 'citizen@lokals.test')->firstOrFail());
+        Sanctum::actingAs(User::where('email', 'resident@lokals.app')->firstOrFail());
 
         $this->getJson('/api/v1/activity')
             ->assertOk()
@@ -50,12 +51,14 @@ class IntegrationApiTest extends TestCase
 
     public function test_saved_items_can_be_listed_created_and_removed(): void
     {
-        $user = User::where('email', 'citizen@lokals.test')->firstOrFail();
+        $user = User::where('email', 'resident@lokals.app')->firstOrFail();
         Sanctum::actingAs($user);
+
+        $product = Product::query()->firstOrFail();
 
         $this->postJson('/api/v1/saved-items', [
             'type' => 'product',
-            'id' => 1,
+            'id' => $product->id,
         ])->assertCreated();
 
         $this->getJson('/api/v1/saved-items')
@@ -71,7 +74,7 @@ class IntegrationApiTest extends TestCase
 
         $this->deleteJson('/api/v1/saved-items', [
             'type' => 'product',
-            'id' => 1,
+            'id' => $product->id,
         ])->assertOk();
     }
 }

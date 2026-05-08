@@ -29,7 +29,7 @@ class ApiHardeningTest extends TestCase
 
     public function test_missing_resource_returns_standard_not_found_json(): void
     {
-        Sanctum::actingAs(User::where('email', 'citizen@lokals.test')->firstOrFail());
+        Sanctum::actingAs(User::where('email', 'resident@lokals.app')->firstOrFail());
 
         $this->getJson('/api/v1/store/products/999999')
             ->assertNotFound()
@@ -40,7 +40,7 @@ class ApiHardeningTest extends TestCase
 
     public function test_validation_errors_return_consistent_shape(): void
     {
-        Sanctum::actingAs(User::where('email', 'citizen@lokals.test')->firstOrFail());
+        Sanctum::actingAs(User::where('email', 'resident@lokals.app')->firstOrFail());
 
         $this->postJson('/api/v1/store/products', [])
             ->assertUnprocessable()

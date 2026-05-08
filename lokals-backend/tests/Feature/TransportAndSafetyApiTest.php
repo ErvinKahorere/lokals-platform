@@ -22,7 +22,7 @@ class TransportAndSafetyApiTest extends TestCase
 
     public function test_delivery_list_create_and_detail_work(): void
     {
-        $user = User::where('email', 'citizen@lokals.test')->firstOrFail();
+        $user = User::where('email', 'resident@lokals.app')->firstOrFail();
         Sanctum::actingAs($user);
 
         $this->getJson('/api/v1/deliveries')
@@ -38,8 +38,8 @@ class TransportAndSafetyApiTest extends TestCase
             ]);
 
         $created = $this->postJson('/api/v1/deliveries', [
-            'pickup_location' => 'Katutura community hall',
-            'dropoff_location' => 'Windhoek CBD',
+            'pickup_location' => 'Nau-Aib Community Hall',
+            'dropoff_location' => 'Okahandja Town Council',
             'parcel_description' => 'Bakery order for same-day delivery',
             'parcel_size' => 'medium',
             'estimated_price' => 65,
@@ -66,7 +66,7 @@ class TransportAndSafetyApiTest extends TestCase
 
     public function test_delivery_creation_validates_required_fields(): void
     {
-        $user = User::where('email', 'citizen@lokals.test')->firstOrFail();
+        $user = User::where('email', 'resident@lokals.app')->firstOrFail();
         Sanctum::actingAs($user);
 
         $this->postJson('/api/v1/deliveries', [])
@@ -83,7 +83,7 @@ class TransportAndSafetyApiTest extends TestCase
 
     public function test_ride_list_create_and_detail_work(): void
     {
-        $user = User::where('email', 'citizen@lokals.test')->firstOrFail();
+        $user = User::where('email', 'resident@lokals.app')->firstOrFail();
         Sanctum::actingAs($user);
 
         $this->getJson('/api/v1/rides')
@@ -99,8 +99,8 @@ class TransportAndSafetyApiTest extends TestCase
             ]);
 
         $created = $this->postJson('/api/v1/rides', [
-            'pickup_location' => 'Khomasdal taxi rank',
-            'dropoff_location' => 'Klein Windhoek clinic',
+            'pickup_location' => 'Taxi Rank, Okahandja',
+            'dropoff_location' => 'Okahandja State Clinic',
             'ride_type' => 'Comfort',
             'trip_purpose' => 'Clinic visit',
             'fare_estimate' => 58,
@@ -127,7 +127,7 @@ class TransportAndSafetyApiTest extends TestCase
 
     public function test_ride_creation_validates_required_fields(): void
     {
-        $user = User::where('email', 'citizen@lokals.test')->firstOrFail();
+        $user = User::where('email', 'resident@lokals.app')->firstOrFail();
         Sanctum::actingAs($user);
 
         $this->postJson('/api/v1/rides', [])
@@ -142,15 +142,15 @@ class TransportAndSafetyApiTest extends TestCase
 
     public function test_sos_creation_works_with_emergency_metadata(): void
     {
-        $user = User::where('email', 'citizen@lokals.test')->firstOrFail();
+        $user = User::where('email', 'resident@lokals.app')->firstOrFail();
         Sanctum::actingAs($user);
 
         $this->postJson('/api/v1/sos', [
             'message' => 'Unsafe roadside situation',
             'emergency_type' => 'Roadside',
-            'location' => 'Olympia',
-            'town' => 'Windhoek',
-            'area' => 'Olympia',
+            'location' => 'Nau-Aib football ground',
+            'town' => 'Okahandja',
+            'area' => 'Nau-Aib',
         ])->assertCreated()
             ->assertJsonPath('data.status', 'sent')
             ->assertJsonPath('data.emergency_type', 'Roadside');
@@ -158,8 +158,8 @@ class TransportAndSafetyApiTest extends TestCase
 
     public function test_transport_requests_stay_scoped_to_requesting_user(): void
     {
-        $citizen = User::where('email', 'citizen@lokals.test')->firstOrFail();
-        $admin = User::where('email', 'admin@lokals.test')->firstOrFail();
+        $citizen = User::where('email', 'resident@lokals.app')->firstOrFail();
+        $admin = User::where('email', 'admin@lokals.app')->firstOrFail();
         $delivery = DeliveryRequest::where('user_id', $citizen->id)->firstOrFail();
         $ride = RideRequest::where('user_id', $citizen->id)->firstOrFail();
 

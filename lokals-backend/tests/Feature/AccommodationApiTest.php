@@ -23,7 +23,7 @@ class AccommodationApiTest extends TestCase
     {
         $listing = Accommodation::query()->where('status', 'published')->firstOrFail();
 
-        $this->getJson('/api/v1/accommodations?town=Windhoek&verified=1')
+        $this->getJson('/api/v1/accommodations?town=Okahandja&verified=1')
             ->assertOk()
             ->assertJsonStructure([
                 'data' => [[
@@ -51,38 +51,38 @@ class AccommodationApiTest extends TestCase
 
     public function test_accommodation_filters_apply(): void
     {
-        $this->getJson('/api/v1/accommodations?type=property_sale&bedrooms=3&town=Windhoek')
+        $this->getJson('/api/v1/accommodations?type=property_sale&bedrooms=3&town=Okahandja')
             ->assertOk()
             ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.title', 'Family House in Eros');
+            ->assertJsonPath('data.0.title', 'Nau-Aib Family House');
     }
 
     public function test_authenticated_user_can_create_accommodation(): void
     {
-        $user = User::where('email', 'citizen@lokals.test')->firstOrFail();
+        $user = User::where('email', 'resident@lokals.app')->firstOrFail();
         Sanctum::actingAs($user);
 
         $this->postJson('/api/v1/accommodations', [
             'type' => 'rental',
-            'title' => 'Khomasdal Studio Flat',
+            'title' => 'Nau-Aib Studio Flat',
             'description' => 'Compact local rental close to taxis.',
             'price' => 4300,
             'price_period' => 'month',
-            'town' => 'Windhoek',
-            'area' => 'Khomasdal',
+            'town' => 'Okahandja',
+            'area' => 'Nau-Aib',
             'bedrooms' => 1,
             'bathrooms' => 1,
             'metadata' => [
-                'contact_phone' => '+264810000002',
+                'contact_phone' => '+264810001050',
                 'amenities' => ['Wi-Fi'],
             ],
         ])->assertCreated()
-            ->assertJsonPath('data.title', 'Khomasdal Studio Flat');
+            ->assertJsonPath('data.title', 'Nau-Aib Studio Flat');
     }
 
     public function test_required_fields_are_validated_for_accommodation_creation(): void
     {
-        $user = User::where('email', 'citizen@lokals.test')->firstOrFail();
+        $user = User::where('email', 'resident@lokals.app')->firstOrFail();
         Sanctum::actingAs($user);
 
         $this->postJson('/api/v1/accommodations', [

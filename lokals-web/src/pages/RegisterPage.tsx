@@ -16,10 +16,10 @@ export function RegisterPage() {
   const [form, setForm] = useState({
     name: '',
     phone: '',
-    password: 'password',
-    password_confirmation: 'password',
-    default_town: 'Windhoek',
-    default_area: 'Katutura',
+    password: 'Password123!',
+    password_confirmation: 'Password123!',
+    default_town: 'Okahandja',
+    default_area: 'Nau-Aib',
   })
 
   const submit = async (event: FormEvent) => {

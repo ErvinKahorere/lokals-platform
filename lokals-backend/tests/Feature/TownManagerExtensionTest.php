@@ -23,7 +23,7 @@ class TownManagerExtensionTest extends TestCase
 
     public function test_town_manager_dashboard_is_accessible_to_town_manager_role(): void
     {
-        Sanctum::actingAs(User::where('email', 'municipality@lokals.test')->firstOrFail());
+        Sanctum::actingAs(User::where('email', 'manager@lokals.app')->firstOrFail());
 
         $this->getJson('/api/v1/dashboard/town-manager')
             ->assertOk()
@@ -44,14 +44,14 @@ class TownManagerExtensionTest extends TestCase
 
     public function test_normal_user_is_blocked_from_town_manager_dashboard(): void
     {
-        Sanctum::actingAs(User::where('email', 'citizen@lokals.test')->firstOrFail());
+        Sanctum::actingAs(User::where('email', 'resident@lokals.app')->firstOrFail());
 
         $this->getJson('/api/v1/dashboard/town-manager')->assertForbidden();
     }
 
     public function test_town_manager_can_view_reports_in_scope(): void
     {
-        Sanctum::actingAs(User::where('email', 'municipality@lokals.test')->firstOrFail());
+        Sanctum::actingAs(User::where('email', 'manager@lokals.app')->firstOrFail());
 
         $this->getJson('/api/v1/reports')
             ->assertOk()
@@ -61,8 +61,8 @@ class TownManagerExtensionTest extends TestCase
 
     public function test_town_manager_can_update_report_status_and_owner_gets_notification(): void
     {
-        $manager = User::where('email', 'municipality@lokals.test')->firstOrFail();
-        $report = CityReport::where('title', 'Pothole on main road')->firstOrFail();
+        $manager = User::where('email', 'manager@lokals.app')->firstOrFail();
+        $report = CityReport::where('title', 'Streetlight outage near Nau-Aib bus stop')->firstOrFail();
         Sanctum::actingAs($manager);
 
         $this->patchJson("/api/v1/reports/{$report->id}/status", [
@@ -86,7 +86,7 @@ class TownManagerExtensionTest extends TestCase
 
     public function test_municipal_alert_appears_in_alerts_feed(): void
     {
-        $manager = User::where('email', 'municipality@lokals.test')->firstOrFail();
+        $manager = User::where('email', 'manager@lokals.app')->firstOrFail();
         Sanctum::actingAs($manager);
 
         $this->postJson('/api/v1/alerts', [
@@ -115,7 +115,7 @@ class TownManagerExtensionTest extends TestCase
 
     public function test_normal_user_can_submit_report(): void
     {
-        $citizen = User::where('email', 'citizen@lokals.test')->firstOrFail();
+        $citizen = User::where('email', 'resident@lokals.app')->firstOrFail();
         Sanctum::actingAs($citizen);
 
         $this->postJson('/api/v1/reports', [

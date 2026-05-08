@@ -1,5 +1,7 @@
 export const demoLogins = [
-  { label: 'Citizen', phone: '+264810000002', password: 'password' },
-  { label: 'Provider', phone: '+264810000003', password: 'password' },
-  { label: 'Admin', phone: '+264810000001', password: 'password' },
+  { label: 'Citizen', phone: '+264810001050', password: 'Password123!' },
+  { label: 'Service provider', phone: '+264810002203', password: 'Password123!' },
+  { label: 'Business owner', phone: '+264810001101', password: 'Password123!' },
+  { label: 'Town manager', phone: '+264810001001', password: 'Password123!' },
+  { label: 'Super admin', phone: '+264810001000', password: 'Password123!' },
 ]

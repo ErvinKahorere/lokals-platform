@@ -45,6 +45,8 @@ class DatabaseSeeder extends Seeder
             DemoBusinessSeeder::class,
             DemoServiceProviderSeeder::class,
             DemoTownManagerSeeder::class,
+            DemoProductSeeder::class,
+            DemoAccommodationSeeder::class,
             DemoMarketplaceSeeder::class,
             DemoEventSeeder::class,
             DemoNewsSeeder::class,

@@ -25,7 +25,7 @@ class EventsApiTest extends TestCase
     {
         $event = Event::query()->where('status', 'published')->firstOrFail();
 
-        $this->getJson('/api/v1/events?town=Windhoek')
+        $this->getJson('/api/v1/events?town=Okahandja')
             ->assertOk()
             ->assertJsonStructure([
                 'data' => [[
@@ -55,8 +55,8 @@ class EventsApiTest extends TestCase
 
     public function test_organizer_can_create_event(): void
     {
-        $user = User::where('email', 'doctor@lokals.test')->firstOrFail();
-        $organization = Organization::where('name', 'Wanaheda Corner Shop')->firstOrFail();
+        $user = User::where('email', 'market@lokals.app')->firstOrFail();
+        $organization = Organization::where('name', 'Okahandja Fresh Market')->firstOrFail();
         Sanctum::actingAs($user);
 
         $this->postJson('/api/v1/events', [
@@ -66,9 +66,9 @@ class EventsApiTest extends TestCase
             'description' => 'Community networking evening.',
             'category' => 'business',
             'venue_name' => 'Main Hall',
-            'location' => 'Wanaheda',
-            'town' => 'Windhoek',
-            'area' => 'Wanaheda',
+            'location' => 'Town Centre, Okahandja',
+            'town' => 'Okahandja',
+            'area' => 'Town Centre',
             'starts_at' => now()->addDays(5)->toIso8601String(),
             'ends_at' => now()->addDays(5)->addHours(2)->toIso8601String(),
             'status' => 'published',
@@ -79,26 +79,30 @@ class EventsApiTest extends TestCase
 
     public function test_free_ticket_can_be_reserved_and_oversell_is_blocked(): void
     {
-        $user = User::where('email', 'citizen@lokals.test')->firstOrFail();
+        $user = User::where('email', 'resident@lokals.app')->firstOrFail();
         Sanctum::actingAs($user);
 
-        $event = Event::where('title', 'School Open Day')->firstOrFail();
-        $ticketType = EventTicketType::where('event_id', $event->id)->where('name', 'Visitor Pass')->firstOrFail();
-        $ticketType->update([
+        $event = Event::where('title', 'Town Hall Service Delivery Briefing')->firstOrFail();
+        $ticketType = EventTicketType::query()->create([
+            'event_id' => $event->id,
+            'name' => 'Visitor Pass',
+            'description' => 'Single attendee pass.',
+            'price' => 0,
             'quantity_available' => 1,
             'quantity_sold' => 0,
             'sales_start_at' => now()->subDay(),
             'sales_end_at' => now()->addDay(),
+            'is_active' => true,
         ]);
 
         $this->postJson("/api/v1/events/{$event->id}/tickets/reserve", [
             'ticket_type_id' => $ticketType->id,
             'holder_name' => 'Petrina Kamati',
-            'holder_phone' => '+264810000002',
+            'holder_phone' => '+264810001050',
         ])->assertCreated()
             ->assertJsonPath('data.status', 'confirmed');
 
-        $secondUser = User::where('email', 'admin@lokals.test')->firstOrFail();
+        $secondUser = User::where('email', 'admin@lokals.app')->firstOrFail();
         Sanctum::actingAs($secondUser);
 
         $this->postJson("/api/v1/events/{$event->id}/tickets/reserve", [
@@ -108,8 +112,8 @@ class EventsApiTest extends TestCase
 
     public function test_event_can_be_saved_and_calendar_can_be_generated(): void
     {
-        $user = User::where('email', 'citizen@lokals.test')->firstOrFail();
-        $event = Event::where('title', 'Health Awareness Day')->firstOrFail();
+        $user = User::where('email', 'resident@lokals.app')->firstOrFail();
+        $event = Event::where('title', 'Town Hall Service Delivery Briefing')->firstOrFail();
         Sanctum::actingAs($user);
 
         $this->postJson("/api/v1/events/{$event->id}/save")
@@ -124,13 +128,31 @@ class EventsApiTest extends TestCase
             ->assertOk()
             ->assertHeader('Content-Type', 'text/calendar; charset=UTF-8')
             ->assertSee('BEGIN:VCALENDAR', false)
-            ->assertSee('SUMMARY:Health Awareness Day', false);
+            ->assertSee('SUMMARY:Town Hall Service Delivery Briefing', false);
     }
 
     public function test_my_tickets_endpoint_returns_ticket_payloads(): void
     {
-        $user = User::where('email', 'citizen@lokals.test')->firstOrFail();
+        $user = User::where('email', 'resident@lokals.app')->firstOrFail();
+        $event = Event::where('title', 'Town Hall Service Delivery Briefing')->firstOrFail();
+        $ticketType = EventTicketType::query()->create([
+            'event_id' => $event->id,
+            'name' => 'Citizen Pass',
+            'description' => 'Ticket for dashboard verification.',
+            'price' => 0,
+            'quantity_available' => 3,
+            'quantity_sold' => 0,
+            'sales_start_at' => now()->subDay(),
+            'sales_end_at' => now()->addDay(),
+            'is_active' => true,
+        ]);
         Sanctum::actingAs($user);
+
+        $this->postJson("/api/v1/events/{$event->id}/tickets/reserve", [
+            'ticket_type_id' => $ticketType->id,
+            'holder_name' => 'Meriam Kambatuku',
+            'holder_phone' => '+264810001050',
+        ])->assertCreated();
 
         $this->getJson('/api/v1/my/tickets')
             ->assertOk()

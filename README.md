@@ -72,9 +72,8 @@ php artisan schedule:work
 
 ## Demo accounts
 
-- Super admin: `+264810000001` / `password`
-- Citizen: `+264810000002` / `password`
-- Provider barber: `+264810000003` / `password`
-- Provider doctor: `+264810000004` / `password`
-- Provider mechanic: `+264810000005` / `password`
-- Municipality admin: `+264810000006` / `password`
+- Super admin: `+264810001000` / `Password123!`
+- Town manager: `+264810001001` / `Password123!`
+- Citizen: `+264810001050` / `Password123!`
+- Business owner: `+264810001101` / `Password123!`
+- Service provider: `+264810002203` / `Password123!`
