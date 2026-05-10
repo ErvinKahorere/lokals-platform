@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_text_styles.dart';
 
 class AppSearchBar extends StatefulWidget {
@@ -85,15 +86,15 @@ class _AppSearchBarState extends State<AppSearchBar> {
           child: Container(
             decoration: BoxDecoration(
               color: AppColors.surfaceWhite,
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(AppRadius.hero),
               border: Border.all(
                 color: _focused ? AppColors.primaryPurple : AppColors.border,
               ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: _focused ? 0.08 : 0.05),
-                  blurRadius: 22,
-                  offset: const Offset(0, 10),
+                  blurRadius: 24,
+                  offset: const Offset(0, 12),
                 ),
               ],
             ),
@@ -106,13 +107,24 @@ class _AppSearchBarState extends State<AppSearchBar> {
                   margin: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: AppColors.purpleSoftAlt,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   child: const Icon(Icons.search_rounded, color: AppColors.primaryPurple),
                 ),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
+                suffixIcon: widget.controller.text.trim().isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'Clear search',
+                        onPressed: () {
+                          widget.controller.clear();
+                          widget.onChanged?.call('');
+                          setState(() {});
+                        },
+                        icon: const Icon(Icons.close_rounded, color: AppColors.mutedText),
+                      ),
               ),
             ),
           ),

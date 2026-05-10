@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../config/app_config.dart';
 import '../../../shared/widgets/app_button.dart';
 
 class OnboardingFlow extends StatefulWidget {
@@ -93,7 +94,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                   Image.asset('assets/brand/lokals-logo.png', height: 42, color: Colors.white),
                   const SizedBox(height: 12),
                   const Text(
-                    'Everything in your city',
+                    'Everything in your town',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 22,
@@ -102,15 +103,26 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Services, jobs, transport, safety, shopping, and local updates in one simple app.',
+                    '${AppConfig.pilotLocationMessage} Services, jobs, transport, safety, shopping, and local updates all stay in one simple flow.',
                     textAlign: TextAlign.center,
                     style: AppTextStyles.body.copyWith(
                       color: Colors.white.withValues(alpha: 0.82),
                     ),
                   ),
+                  const SizedBox(height: 18),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      _InfoChip(label: AppConfig.pilotTown),
+                      const _InfoChip(label: 'Phone-first'),
+                      const _InfoChip(label: 'Guest browsing'),
+                    ],
+                  ),
                   const Spacer(),
                   AppButton(
-                    label: 'Get Started',
+                    label: 'Enter LOKALS',
                     variant: AppButtonVariant.secondary,
                     onPressed: widget.onComplete,
                   ),
@@ -118,7 +130,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                   TextButton(
                     onPressed: widget.onComplete,
                     child: const Text(
-                      'Login',
+                      'Continue as guest',
                       style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
                     ),
                   ),
@@ -127,6 +139,32 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  const _InfoChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
       ),
     );
   }

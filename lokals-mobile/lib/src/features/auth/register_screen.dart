@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../config/app_config.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import 'auth_controller.dart';
@@ -18,8 +19,7 @@ class RegisterScreen extends ConsumerStatefulWidget {
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _townController = TextEditingController(text: 'Windhoek');
-  final _areaController = TextEditingController(text: 'Katutura');
+  String _selectedArea = AppConfig.okahandjaAreas.contains('Nau-Aib') ? 'Nau-Aib' : AppConfig.okahandjaAreas.first;
   final Set<String> _roles = {'citizen'};
   String? _error;
 
@@ -64,7 +64,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           const SizedBox(height: 16),
           const SectionTitle(
             title: 'Create your LOKALS profile',
-            subtitle: 'A short setup keeps the app friendly, local, and quick to join.',
+            subtitle: 'A short setup keeps the app friendly, local, and quick to join in Okahandja.',
           ),
           const SizedBox(height: 16),
           Container(
@@ -99,7 +99,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ),
                       SizedBox(height: 4),
                       Text(
-                        'Choose your area and role now, then grow the profile as you use LOKALS.',
+                        '${AppConfig.pilotLocationMessage} Choose your area and role now, then grow the profile as you use LOKALS.',
                         style: TextStyle(color: AppColors.mutedText),
                       ),
                     ],
@@ -122,9 +122,24 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   keyboardType: TextInputType.phone,
                 ),
                 const SizedBox(height: 12),
-                LokalsTextField(controller: _townController, label: 'Town', hint: 'Your town'),
+                InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Pilot town',
+                  ),
+                  child: Text(
+                    AppConfig.pilotTown,
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                ),
                 const SizedBox(height: 12),
-                LokalsTextField(controller: _areaController, label: 'Area', hint: 'Your area'),
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedArea,
+                  items: AppConfig.okahandjaAreas
+                      .map((area) => DropdownMenuItem(value: area, child: Text(area)))
+                      .toList(),
+                  decoration: const InputDecoration(labelText: 'Area'),
+                  onChanged: (value) => setState(() => _selectedArea = value ?? _selectedArea),
+                ),
                 const SizedBox(height: 16),
                 const Text(
                   'Choose role(s)',
@@ -143,7 +158,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         setState(() {
                           if (selected) {
                             _roles.add(role);
-                          } else {
+                          } else if (_roles.length > 1) {
                             _roles.remove(role);
                           }
                         });
@@ -162,11 +177,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   onPressed: () async {
                     setState(() => _error = null);
                     try {
-                      await ref.read(authControllerProvider.notifier).register(
+                          await ref.read(authControllerProvider.notifier).register(
                             name: _nameController.text.trim(),
                             phone: _phoneController.text.trim(),
-                            town: _townController.text.trim(),
-                            area: _areaController.text.trim(),
+                            town: AppConfig.pilotTown,
+                            area: _selectedArea,
                             roles: _roles.toList(),
                           );
                       if (!context.mounted) return;

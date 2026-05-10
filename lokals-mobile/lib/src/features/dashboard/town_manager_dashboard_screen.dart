@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../discovery/discovery_repository.dart';
+import '../reports/my_reports_screen.dart';
 import 'dashboard_repository.dart';
 import 'widgets/dashboard_common.dart';
 
@@ -40,8 +41,12 @@ class _TownManagerDashboardScreenState extends ConsumerState<TownManagerDashboar
           subtitle: 'Reports, municipal alerts, public services, and urgent issues in one action-focused space.',
           stats: Map<String, dynamic>.from(data['stats'] as Map? ?? const {}),
           quickActions: buildQuickActions(context, (data['quick_actions'] as List?) ?? const []),
-          pendingTasks: ((data['pending_tasks'] as List?) ?? const []).map((item) => Map<String, dynamic>.from(item as Map)).toList(),
-          recentActivity: ((data['recent_activity'] as List?) ?? const []).map((item) => Map<String, dynamic>.from(item as Map)).toList(),
+          pendingTasks: ((data['pending_tasks'] as List?) ?? const [])
+              .map((item) => Map<String, dynamic>.from(item as Map))
+              .toList(),
+          recentActivity: ((data['recent_activity'] as List?) ?? const [])
+              .map((item) => Map<String, dynamic>.from(item as Map))
+              .toList(),
           extraSections: [
             LokalsCard(
               child: Column(
@@ -81,9 +86,11 @@ class _TownManagerDashboardScreenState extends ConsumerState<TownManagerDashboar
                       await ref.read(discoveryRepositoryProvider).createMunicipalAlert(
                             title: _alertTitleController.text.trim(),
                             body: _alertBodyController.text.trim(),
-                        type: _alertType,
-                      );
+                            type: _alertType,
+                          );
                       ref.invalidate(municipalityDashboardProvider);
+                      ref.invalidate(alertsFeedProvider);
+                      ref.invalidate(notificationsProvider);
                       if (!mounted) return;
                       setState(() {
                         _isPublishing = false;
@@ -116,13 +123,49 @@ class _TownManagerDashboardScreenState extends ConsumerState<TownManagerDashboar
                             padding: const EdgeInsets.only(bottom: 10),
                             child: DashboardQuickActionTile(
                               label: item['title']?.toString() ?? 'Report',
-                              body: '${item['category'] ?? 'issue'} • ${item['status'] ?? 'open'}',
+                              body: '${item['category'] ?? 'issue'} | ${item['status'] ?? 'open'}',
                               icon: Icons.assignment_outlined,
                               onTap: () => context.go('/reports/${item['id']}'),
                             ),
                           ))),
                 ],
               ),
+            ),
+            const SizedBox(height: 16),
+            Consumer(
+              builder: (context, ref, _) {
+                final reports = ref.watch(myReportsProvider).asData?.value ?? const [];
+                final resolvedReports = reports.where((report) => report.status == 'resolved').take(2).toList();
+
+                return LokalsCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SectionTitle(
+                        title: 'Resolved updates',
+                        subtitle: 'Use this to show that residents can see outcomes after council action.',
+                      ),
+                      const SizedBox(height: 12),
+                      if (resolvedReports.isEmpty)
+                        const Text('Resolved reports will appear here after the first demo status update.')
+                      else
+                        ...resolvedReports.map(
+                          (report) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: DashboardQuickActionTile(
+                              label: report.title,
+                              body: report.resolutionNotes?.isNotEmpty == true
+                                  ? report.resolutionNotes!
+                                  : 'Resolved and visible to the reporting resident.',
+                              icon: Icons.check_circle_outline,
+                              onTap: () => context.go('/reports/${report.id}'),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
             ),
           ],
         ),

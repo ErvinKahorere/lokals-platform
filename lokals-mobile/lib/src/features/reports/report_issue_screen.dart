@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
+import '../../config/app_config.dart';
 import '../auth/auth_controller.dart';
 import '../discovery/discovery_repository.dart';
 import 'my_reports_screen.dart';
@@ -109,7 +110,7 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
                           category: _category,
                           description: _descriptionController.text.trim(),
                           location: _locationController.text.trim(),
-                          town: user?.defaultTown,
+                          town: user?.defaultTown ?? AppConfig.pilotTown,
                           area: user?.defaultArea,
                           priority: _priority,
                           photo: _photo,
@@ -118,7 +119,10 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
                     if (!mounted) return;
                     setState(() {
                       _isBusy = false;
-                      _message = 'Report submitted.';
+                      _message = 'Report submitted to the Okahandja service desk.';
+                      _titleController.clear();
+                      _descriptionController.clear();
+                      _photo = null;
                     });
                   },
                 ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 
@@ -31,6 +33,33 @@ class MoreScreen extends StatelessWidget {
             subtitle: 'Secondary actions live here so the main app stays simple.',
           ),
           const SizedBox(height: 16),
+          AppCard(
+            child: Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: AppColors.purpleSoftAlt,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: const Icon(Icons.grid_view_rounded, color: AppColors.primaryPurple),
+                ),
+                const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Move quickly through LOKALS', style: TextStyle(fontWeight: FontWeight.w800)),
+                            const SizedBox(height: 4),
+                            Text('Town tools, discovery, transport, and settings stay grouped here without crowding Home.', style: AppTextStyles.bodyMuted),
+                          ],
+                        ),
+                      ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
           ...items.map(
             (item) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -40,7 +69,18 @@ class MoreScreen extends StatelessWidget {
                 child: LokalsCard(
                   child: Row(
                     children: [
-                      Icon(item.$3),
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: item.$1 == 'SOS' ? AppColors.dangerSoft : AppColors.purpleSoftAlt,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(
+                          item.$3,
+                          color: item.$1 == 'SOS' ? AppColors.danger : AppColors.primaryPurple,
+                        ),
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -48,7 +88,7 @@ class MoreScreen extends StatelessWidget {
                           children: [
                             Text(item.$1, style: const TextStyle(fontWeight: FontWeight.w700)),
                             const SizedBox(height: 4),
-                            Text(item.$2, style: const TextStyle(color: Color(0xFF64748B))),
+                            Text(item.$2, style: AppTextStyles.bodyMuted),
                           ],
                         ),
                       ),

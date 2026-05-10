@@ -3,10 +3,12 @@ import type { FormEvent } from 'react'
 import { Camera } from 'lucide-react'
 import { PageHeader, SectionCard, Input, Select, TextArea } from '../components/Ui'
 import { useCreateReport } from '../hooks/queries'
+import { OKAHANDJA_AREAS, PILOT_TOWN } from '../lib/pilot'
 
 export function ReportIssuePage() {
   const [message, setMessage] = useState('')
   const [preview, setPreview] = useState('')
+  const [area, setArea] = useState('Nau-Aib')
   const createReport = useCreateReport()
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -17,16 +19,18 @@ export function ReportIssuePage() {
     payload.append('title', String(formData.get('title') ?? ''))
     payload.append('description', String(formData.get('description') ?? ''))
     payload.append('location', String(formData.get('location') ?? ''))
-    payload.append('town', 'Windhoek')
+    payload.append('town', PILOT_TOWN)
+    payload.append('area', area)
     payload.append('priority', String(formData.get('priority') ?? 'medium'))
     const photo = formData.get('photo')
     if (photo instanceof File && photo.size > 0) {
       payload.append('photo', photo)
     }
     await createReport.mutateAsync(payload)
-    setMessage('Report submitted.')
+    setMessage('Report submitted to the Okahandja service desk.')
     event.currentTarget.reset()
     setPreview('')
+    setArea('Nau-Aib')
   }
 
   return (
@@ -50,8 +54,15 @@ export function ReportIssuePage() {
               <option value="high">High</option>
             </Select>
           </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Input name="location" placeholder="Street, landmark, or section" defaultValue="Nau-Aib, Okahandja" required />
+            <Select value={area} onChange={(event) => setArea(event.target.value)}>
+              {OKAHANDJA_AREAS.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </Select>
+          </div>
           <TextArea name="description" placeholder="Describe the issue" rows={5} required />
-          <Input name="location" placeholder="Location" required />
           <label className="flex cursor-pointer flex-col items-center justify-center rounded-[24px] border border-dashed border-lokals-border bg-slate-50 px-5 py-8 text-center">
             {preview ? <img src={preview} alt="Issue preview" className="mb-4 h-40 w-full rounded-[20px] object-cover" /> : <Camera className="mb-3 h-8 w-8 text-lokals-purple" />}
             <span className="font-semibold text-lokals-charcoal">Add a photo</span>
