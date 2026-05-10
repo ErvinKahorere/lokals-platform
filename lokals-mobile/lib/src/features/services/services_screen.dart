@@ -142,7 +142,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
               const SizedBox(height: 16),
               AppSearchBar(
                 controller: _searchController,
-                hintText: 'Search for a service...',
+                hintText: 'Search services in Okahandja...',
                 recentKey: 'services',
                 suggestions: const ['Barber nearby', 'Electrician available now', 'Affordable plumber', 'Best rated doctor'],
                 shortcuts: const ['Cleaning', 'Plumbing', 'Electrical', 'Moving'],
@@ -265,7 +265,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                   body: 'Try another area or remove one filter to widen your search.',
                 )
               else
-                ...filtered.take(6).map((provider) => Padding(
+                ...filtered.take(5).map((provider) => Padding(
                       padding: const EdgeInsets.only(bottom: 14),
                       child: ProviderCard(provider: provider),
                     )),

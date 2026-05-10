@@ -19,7 +19,7 @@ export function BookingPage() {
   const user = useAuthStore((state) => state.user)
   const [serviceId, setServiceId] = useState('')
   const [bookingDate, setBookingDate] = useState(new Date().toISOString().slice(0, 10))
-  const [startTime, setStartTime] = useState('10:00')
+  const [startTime, setStartTime] = useState('')
   const [notes, setNotes] = useState('')
   const [showNotes, setShowNotes] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -27,6 +27,7 @@ export function BookingPage() {
   const navigate = useNavigate()
   const services = provider?.services?.filter((service) => service.is_active && service.is_bookable) ?? []
   const selectedService = services.find((service) => String(service.id) === serviceId)
+  const timeOptions = buildTimeOptions(provider, bookingDate, selectedService?.duration_minutes ?? 60)
   const dateOptions = Array.from({ length: 5 }).map((_, index) => {
     const date = new Date()
     date.setDate(date.getDate() + index)
@@ -40,6 +41,16 @@ export function BookingPage() {
       setServiceId(String(services[0].id))
     }
   }, [provider?.id, services])
+
+  useEffect(() => {
+    if (timeOptions.length === 0) {
+      setStartTime('')
+      return
+    }
+    if (!timeOptions.includes(startTime)) {
+      setStartTime(timeOptions[0])
+    }
+  }, [startTime, timeOptions])
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -66,7 +77,7 @@ export function BookingPage() {
               <p className="mt-2 text-sm text-lokals-muted">Provider will confirm shortly.</p>
               <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
                 <Button onClick={() => navigate('/dashboard/bookings')}>View My Bookings</Button>
-                <Button variant="secondary" onClick={() => navigate('/')}>Back Home</Button>
+                <Button variant="secondary" onClick={() => navigate('/home')}>Back Home</Button>
               </div>
             </section>
           ) : (
@@ -129,8 +140,13 @@ export function BookingPage() {
 
                     <div>
                       <span className="mb-2 block text-sm font-medium">Time selection</span>
+                      {timeOptions.length === 0 ? (
+                        <div className="rounded-[24px] border border-lokals-border bg-white p-4 text-sm text-lokals-muted shadow-card">
+                          No time slots are available for this day. Choose another date or contact the provider directly.
+                        </div>
+                      ) : (
                       <div className="grid grid-cols-3 gap-2">
-                        {suggestedTimes.map((slot) => (
+                        {timeOptions.map((slot) => (
                           <button
                             type="button"
                             key={slot}
@@ -141,6 +157,7 @@ export function BookingPage() {
                           </button>
                         ))}
                       </div>
+                      )}
                     </div>
 
                     <div className="rounded-[24px] border border-lokals-border bg-white p-4 shadow-card">
@@ -159,7 +176,7 @@ export function BookingPage() {
                 )}
 
                 {error ? <p className="text-sm font-medium text-lokals-danger">{error}</p> : null}
-                <Button className="w-full" disabled={createBooking.isPending || !serviceId}>
+                <Button className="w-full" disabled={createBooking.isPending || !serviceId || !startTime}>
                   {createBooking.isPending ? 'Sending booking...' : 'Confirm Booking'}
                 </Button>
               </form>
@@ -169,4 +186,40 @@ export function BookingPage() {
       )}
     </QueryState>
   )
+}
+
+function buildTimeOptions(provider: Provider | undefined, bookingDate: string, durationMinutes: number) {
+  const hasAvailability = Boolean(provider?.availability_slots?.length)
+  const availability = hasAvailability
+    ? provider!.availability_slots!
+    : [{ id: 0, day_of_week: 1, start_time: '08:00', end_time: '17:00', is_available: true }]
+  const options = new Set<string>()
+  const targetDate = new Date(`${bookingDate}T00:00:00`)
+  const now = new Date()
+  const dayOfWeek = targetDate.getDay()
+  const slotStep = durationMinutes <= 30 ? 30 : durationMinutes
+
+  availability
+    .filter((slot) => slot.day_of_week === dayOfWeek)
+    .forEach((slot) => {
+      const [startHour, startMinute] = slot.start_time.split(':').map(Number)
+      const [endHour, endMinute] = slot.end_time.split(':').map(Number)
+      let cursor = new Date(targetDate)
+      cursor.setHours(startHour, startMinute, 0, 0)
+      const end = new Date(targetDate)
+      end.setHours(endHour, endMinute, 0, 0)
+
+      while (cursor.getTime() + durationMinutes * 60000 <= end.getTime()) {
+        if (cursor > now) {
+          options.add(cursor.toLocaleTimeString('en-NA', { hour: '2-digit', minute: '2-digit', hour12: false }))
+        }
+        cursor = new Date(cursor.getTime() + slotStep * 60000)
+      }
+    })
+
+  if (options.size) {
+    return Array.from(options).sort()
+  }
+
+  return hasAvailability ? [] : suggestedTimes
 }

@@ -17,6 +17,7 @@ export function LoginPage() {
   const location = useLocation()
   const setSession = useAuthStore((state) => state.setSession)
   const nextPath = typeof (location.state as { from?: string } | null)?.from === 'string' ? (location.state as { from?: string }).from! : null
+  const prompt = typeof (location.state as { prompt?: string } | null)?.prompt === 'string' ? (location.state as { prompt?: string }).prompt! : ''
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -36,7 +37,7 @@ export function LoginPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <PageHeader eyebrow="Sign in" title="Phone-first access for city life" description="Keep login short now, and keep the account ready for OTP and profile completion later." />
+      <PageHeader eyebrow="Sign in" title="Phone-first access for city life" description={prompt || 'Keep login short now, and keep the account ready for OTP and profile completion later.'} />
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="overflow-hidden rounded-[28px] border border-violet-100 bg-white p-8 shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
           <img src="/brand/lokals-logo.svg" alt="LOKALS" className="h-10 w-auto" />
@@ -79,8 +80,8 @@ export function LoginPage() {
               <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" autoComplete="current-password" required />
             </div>
             {error ? <p className="text-sm text-lokals-danger">{error}</p> : null}
-            <Button className="w-full" disabled={loading}>{loading ? 'Signing you in...' : 'Continue'}</Button>
-            <button type="button" onClick={() => navigate('/')} className="w-full rounded-lokals-xl border border-lokals-border bg-lokals-surface px-4 py-3 text-sm font-semibold text-lokals-charcoal">
+            <Button className="w-full" isLoading={loading} loadingLabel="Signing you in...">Continue</Button>
+            <button type="button" onClick={() => navigate('/home')} className="w-full rounded-lokals-xl border border-lokals-border bg-lokals-surface px-4 py-3 text-sm font-semibold text-lokals-charcoal">
               Browse as guest
             </button>
           </form>

@@ -16,13 +16,35 @@ export function DirectoryPage() {
   const [sortBy, setSortBy] = useState<'nearest' | 'popular' | 'recent' | 'open'>('nearest')
   const [verifiedOnly, setVerifiedOnly] = useState(false)
   const [publicOnly, setPublicOnly] = useState(false)
+  const [category, setCategory] = useState<'all' | 'public' | 'police' | 'clinic' | 'council' | 'emergency' | 'business'>('all')
   const token = useAuthStore((state) => state.token)
   const directoryQuery = useDirectory({ ...(search ? { search } : {}), ...(verifiedOnly ? { verified: 1 } : {}), ...(publicOnly ? { public_service: 1 } : {}), sort: sortBy })
   const announcementsQuery = useAnnouncements()
   const followsQuery = useFollows(Boolean(token))
   const createFollow = useCreateFollow()
   const deleteFollow = useDeleteFollow()
-  const organizations = useMemo(() => directoryQuery.data?.data ?? [], [directoryQuery.data])
+  const organizations = useMemo(() => {
+    const items = directoryQuery.data?.data ?? []
+    return items.filter((organization) => {
+      const haystack = `${organization.category} ${organization.subcategory ?? ''}`.toLowerCase()
+      switch (category) {
+        case 'public':
+          return organization.is_public_service === true
+        case 'police':
+          return haystack.includes('police')
+        case 'clinic':
+          return haystack.includes('clinic') || haystack.includes('health')
+        case 'council':
+          return haystack.includes('council') || haystack.includes('municipal')
+        case 'emergency':
+          return haystack.includes('emergency')
+        case 'business':
+          return organization.is_public_service !== true
+        default:
+          return true
+      }
+    })
+  }, [category, directoryQuery.data])
   const follows = followsQuery.data?.data ?? []
   const alerts = announcementsQuery.data?.data ?? []
 
@@ -48,6 +70,13 @@ export function DirectoryPage() {
         actions={<SearchBar value={search} onChange={(event) => setSearch(event.target.value)} onValueSelect={setSearch} recentKey="directory" suggestions={['Clinics nearby', 'Local workshops', 'Municipal offices', 'Verified providers']} shortcuts={[{ label: 'Verified', value: 'verified' }, { label: 'Open today', value: 'open today' }, { label: 'Nearby', value: 'nearby' }]} placeholder="Search clinics, police, businesses..." className="w-full md:w-72" />}
       />
       <div className="flex flex-wrap gap-2">
+        <Button variant={category === 'all' ? 'primary' : 'secondary'} onClick={() => setCategory('all')}>All</Button>
+        <Button variant={category === 'public' ? 'primary' : 'secondary'} onClick={() => setCategory('public')}>Public</Button>
+        <Button variant={category === 'police' ? 'primary' : 'secondary'} onClick={() => setCategory('police')}>Police</Button>
+        <Button variant={category === 'clinic' ? 'primary' : 'secondary'} onClick={() => setCategory('clinic')}>Clinic</Button>
+        <Button variant={category === 'council' ? 'primary' : 'secondary'} onClick={() => setCategory('council')}>Council</Button>
+        <Button variant={category === 'emergency' ? 'primary' : 'secondary'} onClick={() => setCategory('emergency')}>Emergency</Button>
+        <Button variant={category === 'business' ? 'primary' : 'secondary'} onClick={() => setCategory('business')}>Business</Button>
         <Button variant={sortBy === 'nearest' ? 'primary' : 'secondary'} onClick={() => setSortBy('nearest')}>Nearest first</Button>
         <Button variant={sortBy === 'popular' ? 'primary' : 'secondary'} onClick={() => setSortBy('popular')}>Popular in your area</Button>
         <Button variant={sortBy === 'recent' ? 'primary' : 'secondary'} onClick={() => setSortBy('recent')}>Recently added</Button>
@@ -92,7 +121,7 @@ export function DirectoryPage() {
 
                 <div className="mt-4 flex items-center gap-2 text-sm text-lokals-muted">
                   <MapPin className="h-4 w-4" />
-                  <span>{organization.location ?? 'Windhoek'}</span>
+                  <span>{[organization.area, organization.town, organization.location].filter(Boolean).join(', ') || 'Okahandja'}</span>
                 </div>
 
                 <div className="mt-3 flex items-center gap-2 text-sm text-lokals-muted">

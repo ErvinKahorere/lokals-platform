@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 import { NotificationToastProvider } from './providers/NotificationToastProvider.tsx'
+import { AppBootstrapProvider } from './providers/AppBootstrapProvider.tsx'
 import { ThemeProvider } from './providers/ThemeProvider.tsx'
 
 const queryClient = new QueryClient()
@@ -14,9 +15,11 @@ createRoot(document.getElementById('root')!).render(
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <NotificationToastProvider>
-            <App />
-          </NotificationToastProvider>
+          <AppBootstrapProvider>
+            <NotificationToastProvider>
+              <App />
+            </NotificationToastProvider>
+          </AppBootstrapProvider>
         </BrowserRouter>
       </QueryClientProvider>
     </ThemeProvider>

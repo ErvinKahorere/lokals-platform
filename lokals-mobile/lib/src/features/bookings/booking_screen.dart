@@ -26,9 +26,9 @@ class BookingScreen extends ConsumerStatefulWidget {
 
 class _BookingScreenState extends ConsumerState<BookingScreen> {
   final _notesController = TextEditingController();
-  TimeOfDay _time = const TimeOfDay(hour: 10, minute: 0);
   DateTime _date = DateTime.now();
   int? _selectedServiceId;
+  String? _selectedTime;
   bool _success = false;
   bool _submitting = false;
   String? _error;
@@ -52,6 +52,14 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
           final activeServices = item.services.where((service) => service.isActive && service.isBookable).toList();
           _selectedServiceId ??= activeServices.isNotEmpty ? activeServices.first.id : null;
           final selectedService = _findSelectedService(activeServices);
+          final timeOptions = _buildTimeOptions(
+            date: _date,
+            availability: item.availabilitySlots,
+            durationMinutes: selectedService?.durationMinutes ?? 60,
+          );
+          if (_selectedTime == null || !timeOptions.contains(_selectedTime)) {
+            _selectedTime = timeOptions.isNotEmpty ? timeOptions.first : null;
+          }
 
           if (_success) {
             return ListView(
@@ -63,15 +71,15 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                   primaryLabel: 'View My Bookings',
                   onPrimary: () => context.go('/my-bookings'),
                   secondaryLabel: 'Back Home',
-                  onSecondary: () => context.go('/'),
+                  onSecondary: () => context.go('/home'),
                 ),
               ],
             );
           }
 
           final dateOptions = List.generate(5, (index) => DateTime.now().add(Duration(days: index)));
-          final selectedTimeLabel = '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}';
-          final canSubmit = _selectedServiceId != null && !_submitting;
+          final selectedTimeLabel = _selectedTime ?? '';
+          final canSubmit = _selectedServiceId != null && !_submitting && selectedTimeLabel.isNotEmpty;
           final locationLabel = [
             item.subcategory ?? item.category,
             item.area ?? item.town ?? item.location,
@@ -194,27 +202,26 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                 const SizedBox(height: 18),
                 const Text('Time selection', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00']
-                      .map(
-                        (slot) => ChoiceChip(
-                          label: Text(slot),
-                          selected: selectedTimeLabel == slot,
-                          onSelected: (_) {
-                            final parts = slot.split(':');
-                            setState(() {
-                              _time = TimeOfDay(
-                                hour: int.parse(parts[0]),
-                                minute: int.parse(parts[1]),
-                              );
-                            });
-                          },
-                        ),
-                      )
-                      .toList(),
-                ),
+                if (timeOptions.isEmpty)
+                  const AppCard(
+                    child: Text(
+                      'No time slots are available for this day. Choose another date or contact the provider directly.',
+                    ),
+                  )
+                else
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: timeOptions
+                        .map(
+                          (slot) => ChoiceChip(
+                            label: Text(slot),
+                            selected: selectedTimeLabel == slot,
+                            onSelected: (_) => setState(() => _selectedTime = slot),
+                          ),
+                        )
+                        .toList(),
+                  ),
                 const SizedBox(height: 18),
                 const Text('Notes', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
@@ -292,7 +299,10 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LokalsLoadingScreen(
+          title: 'Loading booking details',
+          message: 'Preparing availability and service info...',
+        ),
         error: (error, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -318,5 +328,49 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
       }
     }
     return null;
+  }
+
+  List<String> _buildTimeOptions({
+    required DateTime date,
+    required List<AvailabilitySlotModel> availability,
+    required int durationMinutes,
+  }) {
+    final slotDuration = durationMinutes <= 30 ? 30 : durationMinutes;
+    final matchingSlots = availability.where((slot) => slot.dayOfWeek == date.weekday % 7).toList();
+    final options = <String>[];
+    final now = DateTime.now();
+
+    for (final slot in matchingSlots) {
+      final startParts = slot.startTime.split(':');
+      final endParts = slot.endTime.split(':');
+      if (startParts.length < 2 || endParts.length < 2) {
+        continue;
+      }
+
+      var cursor = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        int.parse(startParts[0]),
+        int.parse(startParts[1]),
+      );
+      final end = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        int.parse(endParts[0]),
+        int.parse(endParts[1]),
+      );
+
+      while (cursor.add(Duration(minutes: durationMinutes)).isBefore(end) ||
+          cursor.add(Duration(minutes: durationMinutes)).isAtSameMomentAs(end)) {
+        if (cursor.isAfter(now)) {
+          options.add(DateFormat('HH:mm').format(cursor));
+        }
+        cursor = cursor.add(Duration(minutes: slotDuration));
+      }
+    }
+
+    return options.toSet().toList()..sort();
   }
 }

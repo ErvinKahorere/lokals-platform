@@ -169,7 +169,10 @@ class _TownManagerDashboardScreenState extends ConsumerState<TownManagerDashboar
             ),
           ],
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LokalsLoadingScreen(
+          title: 'Loading town manager portal',
+          message: 'Bringing in Okahandja reports, alerts, and urgent issues...',
+        ),
         error: (error, _) => Center(
           child: EmptyStateView(
             title: 'Dashboard unavailable',

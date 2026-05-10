@@ -8,6 +8,7 @@ import '../../../shared/widgets/job_card.dart';
 import '../../../shared/widgets/worker_card.dart';
 import '../../config/app_config.dart';
 import '../auth/auth_controller.dart';
+import '../auth/auth_navigation.dart';
 import '../../core/models.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
@@ -73,7 +74,10 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
     final auth = ref.read(authControllerProvider);
     if (auth.token == null) {
       if (!mounted) return;
-      context.go('/login');
+      promptSignIn(
+        context,
+        next: GoRouterState.of(context).uri.toString(),
+      );
       return;
     }
 

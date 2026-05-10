@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../config/app_config.dart';
 import '../../widgets/cards.dart';
-import '../../widgets/shell.dart';
 import 'auth_controller.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -46,174 +46,223 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
+    final next = GoRouterState.of(context).uri.queryParameters['next'];
 
-    return LokalsShell(
-      title: 'Login',
-      showBack: true,
-      child: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Center(child: Image.asset('assets/brand/lokals-logo.png', height: 44)),
-          const SizedBox(height: 16),
-          const SectionTitle(
-            title: 'Phone-first login',
-            subtitle:
-                'Sign in quickly and keep local services, marketplace, events, and alerts close in Okahandja.',
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.primaryPurple.withValues(alpha: 0.14)),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x140F172A),
-                  blurRadius: 28,
-                  offset: Offset(0, 12),
-                ),
-              ],
-            ),
-            child: const Row(
-              children: [
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor: Color(0xFFF3E8FF),
-                  child: Icon(Icons.place_outlined, color: AppColors.primaryPurple),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Your local life, ready to move',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        '${AppConfig.pilotLocationMessage} Sign in once to book services, follow updates, and act faster nearby.',
-                        style: TextStyle(color: AppColors.mutedText),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          LokalsCard(
-            child: Column(
-              children: [
-                LokalsTextField(
-                  controller: _phoneController,
-                  label: 'Phone',
-                  hint: '+264...',
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 12),
-                LokalsTextField(
-                  controller: _passwordController,
-                  label: 'Password',
-                  hint: 'Enter your password',
-                  obscureText: true,
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    _error!,
-                    style: const TextStyle(color: AppColors.danger),
-                  ),
-                ],
-                const SizedBox(height: 16),
-                PrimaryAction(
-                  label: 'Sign in',
-                  isBusy: auth.isLoading,
-                  onPressed: () async {
-                    if (!mounted) return;
-                    setState(() {
-                      _error = null;
-                    });
-                    try {
-                      await ref
-                          .read(authControllerProvider.notifier)
-                          .login(
-                            _phoneController.text.trim(),
-                            _passwordController.text.trim(),
-                          );
-                      if (!mounted || !context.mounted) return;
-                      context.go('/');
-                    } on DioException catch (error) {
-                      if (!mounted) return;
-                      setState(() {
-                        _error = _buildLoginError(error);
-                      });
-                    }
-                  },
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.purpleSoftAlt,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppColors.purpleBorder),
-                  ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'After login',
-                        style: TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'LOKALS will personalize Home, alerts, and public services around your Okahandja area.',
-                        style: TextStyle(color: AppColors.mutedText),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                AppButton(
-                  label: 'Browse as guest',
-                  variant: AppButtonVariant.secondary,
-                  onPressed: () => context.go('/'),
-                ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () => context.go('/register'),
-                  child: const Text('New here? Create profile'),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          const Text(
-            'Demo accounts',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 12),
-          ..._demoAccounts.map(
-            (account) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: LokalsCard(
-                child: ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(account.label),
-                  subtitle: Text(account.phone),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.primaryPurple),
-                  onTap: () {
-                    _phoneController.text = account.phone;
-                    _passwordController.text = account.password;
-                  },
+    return Scaffold(
+      backgroundColor: AppColors.softBackground,
+      body: SafeArea(
+        child: Form(
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  onPressed: () => context.pop(),
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded),
                 ),
               ),
-            ),
+              const SizedBox(height: 8),
+              Center(child: Image.asset('assets/brand/lokals-logo.png', height: 44)),
+              const SizedBox(height: 18),
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.purpleSoftAlt,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: const Text(
+                    'Everything in your city',
+                    style: TextStyle(
+                      color: AppColors.primaryPurple,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Sign in around Okahandja',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.deepCharcoal,
+                  height: 1.06,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                next != null && next.isNotEmpty
+                    ? 'Sign in to continue'
+                    : 'Phone-first access keeps bookings, updates, and local activity close by.',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodyMuted,
+              ),
+              const SizedBox(height: 18),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: AppColors.primaryPurple.withValues(alpha: 0.14)),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x140F172A),
+                      blurRadius: 28,
+                      offset: Offset(0, 12),
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 22,
+                      backgroundColor: Color(0xFFF3E8FF),
+                      child: Icon(Icons.place_outlined, color: AppColors.primaryPurple),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Your local life, ready to move',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            '${AppConfig.pilotLocationMessage} Sign in once to book services, follow updates, and act faster nearby.',
+                            style: TextStyle(color: AppColors.mutedText),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              LokalsCard(
+                child: Column(
+                  children: [
+                    LokalsTextField(
+                      controller: _phoneController,
+                      label: 'Phone number',
+                      hint: '+264...',
+                      keyboardType: TextInputType.phone,
+                      errorText: _error == 'phone' ? 'Enter a valid phone number.' : null,
+                    ),
+                    const SizedBox(height: 12),
+                    LokalsTextField(
+                      controller: _passwordController,
+                      label: 'Password',
+                      hint: 'Enter your password',
+                      obscureText: true,
+                      errorText: _error == 'password' ? 'Enter your password.' : null,
+                    ),
+                    if (_error != null && _error != 'phone' && _error != 'password') ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        _error!,
+                        style: const TextStyle(color: AppColors.danger),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    PrimaryAction(
+                      label: 'Continue',
+                      isBusy: auth.isLoading,
+                      onPressed: () async {
+                        final phone = _phoneController.text.trim();
+                        final password = _passwordController.text.trim();
+                        setState(() {
+                          _error = null;
+                        });
+                        if (phone.length < 8) {
+                          setState(() => _error = 'phone');
+                          return;
+                        }
+                        if (password.isEmpty) {
+                          setState(() => _error = 'password');
+                          return;
+                        }
+                        try {
+                          await ref.read(authControllerProvider.notifier).login(phone, password);
+                          if (!mounted || !context.mounted) return;
+                          context.go(next?.isNotEmpty == true ? next! : '/');
+                        } on DioException catch (error) {
+                          if (!mounted) return;
+                          setState(() {
+                            _error = _buildLoginError(error);
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.purpleSoftAlt,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: AppColors.purpleBorder),
+                      ),
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'After login',
+                            style: TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'LOKALS will personalize Home, alerts, and public services around your Okahandja area.',
+                            style: TextStyle(color: AppColors.mutedText),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    AppButton(
+                      label: 'Browse as guest',
+                      variant: AppButtonVariant.secondary,
+                      onPressed: () => context.go('/home'),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () => context.go('/register'),
+                      child: const Text('New here? Create profile'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Demo accounts',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 12),
+              ..._demoAccounts.map(
+                (account) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: LokalsCard(
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(account.label),
+                      subtitle: Text(account.phone),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.primaryPurple),
+                      onTap: () {
+                        _phoneController.text = account.phone;
+                        _passwordController.text = account.password;
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

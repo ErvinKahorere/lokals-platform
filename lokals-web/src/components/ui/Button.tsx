@@ -1,6 +1,7 @@
 import type { PropsWithChildren } from 'react'
 import { motion, type HTMLMotionProps } from 'framer-motion'
 import clsx from 'clsx'
+import { ButtonLoader } from './LoadingSkeleton'
 
 type Variant = 'primary' | 'secondary' | 'accent' | 'dark' | 'danger' | 'ghost'
 
@@ -17,19 +18,30 @@ export function Button({
   children,
   className,
   variant = 'primary',
+  isLoading = false,
+  loadingLabel,
+  disabled,
   ...props
-}: PropsWithChildren<HTMLMotionProps<'button'> & { variant?: Variant }>) {
+}: PropsWithChildren<HTMLMotionProps<'button'> & {
+  variant?: Variant
+  isLoading?: boolean
+  loadingLabel?: string
+}>) {
+  const isDisabled = disabled || isLoading
+
   return (
     <motion.button
-      whileTap={{ scale: 0.97 }}
+      whileTap={isDisabled ? undefined : { scale: 0.97 }}
+      {...props}
       className={clsx(
         'inline-flex min-h-11 items-center justify-center gap-2 rounded-lokals-xl px-4 py-3 text-sm font-semibold transition duration-200 hover:translate-y-[-1px] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-lokals-purple/15 disabled:cursor-not-allowed disabled:opacity-60',
         variants[variant],
         className,
       )}
-      {...props}
+      disabled={isDisabled}
+      aria-busy={isLoading}
     >
-      {children}
+      {isLoading ? <ButtonLoader label={loadingLabel} /> : children}
     </motion.button>
   )
 }

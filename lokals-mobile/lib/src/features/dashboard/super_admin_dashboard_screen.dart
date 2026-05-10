@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import 'dashboard_repository.dart';
 import 'widgets/dashboard_common.dart';
@@ -23,7 +24,10 @@ class SuperAdminDashboardScreen extends ConsumerWidget {
           pendingTasks: ((data['pending_tasks'] as List?) ?? const []).map((item) => Map<String, dynamic>.from(item as Map)).toList(),
           recentActivity: ((data['recent_activity'] as List?) ?? const []).map((item) => Map<String, dynamic>.from(item as Map)).toList(),
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LokalsLoadingScreen(
+          title: 'Loading platform overview',
+          message: 'Checking users, content, and system activity...',
+        ),
         error: (error, _) => const Center(child: Text('Dashboard unavailable')),
       ),
     );

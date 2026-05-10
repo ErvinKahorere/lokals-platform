@@ -1,13 +1,13 @@
-import { BriefcaseBusiness, CarTaxiFront, Package, ShieldAlert, ShoppingBag, Sparkles } from 'lucide-react'
+import { AlertTriangle, CarTaxiFront, Package, ShieldAlert, ShoppingBag, Sparkles } from 'lucide-react'
 import { ActionTile } from '../ui/ActionTile'
 
 const actions = [
   { to: '/services', label: 'Services', icon: Sparkles, color: 'bg-lokals-green-soft text-lokals-green' },
-  { to: '/jobs', label: 'Jobs', icon: BriefcaseBusiness, color: 'bg-violet-50 text-violet-700' },
-  { to: '/store', label: 'Store', icon: ShoppingBag, color: 'bg-amber-50 text-amber-700' },
-  { to: '/delivery', label: 'Delivery', icon: Package, color: 'bg-emerald-50 text-emerald-700' },
   { to: '/ride', label: 'Taxi', icon: CarTaxiFront, color: 'bg-sky-50 text-sky-700' },
+  { to: '/delivery', label: 'Delivery', icon: Package, color: 'bg-emerald-50 text-emerald-700' },
   { to: '/sos', label: 'SOS', icon: ShieldAlert, color: 'bg-red-50 text-red-600' },
+  { to: '/store', label: 'Store', icon: ShoppingBag, color: 'bg-amber-50 text-amber-700' },
+  { to: '/report-issue', label: 'Report Issue', icon: AlertTriangle, color: 'bg-violet-50 text-violet-700' },
 ]
 
 export function HomeQuickActions() {

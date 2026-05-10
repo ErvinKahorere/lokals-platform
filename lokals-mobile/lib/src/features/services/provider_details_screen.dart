@@ -12,6 +12,7 @@ import '../../core/models.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../auth/auth_controller.dart';
+import '../auth/auth_navigation.dart';
 import 'services_repository.dart';
 
 class ProviderDetailsScreen extends ConsumerStatefulWidget {
@@ -52,7 +53,10 @@ class _ProviderDetailsScreenState extends ConsumerState<ProviderDetailsScreen> {
 
           Future<void> toggleFollow() async {
             if (auth.token == null) {
-              context.go('/login');
+              promptSignIn(
+                context,
+                next: GoRouterState.of(context).uri.toString(),
+              );
               return;
             }
             setState(() => _followBusy = true);
@@ -373,7 +377,10 @@ class _ProviderDetailsScreenState extends ConsumerState<ProviderDetailsScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LokalsLoadingScreen(
+          title: 'Loading provider',
+          message: 'Gathering contact details, rates, and availability...',
+        ),
         error: (error, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),

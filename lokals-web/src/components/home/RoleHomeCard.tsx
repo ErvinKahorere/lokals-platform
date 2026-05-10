@@ -1,8 +1,8 @@
-import { ArrowRight, BriefcaseBusiness, Building2, Compass, Store } from 'lucide-react'
+import { ArrowRight, BriefcaseBusiness, Building2, Compass, LayoutDashboard, Store } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '../ui/Button'
 
-type RoleCardKind = 'business' | 'worker' | 'citizen' | 'organization' | 'guest'
+type RoleCardKind = 'business' | 'worker' | 'citizen' | 'organization' | 'manager' | 'guest'
 
 const roleCopy: Record<RoleCardKind, { title: string; body: string; cta: string; to: string; icon: typeof Compass }> = {
   business: {
@@ -27,11 +27,18 @@ const roleCopy: Record<RoleCardKind, { title: string; body: string; cta: string;
     icon: Compass,
   },
   organization: {
-    title: 'Reach your followers',
-    body: 'Post alerts, events, and updates so your community stays informed.',
-    cta: 'Post Update',
+    title: 'Organization dashboard ready',
+    body: 'Manage updates, alerts, events, and community activity from one place.',
+    cta: 'Open Dashboard',
     to: '/dashboard/organization',
     icon: Building2,
+  },
+  manager: {
+    title: 'Open your dashboard',
+    body: 'Jump into reports, alerts, and role-specific oversight without leaving Home.',
+    cta: 'Open Dashboard',
+    to: '/dashboard/town-manager',
+    icon: LayoutDashboard,
   },
   guest: {
     title: 'Sign in for a more personal city view',
@@ -42,8 +49,14 @@ const roleCopy: Record<RoleCardKind, { title: string; body: string; cta: string;
   },
 }
 
-export function RoleHomeCard({ kind }: { kind: RoleCardKind }) {
-  const content = roleCopy[kind]
+export function RoleHomeCard({ kind, activeRole }: { kind: RoleCardKind; activeRole?: string }) {
+  const content =
+    kind === 'manager'
+      ? {
+          ...roleCopy.manager,
+          to: activeRole === 'super_admin' || activeRole === 'operator' ? '/admin' : '/dashboard/town-manager',
+        }
+      : roleCopy[kind]
   const Icon = content.icon
 
   return (

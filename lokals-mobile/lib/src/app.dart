@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/theme/app_theme.dart';
+import 'core/role_routing.dart';
+import 'features/auth/auth_navigation.dart';
 import 'features/auth/auth_controller.dart';
 import 'features/auth/login_screen.dart';
 import 'features/auth/register_screen.dart';
@@ -17,7 +19,6 @@ import 'features/bookings/provider_bookings_screen.dart';
 import 'features/directory/directory_screen.dart';
 import 'features/directory/directory_details_screen.dart';
 import 'features/dashboard/dashboard_router_screen.dart';
-import 'features/dashboard/citizen_dashboard_screen.dart';
 import 'features/dashboard/worker_dashboard_screen.dart';
 import 'features/dashboard/business_dashboard_screen.dart';
 import 'features/dashboard/organization_dashboard_screen.dart';
@@ -30,6 +31,7 @@ import 'features/events/events_screen.dart';
 import 'features/events/my_tickets_screen.dart';
 import 'features/events/ticket_details_screen.dart';
 import 'features/home/home_screen.dart';
+import 'features/home/onboarding_screen.dart';
 import 'features/jobs/job_details_screen.dart';
 import 'features/jobs/jobs_screen.dart';
 import 'features/marketplace/marketplace_screen.dart';
@@ -52,6 +54,7 @@ import 'features/services/provider_details_screen.dart';
 import 'features/services/services_screen.dart';
 import 'features/settings/settings_screen.dart';
 import 'features/sos/sos_screen.dart';
+import 'features/splash/splash_screen.dart';
 import 'features/store/store_screen.dart';
 import 'features/store/product_details_screen.dart';
 import 'features/town_portal/town_portal_screen.dart';
@@ -59,32 +62,6 @@ import 'features/workers/worker_profile_screen.dart';
 import 'features/workers/workers_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
-
-String _roleHomePath(AuthState auth) {
-  final user = auth.user;
-  final role = user?.currentRole ?? (user?.roles.isNotEmpty == true ? user!.roles.first : 'citizen');
-
-  switch (role) {
-    case 'worker':
-      return '/dashboard/worker';
-    case 'seller':
-    case 'business_owner':
-    case 'driver':
-      return '/dashboard/business';
-    case 'service_provider':
-      return '/dashboard/service-provider';
-    case 'organization_admin':
-      return '/dashboard/organization';
-    case 'town_manager':
-    case 'municipality_admin':
-      return '/dashboard/town-manager';
-    case 'super_admin':
-    case 'operator':
-      return '/dashboard/admin';
-    default:
-      return '/home';
-  }
-}
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refreshListenable = ValueNotifier<AuthState>(
@@ -98,13 +75,16 @@ final routerProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/',
+    initialLocation: '/splash',
     refreshListenable: refreshListenable,
     redirect: (context, state) {
       final auth = ref.read(authControllerProvider);
       final isLoggedIn = auth.token != null;
+      final isRestoring = auth.isRestoring || !auth.hasRestored;
+      final isSplash = state.matchedLocation == '/splash';
       final isLoggingIn = state.matchedLocation == '/login';
       final isRegistering = state.matchedLocation == '/register';
+      final isOnboarding = state.matchedLocation == '/onboarding';
       const protectedPrefixes = [
         '/book',
         '/my',
@@ -124,22 +104,27 @@ final routerProvider = Provider<GoRouter>((ref) {
         (prefix) => state.matchedLocation.startsWith(prefix),
       );
 
+      if (isRestoring && !isSplash) {
+        return '/splash';
+      }
+
       if (!isLoggedIn && !isLoggingIn && needsAuth) {
-        return '/login';
+        return buildLoginLocation(next: state.uri.toString());
       }
 
-      if (isLoggedIn && (isLoggingIn || isRegistering)) {
-        return _roleHomePath(auth);
-      }
-
-      if (isLoggedIn && state.matchedLocation == '/') {
-        return _roleHomePath(auth);
+      if (isLoggedIn && (isLoggingIn || isRegistering || isOnboarding)) {
+        return roleHomePath(
+          auth.user?.currentRole ??
+              (auth.user?.roles.isNotEmpty == true ? auth.user!.roles.first : null),
+        );
       }
 
       return null;
     },
     routes: [
-      GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
+      GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
+      GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
+      GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
       GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
       GoRoute(
         path: '/dashboard',
@@ -147,7 +132,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/dashboard/citizen',
-        builder: (context, state) => const CitizenDashboardScreen(),
+        builder: (context, state) => const HomeScreen(),
       ),
       GoRoute(
         path: '/dashboard/worker',

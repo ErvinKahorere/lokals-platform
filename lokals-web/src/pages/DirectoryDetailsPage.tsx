@@ -1,7 +1,7 @@
 import { Building2, Clock3, MapPin, ShieldAlert } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { Avatar } from '../components/ui/Avatar'
-import { Button, EmptyState, PageHeader, QueryState, SectionCard } from '../components/Ui'
+import { Button, EmptyState, PageHeader, QueryState, SectionCard, StatusBadge } from '../components/Ui'
 import { ContactActions } from '../components/experience/ContactActions'
 import { TrustRow } from '../components/experience/TrustRow'
 import { useCreateFollow, useDeleteFollow, useDirectoryAlerts, useDirectoryDetails, useFollows } from '../hooks/queries'
@@ -32,7 +32,11 @@ export function DirectoryDetailsPage() {
               <div className="flex items-start gap-4">
                 <Avatar name={organization.name} src={resolveMediaUrl(organization.logo_url)} className="h-20 w-20 border border-lokals-border" />
                 <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-lokals-green">{organization.category}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-lokals-green">{organization.category}</p>
+                    {organization.is_public_service ? <StatusBadge value="Public service" tone="info" /> : null}
+                    {organization.is_verified ? <StatusBadge value="Verified" tone="success" /> : null}
+                  </div>
                   <h2 className="mt-2 text-2xl font-semibold text-lokals-charcoal">{organization.name}</h2>
                   <p className="mt-2 inline-flex items-center gap-2 text-sm text-lokals-muted"><MapPin className="h-4 w-4" />{[organization.area, organization.town, organization.location].filter(Boolean).join(', ') || 'Windhoek'}</p>
                   <p className="mt-2 inline-flex items-center gap-2 text-sm text-lokals-muted"><Clock3 className="h-4 w-4" />{organization.open_now ? 'Open now' : organization.availability_status ?? 'Opening hours unavailable'}</p>
@@ -53,6 +57,11 @@ export function DirectoryDetailsPage() {
                   <Button variant={followId ? 'primary' : 'secondary'} className="w-full" disabled={!token || createFollow.isPending || deleteFollow.isPending} onClick={() => followId ? deleteFollow.mutate(followId) : createFollow.mutate({ type: 'organization', id: organization.id })}>
                     {!token ? 'Login to follow' : followId ? 'Following' : 'Follow updates'}
                   </Button>
+                </div>
+                <div className="mt-4 rounded-[20px] bg-slate-50 p-4 text-sm text-lokals-muted">
+                  <p>Phone: {organization.phone ?? 'Not listed'}</p>
+                  <p className="mt-2">WhatsApp: {organization.whatsapp ?? organization.phone ?? 'Not listed'}</p>
+                  <p className="mt-2">Email: {organization.email ?? 'Not listed'}</p>
                 </div>
               </div>
             </div>

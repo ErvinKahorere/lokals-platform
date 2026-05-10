@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../auth/auth_controller.dart';
+import '../auth/auth_navigation.dart';
 import '../../widgets/cards.dart';
 import '../discovery/discovery_repository.dart';
 
@@ -26,6 +29,14 @@ class _SaveEventButtonState extends ConsumerState<SaveEventButton> {
       variant: _isSaved ? AppButtonVariant.primary : AppButtonVariant.secondary,
       isLoading: _busy,
       onPressed: () async {
+        final auth = ref.read(authControllerProvider);
+        if (auth.token == null) {
+          promptSignIn(
+            context,
+            next: GoRouterState.of(context).uri.toString(),
+          );
+          return;
+        }
         final messenger = ScaffoldMessenger.of(context);
         setState(() => _busy = true);
         try {

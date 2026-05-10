@@ -1,7 +1,7 @@
 import { lazy, Suspense, type ReactElement } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AppShell } from './components/ui/AppShell'
-import { SkeletonCard } from './components/ui/LoadingSkeleton'
+import { LoadingScreen } from './components/ui/LoadingSkeleton'
 import { HomePage } from './pages/HomePage'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
@@ -74,12 +74,17 @@ const DirectoryDetailsPage = lazy(async () => ({ default: (await import('./pages
 
 function ProtectedRoute({ children }: { children: ReactElement }) {
   const token = useAuthStore((state) => state.token)
-  return token ? children : <Navigate to="/login" replace />
+  const location = useLocation()
+  return token ? children : <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}`, prompt: 'Sign in to continue' }} />
 }
 
 function RootRoute() {
   const token = useAuthStore((state) => state.token)
   const user = useAuthStore((state) => state.user)
+  const onboardingComplete = typeof window !== 'undefined' && window.localStorage.getItem('lokals-onboarding-complete') === 'true'
+  if (!token && !onboardingComplete) {
+    return <Navigate to="/onboarding" replace />
+  }
   return token ? <Navigate to={getRoleHomePath(user)} replace /> : <LandingPage />
 }
 
@@ -128,11 +133,7 @@ function OrganizationRoute({ children }: { children: ReactElement }) {
 }
 
 function RouteFallback() {
-  return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {Array.from({ length: 3 }).map((_, index) => <SkeletonCard key={index} />)}
-    </div>
-  )
+  return <LoadingScreen title="Loading screen" message="Bringing the next part of your city into view..." />
 }
 
 export default function App() {

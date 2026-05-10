@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/widgets/booking_card.dart';
 import '../../../shared/widgets/experience/contact_actions.dart';
 import '../../../shared/widgets/experience/quick_call_button.dart';
+import '../../../shared/widgets/loading_skeleton.dart';
 import '../../widgets/shell.dart';
 import 'bookings_repository.dart';
 
@@ -75,7 +76,10 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LokalsLoadingScreen(
+          title: 'Loading bookings',
+          message: 'Checking your upcoming and recent bookings...',
+        ),
         error: (error, _) =>
             Center(child: Text('Failed to load bookings: $error')),
       ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -15,7 +14,6 @@ import '../discovery/discovery_repository.dart';
 import '../events/event_card.dart';
 import '../news/news_feed_section.dart';
 import '../services/services_repository.dart';
-import 'onboarding_flow.dart';
 import 'widgets/home_hero_card.dart';
 import 'widgets/home_quick_actions.dart';
 import 'widgets/home_section.dart';
@@ -31,33 +29,16 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _searchController = TextEditingController();
-  bool _showOnboarding = false;
 
   @override
   void initState() {
     super.initState();
-    _loadOnboarding();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadOnboarding() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (!mounted) return;
-    setState(() {
-      _showOnboarding = prefs.getBool('lokals_onboarding_complete') != true;
-    });
-  }
-
-  Future<void> _completeOnboarding() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('lokals_onboarding_complete', true);
-    if (!mounted) return;
-    setState(() => _showOnboarding = false);
   }
 
   void _routeSearch(String value) {
@@ -118,6 +99,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final remainingUpdateSlots = baseUpdates.length >= 4 ? 0 : 4 - baseUpdates.length;
     final localUpdates = [
       ...baseUpdates,
+      ...eventItems.take(baseUpdates.length >= 4 ? 0 : 1).map((item) => (
+            title: item.title,
+            source: item.venueName ?? item.locationLabel ?? item.location ?? 'Local event',
+            type: 'event',
+            route: '/events/${item.id}',
+            time: item.startsAt,
+            status: item.category,
+            weight: 2,
+          )),
       ...localNews.take(remainingUpdateSlots).map((item) => (
             title: item.title,
             source: item.sourceName,
@@ -131,9 +121,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return LokalsShell(
       title: 'LOKALS',
-      child: Stack(
-        children: [
-          ListView(
+      child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
               AppCard(
@@ -250,7 +238,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               HomeSection(
                 eyebrow: 'Local updates',
                 title: 'What is happening near you',
-                actionLabel: 'View all updates',
+                actionLabel: 'View All',
                 onAction: () => context.go('/alerts'),
                 isLoading: alertsFeed.isLoading || newsFeed.isLoading || followingFeed.isLoading,
                 errorText: (alertsFeed.hasError || newsFeed.hasError || followingFeed.hasError)
@@ -281,7 +269,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               HomeSection(
                 eyebrow: 'Nearby services',
                 title: 'Trusted providers around you',
-                actionLabel: 'See all services',
+                actionLabel: 'View All',
                 onAction: () => context.go('/services'),
                 isLoading: providers.isLoading,
                 errorText: providers.hasError ? 'Services unavailable right now.' : null,
@@ -299,7 +287,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               HomeSection(
                 eyebrow: 'Events near you',
                 title: 'Upcoming events nearby',
-                actionLabel: 'View events',
+                actionLabel: 'View All',
                 onAction: () => context.go('/events'),
                 isLoading: events.isLoading,
                 errorText: events.hasError ? 'Events unavailable right now.' : null,
@@ -317,7 +305,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               HomeSection(
                 eyebrow: 'Store deals',
                 title: 'Local products and offers',
-                actionLabel: 'Open Store',
+                actionLabel: 'View All',
                 onAction: () => context.go('/store'),
                 isLoading: products.isLoading,
                 errorText: products.hasError ? 'Store deals unavailable right now.' : null,
@@ -366,7 +354,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               HomeSection(
                 eyebrow: role == 'worker' ? 'Work first' : 'Work opportunities',
                 title: 'Jobs near you',
-                actionLabel: 'View Work',
+                actionLabel: 'View All',
                 onAction: () => context.go('/jobs'),
                 isLoading: jobs.isLoading,
                 errorText: jobs.hasError ? 'Jobs unavailable right now.' : null,
@@ -456,9 +444,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ],
           ),
-          if (_showOnboarding) Positioned.fill(child: OnboardingFlow(onComplete: _completeOnboarding)),
-        ],
-      ),
     );
   }
 }

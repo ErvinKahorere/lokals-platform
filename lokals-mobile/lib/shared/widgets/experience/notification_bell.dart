@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 
 class NotificationBell extends StatelessWidget {
-  const NotificationBell({super.key, this.count = 0, this.route = '/notifications'});
+  const NotificationBell({super.key, this.count = 0, this.route = '/activity'});
 
   final int count;
   final String route;

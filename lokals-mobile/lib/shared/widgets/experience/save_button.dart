@@ -1,11 +1,10 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../src/features/auth/auth_controller.dart';
+import '../../../src/features/auth/auth_navigation.dart';
 import '../../../src/features/discovery/discovery_repository.dart';
 
 class SaveButton extends ConsumerStatefulWidget {
@@ -27,7 +26,6 @@ class SaveButton extends ConsumerStatefulWidget {
 }
 
 class _SaveButtonState extends ConsumerState<SaveButton> {
-  static const _storageKey = 'lokals_saved_products';
   bool _saved = false;
 
   @override
@@ -52,56 +50,34 @@ class _SaveButtonState extends ConsumerState<SaveButton> {
       return;
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_storageKey);
-    final savedItems = raw == null ? <String>{} : Set<String>.from((jsonDecode(raw) as List<dynamic>).cast<String>());
-    if (!mounted) {
-      return;
-    }
-    setState(() => _saved = savedItems.contains(widget.storageId));
+    if (!mounted) return;
+    setState(() => _saved = false);
   }
 
   Future<void> _toggle() async {
     final auth = ref.read(authControllerProvider);
-    if (auth.token != null && widget.itemType != null && widget.itemId != null) {
-      final nextSaved = !_saved;
-      setState(() => _saved = nextSaved);
-      widget.onChanged?.call(nextSaved);
-      try {
-        if (nextSaved) {
-          await ref.read(discoveryRepositoryProvider).saveItem(type: widget.itemType!, id: widget.itemId!);
-        } else {
-          await ref.read(discoveryRepositoryProvider).removeSavedItem(type: widget.itemType!, id: widget.itemId!);
-        }
-        ref.invalidate(savedItemsProvider);
-      } catch (_) {
-        if (!mounted) {
-          return;
-        }
-        setState(() => _saved = !nextSaved);
-        widget.onChanged?.call(!nextSaved);
-      }
+    if (auth.token == null || widget.itemType == null || widget.itemId == null) {
+      promptSignIn(
+        context,
+        next: GoRouterState.of(context).uri.toString(),
+      );
       return;
     }
-
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_storageKey);
-    final savedItems = raw == null ? <String>{} : Set<String>.from((jsonDecode(raw) as List<dynamic>).cast<String>());
-    final nextSaved = !savedItems.contains(widget.storageId);
-
-    if (nextSaved) {
-      savedItems.add(widget.storageId);
-    } else {
-      savedItems.remove(widget.storageId);
-    }
-
-    await prefs.setString(_storageKey, jsonEncode(savedItems.toList()));
-    if (!mounted) {
-      return;
-    }
-
+    final nextSaved = !_saved;
     setState(() => _saved = nextSaved);
     widget.onChanged?.call(nextSaved);
+    try {
+      if (nextSaved) {
+        await ref.read(discoveryRepositoryProvider).saveItem(type: widget.itemType!, id: widget.itemId!);
+      } else {
+        await ref.read(discoveryRepositoryProvider).removeSavedItem(type: widget.itemType!, id: widget.itemId!);
+      }
+      ref.invalidate(savedItemsProvider);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _saved = !nextSaved);
+      widget.onChanged?.call(!nextSaved);
+    }
   }
 
   @override

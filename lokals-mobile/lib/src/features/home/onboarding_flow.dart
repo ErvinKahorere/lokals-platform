@@ -2,19 +2,71 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/widgets/loading_skeleton.dart';
 import '../../config/app_config.dart';
 import '../../../shared/widgets/app_button.dart';
 
 class OnboardingFlow extends StatefulWidget {
-  const OnboardingFlow({super.key, required this.onComplete});
+  const OnboardingFlow({
+    super.key,
+    required this.onGetStarted,
+    required this.onSkip,
+    required this.onLogin,
+  });
 
-  final VoidCallback onComplete;
+  final VoidCallback onGetStarted;
+  final VoidCallback onSkip;
+  final VoidCallback onLogin;
 
   @override
   State<OnboardingFlow> createState() => _OnboardingFlowState();
 }
 
 class _OnboardingFlowState extends State<OnboardingFlow> {
+  final _controller = PageController();
+  int _index = 0;
+
+  static const _slides = [
+    (
+      icon: Icons.location_city_rounded,
+      title: 'Everything in your city',
+      subtitle: 'Find services, jobs, events, alerts and help around Okahandja.',
+    ),
+    (
+      icon: Icons.handshake_outlined,
+      title: 'Get help nearby',
+      subtitle: 'Book trusted providers, find public services, and contact local businesses.',
+    ),
+    (
+      icon: Icons.notifications_active_outlined,
+      title: 'Stay connected',
+      subtitle: 'Receive alerts, local news, events and town updates.',
+    ),
+    (
+      icon: Icons.place_outlined,
+      title: 'Built for Okahandja',
+      subtitle: 'LOKALS is currently piloting in Okahandja.',
+    ),
+  ];
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _next() async {
+    if (_index == _slides.length - 1) {
+      widget.onGetStarted();
+      return;
+    }
+
+    await _controller.nextPage(
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -64,79 +116,130 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             ),
           ),
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 18, 24, 28),
-              child: Column(
-                children: [
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: widget.onComplete,
-                      child: const Text(
-                        'Login',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 18, 24, 28),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        TextButton(
+                          onPressed: widget.onSkip,
+                          child: const Text(
+                            'Skip',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        const Spacer(),
+                        TextButton(
+                          onPressed: widget.onLogin,
+                          child: const Text(
+                            'Login',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Expanded(
+                      child: PageView.builder(
+                        controller: _controller,
+                        itemCount: _slides.length,
+                        onPageChanged: (index) => setState(() => _index = index),
+                        itemBuilder: (context, index) {
+                          final slide = _slides[index];
+                          return Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 240),
+                                width: 112,
+                                height: 112,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(34),
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.08),
+                                      blurRadius: 28,
+                                      offset: const Offset(0, 12),
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  slide.icon,
+                                  color: Colors.white,
+                                  size: 44,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              Image.asset('assets/brand/lokals-logo.png', height: 42, color: Colors.white),
+                              const SizedBox(height: 20),
+                              Text(
+                                slide.title,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.1,
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              Text(
+                                slide.subtitle,
+                                textAlign: TextAlign.center,
+                                style: AppTextStyles.body.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.85),
+                                  fontSize: 16,
+                                  height: 1.5,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                alignment: WrapAlignment.center,
+                                children: [
+                                  _InfoChip(label: AppConfig.pilotTown),
+                                  const _InfoChip(label: 'Purple local flow'),
+                                  const _InfoChip(label: 'Guest browsing'),
+                                ],
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ),
-                  ),
-                  const Spacer(),
-                  Container(
-                    width: 104,
-                    height: 104,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        _slides.length,
+                        (index) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          height: 10,
+                          width: index == _index ? 30 : 10,
+                          decoration: BoxDecoration(
+                            color: index == _index ? Colors.white : Colors.white.withValues(alpha: 0.32),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                      ),
                     ),
-                    padding: const EdgeInsets.all(22),
-                    child: Image.asset('assets/brand/lokals-icon.png'),
-                  ),
-                  const SizedBox(height: 22),
-                  Image.asset('assets/brand/lokals-logo.png', height: 42, color: Colors.white),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Everything in your town',
-                    style: TextStyle(
+                    const SizedBox(height: 22),
+                    AppButton(
+                      label: _index == _slides.length - 1 ? 'Get Started' : 'Next',
+                      variant: AppButtonVariant.secondary,
+                      onPressed: _next,
+                    ),
+                    const SizedBox(height: 14),
+                    const LokalsInlineLoader(
+                      label: 'Smooth start for Okahandja',
                       color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    '${AppConfig.pilotLocationMessage} Services, jobs, transport, safety, shopping, and local updates all stay in one simple flow.',
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.body.copyWith(
-                      color: Colors.white.withValues(alpha: 0.82),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      _InfoChip(label: AppConfig.pilotTown),
-                      const _InfoChip(label: 'Phone-first'),
-                      const _InfoChip(label: 'Guest browsing'),
-                    ],
-                  ),
-                  const Spacer(),
-                  AppButton(
-                    label: 'Enter LOKALS',
-                    variant: AppButtonVariant.secondary,
-                    onPressed: widget.onComplete,
-                  ),
-                  const SizedBox(height: 14),
-                  TextButton(
-                    onPressed: widget.onComplete,
-                    child: const Text(
-                      'Continue as guest',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
           ),
         ],
       ),
