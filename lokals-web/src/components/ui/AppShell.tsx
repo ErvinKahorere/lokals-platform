@@ -1,8 +1,8 @@
-import { Bell, BookOpen, CalendarDays, ChevronDown, LayoutDashboard, LogOut, MapPin, Menu, Search, Settings, ShieldAlert, Store, Ticket, UserRound } from 'lucide-react'
+import { ChevronDown, LayoutDashboard, LogOut, MapPin, Menu, Search, Settings, Ticket, UserRound, Bookmark, Bell, BookOpen } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { useMarkAllNotificationsRead, useMe, useMyBusinesses, useNotifications, usePreferences, useUpdatePreferences, useUpdateProfile } from '../../hooks/queries'
-import { getRoleHomePath, hasAnyAssignedRole } from '../../lib/roles'
+import { useMe, useNotifications, usePreferences, useUpdatePreferences, useUpdateProfile } from '../../hooks/queries'
+import { getRoleHomePath } from '../../lib/roles'
 import { useAuthStore } from '../../store/auth'
 import { NotificationBell } from '../experience/NotificationBell'
 import { BottomSheet } from './BottomSheet'
@@ -13,23 +13,23 @@ import { RoleSwitcher } from './RoleSwitcher'
 import { SearchBar } from './SearchBar'
 
 const desktopLinks = [
-  { to: '/', label: 'Home' },
+  { to: '/home', label: 'Home' },
   { to: '/services', label: 'Services' },
+  { to: '/store', label: 'Market' },
+  { to: '/activity', label: 'Activity' },
   { to: '/directory', label: 'Directory' },
-  { to: '/store', label: 'Store' },
-  { to: '/jobs', label: 'Work' },
   { to: '/events', label: 'Events' },
   { to: '/news', label: 'News' },
 ]
 
 const mobileLinks = [
-  { to: '/', label: 'Home' },
+  { to: '/home', label: 'Home' },
   { to: '/services', label: 'Services' },
-  { to: '/alerts', label: 'Activity' },
-  { to: '/store', label: 'Store' },
+  { to: '/store', label: 'Market' },
+  { to: '/activity', label: 'Activity' },
+  { to: '/directory', label: 'Directory' },
   { to: '/events', label: 'Events' },
   { to: '/news', label: 'News' },
-  { to: '/directory', label: 'Directory' },
 ]
 
 const locationOptions = [
@@ -126,32 +126,31 @@ export function AppShell() {
   const meQuery = useMe()
   const preferencesQuery = usePreferences()
   const notificationsQuery = useNotifications()
-  const businessesQuery = useMyBusinesses()
   const updatePreferences = useUpdatePreferences()
   const updateProfile = useUpdateProfile()
-  const markAllRead = useMarkAllNotificationsRead()
   const navigate = useNavigate()
   const currentUser = meQuery.data?.user ? ('data' in meQuery.data.user ? meQuery.data.user.data : meQuery.data.user) : user
   const unreadCount = (notificationsQuery.data ?? []).filter((item) => !item.read_at).length
-  const isAdmin = hasAnyAssignedRole(currentUser, ['super_admin', 'operator', 'municipality_admin', 'town_manager'])
-  const isBusinessUser = hasAnyAssignedRole(currentUser, ['seller', 'service_provider', 'business_owner', 'organization_admin', 'super_admin'])
   const activeRole = currentUser?.current_role ?? currentUser?.roles?.[0] ?? null
+  const isBusinessUser = Boolean(currentUser?.roles?.some((role) => ['seller', 'business_owner', 'service_provider'].includes(role)))
   const dashboardLink = currentUser ? getRoleHomePath(currentUser) : '/dashboard/profile'
   const locationLabel = [currentUser?.default_area ?? preferencesQuery.data?.default_area, currentUser?.default_town ?? preferencesQuery.data?.default_town ?? currentUser?.location ?? 'Okahandja'].filter(Boolean).join(', ')
+  const currentArea = currentUser?.default_area ?? preferencesQuery.data?.default_area
+  const currentTown = currentUser?.default_town ?? preferencesQuery.data?.default_town ?? currentUser?.location ?? 'Okahandja'
+  const guestLocationLabel = currentArea ? `${currentArea}, ${currentTown}` : currentTown
   const profileMenu = useMemo(() => {
     const items = [
-      { to: '/dashboard/profile', label: 'View Profile', icon: UserRound, show: Boolean(currentUser) },
-      { to: '/activity', label: 'My Activity', icon: Bell, show: Boolean(currentUser) },
+      { to: '/dashboard/profile', label: 'Profile', icon: UserRound, show: Boolean(currentUser) },
+      { to: '/saved-items', label: 'Saved Items', icon: Bookmark, show: Boolean(currentUser) },
+      { to: '/activity', label: 'Activity', icon: Bell, show: Boolean(currentUser) },
       { to: '/dashboard/bookings', label: 'My Bookings', icon: BookOpen, show: Boolean(currentUser) },
       { to: '/my-tickets', label: 'My Tickets', icon: Ticket, show: Boolean(currentUser) },
-      { to: '/dashboard/saved', label: 'Saved Items', icon: CalendarDays, show: Boolean(currentUser) },
-      { to: '/dashboard/business', label: 'Manage Business', icon: Store, show: isBusinessUser || (businessesQuery.data?.data?.length ?? 0) > 0 },
       { to: dashboardLink, label: 'Dashboard', icon: LayoutDashboard, show: Boolean(currentUser) },
       { to: '/settings', label: 'Settings', icon: Settings, show: Boolean(currentUser) },
     ]
 
     return items.filter((item) => item.show)
-  }, [businessesQuery.data?.data?.length, currentUser, dashboardLink, isBusinessUser])
+  }, [currentUser, dashboardLink])
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 8)
@@ -224,7 +223,7 @@ export function AppShell() {
             >
               <Menu className="h-5 w-5 text-lokals-charcoal" />
             </button>
-            <NavLink to="/" className="flex min-w-0 items-center gap-3">
+            <NavLink to="/home" className="flex min-w-0 items-center gap-3">
               <img src="/brand/lokals-logo.png" alt="LOKALS" className="h-10 w-auto" />
             </NavLink>
           </div>
@@ -272,19 +271,22 @@ export function AppShell() {
               ) : null}
             </div>
 
-            <NotificationBell count={unreadCount} to="/alerts" />
+            {currentUser ? <NotificationBell count={unreadCount} to="/activity" /> : null}
 
             <div ref={locationRef} className="relative hidden lg:block">
               <button
                 type="button"
-                onClick={() => setLocationOpen((value) => !value)}
+                onClick={() => {
+                  if (!currentUser) return
+                  setLocationOpen((value) => !value)
+                }}
                 className="inline-flex min-h-11 items-center gap-2 rounded-full border border-lokals-border bg-white px-3 py-2 text-sm font-semibold text-lokals-charcoal shadow-card"
               >
                 <MapPin className="h-4 w-4 text-lokals-purple" />
-                <span className="max-w-36 truncate">{locationLabel}</span>
-                <ChevronDown className="h-4 w-4 text-lokals-muted" />
+                <span className="max-w-40 truncate">{currentUser ? locationLabel : guestLocationLabel}</span>
+                {currentUser ? <ChevronDown className="h-4 w-4 text-lokals-muted" /> : null}
               </button>
-              {locationOpen ? (
+              {currentUser && locationOpen ? (
                 <div className="absolute right-0 top-[calc(100%+0.5rem)] z-40 w-72 rounded-[20px] border border-lokals-border bg-white p-2 shadow-soft-lg">
                   <p className="px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-lokals-muted">Switch location</p>
                   <div className="space-y-1">
@@ -321,7 +323,9 @@ export function AppShell() {
                   <ProfileAvatar name={currentUser.name} avatar={currentUser.avatar ?? currentUser.profile?.avatar_url ?? null} size="sm" />
                   <div className="hidden text-left md:block">
                     <p className="max-w-28 truncate text-sm font-semibold text-lokals-charcoal">{currentUser.name}</p>
-                    <p className="text-xs text-lokals-muted">{formatRole(activeRole)}</p>
+                    <div className="mt-1 inline-flex rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-semibold text-lokals-purple">
+                      {formatRole(activeRole)}
+                    </div>
                   </div>
                   <ChevronDown className="hidden h-4 w-4 text-lokals-muted md:block" />
                 </button>
@@ -332,6 +336,9 @@ export function AppShell() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-semibold text-lokals-charcoal">{currentUser.name}</p>
                         <p className="truncate text-sm text-lokals-muted">{locationLabel}</p>
+                        <div className="mt-2 inline-flex rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-semibold text-lokals-purple">
+                          {formatRole(activeRole)}
+                        </div>
                       </div>
                     </div>
                     <div className="mt-3">
@@ -347,21 +354,6 @@ export function AppShell() {
                           </NavLink>
                         )
                       })}
-                      {isAdmin && activeRole !== 'municipality_admin' && activeRole !== 'town_manager' ? (
-                        <NavLink to="/admin" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-lokals-charcoal transition hover:bg-slate-100">
-                          <ShieldAlert className="h-4 w-4 text-lokals-purple" />
-                          Admin
-                        </NavLink>
-                      ) : null}
-                      <button
-                        type="button"
-                        disabled={markAllRead.isPending}
-                        onClick={() => void markAllRead.mutateAsync()}
-                        className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm font-medium text-lokals-charcoal transition hover:bg-slate-100"
-                      >
-                        <Bell className="h-4 w-4 text-lokals-purple" />
-                        {markAllRead.isPending ? 'Marking notifications...' : 'Mark notifications read'}
-                      </button>
                       <button
                         type="button"
                         onClick={async () => {
@@ -414,7 +406,7 @@ export function AppShell() {
       <footer className="border-t border-lokals-border bg-white">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 md:grid-cols-[1.2fr,1fr,1fr] md:px-6">
           <div>
-            <NavLink to="/" className="inline-flex items-center gap-3">
+            <NavLink to="/home" className="inline-flex items-center gap-3">
               <img src="/brand/lokals-logo.png" alt="LOKALS" className="h-10 w-auto" />
             </NavLink>
             <p className="mt-3 max-w-sm text-sm text-lokals-muted">Local services, trusted businesses, events, news, and daily help in one simple platform.</p>
@@ -494,7 +486,7 @@ export function AppShell() {
         <div className="space-y-3">
           <div className="rounded-[24px] border border-lokals-border bg-white p-4">
             <p className="text-sm font-semibold text-lokals-charcoal">{currentUser?.name ?? 'Explore LOKALS'}</p>
-            <p className="mt-1 text-sm text-lokals-muted">{locationLabel}</p>
+            <p className="mt-1 text-sm text-lokals-muted">{currentUser ? locationLabel : guestLocationLabel}</p>
           </div>
           <div className="space-y-2">
             {mobileLinks.map((link) => (

@@ -212,7 +212,10 @@ class ProfileScreen extends ConsumerWidget {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LokalsLoadingScreen(
+          title: 'Loading profile',
+          message: 'Pulling in your account and activity summary...',
+        ),
         error: (error, _) => Center(
           child: EmptyStateView(
             title: 'Profile unavailable',

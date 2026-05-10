@@ -82,7 +82,10 @@ class MyReportsScreen extends ConsumerWidget {
                   )),
           ],
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LokalsLoadingScreen(
+          title: 'Loading reports',
+          message: 'Gathering your submitted city issues...',
+        ),
         error: (error, _) => Center(
           child: EmptyStateView(
             title: 'Unable to load reports.',

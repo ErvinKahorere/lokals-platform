@@ -41,7 +41,7 @@ class HomeHeroCard extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             const Text(
-              'Find trusted services, public offices, shops and events around you.',
+              'What do you need in Okahandja today?',
               style: TextStyle(
                 fontSize: 23,
                 fontWeight: FontWeight.w800,
@@ -51,7 +51,7 @@ class HomeHeroCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              'Move from search to action in a few taps.',
+              'Move from urgent help to local services, trusted shops, and town updates in a few taps.',
               style: TextStyle(color: Colors.white.withValues(alpha: 0.82), height: 1.5),
             ),
             const SizedBox(height: 16),

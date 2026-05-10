@@ -18,6 +18,7 @@ import {
   getServicePriceLabel,
   resolveMediaUrl,
 } from '../lib/display'
+import { navigateToLogin } from '../lib/authNavigation'
 import { useAuthStore } from '../store/auth'
 
 const weekdayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -50,7 +51,7 @@ export function ServiceProviderDetailsPage() {
   const toggleFollow = async () => {
     if (!provider) return
     if (!token) {
-      navigate('/login')
+      navigateToLogin(navigate)
       return
     }
     if (followId) {

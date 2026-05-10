@@ -11,8 +11,8 @@ export function HomeHeroCard() {
             <Search className="h-3.5 w-3.5" />
             Need help nearby?
           </div>
-          <h2 className="mt-4 text-2xl font-semibold text-lokals-charcoal md:text-3xl">Find trusted services, public offices, shops and events around you.</h2>
-          <p className="mt-3 text-sm leading-6 text-lokals-muted">Start with the fastest action, then branch into updates, work, shopping, and local opportunities around your area.</p>
+          <h2 className="mt-4 text-2xl font-semibold text-lokals-charcoal md:text-3xl">What do you need in Okahandja today?</h2>
+          <p className="mt-3 text-sm leading-6 text-lokals-muted">Start with the fastest action, then move into services, urgent help, local shopping, and trusted community updates around your area.</p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
           <Link to="/services"><Button>Find Service</Button></Link>

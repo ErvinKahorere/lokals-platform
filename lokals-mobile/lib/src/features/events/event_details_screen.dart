@@ -9,6 +9,7 @@ import '../../core/models.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../auth/auth_controller.dart';
+import '../auth/auth_navigation.dart';
 import '../discovery/discovery_repository.dart';
 import '../services/services_repository.dart';
 import 'add_to_calendar_button.dart';
@@ -267,7 +268,13 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                           ),
                         ] else if (auth.token == null) ...[
                           const SizedBox(height: 12),
-                          AppButton(label: 'Login to reserve', onPressed: () => context.go('/login')),
+                          AppButton(
+                            label: 'Login to reserve',
+                            onPressed: () => promptSignIn(
+                              context,
+                              next: GoRouterState.of(context).uri.toString(),
+                            ),
+                          ),
                         ] else ...[
                           const SizedBox(height: 12),
                           LokalsTextField(controller: _holderName, label: 'Holder name', hint: 'Optional'),

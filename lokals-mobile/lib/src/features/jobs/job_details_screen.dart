@@ -9,6 +9,7 @@ import '../../services/contact_action_service.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../auth/auth_controller.dart';
+import '../auth/auth_navigation.dart';
 import '../discovery/discovery_repository.dart';
 
 class JobDetailsScreen extends ConsumerStatefulWidget {
@@ -36,7 +37,10 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
     final auth = ref.read(authControllerProvider);
     if (auth.token == null) {
       if (!mounted) return;
-      context.go('/login');
+      promptSignIn(
+        context,
+        next: GoRouterState.of(context).uri.toString(),
+      );
       return;
     }
 
@@ -261,7 +265,10 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LokalsLoadingScreen(
+          title: 'Loading job details',
+          message: 'Pulling in role details and apply actions...',
+        ),
         error: (error, _) => Center(
           child: EmptyStateView(
             title: 'Could not load job',

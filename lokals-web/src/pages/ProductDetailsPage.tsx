@@ -1,16 +1,18 @@
 import { MapPin, PackageCheck } from 'lucide-react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Avatar } from '../components/ui/Avatar'
 import { Button, EmptyState, PageHeader, ProductCard, QueryState, SectionCard, StatusBadge } from '../components/Ui'
 import { ContactActions } from '../components/experience/ContactActions'
 import { SaveButton } from '../components/experience/SaveButton'
 import { useCreateFollow, useDeleteFollow, useFollows, useProduct, useProducts, useSaleAlerts } from '../hooks/queries'
 import { getDisplayPrice, resolveMediaUrl } from '../lib/display'
+import { navigateToLogin } from '../lib/authNavigation'
 import { useAuthStore } from '../store/auth'
 
 export function ProductDetailsPage() {
   const { id } = useParams()
   const token = useAuthStore((state) => state.token)
+  const navigate = useNavigate()
   const productQuery = useProduct(id)
   const productsQuery = useProducts()
   const saleAlertsQuery = useSaleAlerts()
@@ -90,7 +92,17 @@ export function ProductDetailsPage() {
                       </Link>
                     ) : null}
                     {product.business?.id ? (
-                      <Button variant={followId ? 'primary' : 'secondary'} disabled={!token || createFollow.isPending || deleteFollow.isPending} onClick={() => followId ? deleteFollow.mutate(followId) : createFollow.mutate({ type: 'organization', id: product.business!.id })}>
+                      <Button
+                        variant={followId ? 'primary' : 'secondary'}
+                        disabled={createFollow.isPending || deleteFollow.isPending}
+                        onClick={() => {
+                          if (!token) {
+                            navigateToLogin(navigate)
+                            return
+                          }
+                          followId ? deleteFollow.mutate(followId) : createFollow.mutate({ type: 'organization', id: product.business!.id })
+                        }}
+                      >
                         {!token ? 'Login to follow' : followId ? 'Following' : 'Follow'}
                       </Button>
                     ) : null}

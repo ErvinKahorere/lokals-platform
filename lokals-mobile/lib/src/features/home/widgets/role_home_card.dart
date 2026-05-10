@@ -19,7 +19,7 @@ class RoleHomeCard extends StatelessWidget {
         'Manage your business',
         'Track your services, products, and followers in one place.',
         'Open Dashboard',
-        '/profile',
+        role == 'service_provider' ? '/dashboard/service-provider' : '/dashboard/business',
         Icons.storefront_outlined,
       ),
       'worker' => (
@@ -30,11 +30,18 @@ class RoleHomeCard extends StatelessWidget {
         Icons.work_outline_rounded,
       ),
       'organization_admin' => (
-        'Reach your followers',
-        'Share updates, alerts, and events with the people who follow your organization.',
-        'Post Update',
-        '/events',
+        'Organization dashboard ready',
+        'Manage updates, alerts, events, and community activity from one place.',
+        'Open Dashboard',
+        '/dashboard/organization',
         Icons.campaign_outlined,
+      ),
+      'town_manager' || 'municipality_admin' || 'super_admin' || 'operator' => (
+        'Open your dashboard',
+        'Jump into reports, alerts, and role-specific oversight without leaving Home.',
+        'Open Dashboard',
+        role == 'super_admin' || role == 'operator' ? '/dashboard/admin' : '/dashboard/town-manager',
+        Icons.dashboard_customize_outlined,
       ),
       'guest' => (
         'Sign in for a more personal local view',

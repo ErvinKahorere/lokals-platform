@@ -168,7 +168,10 @@ class _NewsDetailsScreenState extends ConsumerState<NewsDetailsScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LokalsLoadingScreen(
+          title: 'Loading news story',
+          message: 'Fetching the latest local update...',
+        ),
         error: (error, _) => const Center(
           child: EmptyStateView(
             title: 'News details unavailable',

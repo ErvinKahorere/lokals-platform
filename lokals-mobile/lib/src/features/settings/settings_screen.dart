@@ -275,7 +275,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ],
               );
             },
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const LokalsLoadingScreen(
+              title: 'Loading settings',
+              message: 'Preparing your account and notification preferences...',
+            ),
             error: (error, _) => Center(
               child: EmptyStateView(
                 title: 'Settings unavailable',

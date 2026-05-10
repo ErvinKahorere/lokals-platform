@@ -8,6 +8,7 @@ import { GlassPanel } from '../components/glass/GlassPanel'
 import { isDemoMode } from '../config/appMode'
 import { useCreateRide, useRides } from '../hooks/queries'
 import { getApiErrorMessage } from '../lib/api'
+import { navigateToLogin } from '../lib/authNavigation'
 import { useAuthStore } from '../store/auth'
 import type { RideItem } from '../types'
 
@@ -268,7 +269,11 @@ export function RidePage() {
           </>
         )
       ) : (
-        <EmptyState title="Login to request a taxi" body="Ride requests work best with your saved profile and contact details." action={<Link to="/login"><Button>Login</Button></Link>} />
+        <EmptyState
+          title="Login to request a taxi"
+          body="Ride requests work best with your saved profile and contact details."
+          action={<Button onClick={() => navigateToLogin(navigate)}>Login</Button>}
+        />
       )}
     </div>
   )

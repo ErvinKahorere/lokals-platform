@@ -1,5 +1,5 @@
 import { ArrowRight, BriefcaseBusiness, MapPin, ShoppingBag } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { EventCard } from '../components/events/EventCard'
 import { HomeHeroCard } from '../components/home/HomeHeroCard'
@@ -9,7 +9,6 @@ import { LocalUpdateCard } from '../components/home/LocalUpdateCard'
 import { RoleHomeCard } from '../components/home/RoleHomeCard'
 import { NewsFeedSection } from '../components/news/NewsFeedSection'
 import { NearbyServiceCard } from '../components/experience/NearbyServiceCard'
-import { OnboardingFlow } from '../components/experience/OnboardingFlow'
 import { Button } from '../components/ui/Button'
 import { SearchBar } from '../components/ui/SearchBar'
 import { useAlertsFeed, useEvents, useFeed, useFollowingFeed, useJobs, useMe, useNewsFeed, useNewsLocal, usePreferences, useProducts, useProviders, useSearchResults } from '../hooks/queries'
@@ -23,7 +22,6 @@ export function HomePage() {
   const meQuery = useMe()
   const preferencesQuery = usePreferences()
   const [search, setSearch] = useState('')
-  const [showOnboarding, setShowOnboarding] = useState(false)
   const currentUser = meQuery.data?.user ? ('data' in meQuery.data.user ? meQuery.data.user.data : meQuery.data.user) : user
   const town = PILOT_TOWN
   const area = normalizePilotArea(currentUser?.default_area ?? preferencesQuery.data?.default_area)
@@ -50,6 +48,7 @@ export function HomePage() {
     if (['seller', 'service_provider', 'business_owner'].includes(activeRole)) return 'business' as const
     if (activeRole === 'worker') return 'worker' as const
     if (activeRole === 'organization_admin') return 'organization' as const
+    if (['town_manager', 'municipality_admin', 'super_admin', 'operator'].includes(activeRole)) return 'manager' as const
     return 'citizen' as const
   }, [activeRole, currentUser])
 
@@ -76,7 +75,18 @@ export function HomePage() {
       weight: 2,
     }))
 
-    const baseUpdateCount = urgentAlerts.length + followedUpdates.length
+    const eventUpdates = events.slice(0, urgentAlerts.length + followedUpdates.length >= 4 ? 0 : 1).map((item) => ({
+      key: `event-${item.id}`,
+      title: item.title,
+      source: item.venue_name ?? item.location_label ?? item.location ?? 'Local event',
+      type: 'event' as const,
+      time: item.starts_at ?? 'Upcoming',
+      status: item.category,
+      to: `/events/${item.id}`,
+      weight: 2,
+    }))
+
+    const baseUpdateCount = urgentAlerts.length + followedUpdates.length + eventUpdates.length
     const newsUpdates = (baseUpdateCount >= 4 ? [] : localNews.slice(0, Math.max(0, 4 - baseUpdateCount))).map((item) => ({
       key: `news-${item.id}`,
       title: item.title,
@@ -88,10 +98,10 @@ export function HomePage() {
       weight: 1,
     }))
 
-    return [...urgentAlerts, ...followedUpdates, ...newsUpdates]
+    return [...urgentAlerts, ...followedUpdates, ...eventUpdates, ...newsUpdates]
       .sort((a, b) => b.weight - a.weight)
       .slice(0, 5)
-  }, [alerts, followingFeedQuery.data?.data, localNews])
+  }, [alerts, followingFeedQuery.data?.data, localNews, events])
 
   const searchTarget = (href: string) => {
     const query = search.trim()
@@ -99,24 +109,13 @@ export function HomePage() {
     return `${href}?q=${encodeURIComponent(query)}`
   }
 
-  useEffect(() => {
-    setShowOnboarding(window.localStorage.getItem('lokals-onboarding-complete') !== 'true')
-  }, [])
-
   return (
     <div className="space-y-8">
-      {showOnboarding ? (
-        <OnboardingFlow onComplete={() => {
-          setShowOnboarding(false)
-          window.localStorage.setItem('lokals-onboarding-complete', 'true')
-        }} />
-      ) : null}
-
       <section className="rounded-[28px] border border-lokals-border bg-white px-6 py-6 shadow-card">
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <p className="text-sm font-medium text-lokals-muted">{currentUser ? `Good morning, ${currentUser.name} 👋` : 'Explore what is happening nearby'}</p>
+              <p className="text-sm font-medium text-lokals-muted">{currentUser ? `Good morning, ${currentUser.name}` : 'Explore what is happening nearby'}</p>
               <h1 className="mt-2 text-3xl font-semibold text-lokals-charcoal">What do you need in Okahandja today?</h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-lokals-muted">
                 Search trusted services, daily essentials, events, jobs, and local updates around {[area, town].filter(Boolean).join(', ')}.
@@ -143,7 +142,7 @@ export function HomePage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             onValueSelect={setSearch}
-            placeholder="Search services, businesses, news, events..."
+            placeholder="Search services, jobs, products..."
             recentKey="home"
             suggestions={['Public services in Okahandja', 'Local businesses in Nau-Aib', 'Events this weekend', 'Okahandja council news', 'Jobs nearby']}
             shortcuts={[
@@ -179,7 +178,6 @@ export function HomePage() {
                   </div>
                 ))}
               </div>
-              <p className="mt-4 text-xs text-lokals-muted">TODO: switch Home to a unified backend search feed once the `/search` endpoint fully returns news and event results across all clients.</p>
             </div>
           ) : null}
         </div>
@@ -189,12 +187,12 @@ export function HomePage() {
 
       <HomeQuickActions />
 
-      <RoleHomeCard kind={roleCardKind} />
+      <RoleHomeCard kind={roleCardKind} activeRole={activeRole} />
 
       <HomeSection
         eyebrow="Local updates"
         title="What is happening near you"
-        action={<Link to="/alerts" className="text-sm font-semibold text-lokals-green">View all updates</Link>}
+        action={<Link to="/alerts" className="text-sm font-semibold text-lokals-green">View All</Link>}
         isLoading={alertsFeedQuery.isLoading || (currentUser ? newsFeedQuery.isLoading : newsLocalQuery.isLoading) || followingFeedQuery.isLoading}
         error={alertsFeedQuery.error ?? (currentUser ? newsFeedQuery.error : newsLocalQuery.error) ?? followingFeedQuery.error}
         empty={localUpdates.length === 0}
@@ -216,7 +214,7 @@ export function HomePage() {
       <HomeSection
         eyebrow="Nearby services"
         title="Trusted providers around you"
-        action={<Link to="/services" className="text-sm font-semibold text-lokals-green">See all services</Link>}
+        action={<Link to="/services" className="text-sm font-semibold text-lokals-green">View All</Link>}
         isLoading={providersQuery.isLoading}
         error={providersQuery.error}
         empty={providers.length === 0}
@@ -232,7 +230,7 @@ export function HomePage() {
       <HomeSection
         eyebrow="Events near you"
         title="Upcoming events nearby"
-        action={<Link to="/events" className="text-sm font-semibold text-lokals-green">View events</Link>}
+        action={<Link to="/events" className="text-sm font-semibold text-lokals-green">View All</Link>}
         isLoading={eventsQuery.isLoading}
         error={eventsQuery.error}
         empty={events.length === 0}
@@ -248,7 +246,7 @@ export function HomePage() {
       <HomeSection
         eyebrow="Store deals"
         title="Local products and offers"
-        action={<Link to="/store" className="text-sm font-semibold text-lokals-green">Open Store</Link>}
+        action={<Link to="/store" className="text-sm font-semibold text-lokals-green">View All</Link>}
         isLoading={productsQuery.isLoading}
         error={productsQuery.error}
         empty={products.length === 0}
@@ -278,7 +276,7 @@ export function HomePage() {
       <HomeSection
         eyebrow={activeRole === 'worker' ? 'Work first' : 'Work opportunities'}
         title="Jobs near you"
-        action={<Link to="/jobs" className="text-sm font-semibold text-lokals-green">View Work</Link>}
+        action={<Link to="/jobs" className="text-sm font-semibold text-lokals-green">View All</Link>}
         isLoading={jobsQuery.isLoading}
         error={jobsQuery.error}
         empty={jobs.length === 0}

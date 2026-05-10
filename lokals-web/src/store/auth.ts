@@ -8,6 +8,7 @@ interface AuthState {
   user: User | null
   setSession: (token: string, user: User) => void
   setUser: (user: User) => void
+  clearSession: () => void
   logout: () => Promise<void>
 }
 
@@ -23,14 +24,17 @@ export const useAuthStore = create<AuthState>()(
       setUser: (user) => {
         set({ user })
       },
+      clearSession: () => {
+        setAuthToken(null)
+        set({ token: null, user: null })
+      },
       logout: async () => {
         try {
           if (get().token) {
             await api.post('/auth/logout')
           }
         } finally {
-          setAuthToken(null)
-          set({ token: null, user: null })
+          get().clearSession()
         }
       },
     }),

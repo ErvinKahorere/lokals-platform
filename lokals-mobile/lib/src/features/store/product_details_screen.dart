@@ -322,7 +322,10 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LokalsLoadingScreen(
+          title: 'Loading product',
+          message: 'Preparing seller details and nearby offers...',
+        ),
         error: (error, _) => const Center(
           child: Padding(
             padding: EdgeInsets.all(24),

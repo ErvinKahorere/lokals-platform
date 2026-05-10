@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../config/app_config.dart';
 import '../../widgets/cards.dart';
-import '../../widgets/shell.dart';
 import 'auth_controller.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -19,8 +19,9 @@ class RegisterScreen extends ConsumerStatefulWidget {
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController(text: 'Password123!');
+  final _confirmPasswordController = TextEditingController(text: 'Password123!');
   String _selectedArea = AppConfig.okahandjaAreas.contains('Nau-Aib') ? 'Nau-Aib' : AppConfig.okahandjaAreas.first;
-  final Set<String> _roles = {'citizen'};
   String? _error;
 
   String _buildRegisterError(DioException error) {
@@ -44,30 +45,60 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
-    const roleOptions = [
-      'citizen',
-      'worker',
-      'seller',
-      'business_owner',
-      'service_provider',
-      'driver',
-      'organization_representative',
-    ];
 
-    return LokalsShell(
-      title: 'Create profile',
-      showBack: true,
-      child: ListView(
-        padding: const EdgeInsets.all(20),
+    return Scaffold(
+      backgroundColor: AppColors.softBackground,
+      body: SafeArea(
+        child: Form(
+          child: ListView(
+            padding: const EdgeInsets.all(20),
         children: [
-          Center(child: Image.asset('assets/brand/lokals-logo.png', height: 44)),
-          const SizedBox(height: 16),
-          const SectionTitle(
-            title: 'Create your LOKALS profile',
-            subtitle: 'A short setup keeps the app friendly, local, and quick to join in Okahandja.',
-          ),
-          const SizedBox(height: 16),
-          Container(
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  onPressed: () => context.pop(),
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Center(child: Image.asset('assets/brand/lokals-logo.png', height: 44)),
+              const SizedBox(height: 18),
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.purpleSoftAlt,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: const Text(
+                    'Built for Okahandja',
+                    style: TextStyle(
+                      color: AppColors.primaryPurple,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Create your LOKALS account',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.deepCharcoal,
+                  height: 1.06,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Start with your name, phone, password, and area. Role switching can happen later without slowing this step down.',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodyMuted,
+              ),
+              const SizedBox(height: 16),
+              Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -99,27 +130,41 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ),
                       SizedBox(height: 4),
                       Text(
-                        '${AppConfig.pilotLocationMessage} Choose your area and role now, then grow the profile as you use LOKALS.',
+                        '${AppConfig.pilotLocationMessage} Your first account opens as a citizen, with your area saved from day one.',
                         style: TextStyle(color: AppColors.mutedText),
                       ),
                     ],
                   ),
                 ),
               ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          LokalsCard(
+                ),
+              ),
+              const SizedBox(height: 16),
+              LokalsCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                LokalsTextField(controller: _nameController, label: 'Name', hint: 'Enter your name'),
+                LokalsTextField(controller: _nameController, label: 'Full name', hint: 'Enter your name'),
                 const SizedBox(height: 12),
                 LokalsTextField(
                   controller: _phoneController,
-                  label: 'Phone',
+                  label: 'Phone number',
                   hint: '+264...',
                   keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 12),
+                LokalsTextField(
+                  controller: _passwordController,
+                  label: 'Password',
+                  hint: 'Create a password',
+                  obscureText: true,
+                ),
+                const SizedBox(height: 12),
+                LokalsTextField(
+                  controller: _confirmPasswordController,
+                  label: 'Confirm password',
+                  hint: 'Repeat your password',
+                  obscureText: true,
                 ),
                 const SizedBox(height: 12),
                 InputDecorator(
@@ -140,52 +185,46 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   decoration: const InputDecoration(labelText: 'Area'),
                   onChanged: (value) => setState(() => _selectedArea = value ?? _selectedArea),
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Choose role(s)',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: roleOptions.map((role) {
-                    final active = _roles.contains(role);
-                    return FilterChip(
-                      label: Text(role.replaceAll('_', ' ')),
-                      selected: active,
-                      onSelected: (selected) {
-                        setState(() {
-                          if (selected) {
-                            _roles.add(role);
-                          } else if (_roles.length > 1) {
-                            _roles.remove(role);
-                          }
-                        });
-                      },
-                    );
-                  }).toList(),
-                ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),
                   Text(_error!, style: const TextStyle(color: AppColors.danger)),
                 ],
                 const SizedBox(height: 16),
                 PrimaryAction(
-                  label: 'Continue',
+                  label: 'Create Account',
                   isBusy: auth.isLoading,
                   onPressed: () async {
+                    final name = _nameController.text.trim();
+                    final phone = _phoneController.text.trim();
+                    final password = _passwordController.text.trim();
+                    final confirmPassword = _confirmPasswordController.text.trim();
                     setState(() => _error = null);
+                    if (name.isEmpty) {
+                      setState(() => _error = 'Enter your name.');
+                      return;
+                    }
+                    if (phone.length < 8) {
+                      setState(() => _error = 'Enter a valid phone number.');
+                      return;
+                    }
+                    if (password.length < 8) {
+                      setState(() => _error = 'Use at least 8 characters for your password.');
+                      return;
+                    }
+                    if (password != confirmPassword) {
+                      setState(() => _error = 'Passwords do not match.');
+                      return;
+                    }
                     try {
-                          await ref.read(authControllerProvider.notifier).register(
-                            name: _nameController.text.trim(),
-                            phone: _phoneController.text.trim(),
-                            town: AppConfig.pilotTown,
-                            area: _selectedArea,
-                            roles: _roles.toList(),
-                          );
+                      await ref.read(authControllerProvider.notifier).register(
+                        name: name,
+                        phone: phone,
+                        password: password,
+                        town: AppConfig.pilotTown,
+                        area: _selectedArea,
+                      );
                       if (!context.mounted) return;
-                      context.go('/');
+                      context.go('/home');
                     } on DioException catch (error) {
                       setState(() => _error = _buildRegisterError(error));
                     }
@@ -198,8 +237,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
               ],
             ),
-          ),
+              ),
         ],
+          ),
+        ),
       ),
     );
   }

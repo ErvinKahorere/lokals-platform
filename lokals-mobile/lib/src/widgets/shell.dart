@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../config/app_config.dart';
+import '../core/role_routing.dart';
 import '../core/models.dart';
 import '../../shared/widgets/experience/notification_bell.dart';
 import '../../shared/widgets/mobile_bottom_nav.dart';
@@ -34,23 +35,26 @@ class LokalsShell extends ConsumerWidget {
 
   int _currentIndex(BuildContext context) {
     final path = GoRouterState.of(context).matchedLocation;
-    if (path == '/' || path.startsWith('/dashboard')) return 0;
-    if (path.startsWith('/services') || path.startsWith('/book') || path.startsWith('/workers')) return 1;
+    if (path == '/' || path.startsWith('/home') || path.startsWith('/search') || path.startsWith('/more') || path.startsWith('/okahandja')) {
+      return 0;
+    }
+    if (path.startsWith('/services') ||
+        path.startsWith('/book') ||
+        path.startsWith('/workers') ||
+        path.startsWith('/directory')) {
+      return 1;
+    }
     if (path.startsWith('/store') ||
-        path.startsWith('/directory') ||
-        path.startsWith('/events') ||
         path.startsWith('/marketplace') ||
-        path.startsWith('/jobs') ||
-        path.startsWith('/search') ||
-        path.startsWith('/accommodation') ||
-        path.startsWith('/okahandja') ||
-        path.startsWith('/more')) {
+        path.startsWith('/accommodation')) {
       return 2;
     }
     if (path.startsWith('/activity') ||
         path.startsWith('/alerts') ||
         path.startsWith('/news') ||
         path.startsWith('/notifications') ||
+        path.startsWith('/events') ||
+        path.startsWith('/jobs') ||
         path.startsWith('/delivery') ||
         path.startsWith('/ride') ||
         path.startsWith('/sos') ||
@@ -63,6 +67,7 @@ class LokalsShell extends ConsumerWidget {
         path.startsWith('/my-bookings') ||
         path.startsWith('/my-tickets') ||
         path.startsWith('/saved-items') ||
+        path.startsWith('/dashboard') ||
         path.startsWith('/provider-bookings')) {
       return 4;
     }
@@ -74,6 +79,28 @@ class LokalsShell extends ConsumerWidget {
         .split('_')
         .map((item) => item.isEmpty ? item : '${item[0].toUpperCase()}${item.substring(1)}')
         .join(' ');
+  }
+
+  bool _isDashboardRoute(BuildContext context) {
+    return GoRouterState.of(context).matchedLocation.startsWith('/dashboard');
+  }
+
+  Widget _buildRoleChip(String label, {bool inverted = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: inverted ? Colors.white.withValues(alpha: 0.16) : AppColors.purpleSoftAlt,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: inverted ? Colors.white : AppColors.primaryPurple,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
   }
 
   Future<void> _openProfileMenu(BuildContext context, WidgetRef ref) async {
@@ -133,6 +160,13 @@ class LokalsShell extends ConsumerWidget {
                             '${user?.defaultArea ?? user?.location ?? AppConfig.pilotTown}, ${user?.defaultTown ?? 'Namibia'}',
                             style: AppTextStyles.bodyMuted,
                           ),
+                          const SizedBox(height: 8),
+                          _buildRoleChip(
+                            _formatRole(
+                              user?.currentRole ??
+                                  ((user?.roles.isNotEmpty ?? false) ? user!.roles.first : 'citizen'),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -187,7 +221,7 @@ class LokalsShell extends ConsumerWidget {
                                     final nextUser = await ref.read(authControllerProvider.notifier).switchRole(role);
                                     if (!context.mounted) return;
                                     Navigator.of(context).pop();
-                                    context.go(nextUser == null ? '/dashboard' : routeForRole(nextUser.currentRole ?? role));
+                                    context.go(nextUser == null ? '/dashboard' : roleHomePath(nextUser.currentRole ?? role));
                                   },
                           ),
                         )
@@ -197,10 +231,18 @@ class LokalsShell extends ConsumerWidget {
                 ],
                 ...[
                   ('/profile', 'Profile', Icons.person_outline_rounded),
+                  ('/saved-items', 'Saved Items', Icons.bookmark_outline_rounded),
                   ('/activity', 'Activity', Icons.notifications_active_outlined),
-                  ('/my-bookings', 'Bookings', Icons.book_online_outlined),
-                  ('/my-tickets', 'Tickets', Icons.confirmation_number_outlined),
-                  ('/saved-items', 'Saved', Icons.bookmark_outline_rounded),
+                  ('/my-bookings', 'My Bookings', Icons.book_online_outlined),
+                  ('/my-tickets', 'My Tickets', Icons.confirmation_number_outlined),
+                  (
+                    roleHomePath(
+                      user?.currentRole ??
+                          ((user?.roles.isNotEmpty ?? false) ? user!.roles.first : null),
+                    ),
+                    'Dashboard',
+                    Icons.dashboard_customize_outlined,
+                  ),
                   ('/settings', 'Settings', Icons.settings_outlined),
                 ].map(
                   (item) => ListTile(
@@ -357,18 +399,74 @@ class LokalsShell extends ConsumerWidget {
     final preferences = ref.watch(preferencesProvider).asData?.value;
     final notifications = ref.watch(notificationsProvider).asData?.value ?? const [];
     final unreadCount = notifications.where((item) => item.readAt == null).length;
-    final canShowBrand = !showBack;
     final isHome = title == 'LOKALS';
+    final isDashboard = _isDashboardRoute(context);
+    final isGuest = user == null;
     final currentTown = preferences?.defaultTown ?? user?.defaultTown ?? AppConfig.pilotTown;
     final currentArea = preferences?.defaultArea ?? user?.defaultArea;
     final locationLabel = [currentArea, currentTown].whereType<String>().where((item) => item.isNotEmpty).join(', ');
+    final activeRole = user?.currentRole ?? ((user?.roles.isNotEmpty ?? false) ? user!.roles.first : 'citizen');
+    final greetingName = user?.name.split(' ').first ?? 'there';
+    final headerHeight = isHome ? 86.0 : 74.0;
+    final canPop = Navigator.of(context).canPop();
+    final titleWidget = isHome
+        ? (isGuest
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset('assets/brand/lokals-logo.png', height: 28),
+                    const SizedBox(width: 10),
+                    _buildRoleChip(currentTown),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Hello, $greetingName',
+                      style: AppTextStyles.bodyMuted.copyWith(
+                        color: AppColors.mutedText,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      currentArea == null || currentArea.isEmpty ? currentTown : '$currentArea, $currentTown',
+                      style: AppTextStyles.h3,
+                    ),
+                    const SizedBox(height: 6),
+                    _buildRoleChip(_formatRole(activeRole)),
+                  ],
+                ))
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(title, style: AppTextStyles.h3),
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  if (isDashboard) _buildRoleChip(_formatRole(activeRole)),
+                  if (locationLabel.isNotEmpty)
+                    Text(
+                      locationLabel,
+                      style: AppTextStyles.caption,
+                    ),
+                ],
+              ),
+            ],
+          );
 
     return Scaffold(
       extendBody: true,
       appBar: AppBar(
+        toolbarHeight: headerHeight,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         titleSpacing: showBack ? 0 : 20,
-        title: isHome
+        title: isHome && !isGuest
             ? InkWell(
                 borderRadius: BorderRadius.circular(999),
                 onTap: () => _openLocationSelector(
@@ -378,67 +476,56 @@ class LokalsShell extends ConsumerWidget {
                   preferences: preferences,
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.place_outlined, size: 16, color: AppColors.deepCharcoal),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          currentTown,
-                          style: AppTextStyles.h4,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.expand_more_rounded, size: 18, color: AppColors.mutedText),
-                    ],
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: titleWidget,
                 ),
               )
-            : canShowBrand
-                ? Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Image.asset('assets/brand/lokals-logo.png', height: 28),
-                    ],
-                  )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(title, style: AppTextStyles.h3),
-                  if (locationLabel.isNotEmpty)
-                    Text(
-                      locationLabel,
-                      style: AppTextStyles.caption,
-                    ),
-                ],
-              ),
+            : titleWidget,
         actions: [
-          NotificationBell(count: unreadCount, route: '/notifications'),
-          IconButton(
-            tooltip: 'Profile menu',
-            onPressed: user == null ? () => context.go('/login') : () => _openProfileMenu(context, ref),
-            icon: CircleAvatar(
-              radius: 15,
-              backgroundColor: AppColors.purpleSoft,
-              child: Text(
-                user?.name.characters.first.toUpperCase() ?? 'L',
-                style: AppTextStyles.caption.copyWith(
-                  color: AppColors.primaryPurple,
-                  fontWeight: FontWeight.w800,
+          if (user != null) ...[
+            NotificationBell(count: unreadCount, route: '/activity'),
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: IconButton(
+                tooltip: 'Profile menu',
+                onPressed: () => _openProfileMenu(context, ref),
+                icon: CircleAvatar(
+                  radius: 15,
+                  backgroundColor: AppColors.purpleSoft,
+                  child: Text(
+                    user.name.characters.first.toUpperCase(),
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.primaryPurple,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
+          ] else
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: TextButton(
+                onPressed: () => context.go('/login'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primaryPurple,
+                  textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                child: const Text('Login'),
+              ),
+            ),
           ...?actions,
         ],
         leading: showBack
             ? IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new),
-                onPressed: () => context.pop(),
+                onPressed: () {
+                  if (canPop) {
+                    context.pop();
+                  } else {
+                    context.go(isGuest ? '/home' : roleHomePath(activeRole));
+                  }
+                },
               )
             : null,
       ),
@@ -460,25 +547,3 @@ class LokalsShell extends ConsumerWidget {
   }
 }
 
-String routeForRole(String role) {
-  switch (role) {
-    case 'worker':
-      return '/dashboard/worker';
-    case 'seller':
-    case 'business_owner':
-    case 'driver':
-      return '/dashboard/business';
-    case 'service_provider':
-      return '/dashboard/service-provider';
-    case 'organization_admin':
-      return '/dashboard/organization';
-    case 'town_manager':
-    case 'municipality_admin':
-      return '/dashboard/town-manager';
-    case 'super_admin':
-    case 'operator':
-      return '/dashboard/admin';
-    default:
-      return '/home';
-  }
-}

@@ -2,7 +2,7 @@ import type { PropsWithChildren, ReactNode } from 'react'
 import { Card } from './ui/Card'
 import { EmptyState as BaseEmptyState } from './ui/EmptyState'
 import { Header } from './ui/Header'
-import { SkeletonCard } from './ui/LoadingSkeleton'
+import { InlineLoader, SkeletonList } from './ui/LoadingSkeleton'
 import { Badge } from './ui/Badge'
 export { Button } from './ui/Button'
 export { Badge } from './ui/Badge'
@@ -19,6 +19,7 @@ export { AlertCard } from './ui/AlertCard'
 export { ActionTile } from './ui/ActionTile'
 export { StatCard } from './ui/StatCard'
 export { Tabs } from './ui/Tabs'
+export { ButtonLoader, InlineLoader, LoadingScreen, SkeletonCard, SkeletonList } from './ui/LoadingSkeleton'
 
 export function StatusBadge({
   value,
@@ -55,11 +56,7 @@ export function QueryState({
   children,
 }: PropsWithChildren<{ isLoading?: boolean; error?: unknown; empty?: boolean }>) {
   if (isLoading) {
-    return (
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, index) => <SkeletonCard key={index} />)}
-      </div>
-    )
+    return <SkeletonList count={6} />
   }
 
   if (error) {
@@ -71,4 +68,8 @@ export function QueryState({
   }
 
   return <>{children}</>
+}
+
+export function SectionLoader({ label = 'Loading section' }: { label?: string }) {
+  return <InlineLoader label={label} />
 }

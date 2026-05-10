@@ -1,34 +1,68 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/experience/contact_actions.dart';
 import '../../../shared/widgets/experience/trust_row.dart';
 import '../../core/experience_helpers.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_text_styles.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
+import '../auth/auth_controller.dart';
+import '../auth/auth_navigation.dart';
 import '../discovery/discovery_repository.dart';
 
-class DirectoryDetailsScreen extends ConsumerWidget {
+class DirectoryDetailsScreen extends ConsumerStatefulWidget {
   const DirectoryDetailsScreen({super.key, required this.directoryId});
 
   final String directoryId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final details = ref.watch(directoryDetailsProvider(directoryId));
+  ConsumerState<DirectoryDetailsScreen> createState() => _DirectoryDetailsScreenState();
+}
+
+class _DirectoryDetailsScreenState extends ConsumerState<DirectoryDetailsScreen> {
+  bool _followBusy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final details = ref.watch(directoryDetailsProvider(widget.directoryId));
+    final followedIds = ref.watch(followedOrganizationIdsProvider);
+    final auth = ref.watch(authControllerProvider);
 
     return LokalsShell(
       title: 'Directory details',
       showBack: true,
       child: details.when(
         data: (item) {
+          final isFollowing = followedIds.asData?.value.contains(item.id) ?? false;
           final openingHours = item.openingHours.isEmpty
               ? [
                   {'day': 'Daily', 'open': '08:00', 'close': '17:00'}
                 ]
               : item.openingHours;
+
+          Future<void> toggleFollow() async {
+            if (auth.token == null) {
+              promptSignIn(context, next: GoRouterState.of(context).uri.toString());
+              return;
+            }
+
+            setState(() => _followBusy = true);
+            try {
+              if (isFollowing) {
+                await ref.read(discoveryRepositoryProvider).unfollowOrganization(item.id);
+              } else {
+                await ref.read(discoveryRepositoryProvider).followOrganization(item.id);
+              }
+              ref.invalidate(followedOrganizationIdsProvider);
+            } finally {
+              if (mounted) {
+                setState(() => _followBusy = false);
+              }
+            }
+          }
 
           return ListView(
             padding: const EdgeInsets.all(20),
@@ -74,7 +108,7 @@ class DirectoryDetailsScreen extends ConsumerWidget {
                                 [item.category, item.subcategory]
                                     .whereType<String>()
                                     .where((value) => value.isNotEmpty)
-                                    .join(' • '),
+                                    .join(' | '),
                                 style: AppTextStyles.bodyMuted,
                               ),
                               const SizedBox(height: 6),
@@ -85,21 +119,21 @@ class DirectoryDetailsScreen extends ConsumerWidget {
                                     .join(', '),
                                 style: AppTextStyles.bodyMuted,
                               ),
-                              if (item.emergencyContact) ...[
-                                const SizedBox(height: 8),
-                                const Text(
-                                  'Emergency contact available',
-                                  style: TextStyle(
-                                    color: AppColors.danger,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
                             ],
                           ),
                         ),
                       ],
                     ),
+                    if (item.emergencyContact) ...[
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Emergency contact available',
+                        style: TextStyle(
+                          color: AppColors.danger,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 14),
                     Text(
                       item.description ??
@@ -110,10 +144,17 @@ class DirectoryDetailsScreen extends ConsumerWidget {
                     TrustRow(
                       verified: item.isVerified,
                       ratingLabel:
-                          '${getDisplayRating(verified: item.isVerified, rating: item.rating)}${item.reviewCount != null ? ' • ${item.reviewCount} reviews' : ''}',
+                          '${getDisplayRating(verified: item.isVerified, rating: item.rating)}${item.reviewCount != null ? ' | ${item.reviewCount} reviews' : ''}',
                       distanceLabel: getDisplayDistance(item.distanceKm, item.location),
                       completedLabel: '${item.followersCount ?? 0} followers',
                       responseLabel: 'Posts local updates',
+                    ),
+                    const SizedBox(height: 14),
+                    AppButton(
+                      label: isFollowing ? 'Following' : 'Follow updates',
+                      expanded: false,
+                      variant: isFollowing ? AppButtonVariant.primary : AppButtonVariant.secondary,
+                      onPressed: _followBusy ? null : toggleFollow,
                     ),
                     const SizedBox(height: 14),
                     ContactActions(
@@ -121,6 +162,19 @@ class DirectoryDetailsScreen extends ConsumerWidget {
                       phone: item.phone,
                       whatsapp: item.whatsapp,
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Contact details', style: AppTextStyles.h3),
+                    const SizedBox(height: 12),
+                    Text('Phone: ${item.phone ?? 'Not listed'}', style: AppTextStyles.body),
+                    const SizedBox(height: 8),
+                    Text('WhatsApp: ${item.whatsapp ?? item.phone ?? 'Not listed'}', style: AppTextStyles.body),
                   ],
                 ),
               ),
@@ -140,7 +194,7 @@ class DirectoryDetailsScreen extends ConsumerWidget {
                       ...item.servicesOffered.map(
                         (service) => Padding(
                           padding: const EdgeInsets.only(bottom: 8),
-                          child: Text('• $service', style: AppTextStyles.body),
+                          child: Text('- $service', style: AppTextStyles.body),
                         ),
                       ),
                   ],
@@ -210,7 +264,10 @@ class DirectoryDetailsScreen extends ConsumerWidget {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LokalsLoadingScreen(
+          title: 'Loading directory details',
+          message: 'Bringing organization details into view...',
+        ),
         error: (error, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -220,7 +277,7 @@ class DirectoryDetailsScreen extends ConsumerWidget {
               action: AppButton(
                 label: 'Retry',
                 expanded: false,
-                onPressed: () => ref.invalidate(directoryDetailsProvider(directoryId)),
+                onPressed: () => ref.invalidate(directoryDetailsProvider(widget.directoryId)),
               ),
             ),
           ),

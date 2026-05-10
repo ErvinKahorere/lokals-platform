@@ -1,6 +1,6 @@
 import { CheckCircle2, Clock3, MapPin, Share2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Button, EmptyState, PageHeader, QueryState, SectionCard, StatusBadge } from '../components/Ui'
 import { AddToCalendarButton } from '../components/events/AddToCalendarButton'
 import { EventCard } from '../components/events/EventCard'
@@ -11,11 +11,13 @@ import { TicketTypeCard } from '../components/events/TicketTypeCard'
 import { ContactActions } from '../components/experience/ContactActions'
 import { useCreateFollow, useDeleteFollow, useEvent, useFollows, useReserveEventTicket } from '../hooks/queries'
 import { resolveMediaUrl } from '../lib/display'
+import { navigateToLogin } from '../lib/authNavigation'
 import { useAuthStore } from '../store/auth'
 
 export function EventDetailsPage() {
   const { id } = useParams()
   const token = useAuthStore((state) => state.token)
+  const navigate = useNavigate()
   const eventQuery = useEvent(id)
   const followsQuery = useFollows(Boolean(token))
   const createFollow = useCreateFollow()
@@ -109,7 +111,19 @@ export function EventDetailsPage() {
                       variant={followId ? 'primary' : 'secondary'}
                       className="w-full"
                       disabled={createFollow.isPending || deleteFollow.isPending}
-                      onClick={() => followId ? deleteFollow.mutate(followId) : event.organizer ? createFollow.mutate({ type: event.organizer.type as 'organization' | 'service_provider', id: event.organizer.id }) : undefined}
+                      onClick={() => {
+                        if (!token) {
+                          navigateToLogin(navigate)
+                          return
+                        }
+                        if (followId) {
+                          deleteFollow.mutate(followId)
+                          return
+                        }
+                        if (event.organizer) {
+                          createFollow.mutate({ type: event.organizer.type as 'organization' | 'service_provider', id: event.organizer.id })
+                        }
+                      }}
                     >
                       {followId ? 'Following organizer' : 'Follow organizer'}
                     </Button>
@@ -195,7 +209,7 @@ export function EventDetailsPage() {
                 </div>
               ) : (
                 <div className="mt-5">
-                  <Link to="/login"><Button className="w-full">Login to reserve or save</Button></Link>
+                  <Button className="w-full" onClick={() => navigateToLogin(navigate)}>Login to reserve or save</Button>
                 </div>
               )}
             </SectionCard>

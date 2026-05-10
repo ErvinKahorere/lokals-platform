@@ -1,10 +1,11 @@
 import type { FormEvent } from 'react'
 import { useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Phone, Sparkles, UserRoundSearch } from 'lucide-react'
 import { Button, EmptyState, Input, JobCard, PageHeader, QueryState, SearchBar, SectionCard, Tabs, TextArea } from '../components/Ui'
 import { useApplyToJob, useCreateJob, useCreateWorkerProfile, useJobs, useWorkers } from '../hooks/queries'
 import { getApiErrorMessage } from '../lib/api'
+import { navigateToLogin } from '../lib/authNavigation'
 import { getDisplayDistance, getDisplayPrice } from '../lib/display'
 import { useAuthStore } from '../store/auth'
 import { Card } from '../components/ui/Card'
@@ -13,6 +14,7 @@ const skillFilters = ['All', 'Cleaning', 'Painting', 'Gardening', 'Driving', 'Tu
 
 export function JobsPage() {
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const [search, setSearch] = useState(searchParams.get('q') ?? '')
   const [mode, setMode] = useState<'find-help' | 'earn-money'>('find-help')
   const [skill, setSkill] = useState('All')
@@ -145,7 +147,7 @@ export function JobsPage() {
                   <h3 className="text-lg font-semibold text-lokals-charcoal">Post a quick job</h3>
                   <p className="mt-2 text-sm text-lokals-muted">Keep it short. Add the task, area, and budget so nearby workers can respond fast.</p>
                 </div>
-                {!token ? <Link to="/login"><Button>Login</Button></Link> : null}
+                {!token ? <Button onClick={() => navigateToLogin(navigate)}>Login</Button> : null}
               </div>
               {token ? (
                 <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={submitJob}>
@@ -229,7 +231,7 @@ export function JobsPage() {
                 </form>
               ) : (
                 <div className="mt-4">
-                  <Link to="/login"><Button>Login to create profile</Button></Link>
+                  <Button onClick={() => navigateToLogin(navigate)}>Login to create profile</Button>
                 </div>
               )}
             </SectionCard>

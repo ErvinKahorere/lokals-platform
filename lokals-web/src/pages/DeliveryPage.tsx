@@ -8,6 +8,7 @@ import { GlassPanel } from '../components/glass/GlassPanel'
 import { isDemoMode } from '../config/appMode'
 import { useCreateDelivery, useDeliveries } from '../hooks/queries'
 import { getApiErrorMessage } from '../lib/api'
+import { navigateToLogin } from '../lib/authNavigation'
 import { useAuthStore } from '../store/auth'
 import type { DeliveryItem } from '../types'
 
@@ -225,7 +226,11 @@ export function DeliveryPage() {
           </SectionCard>
         )
       ) : (
-        <EmptyState title="Login to request delivery" body="Delivery requests use your saved contact details so handoff stays quick." action={<Link to="/login"><Button>Login</Button></Link>} />
+        <EmptyState
+          title="Login to request delivery"
+          body="Delivery requests use your saved contact details so handoff stays quick."
+          action={<Button onClick={() => navigateToLogin(navigate)}>Login</Button>}
+        />
       )}
 
       {token ? (

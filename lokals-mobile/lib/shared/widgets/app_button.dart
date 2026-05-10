@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radius.dart';
+import 'loading_skeleton.dart';
 
 enum AppButtonVariant { primary, secondary, accent, danger }
 
@@ -11,6 +12,7 @@ class AppButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.isLoading = false,
+    this.loadingLabel,
     this.variant = AppButtonVariant.primary,
     this.icon,
     this.expanded = true,
@@ -19,6 +21,7 @@ class AppButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final bool isLoading;
+  final String? loadingLabel;
   final AppButtonVariant variant;
   final IconData? icon;
   final bool expanded;
@@ -72,10 +75,12 @@ class AppButton extends StatelessWidget {
         ),
       ),
       child: isLoading
-          ? const SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
+          ? LokalsButtonLoader(
+              label: loadingLabel ?? 'Processing...',
+              color: switch (variant) {
+                AppButtonVariant.secondary => AppColors.primaryPurple,
+                _ => Colors.white,
+              },
             )
           : Row(
               mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,

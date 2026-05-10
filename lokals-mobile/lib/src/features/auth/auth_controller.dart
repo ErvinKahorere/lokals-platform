@@ -7,23 +7,45 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/api_client.dart';
 import '../../core/models.dart';
 
+const _authStateUnset = Object();
+
 class AuthState {
-  const AuthState({this.token, this.user, this.isLoading = false});
+  const AuthState({
+    this.token,
+    this.user,
+    this.isLoading = false,
+    this.isRestoring = true,
+    this.hasRestored = false,
+    this.startupError,
+  });
 
   final String? token;
   final UserModel? user;
   final bool isLoading;
+  final bool isRestoring;
+  final bool hasRestored;
+  final String? startupError;
 
   AuthState copyWith({
     String? token,
     UserModel? user,
     bool? isLoading,
+    bool? isRestoring,
+    bool? hasRestored,
+    Object? startupError = _authStateUnset,
     bool clear = false,
   }) {
     return AuthState(
       token: clear ? null : token ?? this.token,
       user: clear ? null : user ?? this.user,
       isLoading: isLoading ?? this.isLoading,
+      isRestoring: clear ? false : isRestoring ?? this.isRestoring,
+      hasRestored: clear ? true : hasRestored ?? this.hasRestored,
+      startupError: clear
+          ? null
+          : identical(startupError, _authStateUnset)
+              ? this.startupError
+              : startupError as String?,
     );
   }
 }
@@ -46,6 +68,7 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> restore() async {
+    state = state.copyWith(isRestoring: true, startupError: null);
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     final userRaw = prefs.getString('user');
@@ -54,9 +77,24 @@ class AuthController extends Notifier<AuthState> {
       state = AuthState(
         token: token,
         user: UserModel.fromJson(jsonDecode(userRaw) as Map<String, dynamic>),
+        isRestoring: true,
+        hasRestored: false,
       );
       await hydrateCurrentUser();
+      state = state.copyWith(
+        isRestoring: false,
+        hasRestored: true,
+        startupError: state.startupError,
+      );
+      return;
     }
+
+    state = state.copyWith(
+      isRestoring: false,
+      hasRestored: true,
+      startupError: null,
+      clear: true,
+    );
   }
 
   Future<void> hydrateCurrentUser() async {
@@ -74,9 +112,18 @@ class AuthController extends Notifier<AuthState> {
       final user = UserModel.fromJson(userJson);
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user', jsonEncode(userJson));
-      state = state.copyWith(user: user, isLoading: false);
-    } on DioException {
-      // Keep the persisted session if the backend is temporarily unreachable.
+      state = state.copyWith(user: user, isLoading: false, startupError: null);
+    } on DioException catch (error) {
+      final statusCode = error.response?.statusCode;
+      if (statusCode == 401 || statusCode == 403) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('token');
+        await prefs.remove('user');
+        state = state.copyWith(clear: true, startupError: null, hasRestored: true);
+        return;
+      }
+
+      state = state.copyWith(startupError: 'Couldn\'t load LOKALS');
     }
   }
 
@@ -109,7 +156,13 @@ class AuthController extends Notifier<AuthState> {
       final token = payload['token'] as String;
       await _persistSession(token, userJson);
 
-      state = AuthState(token: token, user: user, isLoading: false);
+      state = AuthState(
+        token: token,
+        user: user,
+        isLoading: false,
+        isRestoring: false,
+        hasRestored: true,
+      );
     } on DioException {
       state = state.copyWith(isLoading: false);
       rethrow;
@@ -119,9 +172,9 @@ class AuthController extends Notifier<AuthState> {
   Future<void> register({
     required String name,
     required String phone,
+    required String password,
     required String town,
     required String area,
-    required List<String> roles,
   }) async {
     state = state.copyWith(isLoading: true);
 
@@ -132,11 +185,11 @@ class AuthController extends Notifier<AuthState> {
         data: {
           'name': name,
           'phone': phone,
-          'password': 'password',
-          'password_confirmation': 'password',
+          'password': password,
+          'password_confirmation': password,
           'default_town': town,
           'default_area': area,
-          'roles': roles,
+          'roles': const ['citizen'],
           'interests': const ['Find services', 'Follow alerts'],
         },
       );
@@ -150,7 +203,13 @@ class AuthController extends Notifier<AuthState> {
       final token = payload['token'] as String;
       await _persistSession(token, userJson);
 
-      state = AuthState(token: token, user: user, isLoading: false);
+      state = AuthState(
+        token: token,
+        user: user,
+        isLoading: false,
+        isRestoring: false,
+        hasRestored: true,
+      );
     } on DioException {
       state = state.copyWith(isLoading: false);
       rethrow;
