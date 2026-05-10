@@ -75,8 +75,8 @@ class _DirectoryScreenState extends ConsumerState<DirectoryScreen> {
               const SizedBox(height: 16),
               if (filtered.isEmpty)
                 const EmptyStateView(
-                  title: 'No public services listed yet for this category',
-                  body: 'Try another area or remove a filter.',
+                  title: 'No contacts found in Okahandja for this category',
+                  body: 'Try another category or remove a filter.',
                 )
               else
                 ...filtered.map(
@@ -109,7 +109,7 @@ class _DirectoryScreenState extends ConsumerState<DirectoryScreen> {
                                       [item.category, item.subcategory]
                                           .whereType<String>()
                                           .where((value) => value.isNotEmpty)
-                                          .join(' • '),
+                                          .join(' | '),
                                       style: AppTextStyles.bodyMuted,
                                     ),
                                     const SizedBox(height: 6),

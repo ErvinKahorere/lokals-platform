@@ -36,7 +36,6 @@ import { MyJobsPage } from './pages/dashboard/MyJobsPage'
 import { MyReportsPage } from './pages/dashboard/MyReportsPage'
 import { ProfilePage } from './pages/dashboard/ProfilePage'
 import { EditProfilePage } from './pages/dashboard/EditProfilePage'
-import { AccountPlaceholderPage } from './pages/dashboard/AccountPlaceholderPage'
 import { AdminProvidersPage } from './pages/admin/AdminProvidersPage'
 import { AdminBookingsPage } from './pages/admin/AdminBookingsPage'
 import { AdminListingsPage } from './pages/admin/AdminListingsPage'
@@ -57,6 +56,7 @@ import { SearchResultsPage } from './pages/SearchResultsPage'
 import { ActivityPage } from './pages/ActivityPage'
 import { SavedItemsPage } from './pages/dashboard/SavedItemsPage'
 import { TownPortalPage } from './pages/TownPortalPage'
+import { getRoleHomePath, hasActiveRole } from './lib/roles'
 import { useAuthStore } from './store/auth'
 
 const MarketplacePage = lazy(async () => ({ default: (await import('./pages/MarketplacePage')).MarketplacePage }))
@@ -79,37 +79,33 @@ function ProtectedRoute({ children }: { children: ReactElement }) {
 
 function RootRoute() {
   const token = useAuthStore((state) => state.token)
-  return token ? <HomePage /> : <LandingPage />
+  const user = useAuthStore((state) => state.user)
+  return token ? <Navigate to={getRoleHomePath(user)} replace /> : <LandingPage />
 }
 
 function AdminRoute({ children }: { children: ReactElement }) {
   const user = useAuthStore((state) => state.user)
-  const isAdmin = Boolean(user?.roles?.some((role) => ['super_admin', 'operator', 'municipality_admin', 'town_manager'].includes(role)))
-  return isAdmin ? children : <Navigate to="/" replace />
+  return hasActiveRole(user, ['super_admin', 'operator']) ? children : <Navigate to={getRoleHomePath(user)} replace />
 }
 
 function BusinessRoute({ children }: { children: ReactElement }) {
   const user = useAuthStore((state) => state.user)
-  const isBusinessUser = Boolean(user?.roles?.some((role) => ['seller', 'service_provider', 'business_owner', 'organization_admin', 'super_admin'].includes(role)))
-  return isBusinessUser ? children : <Navigate to="/" replace />
+  return hasActiveRole(user, ['seller', 'business_owner']) ? children : <Navigate to={getRoleHomePath(user)} replace />
 }
 
 function WorkerRoute({ children }: { children: ReactElement }) {
   const user = useAuthStore((state) => state.user)
-  const isWorker = Boolean(user?.roles?.some((role) => ['worker', 'super_admin'].includes(role)))
-  return isWorker ? children : <Navigate to="/" replace />
+  return hasActiveRole(user, ['worker']) ? children : <Navigate to={getRoleHomePath(user)} replace />
 }
 
 function ServiceProviderRoute({ children }: { children: ReactElement }) {
   const user = useAuthStore((state) => state.user)
-  const isProvider = Boolean(user?.roles?.some((role) => ['service_provider', 'super_admin'].includes(role)))
-  return isProvider ? children : <Navigate to="/" replace />
+  return hasActiveRole(user, ['service_provider']) ? children : <Navigate to={getRoleHomePath(user)} replace />
 }
 
 function MunicipalityRoute({ children }: { children: ReactElement }) {
   const user = useAuthStore((state) => state.user)
-  const isMunicipalityAdmin = Boolean(user?.roles?.some((role) => ['town_manager', 'municipality_admin', 'super_admin'].includes(role)))
-  return isMunicipalityAdmin ? children : <Navigate to="/" replace />
+  return hasActiveRole(user, ['town_manager', 'municipality_admin']) ? children : <Navigate to={getRoleHomePath(user)} replace />
 }
 
 function EventPublisherRoute({ children }: { children: ReactElement }) {
@@ -128,8 +124,7 @@ function EventPublisherRoute({ children }: { children: ReactElement }) {
 
 function OrganizationRoute({ children }: { children: ReactElement }) {
   const user = useAuthStore((state) => state.user)
-  const isOrganizationAdmin = Boolean(user?.roles?.some((role) => ['organization_admin', 'super_admin'].includes(role)))
-  return isOrganizationAdmin ? children : <Navigate to="/" replace />
+  return hasActiveRole(user, ['organization_admin']) ? children : <Navigate to={getRoleHomePath(user)} replace />
 }
 
 function RouteFallback() {
@@ -146,6 +141,7 @@ export default function App() {
       <Routes>
         <Route element={<AppShell />}>
           <Route path="/" element={<RootRoute />} />
+          <Route path="/home" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
@@ -188,12 +184,12 @@ export default function App() {
           <Route path="/dashboard/reports/:id" element={<ProtectedRoute><ReportDetailsPage /></ProtectedRoute>} />
           <Route path="/dashboard/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           <Route path="/dashboard/profile/edit" element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
-          <Route path="/dashboard/products" element={<ProtectedRoute><AccountPlaceholderPage title="My Products" description="A dedicated saved and managed products area is being polished here." /></ProtectedRoute>} />
-          <Route path="/dashboard/accommodation" element={<ProtectedRoute><AccountPlaceholderPage title="My Accommodation" description="Your accommodation ownership and listing shortcuts will live here." /></ProtectedRoute>} />
+          <Route path="/dashboard/products" element={<ProtectedRoute><Navigate to="/store" replace /></ProtectedRoute>} />
+          <Route path="/dashboard/accommodation" element={<ProtectedRoute><Navigate to="/accommodation" replace /></ProtectedRoute>} />
           <Route path="/dashboard/saved" element={<ProtectedRoute><SavedItemsPage /></ProtectedRoute>} />
           <Route path="/saved-items" element={<ProtectedRoute><SavedItemsPage /></ProtectedRoute>} />
-          <Route path="/dashboard/support" element={<ProtectedRoute><AccountPlaceholderPage title="Help & Support" description="Support, issue reporting, and help resources are being organized here." /></ProtectedRoute>} />
-          <Route path="/dashboard/business-shortcuts" element={<ProtectedRoute><AccountPlaceholderPage title="Manage My Business" description="This space will collect business, seller, provider, and organization shortcuts in one place." /></ProtectedRoute>} />
+          <Route path="/dashboard/support" element={<ProtectedRoute><Navigate to="/settings" replace /></ProtectedRoute>} />
+          <Route path="/dashboard/business-shortcuts" element={<ProtectedRoute><Navigate to="/dashboard" replace /></ProtectedRoute>} />
           <Route path="/dashboard/business" element={<BusinessRoute><BusinessDashboardPage /></BusinessRoute>} />
           <Route path="/dashboard/service-provider" element={<ServiceProviderRoute><ServiceProviderDashboardPage /></ServiceProviderRoute>} />
           <Route path="/dashboard/organization" element={<OrganizationRoute><OrganizationDashboardPage /></OrganizationRoute>} />

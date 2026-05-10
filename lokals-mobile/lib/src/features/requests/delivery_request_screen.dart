@@ -22,10 +22,10 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
   static const List<String> _locations = [
     'Home',
     'Work',
-    'Khomasdal taxi rank',
-    'Khomas Care Pharmacy',
-    'Wanaheda Corner Shop',
-    'Windhoek CBD',
+    'Okahandja taxi rank',
+    'Okahandja State Clinic',
+    'Okahandja Town Council',
+    'Nau-Aib community hall',
   ];
 
   static const List<({String value, String label, String detail, int estimate})> _parcelSizes = [
@@ -258,7 +258,7 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
             data: (items) => items.isEmpty
                 ? const EmptyState(
                     title: 'No delivery requests yet',
-                    body: 'Your recent parcel requests will appear here.',
+                    body: 'Your recent Okahandja parcel requests will appear here.',
                   )
                 : Column(
                     children: items.take(5).map((item) {

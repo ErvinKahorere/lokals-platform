@@ -16,7 +16,7 @@ class AppCard extends StatelessWidget {
   const AppCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = const EdgeInsets.all(18),
     this.color,
     this.variant = AppCardVariant.defaultCard,
   });
@@ -66,8 +66,8 @@ class AppCard extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: shadowColor,
-              blurRadius: 28,
-              offset: const Offset(0, 12),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
             ),
           ],
         ),

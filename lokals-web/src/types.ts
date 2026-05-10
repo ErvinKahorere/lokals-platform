@@ -487,6 +487,8 @@ export interface NotificationItem {
   type?: string
   title: string
   body: string
+  target_type?: string | null
+  target_id?: string | number | null
   read_at?: string | null
   created_at?: string | null
   target?: {

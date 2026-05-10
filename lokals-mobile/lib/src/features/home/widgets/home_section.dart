@@ -77,13 +77,20 @@ class HomeSection extends StatelessWidget {
                         letterSpacing: 0.8,
                       ),
                     ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
                 ],
               ),
             ),
             if (actionLabel != null && onAction != null)
-              TextButton(onPressed: onAction, child: Text(actionLabel!)),
+              TextButton(
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                onPressed: onAction,
+                child: Text(actionLabel!),
+              ),
           ],
         ),
         const SizedBox(height: 12),

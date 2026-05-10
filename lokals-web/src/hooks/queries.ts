@@ -367,6 +367,8 @@ export const useNotifications = () =>
         type: item.type,
         title: item.title ?? item.data?.title ?? item.type ?? 'Notification',
         body: item.body ?? item.data?.body ?? item.data?.message ?? 'You have an update.',
+        target_type: item.target_type ?? item.target?.type ?? item.data?.target_type,
+        target_id: item.target_id ?? item.target?.id ?? item.data?.target_id,
         target: {
           id: item.target?.id ?? item.data?.target?.id,
           type: item.target?.type ?? item.data?.target?.type,
@@ -632,6 +634,13 @@ export const useSwitchRole = () => {
         queryClient.invalidateQueries({ queryKey: ['me'] }),
         queryClient.invalidateQueries({ queryKey: ['preferences'] }),
         queryClient.invalidateQueries({ queryKey: ['feed'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-index'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-citizen'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-worker'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-service-provider'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-organization'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-municipality'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-admin'] }),
       ])
     },
   })

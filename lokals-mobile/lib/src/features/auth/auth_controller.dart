@@ -157,9 +157,9 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
-  Future<void> switchRole(String role) async {
+  Future<UserModel?> switchRole(String role) async {
     if (state.token == null) {
-      return;
+      return null;
     }
 
     state = state.copyWith(isLoading: true);
@@ -179,6 +179,7 @@ class AuthController extends Notifier<AuthState> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user', jsonEncode(userJson));
       state = state.copyWith(user: user, isLoading: false);
+      return user;
     } on DioException {
       state = state.copyWith(isLoading: false);
       rethrow;

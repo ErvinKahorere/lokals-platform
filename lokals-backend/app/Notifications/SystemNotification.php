@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Support\NotificationPayload;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
@@ -24,10 +25,10 @@ class SystemNotification extends Notification implements ShouldQueue
 
     public function toArray(object $notifiable): array
     {
-        return [
+        return NotificationPayload::enrich([
             'title' => $this->title,
             'body' => $this->body,
             ...$this->meta,
-        ];
+        ]);
     }
 }

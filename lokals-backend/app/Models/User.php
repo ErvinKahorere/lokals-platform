@@ -174,6 +174,11 @@ class User extends Authenticatable
         return $this->hasMany(DatabaseNotification::class);
     }
 
+    public function deviceTokens(): HasMany
+    {
+        return $this->hasMany(DeviceToken::class);
+    }
+
     public function postDrafts(): HasMany
     {
         return $this->hasMany(PostDraft::class);

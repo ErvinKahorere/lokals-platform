@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../config/app_config.dart';
 import '../../core/models.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
@@ -25,8 +26,8 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
   final _titleController = TextEditingController();
   final _priceController = TextEditingController();
   final _categoryController = TextEditingController(text: 'electronics');
-  final _townController = TextEditingController(text: 'Windhoek');
-  final _areaController = TextEditingController(text: 'Katutura');
+  final _townController = TextEditingController(text: AppConfig.pilotTown);
+  final _areaController = TextEditingController(text: AppConfig.okahandjaAreas.first);
   final _descriptionController = TextEditingController();
   XFile? _image;
   String _selectedCategory = 'all';
@@ -165,7 +166,7 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
                   if (alerts.isEmpty) {
                     return const EmptyStateView(
                       title: 'No sale alerts right now.',
-                      body: 'Fresh promotions from local sellers will show here.',
+                      body: 'Fresh promotions from Okahandja sellers will show here.',
                     );
                   }
 
@@ -225,7 +226,7 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
               const SizedBox(height: 12),
               if (recent.isEmpty)
                 const EmptyStateView(
-                  title: 'No products found in your area.',
+                  title: 'No products in Okahandja yet.',
                   body: 'Try another category.',
                 )
               else
@@ -240,7 +241,7 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
               if (localSellers.isEmpty)
                 const EmptyStateView(
                   title: 'No local sellers yet.',
-                  body: 'Seller profiles will appear here as products go live.',
+                  body: 'Seller profiles will appear here as Okahandja products go live.',
                 )
               else
                 ...localSellers.map(
@@ -351,7 +352,7 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
       final location = [item.area, item.town].whereType<String>().where((value) => value.isNotEmpty).join(', ');
       map[key] = _SellerSummary(
         name: name,
-        location: location.isEmpty ? 'Windhoek' : location,
+        location: location.isEmpty ? AppConfig.pilotTown : location,
         productCount: (current?.productCount ?? 0) + 1,
         businessId: item.businessId,
       );
@@ -508,7 +509,7 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
                                   title: _titleController.text.trim(),
                                   description: _descriptionController.text.trim(),
                                   category: _categoryController.text.trim().isEmpty ? 'general' : _categoryController.text.trim(),
-                                  town: _townController.text.trim().isEmpty ? 'Windhoek' : _townController.text.trim(),
+                                  town: _townController.text.trim().isEmpty ? AppConfig.pilotTown : _townController.text.trim(),
                                   area: _areaController.text.trim(),
                                   price: _priceController.text.trim().isEmpty ? '0' : _priceController.text.trim(),
                                   image: _image,
@@ -602,8 +603,8 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
     _titleController.clear();
     _priceController.clear();
     _categoryController.text = 'electronics';
-    _townController.text = 'Windhoek';
-    _areaController.text = 'Katutura';
+    _townController.text = AppConfig.pilotTown;
+    _areaController.text = AppConfig.okahandjaAreas.first;
     _descriptionController.clear();
     _image = null;
   }

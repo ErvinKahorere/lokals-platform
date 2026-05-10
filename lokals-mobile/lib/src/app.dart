@@ -60,13 +60,48 @@ import 'features/workers/workers_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
+String _roleHomePath(AuthState auth) {
+  final user = auth.user;
+  final role = user?.currentRole ?? (user?.roles.isNotEmpty == true ? user!.roles.first : 'citizen');
+
+  switch (role) {
+    case 'worker':
+      return '/dashboard/worker';
+    case 'seller':
+    case 'business_owner':
+    case 'driver':
+      return '/dashboard/business';
+    case 'service_provider':
+      return '/dashboard/service-provider';
+    case 'organization_admin':
+      return '/dashboard/organization';
+    case 'town_manager':
+    case 'municipality_admin':
+      return '/dashboard/town-manager';
+    case 'super_admin':
+    case 'operator':
+      return '/dashboard/admin';
+    default:
+      return '/home';
+  }
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
-  final auth = ref.watch(authControllerProvider);
+  final refreshListenable = ValueNotifier<AuthState>(
+    ref.read(authControllerProvider),
+  );
+  ref.listen<AuthState>(
+    authControllerProvider,
+    (_, next) => refreshListenable.value = next,
+  );
+  ref.onDispose(refreshListenable.dispose);
 
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/',
+    refreshListenable: refreshListenable,
     redirect: (context, state) {
+      final auth = ref.read(authControllerProvider);
       final isLoggedIn = auth.token != null;
       final isLoggingIn = state.matchedLocation == '/login';
       final isRegistering = state.matchedLocation == '/register';
@@ -94,13 +129,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       if (isLoggedIn && (isLoggingIn || isRegistering)) {
-        return '/';
+        return _roleHomePath(auth);
+      }
+
+      if (isLoggedIn && state.matchedLocation == '/') {
+        return _roleHomePath(auth);
       }
 
       return null;
     },
     routes: [
       GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
+      GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
       GoRoute(
         path: '/dashboard',
         builder: (context, state) => const DashboardRouterScreen(),

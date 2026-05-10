@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../core/models.dart';
 import 'notification_item.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../discovery/discovery_repository.dart';
+import '../notifications/notification_routing.dart';
 
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
@@ -18,40 +18,6 @@ class NotificationsScreen extends ConsumerWidget {
     final created = DateTime.tryParse(createdAt);
     if (created == null) return 'Earlier';
     return created.year == now.year && created.month == now.month && created.day == now.day ? 'Today' : 'Earlier';
-  }
-
-  String _targetRoute(NotificationItemModel item) {
-    if ((item.target?.externalUrl ?? '').isNotEmpty) {
-      final url = Uri.encodeComponent(item.target!.externalUrl!);
-      final source = Uri.encodeComponent(item.target?.sourceName ?? item.title);
-      final title = Uri.encodeComponent(item.target?.title ?? item.title);
-      return '/article?url=$url&source=$source&title=$title';
-    }
-
-    final href = item.target?.href;
-    if (href != null && href.isNotEmpty) {
-      return href;
-    }
-
-    switch (item.type) {
-      case 'booking_update':
-        return '/my-bookings';
-      case 'job_update':
-        return '/jobs';
-      case 'alert_from_followed':
-        return '/alerts';
-      case 'news_update':
-        return '/news';
-      case 'event_reminder':
-      case 'ticket_update':
-        return '/my-tickets';
-      case 'delivery_update':
-        return '/delivery';
-      case 'ride_update':
-        return '/ride';
-      default:
-        return '/activity';
-    }
   }
 
   @override
@@ -110,7 +76,7 @@ class NotificationsScreen extends ConsumerWidget {
                           padding: const EdgeInsets.only(bottom: 12),
                           child: NotificationItemCard(
                             item: item,
-                            onTap: () => context.go(_targetRoute(item)),
+                            onTap: () => context.go(routeForNotification(item)),
                           ),
                         ),
                       ),

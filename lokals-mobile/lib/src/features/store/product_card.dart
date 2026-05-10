@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../config/app_config.dart';
 import '../../core/experience_helpers.dart';
 import '../../core/models.dart';
 import '../../../shared/widgets/app_badge.dart';
@@ -118,7 +119,7 @@ class ProductCard extends StatelessWidget {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          locationLabel.isEmpty ? 'Windhoek' : locationLabel,
+                          locationLabel.isEmpty ? AppConfig.pilotTown : locationLabel,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.caption,

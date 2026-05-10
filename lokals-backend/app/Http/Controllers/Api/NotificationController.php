@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\NotificationPayload;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
@@ -11,9 +12,15 @@ class NotificationController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $notifications = $request->user()
+        $query = $request->user()
             ->notifications()
-            ->latest()
+            ->latest();
+
+        if ($request->boolean('unread')) {
+            $query->whereNull('read_at');
+        }
+
+        $notifications = $query
             ->paginate((int) $request->integer('per_page', 20))
             ->through(fn (DatabaseNotification $notification) => $this->transformNotification($notification));
 
@@ -53,13 +60,15 @@ class NotificationController extends Controller
 
     private function transformNotification(DatabaseNotification $notification): array
     {
-        $data = $notification->data;
+        $data = NotificationPayload::enrich($notification->data);
 
         return [
             'id' => $notification->id,
             'type' => $data['type'] ?? class_basename($notification->type),
             'title' => $data['title'] ?? 'Notification',
             'body' => $data['body'] ?? $data['message'] ?? 'You have a new update.',
+            'target_type' => $data['target_type'] ?? $data['target']['type'] ?? null,
+            'target_id' => $data['target_id'] ?? $data['target']['id'] ?? null,
             'target' => [
                 'id' => $data['target']['id'] ?? null,
                 'type' => $data['target']['type'] ?? null,

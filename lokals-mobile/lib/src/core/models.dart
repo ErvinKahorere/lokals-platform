@@ -1286,6 +1286,8 @@ class NotificationItemModel {
     required this.title,
     required this.body,
     this.type,
+    this.targetType,
+    this.targetId,
     this.target,
     this.readAt,
     this.createdAt,
@@ -1295,6 +1297,8 @@ class NotificationItemModel {
   final String title;
   final String body;
   final String? type;
+  final String? targetType;
+  final String? targetId;
   final NotificationTargetModel? target;
   final String? readAt;
   final String? createdAt;
@@ -1304,8 +1308,10 @@ class NotificationItemModel {
     return NotificationItemModel(
       id: json['id'].toString(),
       type: json['type']?.toString() ?? data['type']?.toString(),
-      title: data['title']?.toString() ?? json['type']?.toString() ?? 'Notification',
-      body: data['body']?.toString() ?? data['message']?.toString() ?? 'You have an update.',
+      title: json['title']?.toString() ?? data['title']?.toString() ?? json['type']?.toString() ?? 'Notification',
+      body: json['body']?.toString() ?? data['body']?.toString() ?? data['message']?.toString() ?? 'You have an update.',
+      targetType: json['target_type']?.toString() ?? data['target_type']?.toString(),
+      targetId: json['target_id']?.toString() ?? data['target_id']?.toString(),
       target: (json['target'] as Map<String, dynamic>?) == null
           ? null
           : NotificationTargetModel.fromJson(json['target'] as Map<String, dynamic>),

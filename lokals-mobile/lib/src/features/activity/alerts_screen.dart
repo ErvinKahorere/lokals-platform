@@ -171,7 +171,7 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
                     return const EmptyStateView(
                       title: 'No alerts right now. You\'re all caught up.',
                       body:
-                          'Area alerts, followed updates, and promotions will appear here.',
+                          'Okahandja alerts, followed updates, and promotions will appear here.',
                     );
                   }
 

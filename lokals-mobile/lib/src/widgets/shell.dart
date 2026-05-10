@@ -34,10 +34,38 @@ class LokalsShell extends ConsumerWidget {
 
   int _currentIndex(BuildContext context) {
     final path = GoRouterState.of(context).matchedLocation;
-    if (path.startsWith('/services') || path.startsWith('/book')) return 1;
-    if (path.startsWith('/store') || path.startsWith('/directory') || path.startsWith('/events') || path.startsWith('/marketplace') || path.startsWith('/more')) return 2;
-    if (path.startsWith('/activity') || path.startsWith('/alerts') || path.startsWith('/news')) return 3;
-    if (path.startsWith('/profile') || path.startsWith('/settings') || path.startsWith('/my-bookings') || path.startsWith('/my-tickets') || path.startsWith('/saved-items')) return 4;
+    if (path == '/' || path.startsWith('/dashboard')) return 0;
+    if (path.startsWith('/services') || path.startsWith('/book') || path.startsWith('/workers')) return 1;
+    if (path.startsWith('/store') ||
+        path.startsWith('/directory') ||
+        path.startsWith('/events') ||
+        path.startsWith('/marketplace') ||
+        path.startsWith('/jobs') ||
+        path.startsWith('/search') ||
+        path.startsWith('/accommodation') ||
+        path.startsWith('/okahandja') ||
+        path.startsWith('/more')) {
+      return 2;
+    }
+    if (path.startsWith('/activity') ||
+        path.startsWith('/alerts') ||
+        path.startsWith('/news') ||
+        path.startsWith('/notifications') ||
+        path.startsWith('/delivery') ||
+        path.startsWith('/ride') ||
+        path.startsWith('/sos') ||
+        path.startsWith('/my-reports') ||
+        path.startsWith('/reports')) {
+      return 3;
+    }
+    if (path.startsWith('/profile') ||
+        path.startsWith('/settings') ||
+        path.startsWith('/my-bookings') ||
+        path.startsWith('/my-tickets') ||
+        path.startsWith('/saved-items') ||
+        path.startsWith('/provider-bookings')) {
+      return 4;
+    }
     return 0;
   }
 
@@ -156,9 +184,10 @@ class LokalsShell extends ConsumerWidget {
                             onPressed: auth.isLoading
                                 ? null
                                 : () async {
-                                    await ref.read(authControllerProvider.notifier).switchRole(role);
+                                    final nextUser = await ref.read(authControllerProvider.notifier).switchRole(role);
                                     if (!context.mounted) return;
                                     Navigator.of(context).pop();
+                                    context.go(nextUser == null ? '/dashboard' : routeForRole(nextUser.currentRole ?? role));
                                   },
                           ),
                         )
@@ -428,5 +457,28 @@ class LokalsShell extends ConsumerWidget {
       floatingActionButton: floatingActionButton,
       bottomNavigationBar: MobileBottomNav(currentIndex: _currentIndex(context)),
     );
+  }
+}
+
+String routeForRole(String role) {
+  switch (role) {
+    case 'worker':
+      return '/dashboard/worker';
+    case 'seller':
+    case 'business_owner':
+    case 'driver':
+      return '/dashboard/business';
+    case 'service_provider':
+      return '/dashboard/service-provider';
+    case 'organization_admin':
+      return '/dashboard/organization';
+    case 'town_manager':
+    case 'municipality_admin':
+      return '/dashboard/town-manager';
+    case 'super_admin':
+    case 'operator':
+      return '/dashboard/admin';
+    default:
+      return '/home';
   }
 }

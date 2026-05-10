@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\BusinessController;
 use App\Http\Controllers\Api\CityServiceController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DeliveryController;
+use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\FollowController;
@@ -155,9 +156,12 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/availability', [ServiceProviderController::class, 'storeAvailability']);
 
         Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::get('/notifications/unread', [NotificationController::class, 'index']);
         Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead']);
         Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']);
         Route::post('/notifications/mark-read', [NotificationController::class, 'markAllRead']);
+        Route::post('/device-tokens', [DeviceTokenController::class, 'store']);
+        Route::delete('/device-tokens/{deviceToken}', [DeviceTokenController::class, 'destroy']);
 
         Route::get('/deliveries', [DeliveryController::class, 'index']);
         Route::post('/deliveries', [DeliveryController::class, 'store']);

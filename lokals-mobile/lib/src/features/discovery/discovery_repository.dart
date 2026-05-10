@@ -143,6 +143,236 @@ class DiscoveryRepository {
 
   final Ref ref;
 
+  static final List<ListingModel> _demoListings = [
+    ListingModel(
+      id: 8101,
+      title: 'Fresh garden spinach bundle',
+      type: 'product',
+      description: 'Same-day local pickup from a verified Okahandja seller.',
+      status: 'published',
+      price: '35',
+      location: 'Nau-Aib, Okahandja',
+      userName: 'Maria Kandjii',
+      businessName: 'Nau-Aib Fresh Produce',
+    ),
+  ];
+
+  static final List<JobModel> _demoJobs = [
+    JobModel(
+      id: 8201,
+      title: 'Pothole patch support crew',
+      description: 'Short-term municipal support for road patching near Five Rand.',
+      employmentType: 'contract',
+      status: 'open',
+      compensation: 'N\$ 650/day',
+      location: 'Five Rand, Okahandja',
+      skills: const ['Driving', 'General labour'],
+      organizationName: 'Okahandja Town Council',
+      applicationsCount: 4,
+      distanceKm: 1.9,
+    ),
+    JobModel(
+      id: 8202,
+      title: 'Clinic reception relief',
+      description: 'Front desk support for a busy local clinic shift.',
+      employmentType: 'part_time',
+      status: 'open',
+      compensation: 'N\$ 120/hour',
+      location: 'Central Okahandja',
+      skills: const ['Admin', 'Customer service'],
+      organizationName: 'Okahandja State Clinic',
+      applicationsCount: 2,
+      distanceKm: 2.7,
+    ),
+  ];
+
+  static final List<WorkerModel> _demoWorkers = [
+    WorkerModel(
+      id: 8301,
+      headline: 'Cleaner and laundry helper',
+      isAvailable: true,
+      name: 'Memory Hango',
+      location: 'Nau-Aib, Okahandja',
+      rate: 'N\$ 140/day',
+      skills: const ['Cleaning', 'Laundry'],
+      experienceYears: 4,
+      phone: '+264810002411',
+      whatsapp: '+264810002411',
+      distanceKm: 1.1,
+    ),
+    WorkerModel(
+      id: 8302,
+      headline: 'Painter and home maintenance helper',
+      isAvailable: true,
+      name: 'Elago Tjipura',
+      location: 'Veddersdal, Okahandja',
+      rate: 'N\$ 180/day',
+      skills: const ['Painting', 'Repairs'],
+      experienceYears: 5,
+      phone: '+264810002412',
+      whatsapp: '+264810002412',
+      distanceKm: 2.0,
+    ),
+  ];
+
+  static final List<OrganizationModel> _demoOrganizations = [
+    OrganizationModel(
+      id: 8401,
+      name: 'Okahandja Town Council',
+      category: 'Council',
+      subcategory: 'Public service',
+      description: 'Main council office for local services, billing, and resident support.',
+      location: 'Town Centre',
+      town: AppConfig.pilotTown,
+      area: 'Central Okahandja',
+      phone: '+26462200001',
+      isVerified: true,
+      openNow: true,
+      availabilityStatus: 'Open today',
+      emergencyContact: true,
+      isPublicService: true,
+      servicesOffered: const ['Accounts', 'Resident services', 'Council support'],
+    ),
+    OrganizationModel(
+      id: 8402,
+      name: 'Okahandja Police Station',
+      category: 'Police',
+      subcategory: 'Emergency',
+      description: 'Emergency and public safety support for Okahandja residents.',
+      location: 'Main Road',
+      town: AppConfig.pilotTown,
+      area: 'Central Okahandja',
+      phone: '+26462200011',
+      isVerified: true,
+      openNow: true,
+      availabilityStatus: '24/7',
+      emergencyContact: true,
+      isPublicService: true,
+    ),
+    OrganizationModel(
+      id: 8403,
+      name: 'Okahandja State Clinic',
+      category: 'Clinic',
+      subcategory: 'Health',
+      description: 'Walk-in local clinic for general care and referrals.',
+      location: 'Clinic Road',
+      town: AppConfig.pilotTown,
+      area: 'Central Okahandja',
+      phone: '+26462200021',
+      isVerified: true,
+      openNow: true,
+      availabilityStatus: 'Open today',
+      emergencyContact: true,
+      isPublicService: true,
+    ),
+  ];
+
+  static final List<DeliveryModel> _demoDeliveries = [
+    DeliveryModel(
+      id: 8501,
+      pickupAddress: 'Okahandja Town Council',
+      dropoffAddress: 'Nau-Aib community hall',
+      itemDescription: 'Council notice packs',
+      price: '75',
+      parcelSize: 'medium',
+      status: 'en route',
+      userName: 'Demo Citizen',
+      driverName: 'Local Courier',
+    ),
+  ];
+
+  static final List<RideModel> _demoRides = [
+    RideModel(
+      id: 8601,
+      pickupLocation: 'Okahandja taxi rank',
+      dropoffLocation: 'Okahandja State Clinic',
+      fareEstimate: '58',
+      rideType: 'Standard',
+      tripPurpose: 'Clinic visit',
+      status: 'requested',
+      userName: 'Demo Citizen',
+      driverName: 'Pilot Driver',
+    ),
+  ];
+
+  static final List<AlertFeedModel> _demoAlerts = [
+    AlertFeedModel(
+      id: 'demo-alert-water',
+      sourceType: 'municipal_alert',
+      title: 'Water outage in Nau-Aib',
+      body: 'Repair work is underway. Water pressure may be low until late afternoon.',
+      location: 'Nau-Aib, Okahandja',
+      severity: 'high',
+      timestamp: DateTime.now().subtract(const Duration(hours: 2)).toIso8601String(),
+    ),
+    AlertFeedModel(
+      id: 'demo-alert-road',
+      sourceType: 'municipal_alert',
+      title: 'Road closure near taxi rank',
+      body: 'Expect a temporary detour while pothole repair crews work on the approach road.',
+      location: 'Central Okahandja',
+      severity: 'medium',
+      timestamp: DateTime.now().subtract(const Duration(hours: 5)).toIso8601String(),
+    ),
+  ];
+
+  static final List<EventModel> _demoEvents = [
+    EventModel(
+      id: 8701,
+      title: 'Town Hall Service Delivery Briefing',
+      category: 'community',
+      description: 'A public meeting on water, roads, and refuse collection priorities.',
+      venueName: 'Okahandja Town Hall',
+      location: 'Town Hall',
+      town: AppConfig.pilotTown,
+      area: 'Central Okahandja',
+      startsAt: DateTime.now().add(const Duration(days: 2)).toIso8601String(),
+      status: 'published',
+      isFeatured: true,
+    ),
+  ];
+
+  static final List<ProductModel> _demoProducts = [
+    ProductModel(
+      id: 8801,
+      title: '50L water storage drum',
+      price: '220',
+      salePrice: '180',
+      description: 'Popular household water drum from a local hardware seller.',
+      category: 'home',
+      town: AppConfig.pilotTown,
+      area: 'Nau-Aib',
+      stockStatus: 'in_stock',
+      businessId: 8401,
+      businessName: 'Okahandja Build & Home',
+      businessPhone: '+264810002501',
+      businessVerified: true,
+    ),
+    ProductModel(
+      id: 8802,
+      title: 'School backpack special',
+      price: '320',
+      description: 'Durable backpack deal from a nearby family shop.',
+      category: 'clothing',
+      town: AppConfig.pilotTown,
+      area: 'Five Rand',
+      stockStatus: 'in_stock',
+      businessName: 'Five Rand Family Store',
+      businessPhone: '+264810002502',
+      businessVerified: false,
+    ),
+  ];
+
+  static final List<SaleAlertModel> _demoSaleAlerts = [
+    SaleAlertModel(
+      id: 8901,
+      title: 'Weekend household essentials sale',
+      body: 'Save on water drums, cleaning stock, and refill containers this weekend.',
+      location: 'Central Okahandja',
+      publishedAt: DateTime.now().subtract(const Duration(hours: 6)),
+    ),
+  ];
+
   Map<String, dynamic> _pilotParams([Map<String, dynamic>? params]) {
     return <String, dynamic>{
       'town': AppConfig.pilotTown,
@@ -158,32 +388,43 @@ class DiscoveryRepository {
     return data as List<dynamic>;
   }
 
+  List<T> _withDemoFallback<T>(List<T> items, List<T> fallback) {
+    if (AppConfig.isDemoMode && items.isEmpty) {
+      return fallback;
+    }
+    return items;
+  }
+
   Future<List<ListingModel>> fetchListings() async {
     final response = await ref.read(dioProvider).get('/marketplace', queryParameters: _pilotParams());
-    return _unwrapList(response.data)
+    final items = _unwrapList(response.data)
         .map((item) => ListingModel.fromJson(item as Map<String, dynamic>))
         .toList();
+    return _withDemoFallback(items, _demoListings);
   }
 
   Future<List<JobModel>> fetchJobs() async {
     final response = await ref.read(dioProvider).get('/jobs', queryParameters: _pilotParams());
-    return _unwrapList(response.data)
+    final items = _unwrapList(response.data)
         .map((item) => JobModel.fromJson(item as Map<String, dynamic>))
         .toList();
+    return _withDemoFallback(items, _demoJobs);
   }
 
   Future<List<WorkerModel>> fetchWorkers() async {
-    final response = await ref.read(dioProvider).get('/workers');
-    return _unwrapList(response.data)
+    final response = await ref.read(dioProvider).get('/workers', queryParameters: _pilotParams());
+    final items = _unwrapList(response.data)
         .map((item) => WorkerModel.fromJson(item as Map<String, dynamic>))
         .toList();
+    return _withDemoFallback(items, _demoWorkers);
   }
 
   Future<List<OrganizationModel>> fetchOrganizations() async {
     final response = await ref.read(dioProvider).get('/directory', queryParameters: _pilotParams());
-    return _unwrapList(response.data)
+    final items = _unwrapList(response.data)
         .map((item) => OrganizationModel.fromJson(item as Map<String, dynamic>))
         .toList();
+    return _withDemoFallback(items, _demoOrganizations);
   }
 
   Future<OrganizationModel> fetchOrganization(String id) async {
@@ -197,9 +438,10 @@ class DiscoveryRepository {
 
   Future<List<DeliveryModel>> fetchDeliveries() async {
     final response = await ref.read(dioProvider).get('/deliveries');
-    return (response.data as List<dynamic>)
+    final items = (response.data as List<dynamic>)
         .map((item) => DeliveryModel.fromJson(item as Map<String, dynamic>))
         .toList();
+    return _withDemoFallback(items, _demoDeliveries);
   }
 
   Future<DeliveryModel> fetchDelivery(String id) async {
@@ -213,9 +455,10 @@ class DiscoveryRepository {
 
   Future<List<RideModel>> fetchRides() async {
     final response = await ref.read(dioProvider).get('/rides');
-    return (response.data as List<dynamic>)
+    final items = (response.data as List<dynamic>)
         .map((item) => RideModel.fromJson(item as Map<String, dynamic>))
         .toList();
+    return _withDemoFallback(items, _demoRides);
   }
 
   Future<RideModel> fetchRide(String id) async {
@@ -241,9 +484,10 @@ class DiscoveryRepository {
 
   Future<List<AlertFeedModel>> fetchAlertsFeed() async {
     final response = await ref.read(dioProvider).get('/alerts/feed', queryParameters: _pilotParams());
-    return _unwrapList(response.data)
+    final items = _unwrapList(response.data)
         .map((item) => AlertFeedModel.fromJson(item as Map<String, dynamic>))
         .toList();
+    return _withDemoFallback(items, _demoAlerts);
   }
 
   Future<List<Map<String, dynamic>>> fetchFollowingFeed() async {
@@ -269,9 +513,10 @@ class DiscoveryRepository {
 
   Future<List<EventModel>> fetchEvents({Map<String, dynamic>? params}) async {
     final response = await ref.read(dioProvider).get('/events', queryParameters: _pilotParams(params));
-    return _unwrapList(response.data)
+    final items = _unwrapList(response.data)
         .map((item) => EventModel.fromJson(item as Map<String, dynamic>))
         .toList();
+    return _withDemoFallback(items, _demoEvents);
   }
 
   Future<Map<String, dynamic>> fetchEvent(String id) async {
@@ -386,16 +631,18 @@ class DiscoveryRepository {
 
   Future<List<ProductModel>> fetchProducts() async {
     final response = await ref.read(dioProvider).get('/store/products', queryParameters: _pilotParams());
-    return _unwrapList(response.data)
+    final items = _unwrapList(response.data)
         .map((item) => ProductModel.fromJson(item as Map<String, dynamic>))
         .toList();
+    return _withDemoFallback(items, _demoProducts);
   }
 
   Future<List<SaleAlertModel>> fetchSaleAlerts() async {
     final response = await ref.read(dioProvider).get('/store/sale-alerts', queryParameters: _pilotParams());
-    return _unwrapList(response.data)
+    final items = _unwrapList(response.data)
         .map((item) => SaleAlertModel.fromJson(item as Map<String, dynamic>))
         .toList();
+    return _withDemoFallback(items, _demoSaleAlerts);
   }
 
   Future<ProductModel> fetchProduct(String id) async {
@@ -427,11 +674,26 @@ class DiscoveryRepository {
     return AccommodationItemModel.fromJson(item);
   }
 
-  Future<List<NotificationItemModel>> fetchNotifications() async {
-    final response = await ref.read(dioProvider).get('/notifications');
+  Future<List<NotificationItemModel>> fetchNotifications({bool unreadOnly = false}) async {
+    final response = await ref.read(dioProvider).get(
+      unreadOnly ? '/notifications/unread' : '/notifications',
+      queryParameters: unreadOnly ? {'unread': 1} : null,
+    );
     return _unwrapList(response.data)
         .map((item) => NotificationItemModel.fromJson(item as Map<String, dynamic>))
         .toList();
+  }
+
+  Future<void> registerDeviceToken({
+    required String platform,
+    required String token,
+    String? deviceName,
+  }) async {
+    await ref.read(dioProvider).post('/device-tokens', data: {
+      'platform': platform,
+      'token': token,
+      'device_name': deviceName,
+    });
   }
 
   Future<Map<String, dynamic>> fetchActivityFeed() async {

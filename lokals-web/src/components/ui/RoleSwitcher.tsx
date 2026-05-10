@@ -1,6 +1,9 @@
 import { ChevronDown, LoaderCircle } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useSwitchRole } from '../../hooks/queries'
+import { getRoleHomePath } from '../../lib/roles'
+import type { User } from '../../types'
 
 const formatRole = (role: string) =>
   role.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
@@ -15,6 +18,7 @@ export function RoleSwitcher({
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement | null>(null)
   const switchRole = useSwitchRole()
+  const navigate = useNavigate()
   const visible = roles.filter(Boolean)
   const active = currentRole && visible.includes(currentRole) ? currentRole : visible[0] ?? 'citizen'
   const extraCount = Math.max(visible.length - 1, 0)
@@ -53,8 +57,9 @@ export function RoleSwitcher({
                   type="button"
                   disabled={isActive || switchRole.isPending}
                   onClick={async () => {
-                    await switchRole.mutateAsync(role)
+                    const payload = await switchRole.mutateAsync(role)
                     setOpen(false)
+                    navigate(getRoleHomePath((payload.user?.data ?? payload.user) as User))
                   }}
                   className={`flex w-full items-center justify-between rounded-2xl px-3 py-3 text-left text-sm font-medium transition ${
                     isActive ? 'bg-lokals-green text-white' : 'text-lokals-charcoal hover:bg-slate-100'

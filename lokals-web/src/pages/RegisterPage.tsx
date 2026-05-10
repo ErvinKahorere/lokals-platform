@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button, Input, PageHeader, Select } from '../components/Ui'
 import { api, getApiErrorMessage } from '../lib/api'
+import { getRoleHomePath } from '../lib/roles'
 import { OKAHANDJA_AREAS, PILOT_LOCATION_MESSAGE, PILOT_TOWN } from '../lib/pilot'
 import { useAuthStore } from '../store/auth'
 
@@ -34,8 +35,9 @@ export function RegisterPage() {
         roles: selectedRoles,
         interests: ['Find services', 'Follow alerts'],
       })
-      setSession(data.token, data.user.data ?? data.user)
-      navigate('/')
+      const user = data.user.data ?? data.user
+      setSession(data.token, user)
+      navigate(getRoleHomePath(user))
     } catch (error) {
       setError(getApiErrorMessage(error, 'Something went wrong. Try again.'))
     } finally {

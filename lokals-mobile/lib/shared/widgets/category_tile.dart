@@ -41,13 +41,13 @@ class CategoryTile extends StatelessWidget {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  height: 52,
-                  width: 52,
+                  height: 56,
+                  width: 56,
                   decoration: BoxDecoration(
                     color: color,
                     borderRadius: BorderRadius.circular(16),

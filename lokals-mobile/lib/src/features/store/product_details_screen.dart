@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/experience/contact_actions.dart';
 import '../../../shared/widgets/experience/save_button.dart';
+import '../../config/app_config.dart';
 import '../../core/experience_helpers.dart';
 import '../../core/models.dart';
 import '../../widgets/cards.dart';
@@ -164,7 +165,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                             children: [
                               const Icon(Icons.place_outlined, size: 16, color: AppColors.mutedText),
                               const SizedBox(width: 6),
-                              Text(locationLabel.isEmpty ? 'Windhoek' : locationLabel, style: AppTextStyles.bodyMuted),
+                              Text(locationLabel.isEmpty ? AppConfig.pilotTown : locationLabel, style: AppTextStyles.bodyMuted),
                             ],
                           ),
                         ],
@@ -248,7 +249,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                                 ],
                               ),
                               const SizedBox(height: 4),
-                              Text(locationLabel.isEmpty ? 'Windhoek' : locationLabel, style: AppTextStyles.bodyMuted),
+                              Text(locationLabel.isEmpty ? AppConfig.pilotTown : locationLabel, style: AppTextStyles.bodyMuted),
                               const SizedBox(height: 4),
                               const Text('Replies by call or WhatsApp for now.', style: AppTextStyles.caption),
                             ],

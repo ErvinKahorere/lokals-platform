@@ -77,6 +77,12 @@ class AuthController extends Controller
             ]);
         }
 
+        if (! $user->current_role) {
+            $user->update([
+                'current_role' => $this->normalizeCurrentRole($user->getRoleNames()->first() ?? 'citizen'),
+            ]);
+        }
+
         $token = $user->createToken('mobile')->plainTextToken;
 
         return response()->json([

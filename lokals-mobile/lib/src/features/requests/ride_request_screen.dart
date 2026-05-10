@@ -21,17 +21,17 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
     'Current location',
     'Home',
     'Work',
-    'Khomasdal taxi rank',
-    'Windhoek CBD',
-    'Klein Windhoek clinic',
-    'Hosea Kutako International Airport',
+    'Okahandja taxi rank',
+    'Okahandja Town Council',
+    'Okahandja State Clinic',
+    'Okahandja Police Station',
   ];
 
   static const List<String> _tripPurposes = [
     'Daily commute',
     'Clinic visit',
     'School pickup',
-    'Airport trip',
+    'Town errand',
     'Late shift ride',
   ];
 
@@ -42,7 +42,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
   ];
 
   String _pickupLocation = _stops.first;
-  String _dropoffLocation = 'Windhoek CBD';
+  String _dropoffLocation = 'Okahandja Town Council';
   String _tripPurpose = _tripPurposes.first;
   String _rideType = _rideChoices.first.title;
   final _notesController = TextEditingController();
@@ -54,7 +54,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
     final ride = _rideChoices.firstWhere((item) => item.title == _rideType);
     final routeBonus = _pickupLocation == _dropoffLocation ? 0 : 12;
     final purposeBonus = switch (_tripPurpose) {
-      'Airport trip' => 85,
+      'Town errand' => 18,
       'Late shift ride' => 20,
       _ => 0,
     };
@@ -141,7 +141,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                     children: [
                       ActionChip(label: const Text('Home'), onPressed: () => setState(() => _dropoffLocation = 'Home')),
                       ActionChip(label: const Text('Work'), onPressed: () => setState(() => _dropoffLocation = 'Work')),
-                      ActionChip(label: const Text('Airport'), onPressed: () => setState(() => _dropoffLocation = 'Hosea Kutako International Airport')),
+                      ActionChip(label: const Text('Clinic'), onPressed: () => setState(() => _dropoffLocation = 'Okahandja State Clinic')),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -286,7 +286,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
             data: (items) => items.isEmpty
                 ? const EmptyState(
                     title: 'No ride requests yet',
-                    body: 'Your recent taxi requests will appear here.',
+                    body: 'Your recent Okahandja ride requests will appear here.',
                   )
                 : Column(
                     children: items.take(5).map((item) {

@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/job_card.dart';
 import '../../../shared/widgets/worker_card.dart';
+import '../../config/app_config.dart';
 import '../auth/auth_controller.dart';
 import '../../core/models.dart';
 import '../../widgets/cards.dart';
@@ -77,7 +78,7 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
     }
 
     final titleController = TextEditingController();
-    final locationController = TextEditingController(text: auth.user?.defaultArea ?? auth.user?.location ?? 'Windhoek');
+    final locationController = TextEditingController(text: auth.user?.defaultArea ?? auth.user?.location ?? AppConfig.okahandjaAreas.first);
     final budgetController = TextEditingController();
     final descriptionController = TextEditingController();
     final skillController = TextEditingController();
@@ -165,7 +166,7 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
                       if (step == 0) ...[
                         LokalsTextField(controller: titleController, label: 'Job title', hint: 'House cleaner needed'),
                         const SizedBox(height: 12),
-                        LokalsTextField(controller: locationController, label: 'Town or area', hint: 'Khomasdal'),
+                        LokalsTextField(controller: locationController, label: 'Town or area', hint: 'Nau-Aib'),
                         const SizedBox(height: 12),
                         DropdownButtonFormField<String>(
                           initialValue: selectedType,
@@ -263,7 +264,7 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
 
     final headlineController = TextEditingController(text: auth.user?.profession ?? '');
     final skillsController = TextEditingController();
-    final locationController = TextEditingController(text: auth.user?.defaultArea ?? auth.user?.location ?? 'Windhoek');
+    final locationController = TextEditingController(text: auth.user?.defaultArea ?? auth.user?.location ?? AppConfig.okahandjaAreas.first);
     final experienceController = TextEditingController();
     final rateController = TextEditingController();
     bool isAvailable = true;
@@ -338,7 +339,7 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
                       const SizedBox(height: 12),
                       LokalsTextField(controller: skillsController, label: 'Skills', hint: 'cleaning, laundry, ironing'),
                       const SizedBox(height: 12),
-                      LokalsTextField(controller: locationController, label: 'Town or area', hint: 'Khomasdal'),
+                      LokalsTextField(controller: locationController, label: 'Town or area', hint: 'Nau-Aib'),
                       const SizedBox(height: 12),
                       Row(
                         children: [
@@ -601,7 +602,7 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
                   if (workers.isEmpty) {
                     return const EmptyStateView(
                       title: 'No workers found nearby',
-                      body: 'Try another skill or area.',
+                      body: 'No workers found nearby. Try another skill.',
                     );
                   }
                   return Column(
@@ -636,7 +637,7 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
                   if (jobs.isEmpty) {
                     return const EmptyStateView(
                       title: 'No jobs nearby yet',
-                      body: 'Check again later or post one.',
+                      body: 'No work opportunities in Okahandja right now. Check again later or post one.',
                     );
                   }
                   return Column(
@@ -715,7 +716,7 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
                   if (workers.isEmpty) {
                     return const EmptyStateView(
                       title: 'No workers found nearby',
-                      body: 'Try another skill or area.',
+                      body: 'No workers found nearby. Try another skill.',
                     );
                   }
                   return Column(

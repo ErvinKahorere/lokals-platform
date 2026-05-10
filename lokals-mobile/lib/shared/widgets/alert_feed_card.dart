@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../src/config/app_config.dart';
 import '../../src/widgets/cards.dart';
 
 class AlertFeedCard extends StatelessWidget {
@@ -98,7 +99,7 @@ class AlertFeedCard extends StatelessWidget {
                 const SizedBox(width: 4),
                 Expanded(child: Text(location!, style: AppTextStyles.caption)),
               ] else
-                Expanded(child: Text('Windhoek', style: AppTextStyles.caption)),
+                Expanded(child: Text(AppConfig.pilotTown, style: AppTextStyles.caption)),
               if (actionLabel != null && onAction != null)
                 TextButton(
                   onPressed: onAction,

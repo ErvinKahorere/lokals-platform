@@ -2,6 +2,7 @@ import { Bell, BookOpen, CalendarDays, ChevronDown, LayoutDashboard, LogOut, Map
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useMarkAllNotificationsRead, useMe, useMyBusinesses, useNotifications, usePreferences, useUpdatePreferences, useUpdateProfile } from '../../hooks/queries'
+import { getRoleHomePath, hasAnyAssignedRole } from '../../lib/roles'
 import { useAuthStore } from '../../store/auth'
 import { NotificationBell } from '../experience/NotificationBell'
 import { BottomSheet } from './BottomSheet'
@@ -31,7 +32,6 @@ const mobileLinks = [
   { to: '/directory', label: 'Directory' },
 ]
 
-const businessRoles = ['seller', 'service_provider', 'business_owner', 'organization_admin', 'super_admin']
 const locationOptions = [
   { town: 'Okahandja', area: 'Central Okahandja' },
   { town: 'Okahandja', area: 'Nau-Aib' },
@@ -133,16 +133,10 @@ export function AppShell() {
   const navigate = useNavigate()
   const currentUser = meQuery.data?.user ? ('data' in meQuery.data.user ? meQuery.data.user.data : meQuery.data.user) : user
   const unreadCount = (notificationsQuery.data ?? []).filter((item) => !item.read_at).length
-  const isAdmin = Boolean(currentUser?.roles?.some((role: string) => ['super_admin', 'operator', 'municipality_admin', 'town_manager'].includes(role)))
-  const isBusinessUser = Boolean(currentUser?.roles?.some((role: string) => businessRoles.includes(role)))
+  const isAdmin = hasAnyAssignedRole(currentUser, ['super_admin', 'operator', 'municipality_admin', 'town_manager'])
+  const isBusinessUser = hasAnyAssignedRole(currentUser, ['seller', 'service_provider', 'business_owner', 'organization_admin', 'super_admin'])
   const activeRole = currentUser?.current_role ?? currentUser?.roles?.[0] ?? null
-  const dashboardLink = activeRole === 'municipality_admin' || activeRole === 'town_manager'
-    ? '/dashboard/town-manager'
-    : activeRole === 'organization_admin'
-      ? '/dashboard/organization'
-      : isBusinessUser
-        ? '/dashboard/business'
-        : '/dashboard/profile'
+  const dashboardLink = currentUser ? getRoleHomePath(currentUser) : '/dashboard/profile'
   const locationLabel = [currentUser?.default_area ?? preferencesQuery.data?.default_area, currentUser?.default_town ?? preferencesQuery.data?.default_town ?? currentUser?.location ?? 'Okahandja'].filter(Boolean).join(', ')
   const profileMenu = useMemo(() => {
     const items = [

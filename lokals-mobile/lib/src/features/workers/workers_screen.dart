@@ -58,7 +58,7 @@ class _WorkersScreenState extends ConsumerState<WorkersScreen> {
               if (filtered.isEmpty)
                 const EmptyStateView(
                   title: 'No workers found nearby',
-                  body: 'Try another skill or area.',
+                  body: 'No workers found nearby. Try another skill.',
                 )
               else
                 ...filtered.map(

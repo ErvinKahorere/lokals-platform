@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button, Input, PageHeader } from '../components/Ui'
 import { api, getApiErrorMessage } from '../lib/api'
 import { demoLogins } from '../data/demo'
+import { getRoleHomePath } from '../lib/roles'
 import { useAuthStore } from '../store/auth'
 
 export function LoginPage() {
@@ -15,7 +16,7 @@ export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const setSession = useAuthStore((state) => state.setSession)
-  const nextPath = typeof (location.state as { from?: string } | null)?.from === 'string' ? (location.state as { from?: string }).from! : '/'
+  const nextPath = typeof (location.state as { from?: string } | null)?.from === 'string' ? (location.state as { from?: string }).from! : null
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -23,8 +24,9 @@ export function LoginPage() {
     setError('')
     try {
       const { data } = await api.post('/auth/login', { phone, password })
-      setSession(data.token, data.user.data ?? data.user)
-      navigate(nextPath)
+      const user = data.user.data ?? data.user
+      setSession(data.token, user)
+      navigate(nextPath ?? getRoleHomePath(user))
     } catch (caught) {
       setError(getApiErrorMessage(caught, 'Unable to sign in right now. Try again.'))
     } finally {
