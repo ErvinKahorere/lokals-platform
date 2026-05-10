@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../config/app_config.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import 'auth_controller.dart';
@@ -16,8 +17,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _phoneController = TextEditingController(text: '+264810000002');
-  final _passwordController = TextEditingController(text: 'password');
+  final _phoneController = TextEditingController(text: '+264810001050');
+  final _passwordController = TextEditingController(text: 'Password123!');
   String? _error;
 
   @override
@@ -57,7 +58,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           const SectionTitle(
             title: 'Phone-first login',
             subtitle:
-                'Sign in quickly and keep local services, marketplace, events, and alerts close.',
+                'Sign in quickly and keep local services, marketplace, events, and alerts close in Okahandja.',
           ),
           const SizedBox(height: 16),
           Container(
@@ -92,7 +93,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       SizedBox(height: 4),
                       Text(
-                        'Sign in once to book services, follow updates, and act faster nearby.',
+                        '${AppConfig.pilotLocationMessage} Sign in once to book services, follow updates, and act faster nearby.',
                         style: TextStyle(color: AppColors.mutedText),
                       ),
                     ],
@@ -152,6 +153,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   },
                 ),
                 const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.purpleSoftAlt,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppColors.purpleBorder),
+                  ),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'After login',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'LOKALS will personalize Home, alerts, and public services around your Okahandja area.',
+                        style: TextStyle(color: AppColors.mutedText),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
                 AppButton(
                   label: 'Browse as guest',
                   variant: AppButtonVariant.secondary,
@@ -203,7 +228,8 @@ class _DemoAccount {
 }
 
 const _demoAccounts = [
-  _DemoAccount('Citizen', '+264810000002', 'password'),
-  _DemoAccount('Provider barber', '+264810000003', 'password'),
-  _DemoAccount('Super admin', '+264810000001', 'password'),
+  _DemoAccount('Citizen', '+264810001050', 'Password123!'),
+  _DemoAccount('Town manager', '+264810001001', 'Password123!'),
+  _DemoAccount('Service provider', '+264810002203', 'Password123!'),
+  _DemoAccount('Super admin', '+264810001000', 'Password123!'),
 ];

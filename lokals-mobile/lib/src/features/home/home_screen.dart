@@ -136,80 +136,63 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: AppColors.purpleSoftAlt,
-                    child: Text(
-                      user?.name.characters.first.toUpperCase() ?? 'L',
-                      style: AppTextStyles.h3.copyWith(color: AppColors.primaryPurple),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Text(
-                          user == null ? 'Welcome to LOKALS' : 'Good morning, ${user.name} 👋',
-                          style: AppTextStyles.bodyMuted,
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'What do you need in Okahandja today?',
-                          style: TextStyle(
-                            fontSize: 29,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.deepCharcoal,
-                            height: 1.1,
+                        LokalsAvatar(label: user?.name ?? 'Lokals'),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                user == null ? 'Welcome to LOKALS' : 'Good day, ${user.name}',
+                                style: AppTextStyles.bodyMuted,
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                'What do you need in Okahandja today?',
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.deepCharcoal,
+                                  height: 1.08,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceWhite,
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: AppColors.border),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Search trusted local services, daily essentials, events, jobs, and civic updates without leaving one clean flow.',
+                      style: AppTextStyles.bodyMuted,
                     ),
-                    child: Text(
-                      [area, town].whereType<String>().join(', '),
-                      style: AppTextStyles.caption.copyWith(color: AppColors.deepCharcoal),
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        AppBadge(
+                          label: [area, town].whereType<String>().join(', '),
+                          tone: AppBadgeTone.neutral,
+                        ),
+                        AppBadge(
+                          label: AppConfig.pilotLocationMessage,
+                          tone: AppBadgeTone.success,
+                        ),
+                        AppBadge(
+                          label: user == null ? 'Guest mode' : role.replaceAll('_', ' '),
+                          tone: AppBadgeTone.brand,
+                        ),
+                      ],
                     ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: AppColors.greenSoft,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      AppConfig.pilotLocationMessage,
-                      style: AppTextStyles.caption.copyWith(color: AppColors.primaryGreen),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: AppColors.purpleSoftAlt,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      user == null ? 'Guest' : role.replaceAll('_', ' '),
-                      style: AppTextStyles.caption.copyWith(color: AppColors.primaryPurple),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 14),
               AppSearchBar(
@@ -228,13 +211,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               if (user == null) ...[
                 const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: AppButton(
-                    label: 'Sign in for your local feed',
-                    expanded: false,
-                    variant: AppButtonVariant.secondary,
-                    onPressed: () => context.go('/login'),
+                LokalsSurfaceTile(
+                  onTap: () => context.go('/login'),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: AppColors.purpleSoftAlt,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(Icons.login_rounded, color: AppColors.primaryPurple),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Sign in for a more personal feed', style: TextStyle(fontWeight: FontWeight.w700)),
+                            SizedBox(height: 4),
+                            Text('Keep your area, activity, and local updates synced across the app.', style: AppTextStyles.bodyMuted),
+                          ],
+                        ),
+                      ),
+                      const AppBadge(label: 'Sign in', tone: AppBadgeTone.brand),
+                    ],
                   ),
                 ),
               ],
@@ -254,7 +256,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 errorText: (alertsFeed.hasError || newsFeed.hasError || followingFeed.hasError)
                     ? 'Please try again in a moment.'
                     : null,
-                emptyTitle: localUpdates.isEmpty ? 'No alerts right now. You\'re all caught up.' : null,
+                emptyTitle: localUpdates.isEmpty ? 'No alerts right now. You are all caught up.' : null,
                 emptyBody: localUpdates.isEmpty ? 'Local alerts, followed updates, and news will appear here.' : null,
                 onRetry: () {
                   ref.invalidate(alertsFeedProvider);
@@ -387,7 +389,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 color: const Color(0xFFEEF2FF),
                                 borderRadius: BorderRadius.circular(18),
                               ),
-                              child: const Icon(Icons.work_outline_rounded, color: Color(0xFF7C3AED)),
+                              child: const Icon(Icons.work_outline_rounded, color: AppColors.primaryPurple),
                             ),
                             const SizedBox(width: 14),
                             Expanded(

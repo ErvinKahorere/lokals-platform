@@ -8,7 +8,10 @@ import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_card.dart';
 import '../../shared/widgets/app_search_bar.dart';
 import '../../shared/widgets/app_text_field.dart';
+import '../../shared/widgets/app_badge.dart';
 import '../../shared/widgets/category_tile.dart';
+import '../../shared/widgets/loading_skeleton.dart';
+import '../../shared/widgets/mobile_bottom_nav.dart';
 
 export '../../shared/widgets/app_badge.dart';
 export '../../shared/widgets/app_button.dart';
@@ -17,6 +20,7 @@ export '../../shared/widgets/app_search_bar.dart';
 export '../../shared/widgets/app_text_field.dart';
 export '../../shared/widgets/empty_state.dart';
 export '../../shared/widgets/loading_skeleton.dart';
+export '../../shared/widgets/mobile_bottom_nav.dart';
 
 class MetricCard extends StatelessWidget {
   const MetricCard({
@@ -67,6 +71,11 @@ class MetricCard extends StatelessWidget {
 typedef LokalsCard = AppCard;
 typedef LokalsSearchBar = AppSearchBar;
 typedef LokalsActionTile = CategoryTile;
+typedef LokalsButton = AppButton;
+typedef LokalsBadge = AppBadge;
+typedef LokalsBottomNav = MobileBottomNav;
+typedef LokalsEmptyState = EmptyStateView;
+typedef LokalsSkeleton = LoadingSkeleton;
 
 class SectionTitle extends StatelessWidget {
   const SectionTitle({
@@ -134,6 +143,51 @@ class LokalsSectionHeader extends StatelessWidget {
       eyebrow: eyebrow,
       action: action,
     );
+  }
+}
+
+class LokalsAvatar extends StatelessWidget {
+  const LokalsAvatar({
+    super.key,
+    required this.label,
+    this.radius = 24,
+    this.backgroundColor = AppColors.purpleSoftAlt,
+    this.foregroundColor = AppColors.primaryPurple,
+  });
+
+  final String label;
+  final double radius;
+  final Color backgroundColor;
+  final Color foregroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final safeLabel = label.trim().isEmpty ? 'L' : label.trim().characters.first.toUpperCase();
+
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: backgroundColor,
+      child: Text(
+        safeLabel,
+        style: AppTextStyles.h3.copyWith(color: foregroundColor),
+      ),
+    );
+  }
+}
+
+class LokalsStatusPill extends StatelessWidget {
+  const LokalsStatusPill({
+    super.key,
+    required this.label,
+    this.tone = AppBadgeTone.neutral,
+  });
+
+  final String label;
+  final AppBadgeTone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBadge(label: label, tone: tone);
   }
 }
 

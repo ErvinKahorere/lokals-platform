@@ -140,6 +140,25 @@ class DemoTownManagerSeeder extends Seeder
             'services_offered' => ['Primary care', 'Maternal health', 'Vaccination support'],
         ]);
 
+        $this->upsertOrganization('Okahandja District Hospital', [
+            'owner_user_id' => $manager->id,
+            'category' => 'healthcare',
+            'subcategory' => 'hospital',
+            'description' => 'Emergency stabilisation, maternity support, and inpatient referral services for the Okahandja pilot.',
+            'phone' => '+264610001014',
+            'location' => 'Town Centre, Okahandja',
+            'town' => 'Okahandja',
+            'area' => 'Town Centre',
+            'lat' => -21.9826,
+            'lng' => 16.9177,
+            'is_verified' => true,
+            'status' => 'active',
+            'emergency_contact' => true,
+            'is_public_service' => true,
+            'opening_hours' => [['day' => 'Daily', 'open' => '00:00', 'close' => '23:59']],
+            'services_offered' => ['Emergency desk', 'Maternity support', 'Referral coordination'],
+        ]);
+
         Announcement::query()->updateOrCreate(
             ['organization_id' => $council->id, 'title' => 'Resident support desk now open on Saturdays'],
             [
@@ -163,9 +182,9 @@ class DemoTownManagerSeeder extends Seeder
         );
 
         Alert::query()->updateOrCreate(
-            ['title' => 'Planned water interruption in Nau-Aib'],
+            ['title' => 'Water outage alert for Nau-Aib'],
             [
-                'body' => 'Maintenance teams will pause supply between 09:00 and 13:00 while a damaged valve is replaced.',
+                'body' => 'Maintenance teams will pause supply between 09:00 and 13:00 tomorrow while a damaged valve is replaced near the Nau-Aib reservoir.',
                 'type' => 'service_update',
                 'audience' => 'public',
                 'location' => 'Nau-Aib, Okahandja',
@@ -184,10 +203,10 @@ class DemoTownManagerSeeder extends Seeder
         );
 
         Alert::query()->updateOrCreate(
-            ['title' => 'Traffic advisory near taxi rank'],
+            ['title' => 'Road closure alert near the taxi rank'],
             [
-                'body' => 'Drivers should expect slower movement near the taxi rank while lighting upgrades are completed this evening.',
-                'type' => 'traffic',
+                'body' => 'A temporary closure will affect the taxi rank approach from 17:00 to 22:00 while storm-water trench repairs are completed. Detour signage will be in place.',
+                'type' => 'municipal_alert',
                 'audience' => 'public',
                 'location' => 'Town Centre, Okahandja',
                 'town' => 'Okahandja',
@@ -208,7 +227,7 @@ class DemoTownManagerSeeder extends Seeder
             ['user_id' => $resident->id, 'title' => 'Streetlight outage near Nau-Aib bus stop'],
             [
                 'user_id' => $resident->id,
-                'category' => 'lighting',
+                'category' => 'other',
                 'description' => 'The pole closest to the bus stop has been dark for three nights and the area feels unsafe after 19:00.',
                 'location' => 'Nau-Aib bus stop',
                 'town' => 'Okahandja',
@@ -218,7 +237,60 @@ class DemoTownManagerSeeder extends Seeder
                 'status' => 'in_progress',
                 'priority' => 'high',
                 'assigned_to' => $manager->id,
-                'resolution_notes' => 'Electrical team scheduled for inspection on the next maintenance round.',
+                'resolution_notes' => 'Electrical team inspection was scheduled for the next maintenance round.',
+            ],
+        );
+
+        CityReport::query()->updateOrCreate(
+            ['user_id' => $resident->id, 'title' => 'Pothole near Nau-Aib bus stop'],
+            [
+                'user_id' => $resident->id,
+                'category' => 'roads',
+                'description' => 'A deep pothole is forcing taxis into the opposite lane near the bus stop and it is getting worse after each passing truck.',
+                'location' => 'Nau-Aib bus stop',
+                'town' => 'Okahandja',
+                'area' => 'Nau-Aib',
+                'lat' => -21.9873,
+                'lng' => 16.9105,
+                'status' => 'in_progress',
+                'priority' => 'high',
+                'assigned_to' => $manager->id,
+                'resolution_notes' => 'Roads team marked the site for patching during the next maintenance round.',
+            ],
+        );
+
+        CityReport::query()->updateOrCreate(
+            ['user_id' => $resident->id, 'title' => 'Water leak near Extension 5 standpipe'],
+            [
+                'user_id' => $resident->id,
+                'category' => 'water',
+                'description' => 'Water has been running down the street since early morning and pressure is lower in nearby homes.',
+                'location' => 'Extension 5 standpipe',
+                'town' => 'Okahandja',
+                'area' => 'Extension 5',
+                'lat' => -21.9808,
+                'lng' => 16.9201,
+                'status' => 'open',
+                'priority' => 'high',
+                'assigned_to' => $manager->id,
+            ],
+        );
+
+        CityReport::query()->updateOrCreate(
+            ['user_id' => $resident->id, 'title' => 'Waste collection missed in Veddersdal'],
+            [
+                'user_id' => $resident->id,
+                'category' => 'waste',
+                'description' => 'Households on the western side of Veddersdal were missed on the regular collection route and bins are still full.',
+                'location' => 'Veddersdal west route',
+                'town' => 'Okahandja',
+                'area' => 'Veddersdal',
+                'lat' => -21.9789,
+                'lng' => 16.9146,
+                'status' => 'resolved',
+                'priority' => 'medium',
+                'assigned_to' => $manager->id,
+                'resolution_notes' => 'Follow-up truck completed collection and route timing was corrected for Friday morning.',
             ],
         );
 

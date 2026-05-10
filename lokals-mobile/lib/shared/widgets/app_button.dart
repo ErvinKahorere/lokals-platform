@@ -56,6 +56,12 @@ class AppButton extends StatelessWidget {
         padding: const WidgetStatePropertyAll(
           EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         ),
+        overlayColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.pressed)) {
+            return Colors.black.withValues(alpha: 0.06);
+          }
+          return null;
+        }),
         textStyle: const WidgetStatePropertyAll(
           TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
         ),

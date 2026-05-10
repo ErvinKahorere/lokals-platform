@@ -99,18 +99,20 @@ export function TownPortalPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-green">Emergency contacts</p>
             <h3 className="mt-1 text-lg font-semibold text-lokals-charcoal">Call quickly</h3>
           </div>
-          <div className="mt-4 space-y-3">
-            {emergencyContacts.map((item) => (
-              <div key={item.id} className="rounded-[18px] border border-lokals-border px-4 py-3">
-                <p className="font-semibold text-lokals-charcoal">{item.name}</p>
-                <p className="mt-1 text-sm text-lokals-muted">{item.phone ?? 'Demo number pending verification'}</p>
-                <div className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-lokals-green">
-                  <Phone className="h-4 w-4" />
-                  <span>Call / WhatsApp</span>
+          <QueryState isLoading={servicesQuery.isLoading} error={servicesQuery.error} empty={emergencyContacts.length === 0}>
+            <div className="mt-4 space-y-3">
+              {emergencyContacts.map((item) => (
+                <div key={item.id} className="rounded-[18px] border border-lokals-border px-4 py-3">
+                  <p className="font-semibold text-lokals-charcoal">{item.name}</p>
+                  <p className="mt-1 text-sm text-lokals-muted">{item.phone ?? 'Call details available from the council desk'}</p>
+                  <div className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-lokals-green">
+                    <Phone className="h-4 w-4" />
+                    <span>Call / WhatsApp</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </QueryState>
         </SectionCard>
       </div>
 

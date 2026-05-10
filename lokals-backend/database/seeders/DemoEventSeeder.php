@@ -45,8 +45,8 @@ class DemoEventSeeder extends Seeder
             ],
             [
                 'title' => 'Town Hall Service Delivery Briefing',
-                'description' => 'Public briefing on rates, road works, and the next municipal maintenance schedule.',
-                'category' => 'government',
+                'description' => 'Public meeting on water maintenance, road works, refuse collection, and resident questions for the next municipal cycle.',
+                'category' => 'municipal',
                 'venue_name' => 'Okahandja Town Council Hall',
                 'location' => 'Town Centre, Okahandja',
                 'town' => 'Okahandja',

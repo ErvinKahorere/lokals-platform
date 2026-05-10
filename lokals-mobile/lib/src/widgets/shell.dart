@@ -5,21 +5,16 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../config/app_config.dart';
 import '../core/models.dart';
 import '../../shared/widgets/experience/notification_bell.dart';
 import '../../shared/widgets/mobile_bottom_nav.dart';
 import '../features/auth/auth_controller.dart';
 import '../features/discovery/discovery_repository.dart';
 
-const _locationOptions = <({String town, String area})>[
-  (town: 'Windhoek', area: 'Katutura'),
-  (town: 'Windhoek', area: 'Khomasdal'),
-  (town: 'Windhoek', area: 'Klein Windhoek'),
-  (town: 'Windhoek', area: 'Eros'),
-  (town: 'Windhoek', area: 'CBD'),
-  (town: 'Swakopmund', area: 'Town Center'),
-  (town: 'Walvis Bay', area: 'Narraville'),
-];
+final _locationOptions = AppConfig.okahandjaAreas
+    .map((area) => (town: AppConfig.pilotTown, area: area))
+    .toList(growable: false);
 
 class LokalsShell extends ConsumerWidget {
   const LokalsShell({
@@ -107,7 +102,7 @@ class LokalsShell extends ConsumerWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${user?.defaultArea ?? user?.location ?? 'Windhoek'}, ${user?.defaultTown ?? 'Namibia'}',
+                            '${user?.defaultArea ?? user?.location ?? AppConfig.pilotTown}, ${user?.defaultTown ?? 'Namibia'}',
                             style: AppTextStyles.bodyMuted,
                           ),
                         ],
@@ -214,8 +209,8 @@ class LokalsShell extends ConsumerWidget {
     required UserModel? user,
     required UserPreferenceModel? preferences,
   }) async {
-    final currentTown = preferences?.defaultTown ?? user?.defaultTown ?? user?.location ?? 'Windhoek';
-    final currentArea = preferences?.defaultArea ?? user?.defaultArea ?? 'Katutura';
+    final currentTown = preferences?.defaultTown ?? user?.defaultTown ?? AppConfig.pilotTown;
+    final currentArea = preferences?.defaultArea ?? user?.defaultArea ?? AppConfig.okahandjaAreas.first;
     final repository = ref.read(discoveryRepositoryProvider);
 
     await showModalBottomSheet<void>(
@@ -248,7 +243,7 @@ class LokalsShell extends ConsumerWidget {
                 Text('Choose your area', style: AppTextStyles.h3.copyWith(fontSize: 20)),
                 const SizedBox(height: 6),
                 Text(
-                  'Keep Home focused on the services, updates, events, and products closest to you.',
+                  '${AppConfig.pilotLocationMessage} Keep Home focused on the services, updates, and opportunities closest to you.',
                   style: AppTextStyles.bodyMuted,
                 ),
                 const SizedBox(height: 18),
@@ -282,8 +277,8 @@ class LokalsShell extends ConsumerWidget {
                             color: isSelected ? AppColors.primaryPurple : AppColors.border,
                           ),
                         ),
-                        child: Row(
-                          children: [
+                          child: Row(
+                            children: [
                             Container(
                               width: 42,
                               height: 42,
@@ -335,7 +330,7 @@ class LokalsShell extends ConsumerWidget {
     final unreadCount = notifications.where((item) => item.readAt == null).length;
     final canShowBrand = !showBack;
     final isHome = title == 'LOKALS';
-    final currentTown = preferences?.defaultTown ?? user?.defaultTown ?? user?.location ?? 'Windhoek';
+    final currentTown = preferences?.defaultTown ?? user?.defaultTown ?? AppConfig.pilotTown;
     final currentArea = preferences?.defaultArea ?? user?.defaultArea;
     final locationLabel = [currentArea, currentTown].whereType<String>().where((item) => item.isNotEmpty).join(', ');
 
@@ -419,12 +414,15 @@ class LokalsShell extends ConsumerWidget {
             : null,
       ),
       body: SafeArea(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.hero)),
+        child: Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 92),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.hero)),
+            ),
+            child: child,
           ),
-          child: child,
         ),
       ),
       floatingActionButton: floatingActionButton,

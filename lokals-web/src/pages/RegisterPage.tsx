@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Button, Input, PageHeader } from '../components/Ui'
+import { Button, Input, PageHeader, Select } from '../components/Ui'
 import { api, getApiErrorMessage } from '../lib/api'
+import { OKAHANDJA_AREAS, PILOT_LOCATION_MESSAGE, PILOT_TOWN } from '../lib/pilot'
 import { useAuthStore } from '../store/auth'
 
 const roleOptions = ['citizen', 'worker', 'seller', 'business_owner', 'service_provider', 'driver', 'organization_representative']
@@ -18,7 +19,7 @@ export function RegisterPage() {
     phone: '',
     password: 'Password123!',
     password_confirmation: 'Password123!',
-    default_town: 'Okahandja',
+    default_town: PILOT_TOWN,
     default_area: 'Nau-Aib',
   })
 
@@ -49,7 +50,7 @@ export function RegisterPage() {
         <img src="/brand/lokals-logo.svg" alt="LOKALS" className="h-10 w-auto" />
         <p className="mt-4 text-sm font-semibold uppercase tracking-[0.28em] text-lokals-purple">Everything in your city</p>
         <h2 className="mt-3 text-3xl font-semibold text-lokals-charcoal">Create your LOKALS profile</h2>
-        <p className="mt-3 max-w-2xl text-sm text-lokals-muted">Choose where you are and what you want to use the app for. The experience will personalize around your town, your roles, and your next action.</p>
+        <p className="mt-3 max-w-2xl text-sm text-lokals-muted">{PILOT_LOCATION_MESSAGE} Choose your area and what you want to use the app for. The experience will personalize around your next action.</p>
       </div>
       <div className="rounded-[24px] border border-lokals-border bg-white p-6 shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
         <form className="grid gap-4 md:grid-cols-2" onSubmit={submit}>
@@ -63,11 +64,15 @@ export function RegisterPage() {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-semibold text-lokals-charcoal">Town</label>
-            <Input value={form.default_town} onChange={(event) => setForm((current) => ({ ...current, default_town: event.target.value }))} placeholder="Your town" />
+            <Input value={form.default_town} readOnly />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-semibold text-lokals-charcoal">Area</label>
-            <Input value={form.default_area} onChange={(event) => setForm((current) => ({ ...current, default_area: event.target.value }))} placeholder="Your area" />
+            <Select value={form.default_area} onChange={(event) => setForm((current) => ({ ...current, default_area: event.target.value }))}>
+              {OKAHANDJA_AREAS.map((area) => (
+                <option key={area} value={area}>{area}</option>
+              ))}
+            </Select>
           </div>
           <div className="md:col-span-2">
             <p className="mb-2 text-sm font-semibold text-lokals-charcoal">Choose role(s)</p>

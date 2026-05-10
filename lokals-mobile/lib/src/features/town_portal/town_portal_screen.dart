@@ -27,6 +27,7 @@ class TownPortalScreen extends ConsumerWidget {
           const SectionTitle(
             title: 'Okahandja Town',
             subtitle: 'Your digital town hub',
+            eyebrow: 'Town portal',
           ),
           const SizedBox(height: 16),
           AppCard(
@@ -34,6 +35,8 @@ class TownPortalScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const AppBadge(label: 'Okahandja pilot', tone: AppBadgeTone.brand),
+                const SizedBox(height: 10),
                 Text('LOKALS ${AppConfig.pilotTown}', style: const TextStyle(fontWeight: FontWeight.w800)),
                 const SizedBox(height: 8),
                 const Text('Town alerts, services, public updates, and local action in one place.'),
@@ -81,7 +84,7 @@ class TownPortalScreen extends ConsumerWidget {
                   padding: const EdgeInsets.only(bottom: 10),
                   child: DashboardQuickActionTile(
                     label: item.name,
-                    body: '${item.category} • ${item.area ?? item.town ?? item.location}',
+                    body: '${item.category} | ${item.area ?? item.town ?? item.location}',
                     icon: Icons.account_balance_outlined,
                     onTap: () => context.go('/directory/${item.id}'),
                   ),
@@ -101,7 +104,7 @@ class TownPortalScreen extends ConsumerWidget {
                   padding: const EdgeInsets.only(bottom: 10),
                   child: DashboardQuickActionTile(
                     label: item.name,
-                    body: item.phone ?? 'Demo number pending verification',
+                    body: item.phone ?? 'Call details available from the council desk',
                     icon: Icons.call_outlined,
                     onTap: () => context.go('/directory/${item.id}'),
                   ),
