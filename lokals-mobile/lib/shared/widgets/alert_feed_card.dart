@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -13,6 +14,7 @@ class AlertFeedCard extends StatelessWidget {
     required this.sourceLabel,
     required this.severity,
     this.location,
+    this.timestamp,
     this.actionLabel,
     this.onAction,
   });
@@ -22,6 +24,7 @@ class AlertFeedCard extends StatelessWidget {
   final String sourceLabel;
   final String severity;
   final String? location;
+  final String? timestamp;
   final String? actionLabel;
   final VoidCallback? onAction;
 
@@ -50,6 +53,13 @@ class AlertFeedCard extends StatelessWidget {
     if (_isUrgent) return 'Urgent';
     if (_isPromotion) return 'Promotion';
     return sourceLabel;
+  }
+
+  String get _timeLabel {
+    if (timestamp == null || timestamp!.isEmpty) return 'Recent';
+    final parsed = DateTime.tryParse(timestamp!);
+    if (parsed == null) return 'Recent';
+    return DateFormat('EEE, d MMM • HH:mm').format(parsed.toLocal());
   }
 
   @override
@@ -91,6 +101,18 @@ class AlertFeedCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(body, style: AppTextStyles.bodyMuted),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              AppBadge(
+                label: sourceLabel,
+                tone: _isUrgent ? AppBadgeTone.danger : _isPromotion ? AppBadgeTone.warning : AppBadgeTone.brand,
+              ),
+              AppBadge(label: _timeLabel, tone: AppBadgeTone.neutral),
+            ],
+          ),
           const SizedBox(height: 10),
           Row(
             children: [

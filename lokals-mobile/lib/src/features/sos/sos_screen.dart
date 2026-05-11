@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../config/app_config.dart';
 import '../../core/models.dart';
 import '../../services/contact_action_service.dart';
 import '../../widgets/cards.dart';
@@ -36,11 +37,11 @@ class _SosScreenState extends ConsumerState<SosScreen> with SingleTickerProvider
   ];
 
   static const List<String> _locations = [
-    'Windhoek CBD',
-    'Khomasdal',
-    'Katutura',
-    'Klein Windhoek',
-    'Hosea Kutako International Airport',
+    'Nau-Aib football ground',
+    'Okahandja State Clinic',
+    'Okahandja Police Station',
+    'Okahandja Town Council',
+    'Osona Village entrance',
   ];
 
   String _emergencyType = _types.first;
@@ -79,7 +80,7 @@ class _SosScreenState extends ConsumerState<SosScreen> with SingleTickerProvider
             message: _reason,
             location: _location,
             emergencyType: _emergencyType,
-            town: 'Windhoek',
+            town: AppConfig.pilotTown,
             area: _location,
           );
       ref.invalidate(sosFeedProvider);
@@ -187,11 +188,11 @@ class _SosScreenState extends ConsumerState<SosScreen> with SingleTickerProvider
                     Text(_location, style: const TextStyle(color: AppColors.mutedText)),
                   ],
                 ),
-                primaryLabel: 'View alerts',
-                onPrimary: () => context.go('/alerts'),
-                secondaryLabel: 'Back home',
-                onSecondary: () => context.go('/'),
-              )
+              primaryLabel: 'View activity',
+              onPrimary: () => context.go('/activity'),
+              secondaryLabel: 'Back home',
+              onSecondary: () => context.go('/'),
+            )
             else
               AppCard(
                 variant: AppCardVariant.emergency,
@@ -224,7 +225,7 @@ class _SosScreenState extends ConsumerState<SosScreen> with SingleTickerProvider
                       runSpacing: 8,
                       children: [
                         AppBadge(label: _location, tone: AppBadgeTone.danger),
-                        const AppBadge(label: 'Windhoek', tone: AppBadgeTone.danger),
+                        AppBadge(label: AppConfig.pilotTown, tone: AppBadgeTone.danger),
                       ],
                     ),
                     if (_error != null) ...[
@@ -277,7 +278,7 @@ class _SosScreenState extends ConsumerState<SosScreen> with SingleTickerProvider
               ),
             ),
             const SizedBox(height: 18),
-            const Text('Recent SOS alerts', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+            const Text('SOS history', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
             const SizedBox(height: 12),
             sosFeed.when(
               data: (items) => items.isEmpty
@@ -310,7 +311,11 @@ class _SosScreenState extends ConsumerState<SosScreen> with SingleTickerProvider
                         );
                       }).toList(),
                     ),
-              loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
+              loading: () => const AppCard(
+                variant: AppCardVariant.emergency,
+                color: Colors.white,
+                child: LoadingSkeleton(height: 96),
+              ),
               error: (error, _) => const Text(
                 'Failed to load SOS feed right now.',
                 style: TextStyle(color: Colors.white),

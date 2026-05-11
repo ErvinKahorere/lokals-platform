@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../config/app_config.dart';
 import '../../core/models.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
@@ -25,6 +26,8 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
     'Okahandja Town Council',
     'Okahandja State Clinic',
     'Okahandja Police Station',
+    'Nau-Aib Community Hall',
+    'Osona Village entrance',
   ];
 
   static const List<String> _tripPurposes = [
@@ -93,7 +96,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                 Text('Ride', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800)),
                 SizedBox(height: 8),
                 Text(
-                  'Choose your pickup, destination, and ride style in one place.',
+                  'Choose your pickup, destination, and ride style across Okahandja in one place.',
                   style: TextStyle(color: Colors.white70, height: 1.4),
                 ),
               ],
@@ -143,6 +146,29 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                       ActionChip(label: const Text('Work'), onPressed: () => setState(() => _dropoffLocation = 'Work')),
                       ActionChip(label: const Text('Clinic'), onPressed: () => setState(() => _dropoffLocation = 'Okahandja State Clinic')),
                     ],
+                  ),
+                  const SizedBox(height: 12),
+                  AppCard(
+                    color: AppColors.neutralSoftAlt,
+                    child: Row(
+                      children: [
+                        const CircleAvatar(
+                          backgroundColor: Color(0xFFEDE9FE),
+                          child: Icon(Icons.verified_user_outlined, color: AppColors.primaryPurple),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Verified local taxi operator', style: TextStyle(fontWeight: FontWeight.w700)),
+                              const SizedBox(height: 4),
+                              Text('Okahandja rides are prioritised for ${AppConfig.pilotTown}.', style: const TextStyle(color: AppColors.mutedText)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 12),
                   ..._rideChoices.map((option) => Padding(

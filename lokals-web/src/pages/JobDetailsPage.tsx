@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Button, EmptyState, PageHeader, QueryState, SectionCard, TextArea } from '../components/Ui'
 import { ContactActions } from '../components/experience/ContactActions'
-import { useApplyToJob, useJob } from '../hooks/queries'
+import { useApplyToJob, useJob, useJobs } from '../hooks/queries'
 import { getApiErrorMessage } from '../lib/api'
 import { getDisplayDistance, getDisplayPrice } from '../lib/display'
 import { useAuthStore } from '../store/auth'
 import { Card } from '../components/ui/Card'
+import { JobCard } from '../components/Ui'
 
 export function JobDetailsPage() {
   const { id } = useParams()
@@ -15,11 +16,15 @@ export function JobDetailsPage() {
   const [error, setError] = useState('')
   const token = useAuthStore((state) => state.token)
   const jobQuery = useJob(id)
+  const jobsQuery = useJobs()
   const applyToJob = useApplyToJob()
   const job = jobQuery.data
+  const relatedJobs = (jobsQuery.data?.data ?? [])
+    .filter((item) => item.id !== job?.id && ((item.skills ?? []).some((skill) => job?.skills?.includes(skill)) || item.employment_type === job?.employment_type))
+    .slice(0, 3)
 
   return (
-    <QueryState isLoading={jobQuery.isLoading} error={jobQuery.error} empty={!job}>
+    <QueryState isLoading={jobQuery.isLoading || jobsQuery.isLoading} error={jobQuery.error ?? jobsQuery.error} empty={!job}>
       {!job ? (
         <EmptyState title="Job not found" body="This job may have closed or moved out of the current feed." />
       ) : (
@@ -90,6 +95,29 @@ export function JobDetailsPage() {
               </div>
             </SectionCard>
           </div>
+
+          {relatedJobs.length ? (
+            <SectionCard className="bg-white">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-lg font-semibold text-lokals-charcoal">Related jobs</h2>
+                <Link to="/jobs" className="text-sm font-semibold text-lokals-purple">View all</Link>
+              </div>
+              <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {relatedJobs.map((item) => (
+                  <JobCard key={item.id} job={item} canApply={Boolean(token)} onApply={token ? async () => {
+                    setFeedback('')
+                    setError('')
+                    try {
+                      await applyToJob.mutateAsync({ jobId: item.id, message: 'Ready to work and available nearby.' })
+                      setFeedback(`Application sent for ${item.title}.`)
+                    } catch (caught) {
+                      setError(getApiErrorMessage(caught, 'Unable to apply right now.'))
+                    }
+                  } : undefined} />
+                ))}
+              </div>
+            </SectionCard>
+          ) : null}
         </div>
       )}
     </QueryState>

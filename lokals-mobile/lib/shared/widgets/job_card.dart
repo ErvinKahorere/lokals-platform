@@ -26,6 +26,8 @@ class JobCard extends StatelessWidget {
     final budgetLabel = job.compensation != null ? getDisplayPrice(job.compensation) : 'Budget TBC';
     final locationLabel = getDisplayDistance(job.distanceKm, job.location);
     final statusLabel = job.status == 'open' ? 'New' : job.status.replaceAll('_', ' ');
+    final topSkill = job.skills.isNotEmpty ? job.skills.first : 'General help';
+    final urgencyLabel = job.applicationsCount == 0 ? 'Urgent' : 'Active';
 
     return AppCard(
       variant: AppCardVariant.job,
@@ -52,6 +54,18 @@ class JobCard extends StatelessWidget {
                     Text(job.title, style: AppTextStyles.h3),
                     const SizedBox(height: 6),
                     Text(job.description, style: AppTextStyles.bodyMuted, maxLines: 2, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        AppBadge(label: topSkill, tone: AppBadgeTone.info),
+                        AppBadge(
+                          label: urgencyLabel,
+                          tone: job.applicationsCount == 0 ? AppBadgeTone.warning : AppBadgeTone.neutral,
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -69,10 +83,6 @@ class JobCard extends StatelessWidget {
               const _JobMeta(label: 'Posted recently'),
             ],
           ),
-          if (job.skills.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Text(job.skills.take(3).join(', '), style: AppTextStyles.caption),
-          ],
           const SizedBox(height: 14),
           Row(
             children: [

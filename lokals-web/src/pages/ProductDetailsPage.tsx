@@ -54,7 +54,7 @@ export function ProductDetailsPage() {
                   </div>
                   <p className="mt-3 inline-flex items-center gap-2 text-sm text-lokals-muted">
                     <MapPin className="h-4 w-4 text-lokals-purple" />
-                    {[product.area, product.town].filter(Boolean).join(', ') || 'Windhoek'}
+                    {[product.area, product.town].filter(Boolean).join(', ') || 'Okahandja'}
                   </p>
                 </div>
                 <div className="rounded-[22px] bg-slate-50 p-4">
@@ -81,7 +81,7 @@ export function ProductDetailsPage() {
                         <p className="text-lg font-semibold text-lokals-charcoal">{product.business?.name ?? product.user?.business_name ?? product.user?.name ?? 'Local seller'}</p>
                         {product.business?.is_verified ? <StatusBadge value="Verified" tone="success" /> : null}
                       </div>
-                      <p className="mt-2 text-sm text-lokals-muted">{[product.business?.area ?? product.user?.default_area, product.business?.town ?? product.user?.default_town ?? product.user?.location].filter(Boolean).join(', ') || 'Windhoek'}</p>
+                      <p className="mt-2 text-sm text-lokals-muted">{[product.business?.area ?? product.user?.default_area, product.business?.town ?? product.user?.default_town ?? product.user?.location].filter(Boolean).join(', ') || 'Okahandja'}</p>
                       <p className="mt-1 text-sm text-lokals-muted">Replies by call or WhatsApp for now.</p>
                     </div>
                   </div>

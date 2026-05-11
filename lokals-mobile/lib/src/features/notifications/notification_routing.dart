@@ -1,5 +1,22 @@
 import '../../core/models.dart';
 
+String normalizeInAppRoute(String route) {
+  if (route.isEmpty) return '/activity';
+
+  if (route == '/dashboard/bookings') return '/my-bookings';
+  if (route == '/dashboard/tickets') return '/my-tickets';
+  if (route == '/dashboard/reports') return '/my-reports';
+  if (route == '/dashboard/jobs') return '/jobs';
+  if (route == '/dashboard/profile') return '/profile';
+
+  final reportMatch = RegExp(r'^/dashboard/reports/([^/?#]+)$').firstMatch(route);
+  if (reportMatch != null) {
+    return '/reports/${reportMatch.group(1)}';
+  }
+
+  return route;
+}
+
 String routeForNotification(NotificationItemModel item) {
   if ((item.target?.externalUrl ?? '').isNotEmpty) {
     final url = Uri.encodeComponent(item.target!.externalUrl!);
@@ -10,7 +27,7 @@ String routeForNotification(NotificationItemModel item) {
 
   final href = item.target?.href;
   if (href != null && href.isNotEmpty) {
-    return href;
+    return normalizeInAppRoute(href);
   }
 
   final targetId = item.target?.id;

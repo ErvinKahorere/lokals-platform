@@ -113,7 +113,7 @@ class AccommodationDetailsScreen extends ConsumerWidget {
                             children: [
                               const Icon(Icons.place_outlined, size: 16, color: AppColors.mutedText),
                               const SizedBox(width: 6),
-                              Expanded(child: Text(locationLabel.isEmpty ? (item.location ?? 'Windhoek') : locationLabel, style: AppTextStyles.bodyMuted)),
+                              Expanded(child: Text(locationLabel.isEmpty ? (item.location ?? 'Okahandja') : locationLabel, style: AppTextStyles.bodyMuted)),
                             ],
                           ),
                           const SizedBox(height: 12),
@@ -188,7 +188,7 @@ class AccommodationDetailsScreen extends ConsumerWidget {
                       children: [
                         const Icon(Icons.map_outlined, color: AppColors.primaryPurple),
                         const SizedBox(width: 10),
-                        Expanded(child: Text(locationLabel.isEmpty ? (item.location ?? 'Windhoek') : locationLabel, style: AppTextStyles.bodyMuted)),
+                        Expanded(child: Text(locationLabel.isEmpty ? (item.location ?? 'Okahandja') : locationLabel, style: AppTextStyles.bodyMuted)),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -262,7 +262,10 @@ class AccommodationDetailsScreen extends ConsumerWidget {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LokalsLoadingScreen(
+          title: 'Loading accommodation',
+          message: 'Preparing listing details, owner info, and nearby stays...',
+        ),
         error: (error, _) => const Center(
           child: Padding(
             padding: EdgeInsets.all(24),

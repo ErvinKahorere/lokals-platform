@@ -3,29 +3,32 @@ import {
   Activity,
   BadgeCheck,
   BriefcaseBusiness,
-  Building2,
   CalendarClock,
   HeartHandshake,
   Home,
   LogOut,
   Package,
+  ReceiptText,
   Settings,
-  ShieldQuestion,
   ShoppingBag,
   Ticket,
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
+import { RoleSwitcher } from '../../components/account/RoleSwitcher'
 import { Avatar } from '../../components/ui/Avatar'
 import { Button, EmptyState, PageHeader, QueryState, SectionCard } from '../../components/Ui'
 import { ProfileMenuItem } from '../../components/account/ProfileMenuItem'
 import { roleLabel } from '../../components/account/accountUtils'
-import { useMe } from '../../hooks/queries'
+import { useMe, useSwitchRole } from '../../hooks/queries'
 import { resolveMediaUrl } from '../../lib/display'
+import { PILOT_TOWN } from '../../lib/pilot'
+import { getRoleHomePath } from '../../lib/roles'
 import { useAuthStore } from '../../store/auth'
 
 export function ProfilePage() {
   const navigate = useNavigate()
   const logout = useAuthStore((state) => state.logout)
+  const switchRole = useSwitchRole()
   const { data, isLoading, error } = useMe()
   const user = useMemo(() => {
     const payload = data?.user
@@ -40,16 +43,15 @@ export function ProfilePage() {
 
   const menu = [
     { to: '/dashboard/bookings', label: 'My Bookings', icon: CalendarClock, description: 'Appointments, ride bookings, and delivery requests.' },
+    { to: '/dashboard/reports', label: 'My Reports', icon: ReceiptText, description: 'Issue reports, municipal feedback, and status updates.' },
     { to: '/dashboard/tickets', label: 'My Tickets', icon: Ticket, description: 'Reserved and confirmed event tickets.' },
     { to: '/dashboard/jobs', label: 'My Jobs', icon: BriefcaseBusiness, description: 'Posted jobs, applications, and worker activity.' },
     { to: '/dashboard/listings', label: 'My Listings', icon: ShoppingBag, description: 'Marketplace posts and public listings.' },
     { to: '/dashboard/products', label: 'My Products', icon: Package, description: 'Product posts and store shortcuts.' },
     { to: '/dashboard/accommodation', label: 'My Accommodation', icon: Home, description: 'Property and short-stay listings.' },
-    { to: '/dashboard/saved', label: 'Saved Items', icon: HeartHandshake, description: 'Saved events, followed providers, and future shortcuts.' },
+    { to: '/dashboard/saved', label: 'Saved Items', icon: HeartHandshake, description: 'Saved products, providers, accommodation, listings, and news.' },
     { to: '/activity', label: 'Activity', icon: Activity, description: 'Notifications, alerts, and local updates.' },
-    { to: '/dashboard/business-shortcuts', label: 'Manage My Business', icon: Building2, description: 'Business tools, dashboards, and publishing shortcuts.' },
     { to: '/settings', label: 'Settings', icon: Settings, description: 'Roles, preferences, privacy, and appearance.' },
-    { to: '/dashboard/support', label: 'Help & Support', icon: ShieldQuestion, description: 'Support links and issue reporting.' },
   ]
 
   return (
@@ -77,7 +79,7 @@ export function ProfilePage() {
                       </div>
                       <h2 className="mt-3 text-3xl font-semibold">{user.name}</h2>
                       <p className="mt-1 text-sm text-white/85">{user.phone}</p>
-                      <p className="mt-1 text-sm text-white/85">{[user.default_area ?? user.profile?.default_area, user.default_town ?? user.profile?.default_town].filter(Boolean).join(', ') || user.location || 'Windhoek, Namibia'}</p>
+                      <p className="mt-1 text-sm text-white/85">{[user.default_area ?? user.profile?.default_area, user.default_town ?? user.profile?.default_town].filter(Boolean).join(', ') || user.location || `${PILOT_TOWN}, Namibia`}</p>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
                         <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-lokals-purple">{roleLabel(currentRole)}</span>
                         {(user.roles ?? []).filter((role) => role !== currentRole).slice(0, 3).map((role) => (
@@ -103,8 +105,8 @@ export function ProfilePage() {
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {[
                 ['Bookings', stats.bookings ?? 0],
-                ['Jobs / applications', stats.jobs_applications ?? 0],
-                ['Listings / products', (stats.listings ?? 0) + (stats.products ?? 0)],
+                ['Reports', stats.reports ?? 0],
+                ['Tickets', stats.tickets ?? 0],
                 ['Saved items', stats.saved_items ?? 0],
               ].map(([label, value], index) => (
                 <SectionCard key={label} className={`bg-white p-5 ${index === 0 ? 'border-lokals-purple/20' : ''}`}>
@@ -113,6 +115,28 @@ export function ProfilePage() {
                 </SectionCard>
               ))}
             </div>
+
+            <SectionCard className="bg-white">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-lokals-charcoal">Role switching</h3>
+                  <p className="mt-1 text-sm text-lokals-muted">Use the role you already own and jump straight to the right dashboard or Home.</p>
+                </div>
+                <span className="rounded-full bg-lokals-purple/10 px-3 py-1 text-xs font-semibold text-lokals-purple">{roleLabel(currentRole)}</span>
+              </div>
+              <div className="mt-4">
+                <RoleSwitcher
+                  roles={user.roles ?? []}
+                  currentRole={user.current_role}
+                  isSwitching={switchRole.isPending}
+                  onSwitch={async (role) => {
+                    const payload = await switchRole.mutateAsync(role)
+                    const nextUser = payload.user?.data ?? payload.user
+                    navigate(getRoleHomePath(nextUser ?? user))
+                  }}
+                />
+              </div>
+            </SectionCard>
 
             <SectionCard className="bg-white">
               <div className="flex items-center justify-between gap-4">

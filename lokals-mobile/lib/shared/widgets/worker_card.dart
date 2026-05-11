@@ -8,6 +8,7 @@ import '../../src/core/models.dart';
 import 'app_badge.dart';
 import 'app_button.dart';
 import 'app_card.dart';
+import 'experience/quick_call_button.dart';
 
 class WorkerCard extends StatelessWidget {
   const WorkerCard({
@@ -83,15 +84,7 @@ class WorkerCard extends StatelessWidget {
                   ],
                 ),
               ),
-              if (onCall != null)
-                IconButton(
-                  onPressed: onCall,
-                  style: IconButton.styleFrom(
-                    backgroundColor: AppColors.purpleSoftAlt,
-                    foregroundColor: AppColors.primaryPurple,
-                  ),
-                  icon: const Icon(Icons.call_outlined),
-                ),
+              QuickCallButton(phone: worker.phone),
             ],
           ),
           const SizedBox(height: 12),
@@ -107,7 +100,7 @@ class WorkerCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: AppButton(
-                  label: 'Hire',
+                  label: 'Invite',
                   onPressed: () => context.push('/workers/${worker.id}'),
                 ),
               ),

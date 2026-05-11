@@ -1,12 +1,13 @@
-import { Bell, CalendarClock, BriefcaseBusiness, Newspaper, Tag, ShieldAlert } from 'lucide-react'
+import { Bell, CalendarClock, BriefcaseBusiness, CalendarRange, Newspaper, Tag, ShieldAlert } from 'lucide-react'
 
 const notificationItems = [
   ['alerts_from_followed_entities', 'Alerts from followed sources', Bell],
   ['booking_updates', 'Booking updates', CalendarClock],
   ['job_updates', 'Jobs and applications', BriefcaseBusiness],
+  ['event_updates', 'Events and tickets', CalendarRange],
   ['news_updates', 'Local news', Newspaper],
   ['promotions', 'Promotions and sale alerts', Tag],
-  ['city_alerts', 'Public notices and safety alerts', ShieldAlert],
+  ['city_alerts', 'Municipal alerts and safety updates', ShieldAlert],
 ] as const
 
 export function NotificationPreferences({

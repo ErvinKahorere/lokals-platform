@@ -42,6 +42,17 @@ export function HomePage() {
   const jobs = jobsQuery.data?.data?.slice(0, 3) ?? []
   const localNews = (currentUser ? newsFeedQuery.data?.data : newsLocalQuery.data?.data)?.slice(0, 3) ?? []
   const alerts = alertsFeedQuery.data?.data ?? data?.alerts ?? []
+  const sortedAlerts = useMemo(() => {
+    const severityWeight: Record<string, number> = { critical: 4, high: 3, urgent: 3, medium: 2, normal: 1 }
+    return [...alerts].sort((a: any, b: any) => {
+      const leftWeight = (a.source_type === 'municipal_alert' ? 10 : 0) + (severityWeight[(a.severity ?? 'normal').toLowerCase()] ?? 0)
+      const rightWeight = (b.source_type === 'municipal_alert' ? 10 : 0) + (severityWeight[(b.severity ?? 'normal').toLowerCase()] ?? 0)
+      if (leftWeight !== rightWeight) {
+        return rightWeight - leftWeight
+      }
+      return new Date(b.timestamp ?? 0).getTime() - new Date(a.timestamp ?? 0).getTime()
+    })
+  }, [alerts])
 
   const roleCardKind = useMemo(() => {
     if (!currentUser) return 'guest' as const
@@ -53,7 +64,7 @@ export function HomePage() {
   }, [activeRole, currentUser])
 
   const localUpdates = useMemo(() => {
-    const urgentAlerts = alerts.slice(0, 2).map((item: any) => ({
+    const urgentAlerts = sortedAlerts.slice(0, 2).map((item: any) => ({
       key: `alert-${item.id}`,
       title: item.title,
       source: item.location ?? 'Local alert',
@@ -64,6 +75,17 @@ export function HomePage() {
       weight: 3,
     }))
 
+    const newsUpdates = localNews.slice(0, 2).map((item) => ({
+      key: `news-${item.id}`,
+      title: item.title,
+      source: item.source_name,
+      type: 'news' as const,
+      time: item.published_at ?? 'Recent',
+      status: item.category,
+      to: `/news/${item.id}`,
+      weight: 2,
+    }))
+
     const followedUpdates = (followingFeedQuery.data?.data ?? []).slice(0, 2).map((item: any) => ({
       key: `followed-${item.id}`,
       title: item.title ?? item.name ?? item.body ?? 'Update from a followed organization',
@@ -72,10 +94,10 @@ export function HomePage() {
       time: item.timestamp ?? item.created_at ?? 'Recent',
       status: item.status ?? 'following',
       to: '/activity',
-      weight: 2,
+      weight: 1,
     }))
 
-    const eventUpdates = events.slice(0, urgentAlerts.length + followedUpdates.length >= 4 ? 0 : 1).map((item) => ({
+    const eventUpdates = events.slice(0, urgentAlerts.length + newsUpdates.length + followedUpdates.length >= 4 ? 0 : 1).map((item) => ({
       key: `event-${item.id}`,
       title: item.title,
       source: item.venue_name ?? item.location_label ?? item.location ?? 'Local event',
@@ -86,9 +108,9 @@ export function HomePage() {
       weight: 2,
     }))
 
-    const baseUpdateCount = urgentAlerts.length + followedUpdates.length + eventUpdates.length
-    const newsUpdates = (baseUpdateCount >= 4 ? [] : localNews.slice(0, Math.max(0, 4 - baseUpdateCount))).map((item) => ({
-      key: `news-${item.id}`,
+    const baseUpdateCount = urgentAlerts.length + newsUpdates.length + followedUpdates.length + eventUpdates.length
+    const overflowNewsUpdates = (baseUpdateCount >= 5 ? [] : localNews.slice(2, 2 + Math.max(0, 5 - baseUpdateCount))).map((item) => ({
+      key: `news-more-${item.id}`,
       title: item.title,
       source: item.source_name,
       type: 'news' as const,
@@ -98,10 +120,10 @@ export function HomePage() {
       weight: 1,
     }))
 
-    return [...urgentAlerts, ...followedUpdates, ...eventUpdates, ...newsUpdates]
+    return [...urgentAlerts, ...newsUpdates, ...followedUpdates, ...eventUpdates, ...overflowNewsUpdates]
       .sort((a, b) => b.weight - a.weight)
       .slice(0, 5)
-  }, [alerts, followingFeedQuery.data?.data, localNews, events])
+  }, [events, followingFeedQuery.data?.data, localNews, sortedAlerts])
 
   const searchTarget = (href: string) => {
     const query = search.trim()

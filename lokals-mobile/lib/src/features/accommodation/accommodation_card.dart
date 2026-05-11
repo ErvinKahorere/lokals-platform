@@ -5,8 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/app_badge.dart';
-import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/experience/save_button.dart';
 import '../../core/experience_helpers.dart';
 import '../../core/models.dart';
@@ -45,11 +45,11 @@ class AccommodationCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AspectRatio(
-              aspectRatio: compact ? 4 / 3 : 4 / 3,
-              child: Stack(
-                children: [
-                  Container(
+            Stack(
+              children: [
+                AspectRatio(
+                  aspectRatio: 4 / 3,
+                  child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
                       color: AppColors.neutralSoft,
@@ -62,33 +62,33 @@ class AccommodationCard extends StatelessWidget {
                           )
                         : null,
                   ),
-                  Positioned(
-                    left: 10,
-                    top: 10,
-                    child: Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        AppBadge(label: _typeLabels[item.type] ?? item.type.replaceAll('_', ' '), tone: AppBadgeTone.info),
-                        if (item.pricePeriod != null) AppBadge(label: 'Per ${item.pricePeriod}', tone: AppBadgeTone.info),
-                      ],
-                    ),
+                ),
+                Positioned(
+                  left: 10,
+                  top: 10,
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      AppBadge(label: _typeLabels[item.type] ?? item.type.replaceAll('_', ' '), tone: AppBadgeTone.info),
+                      if (item.pricePeriod != null) AppBadge(label: 'Per ${item.pricePeriod}', tone: AppBadgeTone.info),
+                    ],
                   ),
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: SaveButton(
-                      storageId: 'accommodation:${item.id}',
-                      itemType: 'accommodation',
-                      itemId: item.id,
-                      onChanged: (saved) {
-                        final label = saved ? 'Saved' : 'Removed from saved';
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(label)));
-                      },
-                    ),
+                ),
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: SaveButton(
+                    storageId: 'accommodation:${item.id}',
+                    itemType: 'accommodation',
+                    itemId: item.id,
+                    onChanged: (saved) {
+                      final label = saved ? 'Saved' : 'Removed from saved';
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(label)));
+                    },
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
             Padding(
               padding: const EdgeInsets.all(12),
@@ -99,9 +99,15 @@ class AccommodationCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Text(item.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: AppTextStyles.h4),
+                        child: Text(
+                          item.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.h4,
+                        ),
                       ),
-                      if (item.ownerVerified || item.businessVerified) const AppBadge(label: 'Verified', tone: AppBadgeTone.success),
+                      if (item.ownerVerified || item.businessVerified)
+                        const AppBadge(label: 'Verified', tone: AppBadgeTone.success),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -114,7 +120,12 @@ class AccommodationCard extends StatelessWidget {
                       const Icon(Icons.place_outlined, size: 14, color: AppColors.mutedText),
                       const SizedBox(width: 4),
                       Expanded(
-                        child: Text(locationLabel.isEmpty ? (item.location ?? 'Windhoek') : locationLabel, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.caption),
+                        child: Text(
+                          locationLabel.isEmpty ? (item.location ?? 'Okahandja') : locationLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.caption,
+                        ),
                       ),
                     ],
                   ),
@@ -123,19 +134,35 @@ class AccommodationCard extends StatelessWidget {
                     children: [
                       if (item.bedrooms != null)
                         Flexible(
-                          child: Text('${item.bedrooms} bed', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.caption.copyWith(color: AppColors.deepCharcoal)),
+                          child: Text(
+                            '${item.bedrooms} bed',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.caption.copyWith(color: AppColors.deepCharcoal),
+                          ),
                         ),
-                      if (item.bedrooms != null && item.bathrooms != null) const Padding(padding: EdgeInsets.symmetric(horizontal: 6), child: Text('•', style: AppTextStyles.caption)),
+                      if (item.bedrooms != null && item.bathrooms != null)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 6),
+                          child: Text('|', style: AppTextStyles.caption),
+                        ),
                       if (item.bathrooms != null)
                         Flexible(
-                          child: Text('${item.bathrooms} bath', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.caption.copyWith(color: AppColors.deepCharcoal)),
+                          child: Text(
+                            '${item.bathrooms} bath',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.caption.copyWith(color: AppColors.deepCharcoal),
+                          ),
                         ),
                     ],
                   ),
                   if (!compact) ...[
                     const SizedBox(height: 10),
                     Text(
-                      item.description?.trim().isNotEmpty == true ? item.description! : 'Local stay or property listing with direct owner contact.',
+                      item.description?.trim().isNotEmpty == true
+                          ? item.description!
+                          : 'Local stay or property listing with direct owner contact.',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.bodyMuted,

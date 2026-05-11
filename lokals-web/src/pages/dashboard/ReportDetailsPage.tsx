@@ -24,6 +24,10 @@ export function ReportDetailsPage() {
   const updateStatus = useUpdateReportStatus()
   const report = reportQuery.data
   const canManage = Boolean(user?.roles?.some((role) => ['town_manager', 'municipality_admin', 'operator', 'super_admin'].includes(role)))
+  const manageBackRoute =
+    user?.current_role === 'town_manager' || user?.current_role === 'municipality_admin'
+      ? '/dashboard/town-manager/reports'
+      : '/admin/reports'
   const [note, setNote] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
 
@@ -45,7 +49,7 @@ export function ReportDetailsPage() {
         eyebrow={canManage ? 'Okahandja report desk' : 'Reports'}
         title={report?.title ?? 'Report details'}
         description="Track issue progress and keep the reporting loop clear for residents."
-        actions={canManage ? <Button variant="secondary" onClick={() => navigate('/admin/reports')}>Back to reports</Button> : undefined}
+        actions={canManage ? <Button variant="secondary" onClick={() => navigate(manageBackRoute)}>Back to reports</Button> : undefined}
       />
       <QueryState isLoading={reportQuery.isLoading} error={reportQuery.error} empty={!report}>
         {report ? (

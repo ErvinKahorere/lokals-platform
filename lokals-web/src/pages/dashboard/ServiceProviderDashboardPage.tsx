@@ -34,6 +34,17 @@ export function ServiceProviderDashboardPage() {
         </DashboardSection>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
+        <DashboardSection title="Recent bookings" description="Current bookings and enquiry-style demand.">
+          <div className="space-y-3">
+            {(((dashboard as any)?.recent_bookings as any[]) ?? []).slice(0, 5).map((booking) => (
+              <div key={booking.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
+                <p className="font-semibold text-lokals-charcoal">{booking.service?.name ?? 'Booking'}</p>
+                <p className="mt-1 text-sm text-lokals-muted">{booking.user?.name ?? 'Customer'} | {booking.status ?? 'pending'}</p>
+              </div>
+            ))}
+            {!(((dashboard as any)?.recent_bookings as any[]) ?? []).length ? <p className="text-sm text-lokals-muted">Incoming bookings will appear here once clients start booking your services.</p> : null}
+          </div>
+        </DashboardSection>
         <DashboardSection title="Services offered" description="Your visible services and rates.">
           <div className="space-y-3">
             {((dashboard?.services_offered as any[]) ?? []).slice(0, 5).map((service) => (
@@ -45,12 +56,14 @@ export function ServiceProviderDashboardPage() {
                 <p className="mt-1 text-sm text-lokals-muted">{service.duration_minutes} min - {service.price_type ?? 'fixed'}</p>
               </div>
             ))}
+            {!((dashboard?.services_offered as any[]) ?? []).length ? <p className="text-sm text-lokals-muted">Services and rates you publish will show up here.</p> : null}
           </div>
         </DashboardSection>
-        <DashboardSection title="Recent activity" description="Booking and provider updates.">
-          <RecentActivityList items={(dashboard?.recent_activity as any[]) ?? []} />
-        </DashboardSection>
       </div>
+
+      <DashboardSection title="Recent activity" description="Booking and provider updates.">
+        <RecentActivityList items={(dashboard?.recent_activity as any[]) ?? []} />
+      </DashboardSection>
     </DashboardShell>
   )
 }

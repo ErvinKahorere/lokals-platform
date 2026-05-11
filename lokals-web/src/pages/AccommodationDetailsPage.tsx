@@ -6,6 +6,7 @@ import { ContactActions } from '../components/experience/ContactActions'
 import { SaveButton } from '../components/experience/SaveButton'
 import { useAccommodation, useAccommodations } from '../hooks/queries'
 import { getDisplayPrice, resolveMediaUrl } from '../lib/display'
+import { PILOT_TOWN } from '../lib/pilot'
 
 const typeLabels: Record<string, string> = {
   rental: 'Rental',
@@ -26,7 +27,7 @@ export function AccommodationDetailsPage() {
   const ownerName = item?.owner?.name ?? item?.business?.name ?? item?.user?.name ?? 'Local owner'
   const ownerPhone = item?.owner?.phone ?? item?.business?.phone ?? item?.user?.phone
   const ownerWhatsapp = item?.owner?.whatsapp ?? item?.business?.whatsapp ?? item?.user?.whatsapp ?? item?.user?.phone
-  const ownerLocation = item?.owner?.location ?? ([item?.area, item?.town].filter(Boolean).join(', ') || item?.location || 'Windhoek')
+  const ownerLocation = item?.owner?.location ?? ([item?.area, item?.town].filter(Boolean).join(', ') || item?.location || PILOT_TOWN)
   const amenities = ((item?.metadata?.amenities as string[] | undefined) ?? ['Secure access', 'Local transport nearby'])
   const rules = ((item?.metadata?.rules as string[] | undefined) ?? [])
   const availability = (item?.metadata?.availability as string | undefined) ?? 'Contact owner to confirm availability.'
@@ -63,7 +64,7 @@ export function AccommodationDetailsPage() {
                   <div className="mt-4 flex flex-wrap gap-3 text-sm text-lokals-muted">
                     {item.bedrooms != null ? <span className="inline-flex items-center gap-1"><BedDouble className="h-4 w-4" />{item.bedrooms} bed</span> : null}
                     {item.bathrooms != null ? <span className="inline-flex items-center gap-1"><Bath className="h-4 w-4" />{item.bathrooms} bath</span> : null}
-                    <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" />{[item.area, item.town].filter(Boolean).join(', ') || item.location || 'Windhoek'}</span>
+                    <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" />{[item.area, item.town].filter(Boolean).join(', ') || item.location || PILOT_TOWN}</span>
                   </div>
                 </div>
                 <div className="rounded-[22px] bg-slate-50 p-4">
@@ -164,11 +165,11 @@ export function AccommodationDetailsPage() {
             ) : (
               <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 {related.map((entry) => (
-                  <Link key={entry.id} to={`/accommodation/${entry.id}`} className="rounded-[20px] border border-lokals-border p-4 transition hover:-translate-y-0.5">
-                    <p className="font-semibold text-lokals-charcoal">{entry.title}</p>
-                    <p className="mt-1 text-sm text-lokals-muted">{[entry.area, entry.town].filter(Boolean).join(', ') || 'Windhoek'}</p>
-                    <p className="mt-3 text-sm font-semibold text-lokals-purple">{getDisplayPrice(entry.price)}</p>
-                  </Link>
+                    <Link key={entry.id} to={`/accommodation/${entry.id}`} className="rounded-[20px] border border-lokals-border p-4 transition hover:-translate-y-0.5">
+                      <p className="font-semibold text-lokals-charcoal">{entry.title}</p>
+                    <p className="mt-1 text-sm text-lokals-muted">{[entry.area, entry.town].filter(Boolean).join(', ') || PILOT_TOWN}</p>
+                      <p className="mt-3 text-sm font-semibold text-lokals-purple">{getDisplayPrice(entry.price)}</p>
+                    </Link>
                 ))}
               </div>
             )}

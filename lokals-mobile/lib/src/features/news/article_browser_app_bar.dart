@@ -33,15 +33,6 @@ class ArticleBrowserAppBar extends StatelessWidget implements PreferredSizeWidge
           onPressed: onOpenBrowser,
           icon: const Icon(Icons.open_in_new_rounded, color: AppColors.primaryPurple),
         ),
-        IconButton(
-          tooltip: 'Share',
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Sharing is coming soon. Please use Open in browser for now.')),
-            );
-          },
-          icon: const Icon(Icons.ios_share_rounded, color: AppColors.primaryPurple),
-        ),
       ],
     );
   }

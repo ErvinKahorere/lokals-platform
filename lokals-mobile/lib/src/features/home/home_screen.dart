@@ -73,9 +73,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final eventItems = events.asData?.value.take(3).toList() ?? const <EventModel>[];
     final productItems = products.asData?.value.take(3).toList() ?? const <ProductModel>[];
     final jobItems = jobs.asData?.value.take(3).toList() ?? const <JobModel>[];
+    final sortedAlertItems = [...(alertsFeed.asData?.value ?? const <AlertFeedModel>[])]
+      ..sort((a, b) {
+        final urgency = <String, int>{'critical': 4, 'high': 3, 'urgent': 3, 'medium': 2, 'normal': 1};
+        final leftWeight = (a.sourceType == 'municipal_alert' ? 10 : 0) + (urgency[a.severity?.toLowerCase() ?? 'normal'] ?? 0);
+        final rightWeight = (b.sourceType == 'municipal_alert' ? 10 : 0) + (urgency[b.severity?.toLowerCase() ?? 'normal'] ?? 0);
+        if (leftWeight != rightWeight) {
+          return rightWeight.compareTo(leftWeight);
+        }
+        final leftTime = DateTime.tryParse(a.timestamp ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final rightTime = DateTime.tryParse(b.timestamp ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return rightTime.compareTo(leftTime);
+      });
 
     final baseUpdates = [
-      ...(alertsFeed.asData?.value.take(2).map((item) => (
+      ...sortedAlertItems.take(2).map((item) => (
             title: item.title,
             source: item.location ?? 'Local alert',
             type: 'alert',
@@ -83,8 +95,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             time: item.timestamp,
             status: item.severity ?? 'urgent',
             weight: 3,
-          )) ??
-          const []),
+            )),
+      ...localNews.take(2).map((item) => (
+            title: item.title,
+            source: item.sourceName,
+            type: 'news',
+            route: '/news/${item.id}',
+            time: item.publishedAt,
+            status: item.category,
+            weight: 2,
+          )),
       ...(followingFeed.asData?.value.take(2).map((item) => (
             title: item['title']?.toString() ?? item['name']?.toString() ?? item['body']?.toString() ?? 'Followed organization update',
             source: item['category']?.toString() ?? item['location']?.toString() ?? 'Followed update',
@@ -92,7 +112,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             route: '/activity',
             time: item['timestamp']?.toString() ?? item['created_at']?.toString(),
             status: item['status']?.toString() ?? 'following',
-            weight: 2,
+            weight: 1,
           )) ??
           const []),
     ];
@@ -106,9 +126,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             route: '/events/${item.id}',
             time: item.startsAt,
             status: item.category,
-            weight: 2,
+            weight: 1,
           )),
-      ...localNews.take(remainingUpdateSlots).map((item) => (
+      ...localNews.skip(2).take(remainingUpdateSlots).map((item) => (
             title: item.title,
             source: item.sourceName,
             type: 'news',

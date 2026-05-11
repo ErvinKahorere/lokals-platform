@@ -17,9 +17,10 @@ class NotificationPreferencesSection extends StatelessWidget {
     'alerts_from_followed_entities': 'Alerts from followed sources',
     'booking_updates': 'Booking updates',
     'job_updates': 'Jobs and applications',
+    'event_updates': 'Events and tickets',
     'news_updates': 'Local news',
     'promotions': 'Promotions and sale alerts',
-    'city_alerts': 'Public notices and safety alerts',
+    'city_alerts': 'Municipal alerts and safety updates',
   };
 
   @override

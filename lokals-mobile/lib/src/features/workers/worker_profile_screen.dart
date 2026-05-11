@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/widgets/experience/contact_actions.dart';
 import '../../services/contact_action_service.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
@@ -111,11 +112,11 @@ class WorkerProfileScreen extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: AppButton(
-                      label: 'Message',
+                      label: 'Invite to job',
                       variant: AppButtonVariant.secondary,
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Messaging is coming soon. Please call or WhatsApp for now.')),
+                          const SnackBar(content: Text('Invite flow will connect through posting or direct contact for now.')),
                         );
                       },
                     ),
@@ -130,15 +131,18 @@ class WorkerProfileScreen extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 10),
-              AppButton(
-                label: 'WhatsApp',
-                variant: AppButtonVariant.secondary,
-                onPressed: whatsapp == null ? null : () => contactService.openWhatsApp(context, phone: whatsapp, name: worker.name ?? worker.headline),
+              ContactActions(
+                name: worker.name ?? worker.headline,
+                phone: phone,
+                whatsapp: whatsapp,
               ),
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LokalsLoadingScreen(
+          title: 'Loading worker',
+          message: 'Preparing skills, availability, and contact options...',
+        ),
         error: (error, _) => const Center(
           child: EmptyStateView(
             title: 'Could not load worker',

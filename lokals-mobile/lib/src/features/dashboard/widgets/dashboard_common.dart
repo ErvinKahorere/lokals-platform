@@ -131,6 +131,43 @@ class DashboardStatusCard extends StatelessWidget {
   }
 }
 
+Widget buildDashboardCollectionSection({
+  required String title,
+  required String subtitle,
+  required List<Map<String, dynamic>> items,
+  required String emptyMessage,
+  required IconData icon,
+  String Function(Map<String, dynamic> item)? bodyBuilder,
+  VoidCallback Function(Map<String, dynamic> item)? onTapBuilder,
+}) {
+  return LokalsCard(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionTitle(title: title, subtitle: subtitle),
+        const SizedBox(height: 14),
+        if (items.isEmpty)
+          Text(emptyMessage, style: AppTextStyles.bodyMuted)
+        else
+          ...items.take(5).map((item) {
+            final body = bodyBuilder?.call(item) ?? 'Open this dashboard item.';
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: DashboardQuickActionTile(
+                label: item['title']?.toString() ??
+                    item['name']?.toString() ??
+                    'Dashboard item',
+                body: body,
+                icon: icon,
+                onTap: onTapBuilder?.call(item) ?? () {},
+              ),
+            );
+          }),
+      ],
+    ),
+  );
+}
+
 class DashboardScaffold extends StatelessWidget {
   const DashboardScaffold({
     super.key,
@@ -277,11 +314,28 @@ IconData dashboardActionIcon(String label) {
 List<Widget> buildQuickActions(BuildContext context, List<dynamic> actions) {
   return actions.map((item) {
     final action = Map<String, dynamic>.from(item as Map);
+    final href = normalizeDashboardHref(action['href']?.toString() ?? '/');
     return DashboardQuickActionTile(
       label: action['label']?.toString() ?? 'Open',
       body: 'Open ${action['label']?.toString().toLowerCase() ?? 'dashboard section'}.',
       icon: dashboardActionIcon(action['label']?.toString() ?? ''),
-      onTap: () => context.go(action['href']?.toString() ?? '/'),
+      onTap: () => context.go(href),
     );
   }).toList();
+}
+
+String normalizeDashboardHref(String href) {
+  switch (href) {
+    case '/dashboard/events/create':
+      return '/events';
+    case '/admin/users':
+    case '/admin/providers':
+    case '/admin/bookings':
+    case '/admin/listings':
+    case '/admin/reports':
+    case '/admin/overview':
+      return '/dashboard/admin';
+    default:
+      return href;
+  }
 }

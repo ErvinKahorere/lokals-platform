@@ -717,6 +717,10 @@ class DiscoveryRepository {
     await ref.read(dioProvider).post('/notifications/mark-read');
   }
 
+  Future<void> markNotificationRead(String id) async {
+    await ref.read(dioProvider).post('/notifications/$id/read');
+  }
+
   Future<void> saveItem({
     required String type,
     required Object id,

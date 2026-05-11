@@ -7,6 +7,7 @@ import { EventCard } from '../components/events/EventCard'
 import { EventCategoryChips } from '../components/events/EventCategoryChips'
 import { SearchBar } from '../components/ui/SearchBar'
 import { useEvents, useFollows, useMe, useNearbyEvents, useNotifications, useUpcomingEvents } from '../hooks/queries'
+import { PILOT_TOWN } from '../lib/pilot'
 
 export function EventsPage() {
   const meQuery = useMe()
@@ -19,6 +20,8 @@ export function EventsPage() {
   const [search, setSearch] = useState(searchParams.get('q') ?? '')
   const [category, setCategory] = useState('all')
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'tomorrow' | 'weekend' | 'month'>('all')
+  const town = PILOT_TOWN
+  const area = user?.default_area ?? undefined
   const notificationsQuery = useNotifications()
   const followsQuery = useFollows(Boolean(user))
 
@@ -34,8 +37,8 @@ export function EventsPage() {
   const params = {
     search: search || undefined,
     category: category === 'all' ? undefined : category,
-    town: user?.default_town ?? undefined,
-    area: user?.default_area ?? undefined,
+    town,
+    area,
     date_from: dateFilter === 'all' ? undefined : dateFilter === 'tomorrow' ? formatDay(tomorrow) : formatDay(now),
     date_to:
       dateFilter === 'today'
@@ -50,9 +53,9 @@ export function EventsPage() {
   }
 
   const eventsQuery = useEvents(params)
-  const nearbyQuery = useNearbyEvents({ town: user?.default_town ?? undefined, area: user?.default_area ?? undefined })
-  const weekendQuery = useUpcomingEvents({ town: user?.default_town ?? undefined, date_to: formatDay(weekendEnd) })
-  const savedEventsQuery = useEvents({ town: user?.default_town ?? undefined, area: user?.default_area ?? undefined })
+  const nearbyQuery = useNearbyEvents({ town, area })
+  const weekendQuery = useUpcomingEvents({ town, area, date_to: formatDay(weekendEnd) })
+  const savedEventsQuery = useEvents({ town, area })
 
   const events = eventsQuery.data?.data ?? []
   const nearbyEvents = nearbyQuery.data?.data?.slice(0, 3) ?? []
@@ -80,7 +83,7 @@ export function EventsPage() {
             <h1 className="mt-1 text-3xl font-semibold text-lokals-charcoal">What is happening near you?</h1>
             <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1.5 text-sm font-semibold text-lokals-purple">
               <MapPin className="h-4 w-4" />
-              {[user?.default_area, user?.default_town].filter(Boolean).join(', ') || 'Windhoek'}
+              {[user?.default_area, town].filter(Boolean).join(', ') || town}
             </div>
           </div>
           <NotificationBell count={unreadCount} />
@@ -91,7 +94,7 @@ export function EventsPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             onValueSelect={setSearch}
-            placeholder="Search events..."
+            placeholder="Search events in Okahandja..."
             recentKey="events"
             suggestions={['Weekend market', 'Workshop', 'Live music', 'Public meeting']}
           />
@@ -106,8 +109,8 @@ export function EventsPage() {
             ['all', 'All'],
             ['today', 'Today'],
             ['tomorrow', 'Tomorrow'],
-            ['weekend', 'This weekend'],
-            ['month', 'This month'],
+            ['weekend', 'Weekend'],
+            ['month', 'This Month'],
           ].map(([value, label]) => (
             <button
               key={value}
@@ -149,7 +152,7 @@ export function EventsPage() {
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-purple">Events near you</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-purple">Upcoming events</p>
             <h2 className="mt-1 text-xl font-semibold text-lokals-charcoal">Upcoming local moments worth acting on</h2>
           </div>
           <Link to="/events/calendar" className="text-sm font-semibold text-lokals-purple">Calendar view</Link>

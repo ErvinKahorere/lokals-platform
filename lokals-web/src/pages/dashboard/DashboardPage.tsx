@@ -6,6 +6,7 @@ import { PageHeader, QueryState } from '../../components/Ui'
 const endpointToRoute: Record<string, string> = {
   '/dashboard/citizen': '/dashboard/citizen',
   '/dashboard/worker': '/dashboard/worker',
+  '/dashboard/seller': '/dashboard/seller',
   '/dashboard/business': '/dashboard/business',
   '/dashboard/service-provider': '/dashboard/service-provider',
   '/dashboard/organization': '/dashboard/organization',

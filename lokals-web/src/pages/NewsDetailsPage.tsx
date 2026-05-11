@@ -32,6 +32,10 @@ export function NewsDetailsPage() {
                 {item.image_url ? <img src={item.image_url} alt={item.title} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-lokals-purple"><Newspaper className="h-12 w-12" /></div>}
               </div>
               <div className="space-y-4 p-6">
+                <div className="flex flex-wrap gap-2">
+                  <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-lokals-purple">{item.category.replace(/_/g, ' ')}</span>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-lokals-muted">{[item.area, item.town].filter(Boolean).join(', ') || 'Okahandja'}</span>
+                </div>
                 <div className="flex flex-wrap gap-3 text-sm text-lokals-muted">
                   <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4" />{formatPublishedAt(item.published_at)}</span>
                   {(item.area || item.town) ? <span className="inline-flex items-center gap-2"><MapPin className="h-4 w-4" />{[item.area, item.town].filter(Boolean).join(', ')}</span> : null}
@@ -42,7 +46,10 @@ export function NewsDetailsPage() {
                   <a href={item.source_url} target="_blank" rel="noreferrer" className="mt-1 inline-block text-sm text-lokals-purple">{item.source_domain ?? item.source_url}</a>
                   <p className="mt-3 text-xs text-lokals-muted">{item.compliance_notice ?? 'Content is provided by external sources. LOKALS does not own this content.'}</p>
                 </div>
-                <p className="text-base leading-7 text-lokals-muted">{item.summary}</p>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Snippet</p>
+                  <p className="mt-2 text-base leading-7 text-lokals-muted">{item.summary}</p>
+                </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <Link to={articleHref(item.external_url, item.source_name, item.title)} className="inline-flex items-center gap-2 rounded-full bg-lokals-charcoal px-5 py-3 text-sm font-semibold text-white">
                     Read full story on {item.source_name}

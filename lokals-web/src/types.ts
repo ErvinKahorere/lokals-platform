@@ -65,6 +65,7 @@ export interface MePayload {
   enrichment?: { percentage?: number }
   stats?: {
     bookings?: number
+    reports?: number
     jobs_applications?: number
     listings?: number
     products?: number

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -11,10 +12,14 @@ class TicketCard extends StatelessWidget {
 
   final EventTicketModel ticket;
 
+  String _formatStartsAt() {
+    final startsAt = ticket.event?.startsAt == null ? null : DateTime.tryParse(ticket.event!.startsAt!);
+    if (startsAt == null) return 'Date TBC';
+    return DateFormat('EEE, d MMM | HH:mm').format(startsAt.toLocal());
+  }
+
   @override
   Widget build(BuildContext context) {
-    final startsAt = ticket.event?.startsAt == null ? null : DateTime.tryParse(ticket.event!.startsAt!);
-
     return InkWell(
       borderRadius: BorderRadius.circular(24),
       onTap: () => context.push('/tickets/${ticket.id}'),
@@ -43,18 +48,26 @@ class TicketCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            Text(ticket.event?.title ?? 'Event ticket', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 6),
-            Text(ticket.event?.locationLabel ?? ticket.event?.location ?? 'Location TBC', style: const TextStyle(color: AppColors.mutedText)),
-            const SizedBox(height: 8),
             Text(
-              startsAt == null ? 'Date TBC' : '${startsAt.day}/${startsAt.month}/${startsAt.year} ${startsAt.hour.toString().padLeft(2, '0')}:${startsAt.minute.toString().padLeft(2, '0')}',
-              style: AppTextStyles.bodyMuted,
+              ticket.event?.title ?? 'Event ticket',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
+            const SizedBox(height: 6),
+            Text(
+              ticket.event?.locationLabel ?? ticket.event?.location ?? 'Location TBC',
+              style: const TextStyle(color: AppColors.mutedText),
+            ),
+            const SizedBox(height: 8),
+            Text(_formatStartsAt(), style: AppTextStyles.bodyMuted),
             const SizedBox(height: 10),
             Text('Code: ${ticket.ticketCode}', style: const TextStyle(fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
-            const Text('QR placeholder ready for later check-in support.', style: TextStyle(color: AppColors.mutedText)),
+            Text(
+              ticket.pricePaid == null
+                  ? 'QR placeholder ready for a later check-in pass.'
+                  : 'Paid: N\$${ticket.pricePaid}',
+              style: const TextStyle(color: AppColors.mutedText),
+            ),
           ],
         ),
       ),

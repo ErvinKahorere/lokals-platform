@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom'
 import { AccommodationCard, Button, EmptyState, Input, PageHeader, QueryState, SearchBar, SectionCard, Select, TextArea } from '../components/Ui'
 import { isDemoMode } from '../config/appMode'
 import { useAccommodations, useCreateAccommodation } from '../hooks/queries'
+import { OKAHANDJA_AREAS, PILOT_TOWN } from '../lib/pilot'
+import { useAuthStore } from '../store/auth'
 import type { Accommodation } from '../types'
 
 const tabItems = [
@@ -18,9 +20,11 @@ const tabItems = [
 const periodOptions = ['any', 'night', 'month', 'once'] as const
 
 export function AccommodationPage() {
+  const currentUser = useAuthStore((state) => state.user)
+  const defaultArea = currentUser?.default_area ?? OKAHANDJA_AREAS[0]
   const [search, setSearch] = useState('')
   const [tab, setTab] = useState<(typeof tabItems)[number]['value']>('rental')
-  const [town, setTown] = useState('Windhoek')
+  const [town] = useState(PILOT_TOWN)
   const [area, setArea] = useState('all')
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
@@ -35,12 +39,12 @@ export function AccommodationPage() {
   const [form, setForm] = useState({
     title: '',
     type: 'rental',
-    town: 'Windhoek',
-    area: 'Katutura',
+    town: PILOT_TOWN,
+    area: defaultArea,
     price: '',
     price_period: 'month',
-    phone: '',
-    whatsapp: '',
+    phone: currentUser?.phone ?? '',
+    whatsapp: currentUser?.whatsapp ?? currentUser?.phone ?? '',
     bedrooms: '',
     bathrooms: '',
     amenities: '',
@@ -65,7 +69,7 @@ export function AccommodationPage() {
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
       if (tab === 'short_stay') {
-        return item.type === 'bnb' || item.type === 'short_stay'
+        return item.type === 'bnb' || item.type === 'short_stay' || item.type === 'guesthouse'
       }
       return item.type === tab
     })
@@ -128,12 +132,12 @@ export function AccommodationPage() {
     setForm({
       title: '',
       type: 'rental',
-      town: 'Windhoek',
-      area: 'Katutura',
+      town: PILOT_TOWN,
+      area: defaultArea,
       price: '',
       price_period: 'month',
-      phone: '',
-      whatsapp: '',
+      phone: currentUser?.phone ?? '',
+      whatsapp: currentUser?.whatsapp ?? currentUser?.phone ?? '',
       bedrooms: '',
       bathrooms: '',
       amenities: '',
@@ -147,16 +151,16 @@ export function AccommodationPage() {
       <PageHeader
         eyebrow="Accommodation"
         title="Accommodation"
-        description="Browse rentals, B&Bs, guesthouses, rooms, and property for sale near you."
+        description="Browse rentals, B&Bs, guesthouses, rooms, and property for sale around Okahandja."
         actions={
           <SearchBar
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             onValueSelect={setSearch}
             recentKey="accommodation"
-            suggestions={['Rentals in Windhoek', 'Guesthouse in Eros', 'Room in Katutura', 'House for sale']}
+            suggestions={['Room in Nau-Aib', 'Guesthouse in Okahandja Park', 'B&B near Gross Barmen Road', 'House for sale in Osona']}
             shortcuts={[{ label: 'Rentals', value: 'rental' }, { label: 'B&B', value: 'bnb' }, { label: 'Property sales', value: 'property sale' }]}
-            placeholder="Search rentals, B&Bs, rooms..."
+            placeholder="Search stays in Okahandja..."
             className="w-full md:w-80"
           />
         }
@@ -194,22 +198,18 @@ export function AccommodationPage() {
           </div>
           <div>
             <h2 className="text-lg font-semibold text-lokals-charcoal">Filter your area</h2>
-            <p className="text-sm text-lokals-muted">Narrow by town, price, bedrooms, bathrooms, and verified hosts.</p>
+            <p className="text-sm text-lokals-muted">Okahandja pilot filters for price, area, bedrooms, bathrooms, and verified hosts.</p>
           </div>
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-4">
-          <Select value={town} onChange={(event) => setTown(event.target.value)}>
-            <option value="all">All towns</option>
-            <option value="Windhoek">Windhoek</option>
-            <option value="Swakopmund">Swakopmund</option>
+          <Select value={town} disabled onChange={() => undefined}>
+            <option value={PILOT_TOWN}>{PILOT_TOWN}</option>
           </Select>
           <Select value={area} onChange={(event) => setArea(event.target.value)}>
             <option value="all">All areas</option>
-            <option value="Katutura">Katutura</option>
-            <option value="Klein Windhoek">Klein Windhoek</option>
-            <option value="Eros">Eros</option>
-            <option value="CBD">CBD</option>
-            <option value="Otjomuise">Otjomuise</option>
+            {OKAHANDJA_AREAS.map((areaOption) => (
+              <option key={areaOption} value={areaOption}>{areaOption}</option>
+            ))}
           </Select>
           <Input value={minPrice} onChange={(event) => setMinPrice(event.target.value)} placeholder="Min price" />
           <Input value={maxPrice} onChange={(event) => setMaxPrice(event.target.value)} placeholder="Max price" />
@@ -391,8 +391,12 @@ export function AccommodationPage() {
                     </Select>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <Input value={form.town} onChange={(event) => setForm((current) => ({ ...current, town: event.target.value }))} placeholder="Town" required />
-                    <Input value={form.area} onChange={(event) => setForm((current) => ({ ...current, area: event.target.value }))} placeholder="Area" required />
+                    <Input value={form.town} readOnly placeholder="Town" required />
+                    <Select value={form.area} onChange={(event) => setForm((current) => ({ ...current, area: event.target.value }))}>
+                      {OKAHANDJA_AREAS.map((areaOption) => (
+                        <option key={areaOption} value={areaOption}>{areaOption}</option>
+                      ))}
+                    </Select>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Input value={form.phone} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} placeholder="Contact phone" required />

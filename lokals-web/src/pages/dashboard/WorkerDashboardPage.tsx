@@ -37,15 +37,34 @@ export function WorkerDashboardPage() {
             {((dashboard?.jobs_near_me as any[]) ?? []).slice(0, 5).map((job) => (
               <div key={job.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
                 <p className="font-semibold text-lokals-charcoal">{job.title}</p>
-                <p className="mt-1 text-sm text-lokals-muted">{job.location ?? 'Windhoek'} - {job.compensation ?? 'Budget on request'}</p>
+                <p className="mt-1 text-sm text-lokals-muted">{job.location ?? 'Okahandja'} - {job.compensation ?? 'Budget on request'}</p>
               </div>
             ))}
+            {!((dashboard?.jobs_near_me as any[]) ?? []).length ? <p className="text-sm text-lokals-muted">Nearby jobs will appear here when local demand is available.</p> : null}
           </div>
         </DashboardSection>
-        <DashboardSection title="Recent activity" description="Applications and worker profile movement.">
-          <RecentActivityList items={(dashboard?.recent_activity as any[]) ?? []} />
+        <DashboardSection title="Applications and profile status" description="Track your worker readiness and active applications.">
+          <div className="space-y-3">
+            <div className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
+              <p className="font-semibold text-lokals-charcoal">Worker profile</p>
+              <p className="mt-1 text-sm text-lokals-muted">
+                {((dashboard as any)?.worker_profile?.headline as string | undefined) ?? 'Profile setup still needs attention.'}
+              </p>
+            </div>
+            {(((dashboard as any)?.applications as any[]) ?? []).slice(0, 4).map((application) => (
+              <div key={application.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
+                <p className="font-semibold text-lokals-charcoal">{application.job?.title ?? 'Application'}</p>
+                <p className="mt-1 text-sm text-lokals-muted">{application.status ?? 'pending'} | {application.job?.location ?? 'Okahandja'}</p>
+              </div>
+            ))}
+            {!(((dashboard as any)?.applications as any[]) ?? []).length ? <p className="text-sm text-lokals-muted">Applications you send through LOKALS will appear here.</p> : null}
+          </div>
         </DashboardSection>
       </div>
+
+      <DashboardSection title="Recent activity" description="Applications and worker profile movement.">
+        <RecentActivityList items={(dashboard?.recent_activity as any[]) ?? []} />
+      </DashboardSection>
     </DashboardShell>
   )
 }

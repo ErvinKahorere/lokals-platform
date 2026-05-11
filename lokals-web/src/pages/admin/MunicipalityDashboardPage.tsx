@@ -121,7 +121,7 @@ export function MunicipalityDashboardPage() {
               <p className="mt-1 text-sm text-lokals-muted">Push an urgent alert that appears instantly across the app.</p>
             </div>
           </button>
-          <Link to="/admin/reports" className="flex min-h-24 items-start gap-3 rounded-[22px] border border-lokals-border bg-lokals-bg px-4 py-4 transition hover:-translate-y-0.5 hover:border-lokals-purple/30">
+          <Link to="/dashboard/town-manager/reports" className="flex min-h-24 items-start gap-3 rounded-[22px] border border-lokals-border bg-lokals-bg px-4 py-4 transition hover:-translate-y-0.5 hover:border-lokals-purple/30">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple">
               <ClipboardList className="h-5 w-5" />
             </div>
@@ -221,11 +221,11 @@ export function MunicipalityDashboardPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <DashboardSection title="Recent reports" description="New issues from residents that need attention first." action={<Link to="/admin/reports" className="text-sm font-semibold text-lokals-green">View reports</Link>}>
+        <DashboardSection title="Recent reports" description="New issues from residents that need attention first." action={<Link to="/dashboard/town-manager/reports" className="text-sm font-semibold text-lokals-green">View reports</Link>}>
           {recentReports.length > 0 ? (
             <div className="space-y-3">
               {recentReports.slice(0, 4).map((report) => (
-                <Link key={report.id} to={`/admin/reports/${report.id}`} className="block rounded-[20px] border border-lokals-border bg-white px-4 py-4 transition hover:border-lokals-green/25 hover:bg-emerald-50/20">
+                <Link key={report.id} to={`/dashboard/town-manager/reports/${report.id}`} className="block rounded-[20px] border border-lokals-border bg-white px-4 py-4 transition hover:border-lokals-green/25 hover:bg-emerald-50/20">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-semibold text-lokals-charcoal">{report.title}</p>

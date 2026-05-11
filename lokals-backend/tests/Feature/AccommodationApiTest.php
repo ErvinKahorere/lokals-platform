@@ -51,10 +51,10 @@ class AccommodationApiTest extends TestCase
 
     public function test_accommodation_filters_apply(): void
     {
-        $this->getJson('/api/v1/accommodations?type=property_sale&bedrooms=3&town=Okahandja')
+        $this->getJson('/api/v1/accommodations?type=property_sale&bedrooms=3&town=Okahandja&area=Osona&price_period=once')
             ->assertOk()
             ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.title', 'Nau-Aib Family House');
+            ->assertJsonPath('data.0.title', 'Osona Family House for Sale');
     }
 
     public function test_authenticated_user_can_create_accommodation(): void

@@ -66,6 +66,10 @@ export function WorkerProfilePage() {
 
               <div className="mt-5 flex flex-col gap-3">
                 <ContactActions name={worker.user?.name ?? worker.headline} phone={worker.user?.phone} whatsapp={worker.user?.whatsapp ?? worker.user?.phone} className="flex flex-wrap gap-2" />
+                <div className="rounded-[22px] border border-lokals-border bg-slate-50 p-4">
+                  <p className="text-sm font-medium text-lokals-charcoal">Profile completion</p>
+                  <p className="mt-1 text-sm text-lokals-muted">Skills, location, and rates are visible. Add more verified job history later as the marketplace grows.</p>
+                </div>
                 <Link to="/jobs"><Button className="w-full">Invite to Job</Button></Link>
               </div>
             </SectionCard>

@@ -309,7 +309,7 @@ class DemoTownManagerSeeder extends Seeder
                 'parcel_description' => 'Small medicine packet from local pharmacy',
                 'notes' => 'Please call on arrival at the gate.',
                 'parcel_size' => 'small',
-                'status' => 'assigned',
+                'status' => 'accepted',
                 'price' => 55,
                 'estimated_price' => 55,
                 'driver_id' => $courier?->id,

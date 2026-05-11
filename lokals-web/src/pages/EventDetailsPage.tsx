@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock3, MapPin, Share2 } from 'lucide-react'
+import { CheckCircle2, Clock3, MapPin } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Button, EmptyState, PageHeader, QueryState, SectionCard, StatusBadge } from '../components/Ui'
@@ -75,16 +75,12 @@ export function EventDetailsPage() {
                 </p>
                 <p className="inline-flex items-center gap-2 text-sm text-lokals-muted">
                   <Clock3 className="h-4 w-4" />
-                  {event.attendees_count ?? 0} attending • {event.saves_count ?? 0} saved
+                  {[`${event.attendees_count ?? 0} attending`, `${event.saves_count ?? 0} saved`].join(' | ')}
                 </p>
                 <p className="text-sm leading-6 text-lokals-muted">{event.description ?? 'Local event details and attendance options will appear here.'}</p>
                 <div className="flex flex-wrap gap-3">
                   {token ? <EventReminderButton eventId={event.id} startsAt={event.starts_at} /> : null}
                   <AddToCalendarButton icsUrl={event.calendar?.ics_url} />
-                  <Button variant="secondary" onClick={() => navigator.clipboard.writeText(window.location.href)}>
-                    <Share2 className="h-4 w-4" />
-                    Share
-                  </Button>
                 </div>
               </div>
 
@@ -167,7 +163,7 @@ export function EventDetailsPage() {
                         <p><span className="font-semibold">Status:</span> {event.is_free ? 'Confirmed' : 'Reserved enquiry'}</p>
                       </div>
                       <div className="flex flex-wrap gap-3">
-                        <Link to="/dashboard/tickets"><Button>View My Tickets</Button></Link>
+                        <Link to="/my-tickets"><Button>View My Tickets</Button></Link>
                         {event.calendar?.ics_url ? <AddToCalendarButton icsUrl={event.calendar.ics_url} /> : null}
                         <Link to="/events"><Button variant="secondary">Back to Events</Button></Link>
                       </div>
@@ -203,7 +199,7 @@ export function EventDetailsPage() {
                       {reserveTicket.isPending ? 'Submitting...' : event.is_free ? 'Confirm free ticket' : 'Reserve ticket enquiry'}
                     </Button>
                   </div>
-                  <Link to="/dashboard/tickets" className="md:col-span-2">
+                  <Link to="/my-tickets" className="md:col-span-2">
                     <Button variant="secondary" className="w-full">View My Tickets</Button>
                   </Link>
                 </div>

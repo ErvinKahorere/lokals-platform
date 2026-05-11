@@ -92,6 +92,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/dashboard', [DashboardController::class, 'index']);
         Route::get('/dashboard/citizen', [DashboardController::class, 'citizen']);
         Route::get('/dashboard/worker', [DashboardController::class, 'worker']);
+        Route::get('/dashboard/seller', [DashboardController::class, 'business']);
         Route::get('/dashboard/business', [DashboardController::class, 'business']);
         Route::get('/dashboard/service-provider', [DashboardController::class, 'serviceProvider']);
         Route::get('/dashboard/organization', [DashboardController::class, 'organization']);

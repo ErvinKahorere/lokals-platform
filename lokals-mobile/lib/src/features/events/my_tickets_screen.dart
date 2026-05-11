@@ -83,7 +83,10 @@ class _MyTicketsScreenState extends ConsumerState<MyTicketsScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LokalsLoadingScreen(
+          title: 'Loading tickets',
+          message: 'Fetching your ticket codes and event access details...',
+        ),
         error: (error, _) => Center(
           child: EmptyStateView(
             title: 'Tickets unavailable',

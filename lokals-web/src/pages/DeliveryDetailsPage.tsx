@@ -71,8 +71,8 @@ export function DeliveryDetailsPage() {
               <div className="mt-4 rounded-2xl border border-lokals-border p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-lokals-charcoal">{delivery.driver?.name ?? 'Driver not assigned yet'}</p>
-                    <p className="text-sm text-lokals-muted">{delivery.driver?.phone ?? 'A driver contact will appear here after acceptance.'}</p>
+                    <p className="font-semibold text-lokals-charcoal">{delivery.driver?.name ?? 'Courier operator pending'}</p>
+                    <p className="text-sm text-lokals-muted">{delivery.driver?.phone ?? 'A courier contact will appear here once the request is accepted.'}</p>
                   </div>
                   {delivery.driver?.phone ? (
                     <a href={`tel:${delivery.driver.phone}`}>
@@ -83,7 +83,7 @@ export function DeliveryDetailsPage() {
               </div>
             </SectionCard>
 
-            <StatusStepper steps={deliverySteps} current={delivery.status} updatedAt={delivery.updated_at} />
+            <StatusStepper steps={deliverySteps} current={delivery.status === 'assigned' ? 'accepted' : delivery.status} updatedAt={delivery.updated_at} />
           </div>
         )}
       </QueryState>

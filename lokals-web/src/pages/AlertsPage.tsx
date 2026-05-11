@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { PageHeader, QueryState } from '../components/Ui'
 import { useAlertsFeed, useFollowingFeed } from '../hooks/queries'
 
-const tabs = ['all', 'following', 'urgent', 'promotions'] as const
+const tabs = ['all', 'following', 'urgent', 'municipal', 'promotions'] as const
 
 export function AlertsPage() {
   const [tab, setTab] = useState<(typeof tabs)[number]>('all')
@@ -16,11 +16,12 @@ export function AlertsPage() {
   const items = useMemo(() => {
     const baseAlerts = alerts.map((item) => ({
       key: item.id,
-      source: item.source_type === 'announcement' ? 'Announcement' : item.source_type === 'job' ? 'Job alert' : 'Local alert',
+      source: item.source_type === 'municipal_alert' ? 'Municipal alert' : item.source_type === 'announcement' ? 'Announcement' : item.source_type === 'job' ? 'Job alert' : 'Local alert',
       title: item.title,
       body: item.body,
       severity: item.severity ?? 'normal',
       location: item.location,
+      timestamp: item.timestamp,
       to: '/alerts',
       type: item.source_type,
     }))
@@ -31,6 +32,7 @@ export function AlertsPage() {
       body: item.body ?? 'Update from a followed organization or provider.',
       severity: 'normal',
       location: item.location,
+      timestamp: item.timestamp ?? item.created_at,
       to: '/activity',
       type: 'following',
     }))
@@ -39,11 +41,15 @@ export function AlertsPage() {
       ? followed
       : tab === 'urgent'
         ? baseAlerts.filter((item) => ['critical', 'high', 'urgent'].includes(item.severity))
+        : tab === 'municipal'
+          ? baseAlerts.filter((item) => item.type === 'municipal_alert')
         : tab === 'promotions'
           ? baseAlerts.filter((item) => item.type === 'announcement' || /sale|promo|discount/i.test(item.title + item.body))
           : [...baseAlerts, ...followed]
 
-    return merged.slice(0, 20)
+    return merged
+      .sort((a, b) => new Date(b.timestamp ?? 0).getTime() - new Date(a.timestamp ?? 0).getTime())
+      .slice(0, 20)
   }, [alerts, following, tab])
 
   return (
@@ -63,7 +69,7 @@ export function AlertsPage() {
             onClick={() => setTab(item)}
             className={`rounded-full px-4 py-2 text-sm font-semibold transition ${tab === item ? 'bg-lokals-purple text-white' : 'border border-lokals-border bg-white text-lokals-charcoal'}`}
           >
-            {item === 'all' ? 'All' : item === 'following' ? 'Following' : item === 'urgent' ? 'Urgent' : 'Promotions'}
+            {item === 'all' ? 'All' : item === 'following' ? 'Following' : item === 'urgent' ? 'Urgent' : item === 'municipal' ? 'Municipal' : 'Promotions'}
           </button>
         ))}
       </div>
@@ -89,7 +95,13 @@ export function AlertsPage() {
                     </div>
                     <h3 className="mt-3 text-lg font-semibold text-lokals-charcoal">{item.title}</h3>
                     <p className="mt-2 text-sm leading-6 text-lokals-muted">{item.body}</p>
-                    <p className="mt-3 text-xs font-medium text-lokals-muted">{item.location ?? 'Windhoek, Namibia'}</p>
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <div className="space-y-1">
+                        <p className="text-xs font-medium text-lokals-muted">{item.location ?? 'Okahandja, Namibia'}</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lokals-muted">{item.timestamp ?? 'Recent'}</p>
+                      </div>
+                      <span className="text-sm font-semibold text-lokals-purple">{item.type === 'following' ? 'Open activity' : item.type === 'job' ? 'View job' : 'Open alert'}</span>
+                    </div>
                   </div>
                 </div>
               </Link>

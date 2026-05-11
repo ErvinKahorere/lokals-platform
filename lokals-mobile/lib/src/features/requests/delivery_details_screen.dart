@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/discovery/discovery_repository.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../services/contact_action_service.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
@@ -49,7 +50,7 @@ class DeliveryDetailsScreen extends ConsumerWidget {
                               children: [
                                 Text(item.itemDescription, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
                                 const SizedBox(height: 4),
-                                AppBadge(label: (item.status ?? 'requested').replaceAll('_', ' ')),
+                                AppBadge(label: ((item.status == 'assigned' ? 'accepted' : item.status) ?? 'requested').replaceAll('_', ' ')),
                               ],
                             ),
                           ),
@@ -62,20 +63,50 @@ class DeliveryDetailsScreen extends ConsumerWidget {
                       _InfoRow(label: 'Estimate', value: item.price == null ? 'Open estimate' : 'N\$ ${item.price}'),
                       if ((item.notes ?? '').isNotEmpty) _InfoRow(label: 'Notes', value: item.notes!),
                       const SizedBox(height: 14),
-                      if ((item.driverPhone ?? '').isNotEmpty)
-                        AppButton(
-                          label: 'Call driver',
-                          expanded: false,
-                          variant: AppButtonVariant.secondary,
-                          onPressed: () => const ContactActionService().call(context, item.driverPhone!),
+                      AppCard(
+                        color: AppColors.neutralSoftAlt,
+                        child: Row(
+                          children: [
+                            const CircleAvatar(
+                              backgroundColor: Color(0xFFE0F2FE),
+                              child: Icon(Icons.local_shipping_outlined, color: AppColors.softBlue),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.driverName?.trim().isNotEmpty == true ? item.driverName! : 'Courier operator pending',
+                                    style: const TextStyle(fontWeight: FontWeight.w700),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    (item.driverPhone ?? '').isNotEmpty
+                                        ? item.driverPhone!
+                                        : 'A courier contact will appear here once the request is accepted.',
+                                    style: const TextStyle(color: AppColors.mutedText),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if ((item.driverPhone ?? '').isNotEmpty)
+                              AppButton(
+                                label: 'Call',
+                                expanded: false,
+                                variant: AppButtonVariant.secondary,
+                                onPressed: () => const ContactActionService().call(context, item.driverPhone!),
+                              ),
+                          ],
                         ),
+                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 16),
                 StatusStepper(
                   steps: steps,
-                  current: item.status ?? 'requested',
+                  current: item.status == 'assigned' ? 'accepted' : item.status ?? 'requested',
                   updatedAt: item.updatedAt,
                 ),
               ],

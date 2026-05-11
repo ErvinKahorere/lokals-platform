@@ -3,6 +3,7 @@ String roleHomePath(String? role) {
     case 'worker':
       return '/dashboard/worker';
     case 'seller':
+      return '/dashboard/seller';
     case 'business_owner':
     case 'driver':
       return '/dashboard/business';
