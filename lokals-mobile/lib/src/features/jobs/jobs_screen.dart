@@ -431,7 +431,7 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
                     children: [
                       Text('Work nearby', style: AppTextStyles.eyebrow),
                       const SizedBox(height: 4),
-                      Text('Jobs and local workers', style: AppTextStyles.h2),
+                      Text('Jobs and local workers in Okahandja', style: AppTextStyles.h2),
                     ],
                   ),
                 ),
@@ -447,7 +447,7 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
                     children: [
                       const Icon(Icons.place_outlined, size: 16, color: AppColors.primaryPurple),
                       const SizedBox(width: 6),
-                      Text(auth.user?.defaultArea ?? auth.user?.location ?? 'Near me', style: AppTextStyles.caption),
+                      Text(auth.user?.defaultArea ?? AppConfig.pilotTown, style: AppTextStyles.caption),
                     ],
                   ),
                 ),
@@ -511,7 +511,7 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
             const SizedBox(height: 16),
             AppSearchBar(
               controller: _searchController,
-              hintText: 'Search jobs or workers...',
+              hintText: 'Search jobs or workers in Okahandja...',
               recentKey: 'jobs',
               suggestions: const ['Cleaner needed', 'Painter nearby', 'Driver work', 'Tutor jobs'],
               shortcuts: const ['Near me', 'Urgent', 'Verified', 'New'],
@@ -620,9 +620,9 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
                         .toList(),
                   );
                 },
-                loading: () => const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20),
-                  child: Center(child: CircularProgressIndicator()),
+                loading: () => const LokalsLoadingScreen(
+                  title: 'Loading workers',
+                  message: 'Finding nearby workers who can help today...',
                 ),
                 error: (error, _) => EmptyStateView(
                   title: 'Workers could not load',
@@ -671,9 +671,9 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
                         .toList(),
                   );
                 },
-                loading: () => const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20),
-                  child: Center(child: CircularProgressIndicator()),
+                loading: () => const LokalsLoadingScreen(
+                  title: 'Loading jobs',
+                  message: 'Finding nearby Okahandja jobs you can apply for...',
                 ),
                 error: (error, _) => EmptyStateView(
                   title: 'Jobs could not load',
@@ -734,7 +734,7 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
                         .toList(),
                   );
                 },
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => const LokalsInlineLoader(label: 'Loading workers'),
                 error: (error, _) => const SizedBox.shrink(),
               ),
             ],

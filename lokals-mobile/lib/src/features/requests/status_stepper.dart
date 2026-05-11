@@ -17,7 +17,8 @@ class StatusStepper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentIndex = steps.indexOf(current).clamp(0, steps.length - 1);
+    final normalizedCurrent = _normalizeStatus(current);
+    final currentIndex = steps.indexOf(normalizedCurrent).clamp(0, steps.length - 1);
 
     return AppCard(
       child: Column(
@@ -76,12 +77,12 @@ class StatusStepper extends StatelessWidget {
                           _label(steps[index]),
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
-                            color: steps[index] == current ? AppColors.primaryPurple : AppColors.deepCharcoal,
+                            color: steps[index] == normalizedCurrent ? AppColors.primaryPurple : AppColors.deepCharcoal,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          steps[index] == current ? 'Current step' : index <= currentIndex ? 'Completed' : 'Pending',
+                          steps[index] == normalizedCurrent ? 'Current step' : index <= currentIndex ? 'Completed' : 'Pending',
                           style: const TextStyle(color: AppColors.mutedText, fontSize: 12),
                         ),
                       ],
@@ -97,9 +98,20 @@ class StatusStepper extends StatelessWidget {
   }
 
   String _label(String value) {
+    final normalized = _normalizeStatus(value);
+    if (normalized == 'accepted') return 'Accepted';
     return value
         .split('_')
         .map((part) => part.isEmpty ? part : '${part[0].toUpperCase()}${part.substring(1)}')
         .join(' ');
+  }
+
+  String _normalizeStatus(String value) {
+    switch (value) {
+      case 'assigned':
+        return 'accepted';
+      default:
+        return value;
+    }
   }
 }

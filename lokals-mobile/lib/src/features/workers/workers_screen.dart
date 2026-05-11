@@ -48,10 +48,10 @@ class _WorkersScreenState extends ConsumerState<WorkersScreen> {
               const SizedBox(height: 16),
               AppSearchBar(
                 controller: _searchController,
-                hintText: 'Search workers...',
+                hintText: 'Search workers in Okahandja...',
                 recentKey: 'workers',
                 suggestions: const ['Cleaner', 'Painter', 'Driver', 'Tutor'],
-                shortcuts: const ['Available now', 'Verified', 'Near me'],
+                shortcuts: const ['Available now', 'Near me', 'Reliable'],
                 onChanged: (_) => setState(() {}),
               ),
               const SizedBox(height: 16),
@@ -70,7 +70,10 @@ class _WorkersScreenState extends ConsumerState<WorkersScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LokalsLoadingScreen(
+          title: 'Loading workers',
+          message: 'Finding nearby Okahandja workers and quick-help profiles...',
+        ),
         error: (error, _) => Center(
           child: EmptyStateView(
             title: 'Workers could not load',

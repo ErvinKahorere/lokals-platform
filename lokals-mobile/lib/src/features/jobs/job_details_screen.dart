@@ -11,6 +11,7 @@ import '../../widgets/shell.dart';
 import '../auth/auth_controller.dart';
 import '../auth/auth_navigation.dart';
 import '../discovery/discovery_repository.dart';
+import '../../../shared/widgets/job_card.dart';
 
 class JobDetailsScreen extends ConsumerStatefulWidget {
   const JobDetailsScreen({super.key, required this.jobId});
@@ -120,6 +121,10 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
           final job = match.first;
           final budget = job.compensation != null ? getDisplayPrice(job.compensation) : 'Negotiable';
           final location = getDisplayDistance(job.distanceKm, job.location);
+          final relatedJobs = items
+              .where((item) => item.id != job.id && (item.skills.any((skill) => job.skills.contains(skill)) || item.employmentType == job.employmentType))
+              .take(3)
+              .toList();
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -232,6 +237,21 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
                                 : () => contactService.call(context, job.posterPhone!),
                           ),
                         ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: AppButton(
+                            label: 'WhatsApp',
+                            variant: AppButtonVariant.secondary,
+                            onPressed: job.posterPhone == null
+                                ? null
+                                : () => contactService.openWhatsApp(
+                                      context,
+                                      phone: job.posterPhone!,
+                                      name: job.posterName ?? job.organizationName ?? 'Local poster',
+                                      message: 'Hi, I am interested in "${job.title}" on LOKALS.',
+                                    ),
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -261,6 +281,20 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
                   ],
                 ),
               ),
+              if (relatedJobs.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const SectionTitle(
+                  title: 'Related jobs',
+                  subtitle: 'Similar nearby work you may also want to check.',
+                ),
+                const SizedBox(height: 12),
+                ...relatedJobs.map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: JobCard(job: item),
+                  ),
+                ),
+              ],
               const SizedBox(height: 96),
             ],
           );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -10,6 +11,18 @@ class NewsCard extends StatelessWidget {
   const NewsCard({super.key, required this.item});
 
   final NewsItemModel item;
+
+  String _formatPublishedAt() {
+    if (item.publishedAt == null || item.publishedAt!.isEmpty) return 'Latest update';
+    final parsed = DateTime.tryParse(item.publishedAt!);
+    if (parsed == null) return 'Latest update';
+    return DateFormat('EEE, d MMM • HH:mm').format(parsed.toLocal());
+  }
+
+  String _locationLabel() {
+    final location = [item.area, item.town].whereType<String>().where((value) => value.isNotEmpty).join(', ');
+    return location.isEmpty ? 'Okahandja' : location;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +52,7 @@ class NewsCard extends StatelessWidget {
               runSpacing: 8,
               children: [
                 AppBadge(label: item.category.replaceAll('_', ' '), tone: AppBadgeTone.brand),
-                Text(item.sourceName, style: AppTextStyles.caption),
+                AppBadge(label: _locationLabel(), tone: AppBadgeTone.neutral),
               ],
             ),
             const SizedBox(height: 12),
@@ -47,21 +60,21 @@ class NewsCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(item.summary, style: AppTextStyles.bodyMuted, maxLines: 3, overflow: TextOverflow.ellipsis),
             const SizedBox(height: 12),
-            if (item.feedReason != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Text('Why this story: ${item.feedReason}', style: AppTextStyles.caption.copyWith(color: AppColors.success)),
-              ),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Text(
-                    [item.area, item.town].whereType<String>().join(', '),
-                    style: AppTextStyles.bodyMuted,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(item.sourceName, style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 4),
+                      Text(_formatPublishedAt(), style: AppTextStyles.caption),
+                    ],
                   ),
                 ),
                 AppButton(
-                  label: 'Read full story',
+                  label: 'Read Full Story',
                   expanded: false,
                   variant: AppButtonVariant.secondary,
                   onPressed: () => context.push(

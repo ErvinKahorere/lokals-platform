@@ -19,11 +19,11 @@ class AddToCalendarButton extends StatelessWidget {
           : () async {
               final uri = Uri.tryParse(icsUrl!);
               if (uri == null) return;
-              final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+              final launched = await launchUrl(uri, mode: LaunchMode.platformDefault);
               if (!context.mounted) return;
               if (!launched) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Unable to open the calendar link right now.')),
+                  const SnackBar(content: Text('Unable to open the calendar file right now. Try again from My Tickets or your browser.')),
                 );
               }
             },

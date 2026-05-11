@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { AddToCalendarButton } from '../../components/events/AddToCalendarButton'
 import { Button, EmptyState, PageHeader, QueryState, SectionCard, StatusBadge } from '../../components/Ui'
 import { useCancelEventTicket, useMyTickets } from '../../hooks/queries'
@@ -22,7 +23,7 @@ export function MyTicketsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Dashboard" title="My tickets" description="Keep event confirmations, reserved ticket requests, and entry codes in one place." />
+      <PageHeader eyebrow="Events" title="My tickets" description="Keep event confirmations, reserved ticket requests, and entry codes in one place." />
       <div className="flex flex-wrap gap-2">
         {[
           ['upcoming', 'Upcoming'],
@@ -53,10 +54,14 @@ export function MyTicketsPage() {
                   <p className="mt-1 text-sm text-lokals-muted">{ticket.event?.location_label ?? ticket.event?.location ?? 'Location TBC'}</p>
                   <p className="mt-2 text-sm text-lokals-muted">{ticket.event?.starts_at ? new Intl.DateTimeFormat('en-NA', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(ticket.event.starts_at)) : 'Date TBC'}</p>
                   <p className="mt-2 text-sm text-lokals-charcoal">Code: <span className="font-semibold">{ticket.ticket_code}</span></p>
-                  <p className="mt-2 text-sm text-lokals-muted">QR placeholder ready for a later check-in pass.</p>
+                  <p className="mt-2 text-sm text-lokals-muted">{ticket.price_paid ? `Paid: N$${ticket.price_paid}` : 'QR placeholder ready for a later check-in pass.'}</p>
+                  {ticket.holder_name ? <p className="mt-2 text-sm text-lokals-muted">Holder: {ticket.holder_name}</p> : null}
                 </div>
                 <div className="flex flex-wrap gap-3">
                   {ticket.event?.calendar?.ics_url ? <AddToCalendarButton icsUrl={ticket.event.calendar.ics_url} /> : null}
+                  <Link to={`/events/${ticket.event_id}`}>
+                    <Button variant="secondary">View event</Button>
+                  </Link>
                   {['reserved', 'confirmed'].includes(ticket.status) ? (
                     <Button variant="secondary" disabled={cancelTicket.isPending} onClick={() => cancelTicket.mutate(ticket.id)}>Cancel ticket</Button>
                   ) : null}

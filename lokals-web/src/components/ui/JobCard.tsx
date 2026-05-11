@@ -16,6 +16,7 @@ export function JobCard({
   canApply?: boolean
 }) {
   const skill = job.skills?.[0] ?? 'General help'
+  const urgencyLabel = (job.applications_count ?? 0) === 0 ? 'Urgent' : 'Active'
 
   return (
     <Card interactive variant="job">
@@ -27,6 +28,10 @@ export function JobCard({
           <div>
             <h3 className="text-lg font-semibold text-lokals-charcoal">{job.title}</h3>
             <p className="mt-1 line-clamp-2 text-sm text-lokals-muted">{job.description}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <Badge tone="info">{skill}</Badge>
+              <Badge tone={(job.applications_count ?? 0) === 0 ? 'warning' : 'neutral'}>{urgencyLabel}</Badge>
+            </div>
           </div>
         </div>
         <Badge tone={job.status === 'open' ? 'success' : 'warn'}>{job.status === 'open' ? 'New' : job.status.replaceAll('_', ' ')}</Badge>
@@ -35,7 +40,6 @@ export function JobCard({
         <span>{getDisplayDistance(job.distance_km, job.location)}</span>
         <span>{job.compensation ? getDisplayPrice(job.compensation) : 'Budget TBC'}</span>
         <span>Posted today</span>
-        <span>{skill}</span>
       </div>
       <div className="mt-5 flex items-center justify-between gap-3">
         <div>

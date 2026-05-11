@@ -47,6 +47,31 @@ export function SuperAdminDashboardPage() {
                 <p className="mt-1 text-sm text-lokals-muted">{flag.notes ?? 'Pending moderator review.'}</p>
               </div>
             ))}
+            {!((((dashboard as any)?.moderation_flags as any[]) ?? []).length) ? <p className="text-sm text-lokals-muted">Moderation flags will appear here when the platform needs review attention.</p> : null}
+          </div>
+        </DashboardSection>
+        <DashboardSection title="System overview" description="High-level platform totals that help you read operational pressure quickly.">
+          <div className="space-y-3">
+            {Object.entries(((dashboard as any)?.system_overview ?? {}) as Record<string, string | number>).map(([key, value]) => (
+              <div key={key} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
+                <p className="font-semibold capitalize text-lokals-charcoal">{key.replaceAll('_', ' ')}</p>
+                <p className="mt-1 text-sm text-lokals-muted">{value}</p>
+              </div>
+            ))}
+          </div>
+        </DashboardSection>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <DashboardSection title="Recent reports" description="Latest platform-visible civic reports and escalation points.">
+          <div className="space-y-3">
+            {(((dashboard as any)?.recent_reports as any[]) ?? []).slice(0, 5).map((report) => (
+              <div key={report.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
+                <p className="font-semibold text-lokals-charcoal">{report.title}</p>
+                <p className="mt-1 text-sm text-lokals-muted">{report.status ?? 'open'} | {report.priority ?? 'standard'}</p>
+              </div>
+            ))}
+            {!((((dashboard as any)?.recent_reports as any[]) ?? []).length) ? <p className="text-sm text-lokals-muted">Recent reports will appear here as platform issues are filed.</p> : null}
           </div>
         </DashboardSection>
         <DashboardSection title="Recent activity" description="Platform movement across flags, reports, and content.">

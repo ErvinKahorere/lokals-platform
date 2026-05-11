@@ -156,6 +156,32 @@ class TransportAndSafetyApiTest extends TestCase
             ->assertJsonPath('data.emergency_type', 'Roadside');
     }
 
+    public function test_sos_list_returns_history_for_authenticated_user(): void
+    {
+        $user = User::where('email', 'resident@lokals.app')->firstOrFail();
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/v1/sos')
+            ->assertOk()
+            ->assertJsonStructure([
+                '*' => [
+                    'id',
+                    'message',
+                    'status',
+                ],
+            ]);
+    }
+
+    public function test_sos_creation_validates_required_message(): void
+    {
+        $user = User::where('email', 'resident@lokals.app')->firstOrFail();
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/v1/sos', [])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['message']);
+    }
+
     public function test_transport_requests_stay_scoped_to_requesting_user(): void
     {
         $citizen = User::where('email', 'resident@lokals.app')->firstOrFail();

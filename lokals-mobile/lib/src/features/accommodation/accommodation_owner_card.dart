@@ -52,7 +52,7 @@ class AccommodationOwnerCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text(ownerLocation.isEmpty ? 'Windhoek' : ownerLocation, style: AppTextStyles.bodyMuted),
+                    Text(ownerLocation.isEmpty ? 'Okahandja' : ownerLocation, style: AppTextStyles.bodyMuted),
                     const SizedBox(height: 4),
                     const Text('Call or WhatsApp for viewings and availability.', style: AppTextStyles.caption),
                   ],

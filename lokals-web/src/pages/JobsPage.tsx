@@ -7,6 +7,7 @@ import { useApplyToJob, useCreateJob, useCreateWorkerProfile, useJobs, useWorker
 import { getApiErrorMessage } from '../lib/api'
 import { navigateToLogin } from '../lib/authNavigation'
 import { getDisplayDistance, getDisplayPrice } from '../lib/display'
+import { OKAHANDJA_AREAS, PILOT_TOWN } from '../lib/pilot'
 import { useAuthStore } from '../store/auth'
 import { Card } from '../components/ui/Card'
 
@@ -94,8 +95,8 @@ export function JobsPage() {
       <section className="rounded-[28px] bg-gradient-to-br from-[#2B1E8C] via-[#3F2BCB] to-[#5B46E8] p-5 text-white shadow-card">
         <PageHeader
           eyebrow="Work"
-          title="Jobs and local workers in one place"
-          description="Post small jobs quickly, browse trusted local workers, or apply to open work nearby."
+          title="Jobs and local workers in Okahandja"
+          description="Post small jobs quickly, browse trusted local workers, or apply to open work nearby in Okahandja."
           actions={
             <SearchBar
               value={search}
@@ -104,12 +105,16 @@ export function JobsPage() {
               recentKey="work"
               suggestions={['Cleaner needed', 'Painter nearby', 'Driver work', 'Tutor jobs']}
               shortcuts={[{ label: 'Near me', value: 'near me' }, { label: 'Urgent', value: 'urgent' }, { label: 'Verified', value: 'verified' }]}
-              placeholder="Search jobs or workers..."
+              placeholder="Search jobs or workers in Okahandja..."
               className="w-full md:w-80"
             />
           }
         />
       </section>
+
+      <div className="inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1.5 text-sm font-semibold text-lokals-purple">
+        {user?.default_area ? `${user.default_area}, ${PILOT_TOWN}` : PILOT_TOWN}
+      </div>
 
       <Tabs
         value={mode}
@@ -152,7 +157,7 @@ export function JobsPage() {
               {token ? (
                 <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={submitJob}>
                   <Input name="title" placeholder="House cleaner needed" required />
-                  <Input name="location" placeholder="Khomasdal, Windhoek" defaultValue={user?.default_area ?? user?.location ?? ''} required />
+                  <Input name="location" placeholder="Nau-Aib, Okahandja" defaultValue={user?.default_area ?? OKAHANDJA_AREAS[0]} required />
                   <Input name="employment_type" placeholder="gig, part_time, contract" defaultValue="gig" required />
                   <Input name="compensation" placeholder="Budget in NAD (optional)" />
                   <Input name="skills" placeholder="cleaning, laundry, reliable" className="md:col-span-2" />
@@ -223,7 +228,7 @@ export function JobsPage() {
               {token ? (
                 <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={submitWorkerProfile}>
                   <Input name="headline" placeholder="House cleaner" defaultValue={user?.profession ?? ''} required />
-                  <Input name="location" placeholder="Khomasdal, Windhoek" defaultValue={user?.default_area ?? user?.location ?? ''} required />
+                  <Input name="location" placeholder="Nau-Aib, Okahandja" defaultValue={user?.default_area ?? OKAHANDJA_AREAS[0]} required />
                   <Input name="skills" placeholder="cleaning, ironing, laundry" className="md:col-span-2" />
                   <Input name="experience_years" placeholder="Years of experience" />
                   <Input name="hourly_rate" placeholder="Hourly/day rate in NAD" />
@@ -288,7 +293,7 @@ export function JobsPage() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3 className="text-lg font-semibold text-lokals-charcoal">Popular local skills</h3>
-              <p className="mt-2 text-sm text-lokals-muted">Common help categories people book quickly around town.</p>
+                  <p className="mt-2 text-sm text-lokals-muted">Common help categories people book quickly around Okahandja.</p>
             </div>
             <Sparkles className="h-5 w-5 text-lokals-purple" />
           </div>

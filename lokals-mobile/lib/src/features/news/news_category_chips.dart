@@ -10,18 +10,17 @@ class NewsCategoryChips extends StatelessWidget {
   final String selected;
   final ValueChanged<String> onSelected;
 
-  static const _categories = [
-    'all',
-    'business',
-    'community',
-    'events',
-    'safety',
-    'health',
-    'education',
-    'transport',
-    'sports',
-    'property',
-    'public_notice',
+  static const _categories = <({String value, String label})>[
+    (value: 'all', label: 'Local'),
+    (value: 'public_notice', label: 'Public Notice'),
+    (value: 'community', label: 'Community'),
+    (value: 'business', label: 'Business'),
+    (value: 'events', label: 'Events'),
+    (value: 'safety', label: 'Safety'),
+    (value: 'health', label: 'Health'),
+    (value: 'education', label: 'Education'),
+    (value: 'transport', label: 'Transport'),
+    (value: 'sports', label: 'Sports'),
   ];
 
   @override
@@ -30,11 +29,11 @@ class NewsCategoryChips extends StatelessWidget {
       spacing: 8,
       runSpacing: 8,
       children: _categories.map((category) {
-        final active = selected == category;
+        final active = selected == category.value;
         return ChoiceChip(
-          label: Text(category == 'all' ? 'Local' : category.replaceAll('_', ' ')),
+          label: Text(category.label),
           selected: active,
-          onSelected: (_) => onSelected(category),
+          onSelected: (_) => onSelected(category.value),
         );
       }).toList(),
     );

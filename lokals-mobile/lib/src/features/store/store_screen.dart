@@ -11,6 +11,7 @@ import '../../config/app_config.dart';
 import '../../core/models.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
+import '../auth/auth_controller.dart';
 import '../discovery/discovery_repository.dart';
 import 'product_card.dart';
 
@@ -40,11 +41,12 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
     ('all', 'All', Icons.grid_view_rounded, Color(0xFFF3F4F6), AppColors.deepCharcoal),
     ('electronics', 'Electronics', Icons.phone_android_rounded, Color(0xFFE0ECFF), AppColors.softBlue),
     ('home', 'Home', Icons.chair_alt_outlined, Color(0xFFECFDF3), AppColors.primaryGreen),
-    ('vehicles', 'Vehicles', Icons.directions_car_outlined, Color(0xFFFFF3E8), Color(0xFFD97706)),
     ('clothing', 'Clothing', Icons.checkroom_rounded, Color(0xFFF3E8FF), AppColors.primaryPurple),
     ('food', 'Food', Icons.fastfood_rounded, Color(0xFFFFF7CC), AppColors.warning),
+    ('building', 'Building', Icons.hardware_rounded, Color(0xFFFFF3E8), Color(0xFFD97706)),
+    ('vehicles', 'Vehicles', Icons.directions_car_outlined, Color(0xFFE2E8F0), AppColors.deepCharcoal),
     ('services', 'Services', Icons.miscellaneous_services_rounded, Color(0xFFE0F2FE), AppColors.softBlue),
-    ('more', 'More', Icons.more_horiz_rounded, Color(0xFFF1F5F9), AppColors.deepCharcoal),
+    ('other', 'Other', Icons.more_horiz_rounded, Color(0xFFF1F5F9), AppColors.deepCharcoal),
   ];
 
   @override
@@ -90,7 +92,7 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
                       children: const [
                         Text('Marketplace', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800)),
                         SizedBox(height: 6),
-                        Text('Shop nearby deals and discover trusted local sellers.', style: AppTextStyles.bodyMuted),
+                        Text('Shop local deals around Okahandja and discover trusted nearby sellers.', style: AppTextStyles.bodyMuted),
                       ],
                     ),
                   ),
@@ -105,11 +107,26 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
               const SizedBox(height: 16),
               AppSearchBar(
                 controller: _searchController,
-                hintText: 'Search products...',
+                hintText: 'Search products in Okahandja...',
                 recentKey: 'store',
                 suggestions: const ['Samsung phone', 'Couch deal', 'Food voucher', 'Toyota Hilux'],
-                shortcuts: const ['Electronics', 'Sale items', 'Home', 'Vehicles'],
+                shortcuts: const ['Electronics', 'Sale items', 'Home', 'Building'],
                 onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.purpleSoftAlt,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  _areaController.text.isEmpty ? AppConfig.pilotTown : '${_areaController.text}, ${AppConfig.pilotTown}',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.primaryPurple,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
               const SizedBox(height: 14),
               SingleChildScrollView(
@@ -318,7 +335,19 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
           item.title.toLowerCase().contains(query) ||
           sellerName.toLowerCase().contains(query) ||
           (item.category?.toLowerCase().contains(query) ?? false);
-      final matchesCategory = _selectedCategory == 'all' || _selectedCategory == 'more' || (item.category?.toLowerCase() == _selectedCategory);
+      final normalizedCategory = item.category?.toLowerCase();
+      final matchesCategory = _selectedCategory == 'all' ||
+          normalizedCategory == _selectedCategory ||
+          (_selectedCategory == 'other' &&
+              !const {
+                'electronics',
+                'home',
+                'clothing',
+                'food',
+                'building',
+                'vehicles',
+                'services',
+              }.contains(normalizedCategory));
       final matchesSale = !_saleOnly || item.salePrice != null;
       final matchesVerified = !_verifiedOnly || item.businessVerified;
       return matchesQuery && matchesCategory && matchesSale && matchesVerified;
@@ -363,6 +392,8 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
   }
 
   Future<void> _openPostProductSheet() async {
+    final auth = ref.read(authControllerProvider);
+    final contactLabel = auth.user?.phone ?? 'Your profile phone will be used';
     var step = 0;
 
     await showModalBottomSheet<void>(
@@ -430,14 +461,27 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
                   const SizedBox(height: 12),
                   LokalsTextField(controller: _priceController, label: 'Price', hint: 'Optional price'),
                   const SizedBox(height: 12),
-                  LokalsTextField(controller: _categoryController, label: 'Category', hint: 'Electronics, home, food...'),
+                  LokalsTextField(controller: _categoryController, label: 'Category', hint: 'Electronics, home, clothing...'),
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Expanded(child: LokalsTextField(controller: _townController, label: 'Town', hint: 'Town')),
+                      Expanded(child: LokalsTextField(controller: _townController, label: 'Town', hint: 'Town', readOnly: true)),
                       const SizedBox(width: 12),
                       Expanded(child: LokalsTextField(controller: _areaController, label: 'Area', hint: 'Area')),
                     ],
+                  ),
+                  const SizedBox(height: 12),
+                  AppCard(
+                    color: AppColors.neutralSoft,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.phone_outlined, color: AppColors.primaryPurple),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text('Buyer contact: $contactLabel', style: AppTextStyles.bodyMuted),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 12),
                   LokalsTextField(

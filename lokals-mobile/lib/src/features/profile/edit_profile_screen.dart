@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/experience_helpers.dart';
+import '../../config/app_config.dart';
 import '../../features/discovery/discovery_repository.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
@@ -92,11 +93,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             _townController.text =
                 summary.user.defaultTown ??
                 summary.profile['default_town']?.toString() ??
-                'Windhoek';
+                AppConfig.pilotTown;
             _areaController.text =
                 summary.user.defaultArea ??
                 summary.profile['default_area']?.toString() ??
-                '';
+                AppConfig.okahandjaAreas.first;
             _bioController.text =
                 summary.user.bio ?? summary.profile['bio']?.toString() ?? '';
             _professionController.text = summary.user.profession ??
@@ -183,13 +184,41 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       subtitle: 'Set the town and area that should influence local results first.',
                     ),
                     const SizedBox(height: 14),
-                    LokalsTextField(controller: _locationController, label: 'Location label', hint: 'Katutura, Windhoek'),
+                    LokalsTextField(controller: _locationController, label: 'Location label', hint: 'Central Okahandja'),
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        Expanded(child: LokalsTextField(controller: _townController, label: 'Town', hint: 'Town')),
+                        Expanded(
+                          child: LokalsTextField(
+                            controller: _townController,
+                            label: 'Town',
+                            hint: AppConfig.pilotTown,
+                            readOnly: true,
+                          ),
+                        ),
                         const SizedBox(width: 12),
-                        Expanded(child: LokalsTextField(controller: _areaController, label: 'Area', hint: 'Area')),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            initialValue: _areaController.text.isNotEmpty
+                                ? _areaController.text
+                                : AppConfig.okahandjaAreas.first,
+                            decoration: const InputDecoration(labelText: 'Area'),
+                            items: AppConfig.okahandjaAreas
+                                .map(
+                                  (area) => DropdownMenuItem<String>(
+                                    value: area,
+                                    child: Text(area),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) {
+                              if (value == null) {
+                                return;
+                              }
+                              setState(() => _areaController.text = value);
+                            },
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -281,47 +310,87 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 onPressed: _saving
                     ? null
                     : () async {
-                        setState(() => _saving = true);
-                        final repo = ref.read(discoveryRepositoryProvider);
-                        if (_avatarFile != null) {
-                          await repo.uploadAvatar(_avatarFile!);
-                        }
-                        await repo.updateProfile(
-                          name: _nameController.text,
-                          phone: _phoneController.text,
-                          email: _emailController.text.trim().isEmpty
-                              ? null
-                              : _emailController.text.trim(),
-                          location: _locationController.text,
-                          defaultTown: _townController.text,
-                          defaultArea: _areaController.text,
-                          bio: _bioController.text,
-                          profession: _professionController.text,
-                          businessName: _businessController.text,
-                          whatsapp: _whatsAppController.text,
-                          secondaryPhone: _secondaryPhoneController.text,
-                          profileVisibility: _profileVisibility,
-                          roles: _roles,
-                          interests: _interests,
-                        );
-                        await ref.read(authControllerProvider.notifier).refreshCurrentUser();
-                        ref.invalidate(profileSummaryProvider);
-                        ref.invalidate(preferencesProvider);
-                        if (!mounted) {
+                        final name = _nameController.text.trim();
+                        final phone = _phoneController.text.trim();
+                        final area = _areaController.text.trim();
+                        if (name.isEmpty || phone.isEmpty || area.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Name, phone, and area are required before saving.',
+                              ),
+                            ),
+                          );
                           return;
                         }
-                        setState(() => _saving = false);
-                        ScaffoldMessenger.of(this.context).showSnackBar(
-                          const SnackBar(content: Text('Profile updated.')),
-                        );
-                        GoRouter.of(this.context).pop();
+                        setState(() => _saving = true);
+                        final repo = ref.read(discoveryRepositoryProvider);
+                        try {
+                          if (_avatarFile != null) {
+                            await repo.uploadAvatar(_avatarFile!);
+                          }
+                          await repo.updateProfile(
+                            name: name,
+                            phone: phone,
+                            email: _emailController.text.trim().isEmpty
+                                ? null
+                                : _emailController.text.trim(),
+                            location: _locationController.text.trim(),
+                            defaultTown: AppConfig.pilotTown,
+                            defaultArea: area,
+                            bio: _bioController.text.trim(),
+                            profession: _professionController.text.trim(),
+                            businessName: _businessController.text.trim(),
+                            whatsapp: _whatsAppController.text.trim(),
+                            secondaryPhone: _secondaryPhoneController.text.trim(),
+                            profileVisibility: _profileVisibility,
+                            roles: _roles,
+                            interests: _interests,
+                          );
+                          await ref
+                              .read(authControllerProvider.notifier)
+                              .refreshCurrentUser();
+                          ref.invalidate(profileSummaryProvider);
+                          ref.invalidate(preferencesProvider);
+                          if (!mounted) {
+                            return;
+                          }
+                          setState(() => _saving = false);
+                          ScaffoldMessenger.of(this.context).showSnackBar(
+                            const SnackBar(content: Text('Profile updated.')),
+                          );
+                          GoRouter.of(this.context).pop();
+                        } catch (error) {
+                          if (!mounted) {
+                            return;
+                          }
+                          setState(() => _saving = false);
+                          ScaffoldMessenger.of(this.context).showSnackBar(
+                            SnackBar(
+                              content: Text('Unable to save profile: $error'),
+                            ),
+                          );
+                        }
                       },
               ),
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('Failed to load profile: $error')),
+        loading: () => const LokalsLoadingScreen(
+          title: 'Loading profile editor',
+          message: 'Preparing your account details and saved preferences...',
+        ),
+        error: (error, _) => Center(
+          child: EmptyStateView(
+            title: 'Profile editor unavailable',
+            body: 'We could not load your profile details right now.',
+            action: AppButton(
+              label: 'Retry',
+              expanded: false,
+              onPressed: () => ref.invalidate(profileSummaryProvider),
+            ),
+          ),
+        ),
       ),
     );
   }

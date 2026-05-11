@@ -34,7 +34,9 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
           (item) => _AlertFeedEntry(
             id: item.id,
             sourceType: item.sourceType,
-            sourceLabel: item.sourceType == 'announcement'
+            sourceLabel: item.sourceType == 'municipal_alert'
+                ? 'Municipal alert'
+                : item.sourceType == 'announcement'
                 ? 'Promotion'
                 : item.sourceType == 'job'
                     ? 'Job update'
@@ -43,6 +45,7 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
             body: item.body,
             severity: item.severity ?? 'normal',
             location: item.location,
+            timestamp: item.timestamp,
             route: item.sourceType == 'job' ? '/jobs' : '/alerts',
           ),
         )
@@ -62,6 +65,7 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
                 .toString(),
             severity: item['status']?.toString() ?? 'normal',
             location: item['location']?.toString(),
+            timestamp: item['timestamp']?.toString() ?? item['created_at']?.toString(),
             route: '/activity',
           ),
         )
@@ -76,6 +80,8 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
         case 'urgent':
           return ['critical', 'high', 'urgent']
               .contains(item.severity.toLowerCase());
+        case 'municipal':
+          return item.sourceType == 'municipal_alert';
         case 'promotions':
           return item.sourceType == 'announcement' ||
               RegExp('sale|promo|discount', caseSensitive: false)
@@ -83,7 +89,12 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
         default:
           return true;
       }
-    }).toList();
+    }).toList()
+      ..sort((a, b) {
+        final left = DateTime.tryParse(a.timestamp ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final right = DateTime.tryParse(b.timestamp ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return right.compareTo(left);
+      });
   }
 
   @override
@@ -144,6 +155,11 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
                   onTap: () => setState(() => _tab = 'urgent'),
                 ),
                 _AlertTabChip(
+                  label: 'Municipal',
+                  isActive: _tab == 'municipal',
+                  onTap: () => setState(() => _tab = 'municipal'),
+                ),
+                _AlertTabChip(
                   label: 'Promotions',
                   isActive: _tab == 'promotions',
                   onTap: () => setState(() => _tab = 'promotions'),
@@ -186,15 +202,13 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
                               sourceLabel: item.sourceLabel,
                               severity: item.severity,
                               location: item.location,
+                              timestamp: item.timestamp,
                               actionLabel: item.sourceType == 'job'
                                   ? 'View job'
                                   : item.sourceType == 'following'
                                       ? 'Open activity'
-                                      : null,
-                              onAction: item.sourceType == 'job' ||
-                                      item.sourceType == 'following'
-                                  ? () => context.go(item.route)
-                                  : null,
+                                      : 'Open alert',
+                              onAction: () => context.go(item.route),
                             ),
                           ),
                         )
@@ -248,6 +262,7 @@ class _AlertFeedEntry {
     required this.severity,
     required this.route,
     this.location,
+    this.timestamp,
   });
 
   final String id;
@@ -258,4 +273,5 @@ class _AlertFeedEntry {
   final String severity;
   final String route;
   final String? location;
+  final String? timestamp;
 }

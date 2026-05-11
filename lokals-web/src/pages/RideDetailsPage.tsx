@@ -35,7 +35,7 @@ export function RideDetailsPage() {
                 </div>
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-3">
-                    <h2 className="text-2xl font-semibold text-lokals-charcoal">{ride.ride_type ?? 'Standard'} ride</h2>
+                    <h2 className="text-2xl font-semibold text-lokals-charcoal">{ride.ride_type === 'local_taxi' ? 'Standard local taxi' : ride.ride_type ?? 'Standard'} ride</h2>
                     <StatusBadge value={(ride.status ?? 'requested').replaceAll('_', ' ')} tone={ride.status === 'cancelled' ? 'danger' : ride.status === 'completed' ? 'success' : 'accent'} />
                   </div>
                   <p className="mt-3 text-sm text-lokals-muted">{ride.pickup_location} to {ride.dropoff_location}</p>
@@ -71,8 +71,8 @@ export function RideDetailsPage() {
               <div className="mt-4 rounded-2xl border border-lokals-border p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-lokals-charcoal">{ride.driver?.name ?? 'Driver assignment pending'}</p>
-                    <p className="text-sm text-lokals-muted">{ride.driver?.phone ?? 'A driver contact will appear after acceptance.'}</p>
+                    <p className="font-semibold text-lokals-charcoal">{ride.driver?.name ?? 'Verified taxi operator pending'}</p>
+                    <p className="text-sm text-lokals-muted">{ride.driver?.phone ?? 'A driver contact will appear after a nearby taxi accepts your request.'}</p>
                   </div>
                   {ride.driver?.phone ? (
                     <a href={`tel:${ride.driver.phone}`}>

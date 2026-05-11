@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/discovery/discovery_repository.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../services/contact_action_service.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
@@ -47,7 +48,7 @@ class RideDetailsScreen extends ConsumerWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(item.rideType ?? 'Standard ride', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                                Text(_rideTypeLabel(item.rideType), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
                                 const SizedBox(height: 4),
                                 AppBadge(label: (item.status ?? 'requested').replaceAll('_', ' ')),
                               ],
@@ -62,13 +63,43 @@ class RideDetailsScreen extends ConsumerWidget {
                       _InfoRow(label: 'Fare estimate', value: item.fareEstimate == null ? 'Open fare' : 'N\$ ${item.fareEstimate}'),
                       if ((item.notes ?? '').isNotEmpty) _InfoRow(label: 'Notes', value: item.notes!),
                       const SizedBox(height: 14),
-                      if ((item.driverPhone ?? '').isNotEmpty)
-                        AppButton(
-                          label: 'Call driver',
-                          expanded: false,
-                          variant: AppButtonVariant.secondary,
-                          onPressed: () => const ContactActionService().call(context, item.driverPhone!),
+                      AppCard(
+                        color: AppColors.neutralSoftAlt,
+                        child: Row(
+                          children: [
+                            const CircleAvatar(
+                              backgroundColor: Color(0xFFEDE9FE),
+                              child: Icon(Icons.local_taxi_outlined, color: AppColors.primaryPurple),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.driverName?.trim().isNotEmpty == true ? item.driverName! : 'Verified taxi operator pending',
+                                    style: const TextStyle(fontWeight: FontWeight.w700),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    (item.driverPhone ?? '').isNotEmpty
+                                        ? item.driverPhone!
+                                        : 'A driver contact will appear once a nearby taxi accepts your ride.',
+                                    style: const TextStyle(color: AppColors.mutedText),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if ((item.driverPhone ?? '').isNotEmpty)
+                              AppButton(
+                                label: 'Call',
+                                expanded: false,
+                                variant: AppButtonVariant.secondary,
+                                onPressed: () => const ContactActionService().call(context, item.driverPhone!),
+                              ),
+                          ],
                         ),
+                      ),
                     ],
                   ),
                 ),
@@ -91,6 +122,18 @@ class RideDetailsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+String _rideTypeLabel(String? rideType) {
+  switch (rideType) {
+    case null:
+    case '':
+      return 'Standard ride';
+    case 'local_taxi':
+      return 'Standard local taxi';
+    default:
+      return '$rideType ride';
   }
 }
 

@@ -27,16 +27,20 @@ class _ArticleBrowserScreenState extends ConsumerState<ArticleBrowserScreen> {
   bool _loading = true;
   bool _failed = false;
 
+  Future<void> _openInApp() async {
+    final opened = await ref.read(articleBrowserServiceProvider).openInApp(widget.url);
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      _failed = !opened;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final opened = await ref.read(articleBrowserServiceProvider).openInApp(widget.url);
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _failed = !opened;
-      });
+      await _openInApp();
     });
   }
 
@@ -76,6 +80,18 @@ class _ArticleBrowserScreenState extends ConsumerState<ArticleBrowserScreen> {
                     Text('Opening ${widget.sourceName} in-app...', style: AppTextStyles.bodyMuted),
                   ] else if (_failed) ...[
                     const Text('Unable to load article in-app.', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 12),
+                    AppButton(
+                      label: 'Try again',
+                      variant: AppButtonVariant.secondary,
+                      onPressed: () async {
+                        setState(() {
+                          _loading = true;
+                          _failed = false;
+                        });
+                        await _openInApp();
+                      },
+                    ),
                     const SizedBox(height: 12),
                     AppButton(
                       label: 'Open in browser',

@@ -20,6 +20,7 @@ import 'features/directory/directory_screen.dart';
 import 'features/directory/directory_details_screen.dart';
 import 'features/dashboard/dashboard_router_screen.dart';
 import 'features/dashboard/worker_dashboard_screen.dart';
+import 'features/dashboard/seller_dashboard_screen.dart';
 import 'features/dashboard/business_dashboard_screen.dart';
 import 'features/dashboard/organization_dashboard_screen.dart';
 import 'features/dashboard/service_provider_dashboard_screen.dart';
@@ -137,6 +138,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/dashboard/worker',
         builder: (context, state) => const WorkerDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/dashboard/seller',
+        builder: (context, state) => const SellerDashboardScreen(),
       ),
       GoRoute(
         path: '/dashboard/business',

@@ -38,7 +38,8 @@ class DashboardController extends Controller
             'role' => $role,
             'dashboard_endpoint' => match ($role) {
                 'worker' => '/dashboard/worker',
-                'seller', 'business_owner' => '/dashboard/business',
+                'seller' => '/dashboard/seller',
+                'business_owner' => '/dashboard/business',
                 'service_provider' => '/dashboard/service-provider',
                 'organization_admin' => '/dashboard/organization',
                 'municipality_admin', 'town_manager' => '/dashboard/town-manager',
@@ -160,20 +161,47 @@ class DashboardController extends Controller
 
         $businesses = Organization::query()->where('owner_user_id', $user->id)->withCount('followers')->get();
         $businessIds = $businesses->pluck('id');
+        $providerIds = ServiceProvider::query()
+            ->whereIn('organization_id', $businessIds)
+            ->pluck('id');
+        $recentPromotions = Announcement::query()
+            ->whereIn('organization_id', $businessIds)
+            ->latest('published_at')
+            ->limit(5)
+            ->get(['id', 'title', 'body', 'location', 'published_at']);
+        $recentProducts = Product::query()
+            ->where('user_id', $user->id)
+            ->latest()
+            ->limit(5)
+            ->get(['id', 'title', 'price', 'sale_price', 'category', 'town', 'area', 'created_at']);
+        $recentServices = Service::query()
+            ->whereIn('organization_id', $businessIds)
+            ->latest()
+            ->limit(5)
+            ->get(['id', 'name', 'price', 'price_type', 'duration_minutes', 'is_active']);
+        $recentBookings = Booking::query()
+            ->whereIn('service_provider_id', $providerIds)
+            ->with(['user:id,name,phone', 'service:id,name'])
+            ->latest()
+            ->limit(5)
+            ->get();
+        $businessRole = $user->current_role === 'seller' ? 'seller' : 'business';
+        $businessDashboardHref = $businessRole === 'seller' ? '/dashboard/seller' : '/dashboard/business';
 
         return response()->json([
-            'role' => 'business',
+            'role' => $businessRole,
             'stats' => [
                 'products' => Product::query()->where('user_id', $user->id)->count(),
                 'services' => Service::query()->whereIn('organization_id', $businessIds)->count(),
+                'bookings' => Booking::query()->whereIn('service_provider_id', $providerIds)->count(),
                 'followers' => $businesses->sum('followers_count'),
-                'sale_alerts' => Announcement::query()->whereIn('organization_id', $businessIds)->count(),
-                'contacts' => Product::query()->where('user_id', $user->id)->count() * 2,
+                'alerts_promotions' => Announcement::query()->whereIn('organization_id', $businessIds)->count(),
+                'enquiries' => Product::query()->where('user_id', $user->id)->count() * 2,
             ],
             'quick_actions' => [
                 ['label' => 'Add Product', 'href' => '/store', 'icon' => 'package'],
                 ['label' => 'Add Service', 'href' => '/services', 'icon' => 'hammer'],
-                ['label' => 'Post Promotion', 'href' => '/dashboard/business', 'icon' => 'megaphone'],
+                ['label' => 'Post Promotion', 'href' => $businessDashboardHref, 'icon' => 'megaphone'],
                 ['label' => 'View Store', 'href' => '/store', 'icon' => 'store'],
             ],
             'pending_tasks' => [
@@ -181,8 +209,12 @@ class DashboardController extends Controller
                 ['label' => 'Promotions to refresh', 'count' => Announcement::query()->whereIn('organization_id', $businessIds)->whereDate('published_at', '<', now()->subDays(14))->count()],
             ],
             'businesses' => $businesses,
-            'sale_alerts' => Announcement::query()->whereIn('organization_id', $businessIds)->latest('published_at')->limit(5)->get(['id', 'title', 'body', 'location', 'published_at']),
-            'recent_products' => Product::query()->where('user_id', $user->id)->latest()->limit(5)->get(['id', 'title', 'price', 'sale_price', 'category', 'town', 'area', 'created_at']),
+            'sale_alerts' => $recentPromotions,
+            'alerts' => $recentPromotions,
+            'recent_products' => $recentProducts,
+            'products' => $recentProducts,
+            'recent_services' => $recentServices,
+            'recent_bookings' => $recentBookings,
             'recent_activity' => $this->mergeActivity([
                 Product::query()->where('user_id', $user->id)->latest()->limit(3)->get()->map(fn (Product $product) => [
                     'type' => 'product',
@@ -220,6 +252,7 @@ class DashboardController extends Controller
                 'availability_slots' => \App\Models\AvailabilitySlot::query()->whereIn('service_provider_id', $providerIds)->count(),
                 'followers' => $providers->sum('followers_count'),
                 'rates' => Service::query()->whereIn('service_provider_id', $providerIds)->count(),
+                'recent_enquiries' => Booking::query()->whereIn('service_provider_id', $providerIds)->where('status', 'pending')->count(),
             ],
             'quick_actions' => [
                 ['label' => 'Add Service', 'href' => '/services', 'icon' => 'plus-circle'],
@@ -284,6 +317,14 @@ class DashboardController extends Controller
             'organizations' => $organizations,
             'public_updates' => Announcement::query()->whereIn('organization_id', $organizationIds)->latest('published_at')->limit(5)->get(['id', 'title', 'body', 'location', 'published_at']),
             'events' => Event::query()->whereIn('id', $eventIds)->orderBy('starts_at')->limit(5)->get(['id', 'title', 'category', 'town', 'area', 'starts_at', 'status']),
+            'profile_status' => [
+                'complete' => $organizations->filter(fn (Organization $organization) => filled($organization->phone) && filled($organization->description))->count(),
+                'needs_attention' => $organizations->filter(fn (Organization $organization) => blank($organization->phone) || blank($organization->description))->count(),
+            ],
+            'news_source_status' => [
+                'connected' => Announcement::query()->whereIn('organization_id', $organizationIds)->exists() ? 1 : 0,
+                'pending' => Announcement::query()->whereIn('organization_id', $organizationIds)->exists() ? 0 : 1,
+            ],
             'recent_activity' => $this->mergeActivity([
                 Announcement::query()->whereIn('organization_id', $organizationIds)->latest()->limit(3)->get()->map(fn (Announcement $alert) => [
                     'type' => 'alert',
@@ -386,6 +427,7 @@ class DashboardController extends Controller
             'role' => 'admin',
             'stats' => [
                 'users' => User::count(),
+                'roles' => \Spatie\Permission\Models\Role::count(),
                 'organizations' => Organization::count(),
                 'businesses' => Organization::query()->whereNotNull('owner_user_id')->count(),
                 'providers' => ServiceProvider::count(),
@@ -395,6 +437,12 @@ class DashboardController extends Controller
                 'products' => Product::count(),
                 'accommodations' => Accommodation::count(),
                 'flagged_content' => ModerationFlag::count(),
+            ],
+            'system_overview' => [
+                'total_listings' => Listing::count(),
+                'total_jobs' => JobPost::count(),
+                'total_bookings' => Booking::count(),
+                'towns_live' => 1,
             ],
             'quick_actions' => [
                 ['label' => 'Manage Users', 'href' => '/admin/users', 'icon' => 'users'],

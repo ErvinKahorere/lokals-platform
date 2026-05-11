@@ -24,7 +24,7 @@ export function AccommodationCard({
   compact?: boolean
 }) {
   const image = resolveMediaUrl(accommodation.image_url) ?? accommodation.image_url
-  const locationLabel = [accommodation.area, accommodation.town].filter(Boolean).join(', ') || accommodation.location || 'Windhoek'
+  const locationLabel = [accommodation.area, accommodation.town].filter(Boolean).join(', ') || accommodation.location || 'Okahandja'
   const ownerPhone = accommodation.owner?.phone ?? accommodation.business?.phone ?? accommodation.user?.phone
 
   return (

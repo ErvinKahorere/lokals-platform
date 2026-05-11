@@ -6,26 +6,30 @@ import { Button, EmptyState, Input, PageHeader, ProductCard, QueryState, SearchB
 import { isDemoMode } from '../config/appMode'
 import { useCreateProduct, useProducts, useSaleAlerts } from '../hooks/queries'
 import { getDisplayPrice } from '../lib/display'
+import { OKAHANDJA_AREAS, PILOT_TOWN } from '../lib/pilot'
+import { useAuthStore } from '../store/auth'
 import type { Product } from '../types'
 
-const categories = ['all', 'electronics', 'home', 'vehicles', 'clothing', 'food', 'services', 'more'] as const
+const categories = ['all', 'electronics', 'home', 'clothing', 'food', 'building', 'vehicles', 'services', 'other'] as const
 
 export function StorePage() {
+  const currentUser = useAuthStore((state) => state.user)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<(typeof categories)[number]>('all')
-  const [town, setTown] = useState('all')
+  const [area, setArea] = useState(currentUser?.default_area ?? '')
   const [sortBy, setSortBy] = useState<'newest' | 'price_low_high' | 'price_high_low'>('newest')
   const [saleOnly, setSaleOnly] = useState(false)
   const [verifiedOnly, setVerifiedOnly] = useState(false)
   const [step, setStep] = useState(0)
-  const [form, setForm] = useState({ title: '', description: '', category: 'electronics', town: 'Windhoek', area: 'Katutura', price: '' })
+  const [form, setForm] = useState({ title: '', description: '', category: 'electronics', town: PILOT_TOWN, area: currentUser?.default_area ?? OKAHANDJA_AREAS[0], price: '' })
   const [image, setImage] = useState<File | null>(null)
   const [successProduct, setSuccessProduct] = useState<Product | null>(null)
+  const contactLabel = currentUser?.phone ?? 'Your profile phone will be used'
 
   const productsQuery = useProducts({
     ...(search ? { search } : {}),
-    ...(category !== 'all' && category !== 'more' ? { category } : {}),
-    ...(town !== 'all' ? { town } : {}),
+    ...(category !== 'all' && category !== 'other' ? { category } : {}),
+    ...(area ? { area } : {}),
     ...(saleOnly ? { sale_items: 1 } : {}),
     ...(verifiedOnly ? { verified_sellers: 1 } : {}),
     sort: sortBy,
@@ -42,13 +46,13 @@ export function StorePage() {
       if (!name) continue
       const key = `${product.business?.id ?? product.user?.id ?? name}:${name}`
       const current = sellers.get(key)
-      sellers.set(key, {
-        id: product.business?.id,
-        name,
-        location: [product.area, product.town].filter(Boolean).join(', ') || 'Windhoek',
-        count: (current?.count ?? 0) + 1,
-        verified: Boolean(product.business?.is_verified),
-      })
+        sellers.set(key, {
+          id: product.business?.id,
+          name,
+          location: [product.area, product.town].filter(Boolean).join(', ') || PILOT_TOWN,
+          count: (current?.count ?? 0) + 1,
+          verified: Boolean(product.business?.is_verified),
+        })
     }
     return Array.from(sellers.values()).sort((a, b) => b.count - a.count).slice(0, 4)
   }, [products])
@@ -82,7 +86,7 @@ export function StorePage() {
   }
 
   const resetPost = () => {
-    setForm({ title: '', description: '', category: 'electronics', town: 'Windhoek', area: 'Katutura', price: '' })
+    setForm({ title: '', description: '', category: 'electronics', town: PILOT_TOWN, area: currentUser?.default_area ?? OKAHANDJA_AREAS[0], price: '' })
     setImage(null)
     setStep(0)
     setSuccessProduct(null)
@@ -93,20 +97,24 @@ export function StorePage() {
       <PageHeader
         eyebrow="Store"
         title="Marketplace"
-        description="Browse local products, promotions, and trusted sellers nearby."
+        description="Browse local products, promotions, and trusted Okahandja sellers nearby."
         actions={
           <SearchBar
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             onValueSelect={setSearch}
             recentKey="store"
-            suggestions={['Samsung phone', 'Food voucher', 'Home deals', 'Toyota Hilux']}
-            shortcuts={[{ label: 'Electronics', value: 'electronics' }, { label: 'Sale items', value: 'sale' }, { label: 'Home', value: 'home' }]}
-            placeholder="Search products..."
+            suggestions={['Samsung phone', 'Food voucher', 'Home deals', 'Cement special']}
+            shortcuts={[{ label: 'Electronics', value: 'electronics' }, { label: 'Sale items', value: 'sale' }, { label: 'Building', value: 'building' }]}
+            placeholder="Search products in Okahandja..."
             className="w-full md:w-80"
           />
         }
       />
+
+      <div className="inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1.5 text-sm font-semibold text-lokals-purple">
+        {area ? `${area}, ${PILOT_TOWN}` : PILOT_TOWN}
+      </div>
 
       <div className="flex flex-wrap gap-3">
         {categories.map((item) => (
@@ -116,16 +124,17 @@ export function StorePage() {
             onClick={() => setCategory(item)}
             className={`rounded-[18px] px-4 py-2 text-sm font-semibold transition ${category === item ? 'bg-lokals-purple text-white shadow-card' : 'bg-white text-lokals-charcoal shadow-soft'}`}
           >
-            {item === 'all' ? 'All' : item === 'more' ? 'More' : item.charAt(0).toUpperCase() + item.slice(1)}
+            {item === 'all' ? 'All' : item.charAt(0).toUpperCase() + item.slice(1)}
           </button>
         ))}
       </div>
 
       <div className="grid gap-3 md:grid-cols-4">
-        <Select value={town} onChange={(event) => setTown(event.target.value)}>
-          <option value="all">All towns</option>
-          <option value="Windhoek">Windhoek</option>
-          <option value="Swakopmund">Swakopmund</option>
+        <Select value={area} onChange={(event) => setArea(event.target.value)}>
+          <option value="">All Okahandja areas</option>
+          {OKAHANDJA_AREAS.map((item) => (
+            <option key={item} value={item}>{item}</option>
+          ))}
         </Select>
         <Select value={sortBy} onChange={(event) => setSortBy(event.target.value as typeof sortBy)}>
           <option value="newest">Newest</option>
@@ -155,7 +164,7 @@ export function StorePage() {
                   <p className="mt-3 text-lg font-semibold text-lokals-charcoal">{alert.title}</p>
                   <p className="mt-2 text-sm text-lokals-muted">{alert.body}</p>
                   <div className="mt-4 flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-lokals-charcoal">{alert.location ?? 'Windhoek'}</p>
+                    <p className="text-sm font-medium text-lokals-charcoal">{alert.location ?? PILOT_TOWN}</p>
                     <Button variant="secondary" onClick={() => setSaleOnly(true)}>View products</Button>
                   </div>
                 </div>
@@ -202,10 +211,22 @@ export function StorePage() {
                 <>
                   <Input value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} placeholder="Product title" required />
                   <Input value={form.price} onChange={(event) => setForm((current) => ({ ...current, price: event.target.value }))} placeholder="Price (optional)" />
-                  <Input value={form.category} onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))} placeholder="Category" />
+                  <Select value={form.category} onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}>
+                    {categories.filter((item) => item !== 'all').map((item) => (
+                      <option key={item} value={item}>{item.charAt(0).toUpperCase() + item.slice(1)}</option>
+                    ))}
+                  </Select>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <Input value={form.town} onChange={(event) => setForm((current) => ({ ...current, town: event.target.value }))} placeholder="Town" />
-                    <Input value={form.area} onChange={(event) => setForm((current) => ({ ...current, area: event.target.value }))} placeholder="Area" />
+                    <Input value={form.town} readOnly placeholder="Town" />
+                    <Select value={form.area} onChange={(event) => setForm((current) => ({ ...current, area: event.target.value }))}>
+                      {OKAHANDJA_AREAS.map((item) => (
+                        <option key={item} value={item}>{item}</option>
+                      ))}
+                    </Select>
+                  </div>
+                  <div className="rounded-[22px] border border-lokals-border bg-slate-50 p-4">
+                    <p className="text-sm font-medium text-lokals-charcoal">Buyer contact</p>
+                    <p className="mt-1 text-sm text-lokals-muted">{contactLabel}</p>
                   </div>
                   <TextArea value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} placeholder="Short description" rows={3} />
                 </>

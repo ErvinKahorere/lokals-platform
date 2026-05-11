@@ -61,6 +61,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
     final user = auth.user;
+    final town = 'Okahandja';
     final events = ref.watch(eventsProvider);
     final eventFeed = events.asData?.value ?? const <EventModel>[];
     final filtered = eventFeed.where(_matchesSearchAndCategory).toList();
@@ -98,7 +99,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
             SectionTitle(
               eyebrow: 'Events',
               title: 'What is happening near you?',
-              subtitle: 'Browse local events around ${[user?.defaultArea, user?.defaultTown].whereType<String>().join(', ')}.',
+              subtitle: 'Browse local events around ${[user?.defaultArea, town].whereType<String>().where((value) => value.isNotEmpty).join(', ')}.',
             ),
             const SizedBox(height: 14),
             Container(
@@ -107,10 +108,10 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                 color: AppColors.purpleSoftAlt,
                 borderRadius: BorderRadius.circular(999),
               ),
-              child: Text(
-                [user?.defaultArea, user?.defaultTown].whereType<String>().join(', ').isEmpty
-                    ? 'Windhoek'
-                    : [user?.defaultArea, user?.defaultTown].whereType<String>().join(', '),
+                child: Text(
+                [user?.defaultArea, town].whereType<String>().where((value) => value.isNotEmpty).join(', ').isEmpty
+                    ? town
+                    : [user?.defaultArea, town].whereType<String>().where((value) => value.isNotEmpty).join(', '),
                 style: AppTextStyles.caption.copyWith(
                   color: AppColors.primaryPurple,
                   fontWeight: FontWeight.w700,
@@ -120,11 +121,11 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
             const SizedBox(height: 14),
             AppSearchBar(
               controller: _searchController,
-              hintText: 'Search events...',
+              hintText: 'Search events in Okahandja...',
               recentKey: 'events',
               onChanged: (_) => setState(() {}),
               onValueSelected: (_) => setState(() {}),
-              suggestions: const ['Market', 'Workshop', 'Music night', 'Public meeting'],
+              suggestions: const ['Weekend market', 'Workshop', 'Music night', 'Public meeting'],
             ),
             const SizedBox(height: 14),
             Wrap(
@@ -169,7 +170,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                   ('all', 'All'),
                   ('today', 'Today'),
                   ('tomorrow', 'Tomorrow'),
-                  ('weekend', 'This Weekend'),
+                  ('weekend', 'Weekend'),
                   ('month', 'This Month'),
                 ])
                   ChoiceChip(
@@ -188,12 +189,9 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
             ),
             const SizedBox(height: 18),
             if (events.isLoading)
-              Column(
-                children: const [
-                  LoadingSkeleton(height: 220),
-                  SizedBox(height: 12),
-                  LoadingSkeleton(height: 220),
-                ],
+              const LokalsLoadingScreen(
+                title: 'Loading events',
+                message: 'Fetching upcoming Okahandja events and tickets...',
               )
             else if (events.hasError)
               EmptyStateView(
@@ -221,7 +219,7 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                 const SizedBox(height: 18),
               ],
               _EventsSection(
-                title: 'Events Near You',
+                title: 'Upcoming events',
                 items: nearby,
               ),
               const SizedBox(height: 18),
@@ -262,12 +260,28 @@ class _EventsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final headline = title == 'Saved Events'
+        ? 'Your saved picks'
+        : title == 'From Followed Organizers'
+            ? 'From organizers you trust'
+            : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Expanded(child: Text(title, style: AppTextStyles.h3)),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: AppTextStyles.h3),
+                  if (headline != null) ...[
+                    const SizedBox(height: 4),
+                    Text(headline, style: AppTextStyles.bodyMuted),
+                  ],
+                ],
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 12),

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import type { Product } from '../../types'
 import { getDisplayPrice, resolveMediaUrl } from '../../lib/display'
 import { SaveButton } from '../experience/SaveButton'
+import { QuickCallButton } from '../experience/QuickCallButton'
 import { Button } from './Button'
 import { Badge } from './Badge'
 import { Card } from './Card'
@@ -15,8 +16,9 @@ export function ProductCard({
   compact?: boolean
 }) {
   const sellerName = product.business?.name ?? product.user?.business_name ?? product.user?.name ?? 'Local seller'
-  const locationLabel = [product.area, product.town].filter(Boolean).join(', ') || 'Windhoek'
+  const locationLabel = [product.area, product.town].filter(Boolean).join(', ') || 'Okahandja'
   const image = resolveMediaUrl(product.image_url) ?? product.image_url
+  const sellerPhone = product.business?.phone ?? product.user?.phone ?? undefined
 
   return (
     <Card className="overflow-hidden bg-white p-0">
@@ -45,9 +47,10 @@ export function ProductCard({
           {locationLabel}
         </p>
         {!compact ? <p className="mt-3 line-clamp-2 text-sm text-lokals-muted">{product.description ?? 'Local product listing.'}</p> : null}
-        <div className="mt-4">
-          <Link to={`/store/${product.id}`}>
-            <Button className="w-full">View details</Button>
+        <div className="mt-4 flex gap-2">
+          <QuickCallButton phone={sellerPhone} className="flex-1" />
+          <Link to={`/store/${product.id}`} className="flex-1">
+            <Button className="w-full">View</Button>
           </Link>
         </div>
       </div>

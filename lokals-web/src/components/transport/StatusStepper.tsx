@@ -7,7 +7,8 @@ export function StatusStepper({
   current?: string | null
   updatedAt?: string | null
 }) {
-  const currentIndex = Math.max(steps.findIndex((step) => step === current), 0)
+  const normalizedCurrent = current === 'assigned' ? 'accepted' : current
+  const currentIndex = Math.max(steps.findIndex((step) => step === normalizedCurrent), 0)
 
   return (
     <div className="rounded-[24px] border border-lokals-border bg-white p-5">
@@ -20,7 +21,7 @@ export function StatusStepper({
       <div className="mt-4 space-y-3">
         {steps.map((step, index) => {
           const isDone = index <= currentIndex
-          const isCurrent = step === current
+          const isCurrent = step === normalizedCurrent
           return (
             <div key={step} className="flex items-start gap-3">
               <div className="flex flex-col items-center">

@@ -7,6 +7,13 @@ import { EventDateBadge } from './EventDateBadge'
 import { SaveEventButton } from './SaveEventButton'
 
 export function EventCard({ event }: { event: EventItem }) {
+  const locationLabel = event.venue_name ?? event.location_label ?? event.location ?? ([event.area, event.town].filter(Boolean).join(', ') || 'Okahandja')
+  const priceLabel = event.ticket_price_from == null || Number(event.ticket_price_from) === 0
+    ? 'Free or RSVP'
+    : event.ticket_price_to != null && event.ticket_price_to !== event.ticket_price_from
+      ? `N$${event.ticket_price_from} - N$${event.ticket_price_to}`
+      : `From N$${event.ticket_price_from}`
+
   return (
     <article className="overflow-hidden rounded-[24px] border border-lokals-border bg-white shadow-card transition duration-200 hover:-translate-y-1 hover:shadow-soft-lg">
       <div className="h-44 bg-slate-100">
@@ -28,10 +35,10 @@ export function EventCard({ event }: { event: EventItem }) {
           <EventDateBadge startsAt={event.starts_at} endsAt={event.ends_at} />
         </div>
         <p className="line-clamp-2 text-sm text-lokals-muted">{event.description ?? 'Local event details and community activity.'}</p>
-        <p className="inline-flex items-center gap-2 text-sm text-lokals-muted"><MapPin className="h-4 w-4" />{event.location_label ?? event.location ?? ([event.area, event.town].filter(Boolean).join(', ') || 'Windhoek')}</p>
+        <p className="inline-flex items-center gap-2 text-sm text-lokals-muted"><MapPin className="h-4 w-4" />{locationLabel}</p>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold text-lokals-charcoal">{event.ticket_price_from == null || Number(event.ticket_price_from) === 0 ? 'Free or RSVP' : `From N$${event.ticket_price_from}`}</p>
+            <p className="text-sm font-semibold text-lokals-charcoal">{priceLabel}</p>
             <p className="text-xs text-lokals-muted">{event.attendees_count ?? 0} attending</p>
           </div>
           <div className="flex items-center gap-2">

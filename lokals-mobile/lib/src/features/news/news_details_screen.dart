@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -21,6 +22,13 @@ class NewsDetailsScreen extends ConsumerStatefulWidget {
 
 class _NewsDetailsScreenState extends ConsumerState<NewsDetailsScreen> {
   bool _followBusy = false;
+
+  String _publishedLabel(String? value) {
+    if (value == null || value.isEmpty) return 'Latest update';
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) return 'Latest update';
+    return DateFormat('EEE, d MMM • HH:mm').format(parsed.toLocal());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,6 +86,20 @@ class _NewsDetailsScreenState extends ConsumerState<NewsDetailsScreen> {
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  AppBadge(label: item.category.replaceAll('_', ' '), tone: AppBadgeTone.brand),
+                  AppBadge(
+                    label: [item.area, item.town].whereType<String>().where((value) => value.isNotEmpty).join(', ').isEmpty
+                        ? 'Okahandja'
+                        : [item.area, item.town].whereType<String>().where((value) => value.isNotEmpty).join(', '),
+                    tone: AppBadgeTone.neutral,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               Text(item.title, style: AppTextStyles.h1),
               const SizedBox(height: 16),
               Container(
@@ -103,6 +125,8 @@ class _NewsDetailsScreenState extends ConsumerState<NewsDetailsScreen> {
                     Text(item.sourceName, style: AppTextStyles.h4.copyWith(fontSize: 16)),
                     const SizedBox(height: 4),
                     Text(item.sourceDomain ?? item.sourceUrl, style: AppTextStyles.bodyMuted),
+                    const SizedBox(height: 4),
+                    Text(_publishedLabel(item.publishedAt), style: AppTextStyles.caption),
                     const SizedBox(height: 12),
                     Text(
                       item.complianceNotice ?? 'Content is provided by external sources. LOKALS does not own this content.',
@@ -112,6 +136,8 @@ class _NewsDetailsScreenState extends ConsumerState<NewsDetailsScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              const Text('Snippet', style: AppTextStyles.h4),
+              const SizedBox(height: 8),
               Text(item.summary, style: AppTextStyles.body.copyWith(height: 1.6)),
               const SizedBox(height: 16),
               if (sourceEntity != null)
@@ -131,7 +157,7 @@ class _NewsDetailsScreenState extends ConsumerState<NewsDetailsScreen> {
               ),
               const SizedBox(height: 12),
               AppButton(
-                label: 'Open in browser',
+                label: 'Open original article',
                 variant: AppButtonVariant.secondary,
                 onPressed: () => context.push(
                   '/article?url=${Uri.encodeComponent(item.externalUrl)}&source=${Uri.encodeComponent(item.sourceName)}&title=${Uri.encodeComponent(item.title)}',
@@ -159,7 +185,7 @@ class _NewsDetailsScreenState extends ConsumerState<NewsDetailsScreen> {
                               const SizedBox(height: 8),
                               Text(story.title, style: AppTextStyles.h4),
                               const SizedBox(height: 8),
-                              Text(story.summary, style: AppTextStyles.bodyMuted),
+                              Text(story.summary, style: AppTextStyles.bodyMuted, maxLines: 3, overflow: TextOverflow.ellipsis),
                             ],
                           ),
                         ),

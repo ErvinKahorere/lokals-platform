@@ -36,7 +36,7 @@ export function ArticleBrowserPage() {
             </p>
             <div className="mt-4 rounded-[20px] bg-lokals-surface p-4 text-sm text-lokals-muted">
               <p className="font-semibold text-lokals-charcoal">{domain}</p>
-              <p className="mt-2">Content is provided by external sources. LOKALS does not own this content.</p>
+              <p className="mt-2">LOKALS only shows a source-attributed snippet and sends you to the original publisher for the full article.</p>
             </div>
           </div>
         </div>
@@ -66,6 +66,7 @@ export function ArticleBrowserPage() {
             Back to news
           </Link>
         </div>
+        <p className="mt-4 text-xs text-lokals-muted">If a new tab did not open automatically, use "Continue to article" above.</p>
       </SectionCard>
     </div>
   )

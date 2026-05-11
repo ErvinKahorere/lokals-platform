@@ -131,7 +131,7 @@ export const useJob = (id?: string) =>
 export const useWorkers = (params?: Record<string, string | number | undefined>) =>
   useQuery({
     queryKey: ['workers', params],
-    queryFn: async () => toPaginated<Worker>((await api.get('/workers', { params })).data),
+    queryFn: async () => toPaginated<Worker>((await api.get('/workers', { params: applyPilotLocation(params) })).data),
   })
 
 export const useWorker = (id?: string) =>

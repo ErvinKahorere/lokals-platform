@@ -5,6 +5,7 @@ import { Button, EmptyState, QueryState, SectionCard, Select, StatusBadge } from
 import { RequestSuccessState } from '../components/transport/RequestSuccessState'
 import { useCreateSos, useSosFeed } from '../hooks/queries'
 import { getApiErrorMessage } from '../lib/api'
+import { PILOT_TOWN } from '../lib/pilot'
 import { useAuthStore } from '../store/auth'
 
 const emergencyTypes = ['Personal safety', 'Medical', 'Roadside', 'Fire', 'Public disturbance']
@@ -14,7 +15,7 @@ const emergencyMessages = [
   'Unsafe situation, need help now',
   'Roadside emergency',
 ]
-const emergencyLocations = ['Windhoek CBD', 'Khomasdal', 'Katutura', 'Klein Windhoek', 'Hosea Kutako International Airport']
+const emergencyLocations = ['Nau-Aib football ground', 'Okahandja State Clinic', 'Okahandja Police Station', 'Okahandja Town Council', 'Osona Village entrance']
 
 export function SosPage() {
   const [countdown, setCountdown] = useState<number | null>(null)
@@ -30,7 +31,7 @@ export function SosPage() {
   const [area, town] = useMemo(() => {
     const parts = location.split(',').map((part) => part.trim()).filter(Boolean)
     if (parts.length > 1) return [parts[0], parts[1]]
-    return [location, 'Windhoek']
+    return [location, PILOT_TOWN]
   }, [location])
 
   useEffect(() => {
@@ -128,8 +129,8 @@ export function SosPage() {
             </div>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               <StatusBadge value={area} tone="danger" />
-              <StatusBadge value={town} tone="danger" />
-            </div>
+                    <StatusBadge value={town} tone="danger" />
+                  </div>
             {error ? <p className="mt-4 text-sm font-medium text-lokals-danger">{error}</p> : null}
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Button variant="danger" disabled={createSos.isPending} onClick={() => { setSent(false); setCountdown(3) }}>
@@ -174,7 +175,7 @@ export function SosPage() {
       </div>
 
       <SectionCard className="border-rose-200 bg-white">
-        <h3 className="text-lg font-semibold text-lokals-charcoal">Recent SOS alerts</h3>
+        <h3 className="text-lg font-semibold text-lokals-charcoal">SOS history</h3>
         <QueryState isLoading={sosFeedQuery.isLoading} error={sosFeedQuery.error} empty={(sosFeedQuery.data?.data ?? []).length === 0}>
           <div className="mt-4 space-y-3">
             {(sosFeedQuery.data?.data ?? []).slice(0, 5).map((alert) => (

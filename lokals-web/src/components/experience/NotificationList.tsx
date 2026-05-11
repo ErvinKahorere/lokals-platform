@@ -1,52 +1,54 @@
-import { BellRing, BriefcaseBusiness, CalendarClock, HeartHandshake, Newspaper, ShieldAlert, CarFront, Truck, Settings2 } from 'lucide-react'
+import { BellRing, BriefcaseBusiness, CalendarClock, HeartHandshake, Newspaper, ShieldAlert, CarFront, Truck, Settings2, ClipboardList, Ticket, Megaphone } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { NotificationItem } from '../../types'
 import { EmptyState, StatusBadge } from '../Ui'
+import { resolveNotificationHref } from '../../lib/notificationRoutes'
 
 const iconMap = {
   booking_update: CalendarClock,
+  booking_status: CalendarClock,
   job_update: BriefcaseBusiness,
-  alert_from_followed: ShieldAlert,
+  job_application: BriefcaseBusiness,
+  municipal_alert: ShieldAlert,
+  report_update: ClipboardList,
+  report_created: ClipboardList,
+  alert_from_followed: Megaphone,
   news_update: Newspaper,
   event_reminder: CalendarClock,
-  ticket_update: CalendarClock,
+  ticket_update: Ticket,
+  event_ticket: Ticket,
   delivery_update: Truck,
   ride_update: CarFront,
   new_follower: HeartHandshake,
   system: Settings2,
 }
 
-const targetHref = (notification: NotificationItem) => {
-  if (notification.target?.href) {
-    return notification.target.href
-  }
-
-  if (notification.target?.external_url) {
-    return `/article?${new URLSearchParams({
-      url: notification.target.external_url,
-      source: notification.target.source_name ?? 'external source',
-      title: notification.target.title ?? notification.title,
-    }).toString()}`
-  }
-
-  switch (notification.type) {
+const typeLabel = (type?: string) => {
+  switch (type) {
+    case 'municipal_alert':
+      return 'Municipal alert'
+    case 'report_update':
+    case 'report_created':
+      return 'Report update'
     case 'booking_update':
-      return '/dashboard/bookings'
+    case 'booking_status':
+      return 'Booking update'
     case 'job_update':
-      return '/jobs'
-    case 'news_update':
-      return '/news'
-    case 'alert_from_followed':
-      return '/alerts'
+    case 'job_application':
+      return 'Job update'
     case 'event_reminder':
+      return 'Event reminder'
     case 'ticket_update':
-      return '/dashboard/tickets'
+    case 'event_ticket':
+      return 'Ticket update'
     case 'delivery_update':
-      return '/delivery'
+      return 'Delivery update'
     case 'ride_update':
-      return '/ride'
+      return 'Ride update'
+    case 'news_update':
+      return 'News update'
     default:
-      return '/notifications'
+      return 'System'
   }
 }
 
@@ -58,7 +60,15 @@ const sectionLabel = (createdAt?: string | null) => {
   return sameDay ? 'Today' : 'Earlier'
 }
 
-export function NotificationList({ items }: { items: NotificationItem[] }) {
+export function NotificationList({
+  items,
+  onMarkRead,
+  onOpen,
+}: {
+  items: NotificationItem[]
+  onMarkRead?: (id: string) => void
+  onOpen?: (notification: NotificationItem) => void
+}) {
   if (items.length === 0) {
     return <EmptyState title="No notifications yet." body="Booking updates, alerts, reminders, and local activity will show here." />
   }
@@ -76,21 +86,44 @@ export function NotificationList({ items }: { items: NotificationItem[] }) {
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">{section}</p>
             {sectionItems.map((item) => {
               const Icon = iconMap[item.type as keyof typeof iconMap] ?? BellRing
-              const href = targetHref(item)
+              const href = resolveNotificationHref(item)
 
               return (
-                <Link key={item.id} to={href} className={`block rounded-[20px] border p-4 transition hover:-translate-y-0.5 ${item.read_at ? 'border-lokals-border bg-white' : 'border-violet-200 bg-violet-50/40'}`}>
+                <Link
+                  key={item.id}
+                  to={href}
+                  onClick={() => onOpen?.(item)}
+                  className={`block rounded-[20px] border p-4 transition hover:-translate-y-0.5 ${item.read_at ? 'border-lokals-border bg-white' : 'border-violet-200 bg-violet-50/40'}`}
+                >
                   <div className="flex items-start gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-lokals-purple shadow-sm">
                       <Icon className="h-5 w-5" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-3">
-                        <p className="font-semibold text-lokals-charcoal">{item.title}</p>
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-lokals-muted">{typeLabel(item.type)}</p>
+                          <p className="mt-1 font-semibold text-lokals-charcoal">{item.title}</p>
+                        </div>
                         <StatusBadge value={item.read_at ? 'Read' : 'Unread'} tone={item.read_at ? 'neutral' : 'accent'} />
                       </div>
                       <p className="mt-1 text-sm text-lokals-muted">{item.body}</p>
-                      <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-lokals-muted">{item.created_at ?? 'Recent'}</p>
+                      <div className="mt-3 flex items-center justify-between gap-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lokals-muted">{item.created_at ?? 'Recent'}</p>
+                        {!item.read_at && onMarkRead ? (
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.preventDefault()
+                              event.stopPropagation()
+                              onMarkRead(item.id)
+                            }}
+                            className="text-xs font-semibold text-lokals-purple transition hover:text-lokals-charcoal"
+                          >
+                            Mark read
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                 </Link>

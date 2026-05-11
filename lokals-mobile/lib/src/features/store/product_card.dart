@@ -7,7 +7,9 @@ import '../../config/app_config.dart';
 import '../../core/experience_helpers.dart';
 import '../../core/models.dart';
 import '../../../shared/widgets/app_badge.dart';
+import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/experience/quick_call_button.dart';
 import '../../../shared/widgets/experience/save_button.dart';
 
 class ProductCard extends StatelessWidget {
@@ -23,6 +25,7 @@ class ProductCard extends StatelessWidget {
     final imageUrl = resolveMediaUrl(product.imageUrl);
     final sellerName = product.businessName ?? product.userBusinessName ?? product.userName ?? 'Local seller';
     final locationLabel = [product.area, product.town].whereType<String>().where((value) => value.isNotEmpty).join(', ');
+    final sellerPhone = product.businessPhone ?? product.userPhone;
 
     return InkWell(
       borderRadius: BorderRadius.circular(22),
@@ -123,6 +126,22 @@ class ProductCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.caption,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: QuickCallButton(phone: sellerPhone),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: AppButton(
+                          label: 'View',
+                          expanded: false,
+                          onPressed: () => context.push('/store/${product.id}'),
                         ),
                       ),
                     ],

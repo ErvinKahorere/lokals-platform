@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
+import { BellRing, BriefcaseBusiness, CalendarClock, CarFront, ClipboardList, Bookmark, Newspaper, ShieldAlert, Ticket, Truck, TriangleAlert } from 'lucide-react'
 import { EmptyState, PageHeader, QueryState, SectionCard, StatusBadge } from '../components/Ui'
 import { useActivityFeed } from '../hooks/queries'
+import { normalizeNotificationHref } from '../lib/notificationRoutes'
 
 const sectionLabel = (timestamp?: string | null) => {
   if (!timestamp) return 'Earlier'
@@ -12,6 +14,33 @@ const sectionLabel = (timestamp?: string | null) => {
 export function ActivityPage() {
   const activityQuery = useActivityFeed()
   const items = activityQuery.data?.data ?? []
+
+  const iconForType = (type: string) => {
+    switch (type) {
+      case 'booking':
+        return CalendarClock
+      case 'ticket':
+        return Ticket
+      case 'delivery':
+        return Truck
+      case 'ride':
+        return CarFront
+      case 'job_application':
+        return BriefcaseBusiness
+      case 'report':
+        return ClipboardList
+      case 'alert':
+        return ShieldAlert
+      case 'saved_item':
+        return Bookmark
+      case 'notification':
+        return BellRing
+      case 'sos':
+        return TriangleAlert
+      default:
+        return Newspaper
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -28,12 +57,20 @@ export function ActivityPage() {
                 <div key={section} className="space-y-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">{section}</p>
                   {sectionItems.map((item, index) => (
-                    <Link key={`${item.type}-${item.title}-${index}`} to={item.route} className="block rounded-[22px] border border-lokals-border bg-white p-4 shadow-card transition hover:-translate-y-0.5">
+                    <Link key={`${item.type}-${item.title}-${index}`} to={normalizeNotificationHref(item.route)} className="block rounded-[22px] border border-lokals-border bg-white p-4 shadow-card transition hover:-translate-y-0.5">
                       <div className="flex items-start justify-between gap-3">
-                        <div>
+                        <div className="flex min-w-0 items-start gap-3">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-50 text-lokals-purple">
+                            {(() => {
+                              const Icon = iconForType(item.type)
+                              return <Icon className="h-5 w-5" />
+                            })()}
+                          </div>
+                          <div className="min-w-0">
                           <p className="font-semibold text-lokals-charcoal">{item.title}</p>
                           <p className="mt-1 text-sm text-lokals-muted">{item.body}</p>
                           <p className="mt-2 text-xs text-lokals-muted">{item.timestamp ?? 'Recent'}</p>
+                          </div>
                         </div>
                         <StatusBadge value={item.status ?? item.type} tone={item.type === 'sos' ? 'danger' : item.type === 'alert' ? 'accent' : 'neutral'} />
                       </div>

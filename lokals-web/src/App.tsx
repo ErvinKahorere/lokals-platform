@@ -52,6 +52,7 @@ import { DashboardPage } from './pages/dashboard/DashboardPage'
 import { CitizenDashboardPage } from './pages/dashboard/CitizenDashboardPage'
 import { WorkerDashboardPage } from './pages/dashboard/WorkerDashboardPage'
 import { ServiceProviderDashboardPage } from './pages/dashboard/ServiceProviderDashboardPage'
+import { SellerDashboardPage } from './pages/dashboard/SellerDashboardPage'
 import { SearchResultsPage } from './pages/SearchResultsPage'
 import { ActivityPage } from './pages/ActivityPage'
 import { SavedItemsPage } from './pages/dashboard/SavedItemsPage'
@@ -191,11 +192,14 @@ export default function App() {
           <Route path="/saved-items" element={<ProtectedRoute><SavedItemsPage /></ProtectedRoute>} />
           <Route path="/dashboard/support" element={<ProtectedRoute><Navigate to="/settings" replace /></ProtectedRoute>} />
           <Route path="/dashboard/business-shortcuts" element={<ProtectedRoute><Navigate to="/dashboard" replace /></ProtectedRoute>} />
+          <Route path="/dashboard/seller" element={<BusinessRoute><SellerDashboardPage /></BusinessRoute>} />
           <Route path="/dashboard/business" element={<BusinessRoute><BusinessDashboardPage /></BusinessRoute>} />
           <Route path="/dashboard/service-provider" element={<ServiceProviderRoute><ServiceProviderDashboardPage /></ServiceProviderRoute>} />
           <Route path="/dashboard/organization" element={<OrganizationRoute><OrganizationDashboardPage /></OrganizationRoute>} />
           <Route path="/dashboard/municipality" element={<MunicipalityRoute><MunicipalityDashboardPage /></MunicipalityRoute>} />
           <Route path="/dashboard/town-manager" element={<MunicipalityRoute><MunicipalityDashboardPage /></MunicipalityRoute>} />
+          <Route path="/dashboard/town-manager/reports" element={<MunicipalityRoute><AdminReportsPage /></MunicipalityRoute>} />
+          <Route path="/dashboard/town-manager/reports/:id" element={<MunicipalityRoute><ReportDetailsPage /></MunicipalityRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />

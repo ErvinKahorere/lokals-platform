@@ -36,7 +36,7 @@ export function CitizenDashboardPage() {
         </DashboardSection>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 xl:grid-cols-3">
         <DashboardSection title="Upcoming bookings" description="Your next confirmed or pending appointments.">
           <div className="space-y-3">
             {((dashboard?.upcoming_bookings as any[]) ?? []).slice(0, 4).map((booking) => (
@@ -45,8 +45,40 @@ export function CitizenDashboardPage() {
                 <p className="mt-1 text-sm text-lokals-muted">{booking.service_provider?.name ?? 'Provider'} - {booking.booking_date}</p>
               </div>
             ))}
+            {!((dashboard?.upcoming_bookings as any[]) ?? []).length ? <p className="text-sm text-lokals-muted">Your next bookings will show up here once you start booking local services.</p> : null}
           </div>
         </DashboardSection>
+        <DashboardSection title="My reports" description="Recent civic issues and where they stand.">
+          <div className="space-y-3">
+            {(((dashboard as any)?.my_reports as any[]) ?? []).slice(0, 4).map((report) => (
+              <div key={report.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
+                <p className="font-semibold text-lokals-charcoal">{report.title}</p>
+                <p className="mt-1 text-sm text-lokals-muted">{report.status ?? 'open'} | {report.priority ?? 'standard'}</p>
+              </div>
+            ))}
+            {!(((dashboard as any)?.my_reports as any[]) ?? []).length ? <p className="text-sm text-lokals-muted">Reports you send through LOKALS will appear here.</p> : null}
+          </div>
+        </DashboardSection>
+        <DashboardSection title="My tickets and alerts" description="Stay close to event access and urgent local updates.">
+          <div className="space-y-3">
+            {(((dashboard as any)?.my_tickets as any[]) ?? []).slice(0, 2).map((ticket) => (
+              <div key={`ticket-${ticket.id}`} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
+                <p className="font-semibold text-lokals-charcoal">{ticket.event?.title ?? `Ticket ${ticket.ticket_code}`}</p>
+                <p className="mt-1 text-sm text-lokals-muted">{ticket.status ?? 'reserved'}</p>
+              </div>
+            ))}
+            {(((dashboard as any)?.recent_alerts as any[]) ?? []).slice(0, 2).map((alert) => (
+              <div key={`alert-${alert.id}`} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
+                <p className="font-semibold text-lokals-charcoal">{alert.title}</p>
+                <p className="mt-1 text-sm text-lokals-muted">{alert.priority ?? 'Local update'}</p>
+              </div>
+            ))}
+            {!(((dashboard as any)?.my_tickets as any[]) ?? []).length && !(((dashboard as any)?.recent_alerts as any[]) ?? []).length ? <p className="text-sm text-lokals-muted">Tickets and alerts will appear here as you reserve events and follow town updates.</p> : null}
+          </div>
+        </DashboardSection>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
         <DashboardSection title="Recent activity" description="Recent account movement across bookings, tickets, and reports.">
           <RecentActivityList items={(dashboard?.recent_activity as any[]) ?? []} />
         </DashboardSection>

@@ -119,16 +119,6 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                             if (auth.token != null) SaveEventButton(eventId: event.id, isSaved: event.isSaved),
                             if (auth.token != null) EventReminderButton(eventId: event.id, startsAt: event.startsAt),
                             AddToCalendarButton(icsUrl: event.calendar?.icsUrl),
-                            AppButton(
-                              label: 'Share',
-                              expanded: false,
-                              variant: AppButtonVariant.secondary,
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Share is coming soon.')),
-                                );
-                              },
-                            ),
                           ],
                         ),
                       ],
@@ -172,6 +162,13 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                           event.description ?? 'Event details and attendance information will appear here.',
                           style: AppTextStyles.bodyMuted,
                         ),
+                        if (organizer?.phone != null || organizer?.whatsapp != null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            organizer?.whatsapp ?? organizer?.phone ?? '',
+                            style: AppTextStyles.caption,
+                          ),
+                        ],
                         const SizedBox(height: 12),
                         Wrap(
                           spacing: 10,
@@ -331,11 +328,22 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 ],
               );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => const Center(
-          child: EmptyStateView(
-            title: 'Event unavailable',
-            body: 'We could not load this event right now.',
+        loading: () => const LokalsLoadingScreen(
+          title: 'Loading event',
+          message: 'Fetching event details, tickets, and calendar actions...',
+        ),
+        error: (error, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: EmptyStateView(
+              title: 'Event unavailable',
+              body: 'We could not load this event right now.',
+              action: AppButton(
+                label: 'Retry',
+                expanded: false,
+                onPressed: () => ref.invalidate(eventDetailsProvider(widget.eventId)),
+              ),
+            ),
           ),
         ),
       ),

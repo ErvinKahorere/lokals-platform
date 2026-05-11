@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_text_styles.dart';
+import '../../core/role_routing.dart';
 import '../../config/app_config.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
@@ -28,6 +30,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     'alerts_from_followed_entities': true,
     'booking_updates': true,
     'job_updates': true,
+    'event_updates': true,
     'news_updates': true,
     'promotions': true,
     'city_alerts': true,
@@ -152,10 +155,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                     : 'citizen'),
                             isBusy: auth.isLoading,
                             onSelected: (role) async {
-                              await ref
+                              final nextUser = await ref
                                   .read(authControllerProvider.notifier)
                                   .switchRole(role);
                               ref.invalidate(profileSummaryProvider);
+                              if (!context.mounted) {
+                                return;
+                              }
+                              context.go(
+                                roleHomePath(nextUser?.currentRole ?? role),
+                              );
                             },
                           ),
                         ],
@@ -219,12 +228,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SectionTitle(
-                          title: 'Privacy and support',
-                          subtitle: 'Profile visibility, support, and reporting stay simple here.',
+                          title: 'Privacy',
+                          subtitle: 'Keep profile visibility and personal details predictable.',
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Current profile visibility follows the value saved in your profile. Blocked users and deeper support tools can be expanded later without breaking this flow.',
+                          'Current profile visibility follows the value saved in your profile. More detailed privacy controls can be added later without changing your account flow.',
+                          style: AppTextStyles.bodyMuted,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  AppCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SectionTitle(
+                          title: 'Help & support',
+                          subtitle: 'Get help fast if something in your account does not look right.',
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Use Activity to track notifications and reports, or visit your Profile shortcuts to reach bookings, tickets, and saved items quickly.',
                           style: AppTextStyles.bodyMuted,
                         ),
                       ],

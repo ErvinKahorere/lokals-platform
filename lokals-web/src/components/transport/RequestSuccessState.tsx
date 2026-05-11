@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Check } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 
@@ -22,7 +23,7 @@ export function RequestSuccessState({
   return (
     <Card className="rounded-[28px] border border-emerald-200 bg-emerald-50/70 p-6">
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-        <span className="text-2xl font-bold">✓</span>
+        <Check className="h-7 w-7" />
       </div>
       <h3 className="mt-4 text-2xl font-semibold text-lokals-charcoal">{title}</h3>
       <p className="mt-2 text-sm leading-6 text-lokals-muted">{body}</p>

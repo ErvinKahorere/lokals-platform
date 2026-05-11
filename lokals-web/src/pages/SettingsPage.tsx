@@ -1,21 +1,23 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Bell, Building2, MapPin, Palette, Shield, UserRoundCog } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Bell, Building2, CircleHelp, MapPin, Palette, Shield, UserRoundCog } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
 import { AppearanceSettings } from '../components/account/AppearanceSettings'
 import { LocationSettings } from '../components/account/LocationSettings'
 import { NotificationPreferences } from '../components/account/NotificationPreferences'
 import { RoleSwitcher } from '../components/account/RoleSwitcher'
 import { roleLabel } from '../components/account/accountUtils'
-import { Button, PageHeader, SectionCard } from '../components/Ui'
+import { Button, EmptyState, PageHeader, QueryState, SectionCard } from '../components/Ui'
 import { useMe, useMyBusinesses, usePreferences, useSwitchRole, useUpdatePreferences, useUpdateProfile } from '../hooks/queries'
 import { normalizePilotArea, PILOT_LOCATION_MESSAGE, PILOT_TOWN } from '../lib/pilot'
+import { getRoleHomePath } from '../lib/roles'
 
 type AppearanceMode = 'light' | 'system' | 'dark'
 
 const appearanceStorageKey = 'lokals-appearance'
 
 export function SettingsPage() {
+  const navigate = useNavigate()
   const meQuery = useMe()
   const preferencesQuery = usePreferences()
   const businessesQuery = useMyBusinesses()
@@ -42,6 +44,7 @@ export function SettingsPage() {
     alerts_from_followed_entities: true,
     booking_updates: true,
     job_updates: true,
+    event_updates: true,
     news_updates: true,
     promotions: true,
     city_alerts: true,
@@ -56,6 +59,7 @@ export function SettingsPage() {
       alerts_from_followed_entities: preferencesQuery.data?.notification_preferences?.alerts_from_followed_entities ?? true,
       booking_updates: preferencesQuery.data?.notification_preferences?.booking_updates ?? true,
       job_updates: preferencesQuery.data?.notification_preferences?.job_updates ?? true,
+      event_updates: preferencesQuery.data?.notification_preferences?.event_updates ?? true,
       news_updates: preferencesQuery.data?.notification_preferences?.news_updates ?? true,
       promotions: preferencesQuery.data?.notification_preferences?.promotions ?? preferencesQuery.data?.notification_preferences?.sale_alerts ?? true,
       city_alerts: preferencesQuery.data?.notification_preferences?.city_alerts ?? true,
@@ -90,7 +94,14 @@ export function SettingsPage() {
   return (
     <div className="space-y-6">
       <PageHeader eyebrow="Settings" title="Settings" description="Manage your account, location, alerts, roles, privacy, and ownership preferences." />
-      <div className="grid gap-4 lg:grid-cols-2">
+      <QueryState
+        isLoading={meQuery.isLoading || preferencesQuery.isLoading}
+        error={meQuery.error ?? preferencesQuery.error}
+      >
+        {!user ? (
+          <EmptyState title="Settings unavailable" body="Sign in again to restore your account settings." />
+        ) : (
+          <div className="grid gap-4 lg:grid-cols-2">
         <SectionCard className="bg-white">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple"><UserRoundCog className="h-5 w-5" /></div>
@@ -173,7 +184,11 @@ export function SettingsPage() {
               roles={user?.roles ?? []}
               currentRole={user?.current_role}
               isSwitching={switchRole.isPending}
-              onSwitch={(role) => void switchRole.mutateAsync(role)}
+              onSwitch={async (role) => {
+                const payload = await switchRole.mutateAsync(role)
+                const nextUser = payload.user?.data ?? payload.user
+                navigate(getRoleHomePath(nextUser ?? user))
+              }}
             />
           </div>
         </SectionCard>
@@ -190,7 +205,7 @@ export function SettingsPage() {
             {(businessesQuery.data?.data ?? []).slice(0, 3).map((business) => (
               <div key={business.id} className="rounded-[18px] border border-lokals-border px-4 py-3">
                 <p className="font-semibold text-lokals-charcoal">{business.name}</p>
-                <p className="text-sm text-lokals-muted">{business.category} - {business.area ?? business.town ?? business.location ?? 'Windhoek'}</p>
+                <p className="text-sm text-lokals-muted">{business.category} - {business.area ?? business.town ?? business.location ?? PILOT_TOWN}</p>
               </div>
             ))}
             {!businessesQuery.data?.data?.length ? <p className="text-sm text-lokals-muted">Business, service, and organization shortcuts will appear here once you create or link those profiles.</p> : null}
@@ -201,16 +216,31 @@ export function SettingsPage() {
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-50 text-lokals-danger"><Shield className="h-5 w-5" /></div>
             <div>
-              <h2 className="text-lg font-semibold text-lokals-charcoal">Privacy and support</h2>
+              <h2 className="text-lg font-semibold text-lokals-charcoal">Privacy</h2>
               <p className="text-sm text-lokals-muted">Keep control over what others can see.</p>
             </div>
           </div>
           <div className="mt-4 space-y-3 text-sm text-lokals-muted">
             <p>Profile visibility: <span className="font-semibold text-lokals-charcoal">{user?.profile_visibility ?? 'public'}</span></p>
-            <p>Blocked users and support flows stay intentionally lightweight for now, but the links in Profile now land on real placeholder destinations instead of breaking.</p>
+            <p>Blocked users and deeper privacy controls can expand later without changing your current account flow.</p>
           </div>
         </SectionCard>
-      </div>
+
+        <SectionCard className="bg-white">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple"><CircleHelp className="h-5 w-5" /></div>
+            <div>
+              <h2 className="text-lg font-semibold text-lokals-charcoal">Help &amp; Support</h2>
+              <p className="text-sm text-lokals-muted">Find the fastest path back to your bookings, tickets, reports, and saved items.</p>
+            </div>
+          </div>
+          <div className="mt-4 space-y-3 text-sm text-lokals-muted">
+            <p>Use Profile shortcuts for bookings, tickets, saved items, and reports. Activity keeps your alerts and account updates together in one place.</p>
+          </div>
+        </SectionCard>
+          </div>
+        )}
+      </QueryState>
     </div>
   )
 }
