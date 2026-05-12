@@ -100,7 +100,14 @@ class _AppSearchBarState extends State<AppSearchBar> {
             ),
             child: TextField(
               controller: widget.controller,
-              onChanged: widget.onChanged,
+              textInputAction: TextInputAction.search,
+              onChanged: (value) {
+                setState(() {});
+                widget.onChanged?.call(value);
+              },
+              onSubmitted: (value) {
+                _selectValue(value);
+              },
               decoration: InputDecoration(
                 hintText: widget.hintText,
                 prefixIcon: Container(

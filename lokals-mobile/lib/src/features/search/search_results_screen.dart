@@ -23,6 +23,8 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
     ('services', 'Services', '/services', 'name'),
     ('providers', 'Providers', '/services', 'name'),
     ('directory', 'Directory', '/directory', 'name'),
+    ('alerts', 'Alerts', '/alerts', 'title'),
+    ('listings', 'Listings', '/marketplace', 'title'),
     ('products', 'Products', '/store', 'title'),
     ('jobs', 'Jobs', '/jobs', 'title'),
     ('events', 'Events', '/events', 'title'),
@@ -53,6 +55,10 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
         return '/services/$id';
       case 'directory':
         return '/directory/$id';
+      case 'alerts':
+        return '/alerts';
+      case 'listings':
+        return '/marketplace';
       case 'products':
         return '/store/$id';
       case 'jobs':
@@ -88,10 +94,11 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
             controller: _controller,
             hintText: 'Search services, jobs, products...',
             recentKey: 'global-results',
+            onChanged: (_) => setState(() {}),
             onValueSelected: (_) => setState(() {}),
             suggestions: const [
               'Barber nearby',
-              'Jobs in Windhoek',
+              'Jobs in Okahandja',
               'Events this weekend',
               'Local news',
             ],
@@ -106,79 +113,105 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
             )
           else
             results.when(
-              data: (payload) => Column(
-                children: _sections.map((section) {
-                  final items = (payload[section.$1] as List<dynamic>? ??
-                          const [])
-                      .map((item) => Map<String, dynamic>.from(item as Map))
-                      .toList();
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
-                    child: AppCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  section.$2,
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
+              data: (payload) {
+                final sectionResults = _sections
+                    .map((section) {
+                      final items = (payload[section.$1] as List<dynamic>? ??
+                              const [])
+                          .map((item) => Map<String, dynamic>.from(item as Map))
+                          .toList();
+                      return (section: section, items: items);
+                    })
+                    .toList();
+                final hasAnyMatch = sectionResults.any(
+                  (entry) => entry.items.isNotEmpty,
+                );
+
+                if (!hasAnyMatch) {
+                  return const EmptyStateView(
+                    title: 'No matches found',
+                    body:
+                        'No services, jobs, products, or local updates matched that search yet. Try another word or browse by section.',
+                  );
+                }
+
+                return Column(
+                  children: sectionResults.map((entry) {
+                    final section = entry.section;
+                    final items = entry.items;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: AppCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    section.$2,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              TextButton(
-                                onPressed: () => context.go(
-                                  '${section.$3}?q=${Uri.encodeComponent(query)}',
+                                TextButton(
+                                  onPressed: () => context.go(
+                                    '${section.$3}?q=${Uri.encodeComponent(query)}',
+                                  ),
+                                  child: const Text('View all'),
                                 ),
-                                child: const Text('View all'),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          if (items.isEmpty)
-                            const Text(
-                              'No matches in this section.',
-                              style: TextStyle(color: Colors.grey),
-                            )
-                          else
-                            ...items.take(4).map((item) {
-                              final subtitle = [
-                                item['category']?.toString(),
-                                item['area']?.toString(),
-                                item['town']?.toString(),
-                                item['location']?.toString(),
-                                item['source_name']?.toString(),
-                              ]
-                                  .whereType<String>()
-                                  .where((value) => value.isNotEmpty)
-                                  .join(' | ');
-                              return ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                title: Text(
-                                  item[section.$4]?.toString() ??
-                                      item['title']?.toString() ??
-                                      item['name']?.toString() ??
-                                      'Result',
-                                ),
-                                subtitle: Text(
-                                  subtitle.isEmpty
-                                      ? 'Open details'
-                                      : subtitle,
-                                ),
-                                onTap: () => context.go(
-                                  _detailRoute(section.$1, item, query),
-                                ),
-                              );
-                            }),
-                        ],
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            if (items.isEmpty)
+                              const Text(
+                                'No matches in this section.',
+                                style: TextStyle(color: Colors.grey),
+                              )
+                            else
+                              ...items.take(4).map((item) {
+                                final subtitle = [
+                                  item['category']?.toString(),
+                                  item['area']?.toString(),
+                                  item['town']?.toString(),
+                                  item['location']?.toString(),
+                                  item['source_name']?.toString(),
+                                  item['status']?.toString(),
+                                  item['priority']?.toString(),
+                                  item['price']?.toString(),
+                                  item['sale_price']?.toString(),
+                                ]
+                                    .whereType<String>()
+                                    .where((value) => value.isNotEmpty)
+                                    .toSet()
+                                    .join(' | ');
+                                return ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  title: Text(
+                                    item[section.$4]?.toString() ??
+                                        item['title']?.toString() ??
+                                        item['name']?.toString() ??
+                                        'Result',
+                                  ),
+                                  subtitle: Text(
+                                    subtitle.isEmpty
+                                        ? 'Open details'
+                                        : subtitle,
+                                  ),
+                                  onTap: () => context.go(
+                                    _detailRoute(section.$1, item, query),
+                                  ),
+                                );
+                              }),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                }).toList(),
-              ),
+                    );
+                  }).toList(),
+                );
+              },
               loading: () => const LoadingSkeleton(height: 180),
               error: (error, _) => EmptyStateView(
                 title: 'Search unavailable',

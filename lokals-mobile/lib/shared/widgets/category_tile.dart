@@ -12,6 +12,10 @@ class CategoryTile extends StatelessWidget {
     required this.onTap,
     this.color = AppColors.greenSoft,
     this.iconColor = AppColors.lokalsGreen,
+    this.iconContainerSize = 44,
+    this.iconSize = 20,
+    this.labelFontSize = 11,
+    this.padding = const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
   });
 
   final IconData icon;
@@ -19,6 +23,10 @@ class CategoryTile extends StatelessWidget {
   final VoidCallback onTap;
   final Color color;
   final Color iconColor;
+  final double iconContainerSize;
+  final double iconSize;
+  final double labelFontSize;
+  final EdgeInsets padding;
 
   @override
   Widget build(BuildContext context) {
@@ -41,19 +49,19 @@ class CategoryTile extends StatelessWidget {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+            padding: padding,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  height: 44,
-                  width: 44,
+                  height: iconContainerSize,
+                  width: iconContainerSize,
                   decoration: BoxDecoration(
                     color: color,
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(icon, color: iconColor, size: 20),
+                  child: Icon(icon, color: iconColor, size: iconSize),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -62,7 +70,7 @@ class CategoryTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   softWrap: true,
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.h3.copyWith(fontSize: 11, height: 1.05),
+                  style: AppTextStyles.h3.copyWith(fontSize: labelFontSize, height: 1.05),
                 ),
               ],
             ),

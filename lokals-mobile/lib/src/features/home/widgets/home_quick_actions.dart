@@ -109,14 +109,27 @@ class HomeQuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final roleActions = _roleActions();
+    final quickActions = <_QuickActionItem>[
+      ..._primaryActions,
+      ..._exploreActions,
+      ..._accountActions,
+      ...roleActions,
+    ];
+    final dedupedQuickActions = <_QuickActionItem>[];
+    final seenRoutes = <String>{};
+    for (final item in quickActions) {
+      if (seenRoutes.add(item.route)) {
+        dedupedQuickActions.add(item);
+      }
+    }
 
     return Column(
       children: [
-        _ActionGroupCard(
+        _ActionRailCard(
           eyebrow: 'Primary actions',
           title: 'Quick actions',
-          subtitle: 'The fastest ways to get help, move around town, and reach key local tools.',
-          items: _primaryActions,
+          subtitle: 'Services, requests, updates, account tools, and role shortcuts all in one place.',
+          items: dedupedQuickActions,
           footer: Align(
             alignment: Alignment.centerLeft,
             child: AppButton(
@@ -128,36 +141,13 @@ class HomeQuickActions extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        _ActionGroupCard(
-          eyebrow: 'Explore more',
-          title: 'More services',
-          subtitle: 'Opportunities, local life, and community tools that should stay one tap away.',
-          items: _exploreActions,
-        ),
-        const SizedBox(height: 16),
-        _ActionGroupCard(
-          eyebrow: 'My space',
-          title: 'Account and updates',
-          subtitle: 'Keep your requests, notifications, saved items, and profile easy to reach.',
-          items: _accountActions,
-        ),
-        if (roleActions.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          _ActionGroupCard(
-            eyebrow: 'Role tools',
-            title: 'Built for your role',
-            subtitle: 'Shortcuts that match what you do in LOKALS right now.',
-            items: roleActions,
-          ),
-        ],
       ],
     );
   }
 }
 
-class _ActionGroupCard extends StatelessWidget {
-  const _ActionGroupCard({
+class _ActionRailCard extends StatelessWidget {
+  const _ActionRailCard({
     required this.eyebrow,
     required this.title,
     required this.subtitle,
@@ -183,40 +173,93 @@ class _ActionGroupCard extends StatelessWidget {
             subtitle: subtitle,
           ),
           const SizedBox(height: 14),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final columns = constraints.maxWidth < 360 ? 2 : 3;
-              final ratio = constraints.maxWidth < 360 ? 1.04 : 0.98;
-
-              return GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: items.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: columns,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  childAspectRatio: ratio,
-                ),
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  return CategoryTile(
-                    icon: item.icon,
-                    label: item.label,
-                    color: item.color,
-                    iconColor: item.iconColor,
-                    onTap: () => context.go(item.route),
-                  );
-                },
-              );
-            },
-          ),
+          _HorizontalActionRail(items: items),
           if (footer != null) ...[
             const SizedBox(height: 14),
             footer!,
           ],
         ],
       ),
+    );
+  }
+}
+
+class _HorizontalActionRail extends StatefulWidget {
+  const _HorizontalActionRail({
+    required this.items,
+  });
+
+  final List<_QuickActionItem> items;
+
+  @override
+  State<_HorizontalActionRail> createState() => _HorizontalActionRailState();
+}
+
+class _HorizontalActionRailState extends State<_HorizontalActionRail> {
+  @override
+  Widget build(BuildContext context) {
+    final firstRow = <_QuickActionItem>[];
+    final secondRow = <_QuickActionItem>[];
+    for (var index = 0; index < widget.items.length; index++) {
+      if (index.isEven) {
+        firstRow.add(widget.items[index]);
+      } else {
+        secondRow.add(widget.items[index]);
+      }
+    }
+
+    return SizedBox(
+      height: 284,
+      child: Column(
+        children: [
+          Expanded(
+            child: _ActionRow(
+              items: firstRow,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: _ActionRow(
+              items: secondRow,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionRow extends StatelessWidget {
+  const _ActionRow({
+    required this.items,
+  });
+
+  final List<_QuickActionItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      itemCount: items.length,
+      separatorBuilder: (context, index) => const SizedBox(width: 10),
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return SizedBox(
+          width: 118,
+          child: CategoryTile(
+            icon: item.icon,
+            label: item.label,
+            color: item.color,
+            iconColor: item.iconColor,
+            iconContainerSize: 58,
+            iconSize: 28,
+            labelFontSize: 12,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 13),
+            onTap: () => context.go(item.route),
+          ),
+        );
+      },
     );
   }
 }
