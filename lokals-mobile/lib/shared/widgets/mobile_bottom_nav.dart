@@ -12,7 +12,7 @@ class MobileBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+      padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surfaceWhite,
@@ -49,7 +49,7 @@ class MobileBottomNav extends StatelessWidget {
               }),
             ),
             child: NavigationBar(
-              height: 72,
+              height: 68,
               selectedIndex: currentIndex,
               destinations: const [
                 NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Home'),

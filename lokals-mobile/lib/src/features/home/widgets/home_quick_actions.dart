@@ -15,7 +15,7 @@ class HomeQuickActions extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 12,
       mainAxisSpacing: 12,
-      childAspectRatio: 0.96,
+      childAspectRatio: 1.08,
       children: [
         CategoryTile(icon: Icons.home_repair_service_outlined, label: 'Services', onTap: () => context.go('/services'), color: AppColors.infoSoft, iconColor: AppColors.softBlue),
         CategoryTile(icon: Icons.local_taxi_outlined, label: 'Taxi', onTap: () => context.go('/ride'), color: const Color(0xFFFFF1D9), iconColor: const Color(0xFFD97706)),

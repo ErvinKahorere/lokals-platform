@@ -72,7 +72,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final unreadCount = notifications.asData?.value.where((item) => item.readAt == null).length ?? 0;
 
     final localNews = newsFeed.asData?.value.take(3).toList() ?? const <NewsItemModel>[];
-    final providerItems = providers.asData?.value.take(4).toList() ?? const <ProviderModel>[];
+    final providerItems = providers.asData?.value.toList() ?? const <ProviderModel>[];
     final eventItems = events.asData?.value.take(3).toList() ?? const <EventModel>[];
     final productItems = products.asData?.value.take(3).toList() ?? const <ProductModel>[];
     final jobItems = jobs.asData?.value.take(3).toList() ?? const <JobModel>[];
@@ -320,11 +320,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 emptyTitle: providerItems.isEmpty ? 'No nearby services yet.' : null,
                 emptyBody: providerItems.isEmpty ? 'Trusted local providers will appear here.' : null,
                 onRetry: () => ref.invalidate(servicesProvider),
-                child: Column(
-                  children: providerItems.map((item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: NearbyServiceCard(provider: item),
-                  )).toList(),
+                child: SizedBox(
+                  height: 260,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: providerItems.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(width: 12),
+                    itemBuilder: (context, index) => SizedBox(
+                      width: 320,
+                      child: NearbyServiceCard(provider: providerItems[index]),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 20),

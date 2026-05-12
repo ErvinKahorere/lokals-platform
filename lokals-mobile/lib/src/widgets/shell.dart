@@ -408,6 +408,7 @@ class LokalsShell extends ConsumerWidget {
     final activeRole = user?.currentRole ?? ((user?.roles.isNotEmpty ?? false) ? user!.roles.first : 'citizen');
     final greetingName = user?.name.split(' ').first ?? 'there';
     final headerHeight = isHome ? 86.0 : 74.0;
+    final bottomNavInset = MediaQuery.of(context).padding.bottom + 76;
     final canPop = Navigator.of(context).canPop();
     final titleWidget = isHome
         ? (isGuest
@@ -531,7 +532,7 @@ class LokalsShell extends ConsumerWidget {
       ),
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 92),
+          padding: EdgeInsets.only(bottom: bottomNavInset),
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: Theme.of(context).scaffoldBackgroundColor,

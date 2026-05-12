@@ -41,24 +41,26 @@ class CategoryTile extends StatelessWidget {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  height: 56,
-                  width: 56,
+                  height: 50,
+                  width: 50,
                   decoration: BoxDecoration(
                     color: color,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(icon, color: iconColor),
+                  child: Icon(icon, color: iconColor, size: 22),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 Text(
                   label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.h3.copyWith(fontSize: 13),
+                  style: AppTextStyles.h3.copyWith(fontSize: 12, height: 1.1),
                 ),
               ],
             ),

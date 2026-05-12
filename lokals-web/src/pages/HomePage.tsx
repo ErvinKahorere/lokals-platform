@@ -39,7 +39,7 @@ export function HomePage() {
   const eventsQuery = useEvents({ town, area: area ?? undefined })
   const jobsQuery = useJobs({ town, area: area ?? undefined })
 
-  const providers = providersQuery.data?.data?.slice(0, 4) ?? []
+  const providers = providersQuery.data?.data ?? []
   const products = productsQuery.data?.data?.slice(0, 3) ?? []
   const events = eventsQuery.data?.data?.slice(0, 3) ?? []
   const jobs = jobsQuery.data?.data?.slice(0, 3) ?? []
@@ -255,8 +255,14 @@ export function HomePage() {
         emptyBody="We will show trusted local providers here as they become available."
         onRetry={() => void providersQuery.refetch()}
       >
-        <div className="grid gap-4 xl:grid-cols-3">
-          {providers.map((provider) => <NearbyServiceCard key={provider.id} provider={provider} />)}
+        <div className="-mx-1 overflow-x-auto pb-2">
+          <div className="flex min-w-max gap-4 px-1">
+            {providers.map((provider) => (
+              <div key={provider.id} className="w-[320px] shrink-0">
+                <NearbyServiceCard provider={provider} />
+              </div>
+            ))}
+          </div>
         </div>
       </HomeSection>
 
