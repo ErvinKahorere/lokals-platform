@@ -16,6 +16,7 @@ class AppButton extends StatelessWidget {
     this.variant = AppButtonVariant.primary,
     this.icon,
     this.expanded = true,
+    this.compact = false,
   });
 
   final String label;
@@ -25,9 +26,16 @@ class AppButton extends StatelessWidget {
   final AppButtonVariant variant;
   final IconData? icon;
   final bool expanded;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final minimumHeight = compact ? 44.0 : 52.0;
+    final horizontalPadding = compact ? 16.0 : 18.0;
+    final verticalPadding = compact ? 10.0 : 14.0;
+    final fontSize = compact ? 13.0 : 15.0;
+    final radius = compact ? 18.0 : AppRadius.xl;
+
     final style = switch (variant) {
       AppButtonVariant.primary => FilledButton.styleFrom(
         backgroundColor: AppColors.primaryGreen,
@@ -55,9 +63,9 @@ class AppButton extends StatelessWidget {
     final child = FilledButton(
       onPressed: isLoading ? null : onPressed,
       style: style.copyWith(
-        minimumSize: const WidgetStatePropertyAll(Size.fromHeight(52)),
-        padding: const WidgetStatePropertyAll(
-          EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        minimumSize: WidgetStatePropertyAll(Size.fromHeight(minimumHeight)),
+        padding: WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalPadding),
         ),
         overlayColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.pressed)) {
@@ -65,12 +73,12 @@ class AppButton extends StatelessWidget {
           }
           return null;
         }),
-        textStyle: const WidgetStatePropertyAll(
-          TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+        textStyle: WidgetStatePropertyAll(
+          TextStyle(fontSize: fontSize, fontWeight: FontWeight.w700),
         ),
         shape: WidgetStatePropertyAll(
           RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.xl),
+            borderRadius: BorderRadius.circular(radius),
           ),
         ),
       ),

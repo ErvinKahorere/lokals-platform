@@ -1,4 +1,4 @@
-import { ChevronDown, LayoutDashboard, LogOut, MapPin, Menu, Search, Settings, Ticket, UserRound, Bookmark, Bell, BookOpen } from 'lucide-react'
+import { ChevronDown, LayoutDashboard, LogOut, MapPin, Menu, Search, Settings, Ticket, UserRound, Bookmark, Bell, BookOpen, CircleHelp } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useMe, useNotifications, usePreferences, useUpdatePreferences, useUpdateProfile } from '../../hooks/queries'
@@ -20,6 +20,7 @@ const desktopLinks = [
   { to: '/directory', label: 'Directory' },
   { to: '/events', label: 'Events' },
   { to: '/news', label: 'News' },
+  { to: '/more', label: 'More' },
 ]
 
 const mobileLinks = [
@@ -30,6 +31,7 @@ const mobileLinks = [
   { to: '/directory', label: 'Directory' },
   { to: '/events', label: 'Events' },
   { to: '/news', label: 'News' },
+  { to: '/more', label: 'More' },
 ]
 
 const locationOptions = [
@@ -143,10 +145,12 @@ export function AppShell() {
       { to: '/dashboard/profile', label: 'Profile', icon: UserRound, show: Boolean(currentUser) },
       { to: '/saved-items', label: 'Saved Items', icon: Bookmark, show: Boolean(currentUser) },
       { to: '/activity', label: 'Activity', icon: Bell, show: Boolean(currentUser) },
+      { to: '/notifications', label: 'Notifications', icon: Bell, show: Boolean(currentUser) },
       { to: '/dashboard/bookings', label: 'My Bookings', icon: BookOpen, show: Boolean(currentUser) },
       { to: '/my-tickets', label: 'My Tickets', icon: Ticket, show: Boolean(currentUser) },
       { to: dashboardLink, label: 'Dashboard', icon: LayoutDashboard, show: Boolean(currentUser) },
       { to: '/settings', label: 'Settings', icon: Settings, show: Boolean(currentUser) },
+      { to: '/support', label: 'Help & Support', icon: CircleHelp, show: true },
     ]
 
     return items.filter((item) => item.show)
@@ -494,8 +498,17 @@ export function AppShell() {
                 {link.label}
               </NavLink>
             ))}
+            <NavLink to="/okahandja" onClick={() => setMobileOpen(false)} className="block rounded-lokals-lg border border-lokals-border bg-white px-4 py-3 text-sm font-semibold text-lokals-charcoal">
+              Town Portal
+            </NavLink>
             {currentUser ? (
               <>
+                <NavLink to="/notifications" onClick={() => setMobileOpen(false)} className="block rounded-lokals-lg border border-lokals-border bg-white px-4 py-3 text-sm font-semibold text-lokals-charcoal">
+                  Notifications
+                </NavLink>
+                <NavLink to="/saved-items" onClick={() => setMobileOpen(false)} className="block rounded-lokals-lg border border-lokals-border bg-white px-4 py-3 text-sm font-semibold text-lokals-charcoal">
+                  Saved Items
+                </NavLink>
                 <NavLink to="/my-tickets" onClick={() => setMobileOpen(false)} className="block rounded-lokals-lg border border-lokals-border bg-white px-4 py-3 text-sm font-semibold text-lokals-charcoal">
                   My Tickets
                 </NavLink>
@@ -504,6 +517,9 @@ export function AppShell() {
                 </NavLink>
               </>
             ) : null}
+            <NavLink to="/support" onClick={() => setMobileOpen(false)} className="block rounded-lokals-lg border border-lokals-border bg-white px-4 py-3 text-sm font-semibold text-lokals-charcoal">
+              Help & Support
+            </NavLink>
           </div>
         </div>
       </BottomSheet>

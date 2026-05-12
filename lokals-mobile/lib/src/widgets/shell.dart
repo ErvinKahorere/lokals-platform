@@ -25,6 +25,7 @@ class LokalsShell extends ConsumerWidget {
     this.showBack = false,
     this.actions,
     this.floatingActionButton,
+    this.bodyBottomInset,
   });
 
   final String title;
@@ -32,6 +33,7 @@ class LokalsShell extends ConsumerWidget {
   final bool showBack;
   final List<Widget>? actions;
   final Widget? floatingActionButton;
+  final double? bodyBottomInset;
 
   int _currentIndex(BuildContext context) {
     final path = GoRouterState.of(context).matchedLocation;
@@ -231,7 +233,9 @@ class LokalsShell extends ConsumerWidget {
                 ],
                 ...[
                   ('/profile', 'Profile', Icons.person_outline_rounded),
+                  ('/notifications', 'Notifications', Icons.notifications_none_rounded),
                   ('/saved-items', 'Saved Items', Icons.bookmark_outline_rounded),
+                  ('/following-organizations', 'Followed Organizations', Icons.groups_2_outlined),
                   ('/activity', 'Activity', Icons.notifications_active_outlined),
                   ('/my-bookings', 'My Bookings', Icons.book_online_outlined),
                   ('/my-tickets', 'My Tickets', Icons.confirmation_number_outlined),
@@ -244,6 +248,7 @@ class LokalsShell extends ConsumerWidget {
                     Icons.dashboard_customize_outlined,
                   ),
                   ('/settings', 'Settings', Icons.settings_outlined),
+                  ('/support', 'Help & Support', Icons.support_agent_outlined),
                 ].map(
                   (item) => ListTile(
                     contentPadding: EdgeInsets.zero,
@@ -408,7 +413,7 @@ class LokalsShell extends ConsumerWidget {
     final activeRole = user?.currentRole ?? ((user?.roles.isNotEmpty ?? false) ? user!.roles.first : 'citizen');
     final greetingName = user?.name.split(' ').first ?? 'there';
     final headerHeight = isHome ? 86.0 : 74.0;
-    final bottomNavInset = MediaQuery.of(context).padding.bottom + 76;
+    final bottomNavInset = bodyBottomInset ?? (MediaQuery.of(context).padding.bottom + 76);
     final canPop = Navigator.of(context).canPop();
     final titleWidget = isHome
         ? (isGuest

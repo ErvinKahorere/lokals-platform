@@ -58,6 +58,31 @@ class RoleHomeCard extends StatelessWidget {
         Icons.explore_outlined,
       ),
     };
+    final shortcuts = switch (roleKey) {
+      'seller' || 'service_provider' || 'business_owner' => const [
+        ('Requests', '/provider-bookings'),
+        ('Market', '/store'),
+      ],
+      'worker' => const [
+        ('Quick Jobs', '/jobs'),
+        ('Profile', '/profile'),
+      ],
+      'organization_admin' => const [
+        ('Updates', '/following-organizations'),
+        ('Events', '/events'),
+      ],
+      'town_manager' || 'municipality_admin' || 'super_admin' || 'operator' => const [
+        ('Reports', '/my-reports'),
+        ('Alerts', '/alerts'),
+      ],
+      'guest' => const [
+        ('Support', '/support'),
+      ],
+      _ => const [
+        ('Announcements', '/alerts'),
+        ('Activity', '/activity'),
+      ],
+    };
 
     return AppCard(
       child: Row(
@@ -86,6 +111,18 @@ class RoleHomeCard extends StatelessWidget {
                   expanded: false,
                   variant: isGuest ? AppButtonVariant.secondary : AppButtonVariant.primary,
                   onPressed: () => context.go(content.$4),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: shortcuts.map((item) => AppButton(
+                    label: item.$1,
+                    compact: true,
+                    expanded: false,
+                    variant: AppButtonVariant.secondary,
+                    onPressed: () => context.go(item.$2),
+                  )).toList(),
                 ),
               ],
             ),

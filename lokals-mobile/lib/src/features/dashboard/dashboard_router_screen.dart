@@ -6,7 +6,6 @@ import 'citizen_dashboard_screen.dart';
 import 'business_dashboard_screen.dart';
 import 'seller_dashboard_screen.dart';
 import 'organization_dashboard_screen.dart';
-import 'seller_dashboard_screen.dart';
 import 'service_provider_dashboard_screen.dart';
 import 'super_admin_dashboard_screen.dart';
 import 'town_manager_dashboard_screen.dart';

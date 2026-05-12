@@ -92,11 +92,14 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final safeBottom = MediaQuery.viewPaddingOf(context).bottom;
+    final scrollBottomPadding = safeBottom + 88;
     final providers = ref.watch(servicesProvider);
 
     return LokalsShell(
       title: 'Services',
       showBack: true,
+      bodyBottomInset: 10,
       child: providers.when(
         data: (items) {
           final query = _searchController.text.toLowerCase().trim();
@@ -116,7 +119,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
             });
 
           return ListView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            padding: EdgeInsets.fromLTRB(20, 12, 20, scrollBottomPadding),
             children: [
               Container(
                 padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
@@ -287,7 +290,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
           );
         },
         loading: () => ListView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          padding: EdgeInsets.fromLTRB(20, 12, 20, scrollBottomPadding),
           children: const [
             LoadingSkeleton(height: 160),
             SizedBox(height: 16),

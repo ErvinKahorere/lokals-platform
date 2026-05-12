@@ -12,7 +12,7 @@ import { NearbyServiceCard } from '../components/experience/NearbyServiceCard'
 import { NotificationBell } from '../components/experience/NotificationBell'
 import { Button } from '../components/ui/Button'
 import { SearchBar } from '../components/ui/SearchBar'
-import { Card, StatusPill } from '../components/Ui'
+import { StatusPill } from '../components/Ui'
 import { useAlertsFeed, useEvents, useFeed, useFollowingFeed, useJobs, useMe, useNewsFeed, useNewsLocal, useNotifications, usePreferences, useProducts, useProviders, useSearchResults } from '../hooks/queries'
 import { getDisplayPrice } from '../lib/display'
 import { normalizePilotArea, PILOT_LOCATION_MESSAGE, PILOT_TOWN } from '../lib/pilot'
@@ -216,9 +216,7 @@ export function HomePage() {
 
       <HomeHeroCard />
 
-      <Card className="p-5">
-        <HomeQuickActions />
-      </Card>
+      <HomeQuickActions activeRole={activeRole} isGuest={!currentUser} />
 
       <RoleHomeCard kind={roleCardKind} activeRole={activeRole} />
 

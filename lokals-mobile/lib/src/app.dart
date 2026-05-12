@@ -16,13 +16,13 @@ import 'features/activity/notifications_screen.dart';
 import 'features/bookings/booking_screen.dart';
 import 'features/bookings/my_bookings_screen.dart';
 import 'features/bookings/provider_bookings_screen.dart';
+import 'features/common/feature_placeholder_screen.dart';
 import 'features/directory/directory_screen.dart';
 import 'features/directory/directory_details_screen.dart';
 import 'features/dashboard/dashboard_router_screen.dart';
 import 'features/dashboard/worker_dashboard_screen.dart';
 import 'features/dashboard/seller_dashboard_screen.dart';
 import 'features/dashboard/business_dashboard_screen.dart';
-import 'features/dashboard/seller_dashboard_screen.dart';
 import 'features/dashboard/organization_dashboard_screen.dart';
 import 'features/dashboard/service_provider_dashboard_screen.dart';
 import 'features/dashboard/town_manager_dashboard_screen.dart';
@@ -349,6 +349,36 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/following-organizations',
+        builder: (context, state) => const FeaturePlaceholderScreen(
+          title: 'Followed organizations',
+          description: 'A richer followed organizations feed is on the way. For now, open Activity to catch community updates and followed alerts in one place.',
+          primaryLabel: 'Open activity',
+          primaryRoute: '/activity',
+          icon: Icons.groups_2_outlined,
+        ),
+      ),
+      GoRoute(
+        path: '/verification',
+        builder: (context, state) => const FeaturePlaceholderScreen(
+          title: 'Verification',
+          description: 'Profile verification tools are being polished. Keep your identity, business, and provider details updated from your profile in the meantime.',
+          primaryLabel: 'Open profile',
+          primaryRoute: '/profile/edit',
+          icon: Icons.verified_user_outlined,
+        ),
+      ),
+      GoRoute(
+        path: '/support',
+        builder: (context, state) => const FeaturePlaceholderScreen(
+          title: 'Help and support',
+          description: 'Support tools are being organized into a cleaner help hub. Use settings for account controls while the dedicated support experience is in progress.',
+          primaryLabel: 'Open settings',
+          primaryRoute: '/settings',
+          icon: Icons.support_agent_outlined,
+        ),
       ),
     ],
   );

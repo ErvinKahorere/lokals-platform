@@ -13,7 +13,7 @@ class HomeHeroCard extends StatelessWidget {
     return AppCard(
       padding: EdgeInsets.zero,
       child: Container(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [AppColors.primaryPurple, AppColors.electricPurple],
@@ -43,7 +43,7 @@ class HomeHeroCard extends StatelessWidget {
             const Text(
               'What do you need in Okahandja today?',
               style: TextStyle(
-                fontSize: 23,
+                fontSize: 22,
                 fontWeight: FontWeight.w800,
                 color: Colors.white,
                 height: 1.2,
@@ -55,18 +55,36 @@ class HomeHeroCard extends StatelessWidget {
               style: TextStyle(color: Colors.white.withValues(alpha: 0.82), height: 1.5),
             ),
             const SizedBox(height: 16),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                AppButton(label: 'Find Service', expanded: false, onPressed: () => context.go('/services')),
-                AppButton(
-                  label: 'Explore Directory',
-                  expanded: false,
-                  variant: AppButtonVariant.secondary,
-                  onPressed: () => context.go('/directory'),
-                ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final stackButtons = constraints.maxWidth < 360;
+
+                return Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    SizedBox(
+                      width: stackButtons ? double.infinity : null,
+                      child: AppButton(
+                        label: 'Find Service',
+                        compact: true,
+                        expanded: stackButtons,
+                        onPressed: () => context.go('/services'),
+                      ),
+                    ),
+                    SizedBox(
+                      width: stackButtons ? double.infinity : null,
+                      child: AppButton(
+                        label: 'Explore Directory',
+                        compact: true,
+                        expanded: stackButtons,
+                        variant: AppButtonVariant.secondary,
+                        onPressed: () => context.go('/directory'),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ],
         ),

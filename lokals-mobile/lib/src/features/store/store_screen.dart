@@ -63,12 +63,15 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final safeBottom = MediaQuery.viewPaddingOf(context).bottom;
+    final scrollBottomPadding = safeBottom + 100;
     final productsQuery = ref.watch(storeProductsProvider);
     final alertsQuery = ref.watch(saleAlertsProvider);
 
     return LokalsShell(
       title: 'Marketplace',
       showBack: true,
+      bodyBottomInset: 10,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openPostProductSheet,
         label: const Text('Post'),
@@ -82,7 +85,7 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
           final localSellers = _buildSellerCards(filtered);
 
           return ListView(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.fromLTRB(20, 20, 20, scrollBottomPadding),
             children: [
               Row(
                 children: [
@@ -318,7 +321,7 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
           );
         },
         loading: () => ListView(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.fromLTRB(20, 20, 20, scrollBottomPadding),
           children: const [
             LoadingSkeleton(height: 52),
             SizedBox(height: 16),

@@ -62,11 +62,14 @@ class ActivityScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final safeBottom = MediaQuery.viewPaddingOf(context).bottom;
+    final scrollBottomPadding = safeBottom + 88;
     final activityFeed = ref.watch(activityFeedProvider);
 
     return LokalsShell(
       title: 'Activity',
       showBack: true,
+      bodyBottomInset: 10,
       child: activityFeed.when(
         data: (payload) {
           final items = (payload['data'] as List<dynamic>? ?? const [])
@@ -75,7 +78,7 @@ class ActivityScreen extends ConsumerWidget {
           final summary = Map<String, dynamic>.from(payload['summary'] as Map? ?? const {});
 
           return ListView(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.fromLTRB(20, 20, 20, scrollBottomPadding),
             children: [
               const SectionTitle(
                 title: 'Activity timeline',
@@ -144,7 +147,7 @@ class ActivityScreen extends ConsumerWidget {
           );
         },
         loading: () => ListView(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.fromLTRB(20, 20, 20, scrollBottomPadding),
           children: const [
             SectionTitle(
               title: 'Activity timeline',

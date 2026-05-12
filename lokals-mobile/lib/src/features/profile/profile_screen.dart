@@ -17,11 +17,14 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final safeBottom = MediaQuery.viewPaddingOf(context).bottom;
+    final scrollBottomPadding = safeBottom + 88;
     final profile = ref.watch(profileSummaryProvider);
     final authState = ref.watch(authControllerProvider);
 
     return LokalsShell(
       title: 'Profile',
+      bodyBottomInset: 10,
       child: profile.when(
         data: (summary) {
           final currentRole = summary.user.currentRole ??
@@ -44,7 +47,7 @@ class ProfileScreen extends ConsumerWidget {
           ];
 
           return ListView(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.fromLTRB(20, 20, 20, scrollBottomPadding),
             children: [
               AppCard(
                 variant: AppCardVariant.dashboard,

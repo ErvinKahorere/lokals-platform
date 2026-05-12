@@ -1,3 +1,4 @@
+import { Building2, CircleHelp, Verified } from 'lucide-react'
 import { lazy, Suspense, type ReactElement } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AppShell } from './components/ui/AppShell'
@@ -57,6 +58,7 @@ import { SearchResultsPage } from './pages/SearchResultsPage'
 import { ActivityPage } from './pages/ActivityPage'
 import { SavedItemsPage } from './pages/dashboard/SavedItemsPage'
 import { TownPortalPage } from './pages/TownPortalPage'
+import { FeaturePlaceholderPage } from './pages/FeaturePlaceholderPage'
 import { getRoleHomePath, hasActiveRole } from './lib/roles'
 import { useAuthStore } from './store/auth'
 
@@ -170,8 +172,12 @@ export default function App() {
           <Route path="/directory/:id" element={<DirectoryDetailsPage />} />
           <Route path="/town/okahandja" element={<TownPortalPage />} />
           <Route path="/okahandja" element={<TownPortalPage />} />
+          <Route path="/organizations" element={<ProtectedRoute><FeaturePlaceholderPage title="Organizations" description="A fuller organizations browser is being prepared. Use your followed organizations feed for now to keep community groups and updates close." ctaLabel="Open followed organizations" ctaTo="/dashboard/feed" icon={Building2} /></ProtectedRoute>} />
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/report-issue" element={<ProtectedRoute><ReportIssuePage /></ProtectedRoute>} />
+          <Route path="/support" element={<FeaturePlaceholderPage title="Help and support" description="A dedicated support hub is being refined. Settings still gives you the quickest access to account controls and preferences." ctaLabel="Open settings" ctaTo="/settings" icon={CircleHelp} />} />
+          <Route path="/verification" element={<ProtectedRoute><FeaturePlaceholderPage title="Verification" description="Verification tools are being consolidated into a cleaner trust workflow. Use your profile page for identity and account updates in the meantime." ctaLabel="Open profile" ctaTo="/dashboard/profile" icon={Verified} /></ProtectedRoute>} />
+          <Route path="/following-organizations" element={<ProtectedRoute><FollowingFeedPage /></ProtectedRoute>} />
 
           <Route path="/dashboard/feed" element={<ProtectedRoute><FollowingFeedPage /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
