@@ -16,7 +16,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom'
 import { RoleSwitcher } from '../../components/account/RoleSwitcher'
 import { Avatar } from '../../components/ui/Avatar'
-import { Button, EmptyState, PageHeader, QueryState, SectionCard } from '../../components/Ui'
+import { Button, EmptyState, PageHeader, QueryState, SectionCard, StatusPill } from '../../components/Ui'
 import { ProfileMenuItem } from '../../components/account/ProfileMenuItem'
 import { roleLabel } from '../../components/account/accountUtils'
 import { useMe, useSwitchRole } from '../../hooks/queries'
@@ -81,6 +81,7 @@ export function ProfilePage() {
                       <p className="mt-1 text-sm text-white/85">{user.phone}</p>
                       <p className="mt-1 text-sm text-white/85">{[user.default_area ?? user.profile?.default_area, user.default_town ?? user.profile?.default_town].filter(Boolean).join(', ') || user.location || `${PILOT_TOWN}, Namibia`}</p>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white/90">Okahandja pilot</span>
                         <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-lokals-purple">{roleLabel(currentRole)}</span>
                         {(user.roles ?? []).filter((role) => role !== currentRole).slice(0, 3).map((role) => (
                           <span key={role} className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white/90">{roleLabel(role)}</span>
@@ -122,7 +123,7 @@ export function ProfilePage() {
                   <h3 className="text-lg font-semibold text-lokals-charcoal">Role switching</h3>
                   <p className="mt-1 text-sm text-lokals-muted">Use the role you already own and jump straight to the right dashboard or Home.</p>
                 </div>
-                <span className="rounded-full bg-lokals-purple/10 px-3 py-1 text-xs font-semibold text-lokals-purple">{roleLabel(currentRole)}</span>
+                <StatusPill value={roleLabel(currentRole)} tone="accent" />
               </div>
               <div className="mt-4">
                 <RoleSwitcher

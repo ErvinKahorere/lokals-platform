@@ -50,6 +50,25 @@ class NotificationsScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 16),
+          AppCard(
+            child: Row(
+              children: [
+                const Expanded(
+                  child: SectionTitle(
+                    title: 'Activity feed',
+                    subtitle:
+                        'Unread items stay easy to spot while bookings, alerts, and local updates stay grouped.',
+                  ),
+                ),
+                AppBadge(
+                  label:
+                      '${notifications.asData?.value.where((item) => item.readAt == null).length ?? 0} unread',
+                  tone: AppBadgeTone.brand,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
           notifications.when(
             data: (items) {
               if (items.isEmpty) {

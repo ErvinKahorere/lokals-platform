@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Activity, Bell, ChartColumn, ClipboardList } from 'lucide-react'
 import { PageHeader, QueryState, StatCard } from '../Ui'
 
 export function DashboardShell({
@@ -25,8 +26,16 @@ export function DashboardShell({
       <PageHeader eyebrow={eyebrow} title={title} description={description} actions={actions} />
       <QueryState isLoading={isLoading} error={error}>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {Object.entries(stats).map(([key, value]) => (
-            <StatCard key={key} label={key.replaceAll('_', ' ')} value={String(value)} hint="Role snapshot" />
+          {Object.entries(stats).map(([key, value], index) => (
+            <StatCard
+              key={key}
+              label={key.replaceAll('_', ' ')}
+              value={String(value)}
+              hint="Role snapshot"
+              icon={
+                index === 0 ? <ClipboardList className="h-4 w-4" /> : index === 1 ? <Bell className="h-4 w-4" /> : index === 2 ? <Activity className="h-4 w-4" /> : <ChartColumn className="h-4 w-4" />
+              }
+            />
           ))}
         </div>
         <div className="rounded-[28px] border border-lokals-purple/10 bg-[linear-gradient(180deg,#ffffff,#fbfcff)] p-4 shadow-card md:p-5">

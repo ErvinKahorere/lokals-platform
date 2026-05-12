@@ -99,9 +99,19 @@ class ProfileScreen extends ConsumerWidget {
                         style: AppTextStyles.bodyMuted.copyWith(color: Colors.white70),
                       ),
                       const SizedBox(height: 12),
-                      AppBadge(
-                        label: formatRoleLabel(currentRole),
-                        tone: AppBadgeTone.brand,
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          AppBadge(
+                            label: 'Okahandja pilot',
+                            tone: AppBadgeTone.neutral,
+                          ),
+                          AppBadge(
+                            label: formatRoleLabel(currentRole),
+                            tone: AppBadgeTone.brand,
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 14),
                       AppButton(
@@ -122,6 +132,7 @@ class ProfileScreen extends ConsumerWidget {
                       label: 'Bookings',
                       value: '${stats['bookings'] ?? 0}',
                       color: AppColors.primaryPurple,
+                      icon: Icons.calendar_month_outlined,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -129,6 +140,7 @@ class ProfileScreen extends ConsumerWidget {
                     child: MetricCard(
                       label: 'Jobs',
                       value: '${stats['jobs_applications'] ?? 0}',
+                      icon: Icons.work_outline_rounded,
                     ),
                   ),
                 ],
@@ -141,6 +153,7 @@ class ProfileScreen extends ConsumerWidget {
                       label: 'Listings',
                       value: '${(stats['listings'] ?? 0) + (stats['products'] ?? 0)}',
                       color: AppColors.primaryGreen,
+                      icon: Icons.storefront_outlined,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -149,6 +162,7 @@ class ProfileScreen extends ConsumerWidget {
                       label: 'Saved',
                       value: '${stats['saved_items'] ?? 0}',
                       color: AppColors.warning,
+                      icon: Icons.bookmark_outline_rounded,
                     ),
                   ),
                 ],

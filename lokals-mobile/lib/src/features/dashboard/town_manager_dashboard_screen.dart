@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../discovery/discovery_repository.dart';
@@ -48,6 +49,42 @@ class _TownManagerDashboardScreenState extends ConsumerState<TownManagerDashboar
               .map((item) => Map<String, dynamic>.from(item as Map))
               .toList(),
           extraSections: [
+            LokalsCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SectionTitle(
+                    eyebrow: 'Municipal overview',
+                    title: 'Official, calm, and ready for the council demo',
+                    subtitle:
+                        'Keep urgent reports, recent resolutions, and resident-facing alerts visible in one premium control area.',
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: MetricCard(
+                          label: 'Open reports',
+                          value: '${(data['stats'] as Map?)?['open_reports'] ?? (data['stats'] as Map?)?['open'] ?? 0}',
+                          color: AppColors.primaryPurple,
+                          icon: Icons.assignment_outlined,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: MetricCard(
+                          label: 'Urgent',
+                          value: '${(data['stats'] as Map?)?['urgent'] ?? 0}',
+                          color: AppColors.danger,
+                          icon: Icons.warning_amber_rounded,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
             LokalsCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

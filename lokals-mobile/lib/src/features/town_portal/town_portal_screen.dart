@@ -64,6 +64,50 @@ class TownPortalScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: MetricCard(
+                  label: 'Town alerts',
+                  value: '${(alerts.asData?.value ?? const []).length}',
+                  color: AppColors.primaryPurple,
+                  icon: Icons.notifications_active_outlined,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: MetricCard(
+                  label: 'Public services',
+                  value: '${(directory.asData?.value ?? const []).where((item) => item.isPublicService).length}',
+                  color: AppColors.primaryGreen,
+                  icon: Icons.account_balance_outlined,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: MetricCard(
+                  label: 'Events',
+                  value: '${(events.asData?.value ?? const []).length}',
+                  color: AppColors.warning,
+                  icon: Icons.event_outlined,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: MetricCard(
+                  label: 'News',
+                  value: '${(news.asData?.value ?? const []).length}',
+                  color: AppColors.primaryPurple,
+                  icon: Icons.newspaper_outlined,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           _PortalSection(
             title: 'Town Alerts',
             subtitle: 'Recent council and service notices.',

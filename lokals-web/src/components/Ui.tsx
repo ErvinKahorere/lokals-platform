@@ -2,6 +2,7 @@ import type { PropsWithChildren, ReactNode } from 'react'
 import { Card } from './ui/Card'
 import { EmptyState as BaseEmptyState } from './ui/EmptyState'
 import { Header } from './ui/Header'
+import { ListTile as BaseListTile } from './ui/ListTile'
 import { InlineLoader, SkeletonList } from './ui/LoadingSkeleton'
 import { Badge } from './ui/Badge'
 export { Card } from './ui/Card'
@@ -38,8 +39,31 @@ export function StatusBadge({
   )
 }
 
+export function StatusPill({
+  value,
+  tone = 'neutral',
+  className,
+}: {
+  value: ReactNode
+  tone?: 'success' | 'warning' | 'warn' | 'danger' | 'info' | 'neutral' | 'accent'
+  className?: string
+}) {
+  return <StatusBadge value={value} tone={tone} className={className} />
+}
+
 export function SectionCard({ children, className }: PropsWithChildren<{ className?: string }>) {
   return <Card className={className}>{children}</Card>
+}
+
+export function ListTile(props: {
+  title: ReactNode
+  subtitle?: ReactNode
+  leading?: ReactNode
+  trailing?: ReactNode
+  to?: string
+  className?: string
+}) {
+  return <BaseListTile {...props} />
 }
 
 export function PageHeader({ eyebrow, title, description, actions }: { eyebrow?: string; title: string; description?: string; actions?: ReactNode }) {
@@ -65,7 +89,7 @@ export function QueryState({
   }
 
   if (empty) {
-    return <BaseEmptyState title="Nothing here yet" body="This space will fill as people publish, book, and move around the city." />
+    return <BaseEmptyState title="Nothing nearby yet" body="This space will fill as people publish, book, and move around Okahandja." />
   }
 
   return <>{children}</>

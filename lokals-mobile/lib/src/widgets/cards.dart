@@ -28,11 +28,15 @@ class MetricCard extends StatelessWidget {
     required this.label,
     required this.value,
     this.color = AppColors.lokalsGreen,
+    this.icon,
+    this.hint,
   });
 
   final String label;
   final String value;
   final Color color;
+  final IconData? icon;
+  final String? hint;
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +57,21 @@ class MetricCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: AppTextStyles.caption),
+          Row(
+            children: [
+              Expanded(child: Text(label, style: AppTextStyles.caption)),
+              if (icon != null)
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(icon, color: color, size: 18),
+                ),
+            ],
+          ),
           const SizedBox(height: 10),
           Text(
             value,
@@ -62,6 +80,10 @@ class MetricCard extends StatelessWidget {
               fontSize: 24,
             ),
           ),
+          if (hint != null) ...[
+            const SizedBox(height: 6),
+            Text(hint!, style: AppTextStyles.bodyMuted),
+          ],
         ],
       ),
     );
@@ -188,6 +210,61 @@ class LokalsStatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppBadge(label: label, tone: tone);
+  }
+}
+
+class LokalsListTile extends StatelessWidget {
+  const LokalsListTile({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.leading,
+    this.trailing,
+    this.onTap,
+  });
+
+  final Widget title;
+  final Widget? subtitle;
+  final Widget? leading;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return LokalsSurfaceTile(
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        children: [
+          if (leading != null) ...[
+            leading!,
+            const SizedBox(width: 12),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                DefaultTextStyle(
+                  style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700),
+                  child: title,
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 4),
+                  DefaultTextStyle(
+                    style: AppTextStyles.bodyMuted,
+                    child: subtitle!,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (trailing != null) ...[
+            const SizedBox(width: 12),
+            trailing!,
+          ],
+        ],
+      ),
+    );
   }
 }
 

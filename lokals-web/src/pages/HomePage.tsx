@@ -9,9 +9,11 @@ import { LocalUpdateCard } from '../components/home/LocalUpdateCard'
 import { RoleHomeCard } from '../components/home/RoleHomeCard'
 import { NewsFeedSection } from '../components/news/NewsFeedSection'
 import { NearbyServiceCard } from '../components/experience/NearbyServiceCard'
+import { NotificationBell } from '../components/experience/NotificationBell'
 import { Button } from '../components/ui/Button'
 import { SearchBar } from '../components/ui/SearchBar'
-import { useAlertsFeed, useEvents, useFeed, useFollowingFeed, useJobs, useMe, useNewsFeed, useNewsLocal, usePreferences, useProducts, useProviders, useSearchResults } from '../hooks/queries'
+import { Card, StatusPill } from '../components/Ui'
+import { useAlertsFeed, useEvents, useFeed, useFollowingFeed, useJobs, useMe, useNewsFeed, useNewsLocal, useNotifications, usePreferences, useProducts, useProviders, useSearchResults } from '../hooks/queries'
 import { getDisplayPrice } from '../lib/display'
 import { normalizePilotArea, PILOT_LOCATION_MESSAGE, PILOT_TOWN } from '../lib/pilot'
 import { useAuthStore } from '../store/auth'
@@ -31,6 +33,7 @@ export function HomePage() {
   const newsLocalQuery = useNewsLocal({ town, area: area ?? undefined })
   const newsFeedQuery = useNewsFeed(Boolean(currentUser))
   const searchResultsQuery = useSearchResults(search)
+  const notificationsQuery = useNotifications()
   const providersQuery = useProviders({ town, area: area ?? undefined })
   const productsQuery = useProducts({ sort: 'popular', town, area: area ?? undefined })
   const eventsQuery = useEvents({ town, area: area ?? undefined })
@@ -40,6 +43,7 @@ export function HomePage() {
   const products = productsQuery.data?.data?.slice(0, 3) ?? []
   const events = eventsQuery.data?.data?.slice(0, 3) ?? []
   const jobs = jobsQuery.data?.data?.slice(0, 3) ?? []
+  const unreadCount = notificationsQuery.data?.filter((item) => item.read_at == null).length ?? 0
   const localNews = (currentUser ? newsFeedQuery.data?.data : newsLocalQuery.data?.data)?.slice(0, 3) ?? []
   const alerts = alertsFeedQuery.data?.data ?? data?.alerts ?? []
   const sortedAlerts = useMemo(() => {
@@ -136,9 +140,14 @@ export function HomePage() {
       <section className="overflow-hidden rounded-[28px] border border-white/70 bg-[linear-gradient(180deg,#ffffff,#fbfcff)] px-6 py-6 shadow-soft">
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <p className="text-sm font-medium text-lokals-muted">{currentUser ? `Good morning, ${currentUser.name}` : 'Explore what is happening nearby'}</p>
-              <h1 className="mt-2 text-3xl font-semibold text-lokals-charcoal">What do you need in Okahandja today?</h1>
+            <div className="flex-1">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-lokals-muted">{currentUser ? `Good morning, ${currentUser.name}` : 'Explore what is happening nearby'}</p>
+                  <h1 className="mt-2 text-3xl font-semibold text-lokals-charcoal">What do you need in Okahandja today?</h1>
+                </div>
+                <NotificationBell count={unreadCount} to="/notifications" />
+              </div>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-lokals-muted">
                 Search trusted services, daily essentials, events, jobs, and local updates around {[area, town].filter(Boolean).join(', ')}.
               </p>
@@ -207,7 +216,9 @@ export function HomePage() {
 
       <HomeHeroCard />
 
-      <HomeQuickActions />
+      <Card className="p-5">
+        <HomeQuickActions />
+      </Card>
 
       <RoleHomeCard kind={roleCardKind} activeRole={activeRole} />
 
@@ -287,7 +298,10 @@ export function HomePage() {
                   <p className="line-clamp-2 font-semibold text-lokals-charcoal">{product.title}</p>
                   <p className="mt-1 text-sm text-lokals-muted">{product.business?.name ?? product.user?.name ?? 'Local seller'}</p>
                   <p className="mt-3 text-lg font-bold text-lokals-charcoal">{getDisplayPrice(product.sale_price ?? product.price)}</p>
-                  <p className="mt-1 text-xs text-lokals-muted">{product.area ?? product.town ?? PILOT_TOWN}</p>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <p className="text-xs text-lokals-muted">{product.area ?? product.town ?? PILOT_TOWN}</p>
+                    <StatusPill value="Local deal" tone="success" />
+                  </div>
                 </div>
               </div>
             </Link>

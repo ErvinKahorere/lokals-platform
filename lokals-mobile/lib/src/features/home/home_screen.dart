@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/experience/nearby_service_card.dart';
+import '../../../shared/widgets/experience/notification_bell.dart';
 import '../../config/app_config.dart';
 import '../../core/models.dart';
 import '../../widgets/cards.dart';
@@ -55,6 +56,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final providers = ref.watch(servicesProvider);
     final events = ref.watch(eventsProvider);
     final alertsFeed = ref.watch(alertsFeedProvider);
+    final notifications = ref.watch(notificationsProvider);
     final products = ref.watch(storeProductsProvider);
     final jobs = ref.watch(jobsProvider);
     final followingFeed = ref.watch(followingFeedProvider);
@@ -67,6 +69,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     };
     final newsFeed = ref.watch(auth.token == null ? newsProvider(localNewsParams) : newsFeedProvider);
     final role = user?.currentRole ?? (user?.roles.isNotEmpty == true ? user!.roles.first : 'guest');
+    final unreadCount = notifications.asData?.value.where((item) => item.readAt == null).length ?? 0;
 
     final localNews = newsFeed.asData?.value.take(3).toList() ?? const <NewsItemModel>[];
     final providerItems = providers.asData?.value.take(4).toList() ?? const <ProviderModel>[];
@@ -149,21 +152,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        LokalsAvatar(label: user?.name ?? 'Lokals'),
-                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                user == null ? 'Welcome to LOKALS' : 'Good day, ${user.name}',
-                                style: AppTextStyles.bodyMuted,
+                              Row(
+                                children: [
+                                  LokalsAvatar(label: user?.name ?? 'Lokals'),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      user == null ? 'Welcome to LOKALS' : 'Good day, ${user.name}',
+                                      style: AppTextStyles.bodyMuted,
+                                    ),
+                                  ),
+                                  NotificationBell(count: unreadCount),
+                                ],
                               ),
-                              const SizedBox(height: 4),
-                              const Text(
+                              const SizedBox(height: 10),
+                              Text(
                                 'What do you need in Okahandja today?',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 30,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.deepCharcoal,
@@ -251,7 +262,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(height: 20),
               const HomeHeroCard(),
               const SizedBox(height: 20),
-              const HomeQuickActions(),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    SectionTitle(
+                      eyebrow: 'Quick actions',
+                      title: 'Take action in seconds',
+                      subtitle: 'The most useful shortcuts for daily city life.',
+                    ),
+                    SizedBox(height: 14),
+                    HomeQuickActions(),
+                  ],
+                ),
+              ),
               const SizedBox(height: 20),
               RoleHomeCard(role: role, isGuest: user == null),
               const SizedBox(height: 20),
