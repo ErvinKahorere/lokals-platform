@@ -113,7 +113,11 @@ export function EventsPage() {
               key={value}
               type="button"
               onClick={() => setDateFilter(value as typeof dateFilter)}
-              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${dateFilter === value ? 'bg-lokals-purple text-white shadow-card' : 'bg-slate-100 text-lokals-charcoal hover:bg-slate-200'}`}
+              className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                dateFilter === value
+                  ? 'border-lokals-purple bg-lokals-purple text-white shadow-card'
+                  : 'border-lokals-border bg-lokals-bg text-lokals-charcoal hover:border-lokals-purple/30 hover:bg-white'
+              }`}
             >
               {label}
             </button>

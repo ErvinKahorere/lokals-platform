@@ -257,46 +257,60 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  PrimaryAction(
-                    label: 'Save settings',
-                    isBusy: _saving,
-                    onPressed: () async {
-                      setState(() => _saving = true);
-                      await Future.wait([
-                        ref.read(discoveryRepositoryProvider).updatePreferences(
-                              defaultTown: _townController.text.trim(),
-                              defaultArea: _areaController.text.trim(),
-                              serviceRadius:
-                                  int.tryParse(_radiusController.text.trim()) ??
-                                  10,
-                              notificationPreferences: _notificationPreferences,
-                            ),
-                        ref.read(discoveryRepositoryProvider).updateProfile(
-                              name: profileSummary?.user.name ?? auth.user?.name ?? '',
-                              phone: profileSummary?.user.phone ?? auth.user?.phone ?? '',
-                              email: profileSummary?.user.email,
-                              location: profileSummary?.user.location ?? '',
-                              defaultTown: _townController.text.trim(),
-                              defaultArea: _areaController.text.trim(),
-                              bio: profileSummary?.user.bio ?? '',
-                              profession: profileSummary?.user.profession ?? '',
-                              businessName: profileSummary?.user.businessName ?? '',
-                              whatsapp: profileSummary?.user.whatsapp ?? '',
-                              secondaryPhone: profileSummary?.user.secondaryPhone ?? '',
-                              profileVisibility: profileSummary?.user.profileVisibility ?? 'public',
-                              roles: profileSummary?.user.roles ?? const ['citizen'],
-                              interests: prefs.interests,
-                            ),
-                      ]);
-                      await ref.read(authControllerProvider.notifier).refreshCurrentUser();
-                      ref.invalidate(profileSummaryProvider);
-                      ref.invalidate(preferencesProvider);
-                      if (!context.mounted) return;
-                      setState(() => _saving = false);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Settings saved')),
-                      );
-                    },
+                  AppCard(
+                    color: const Color(0xFFEEF2FF),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SectionTitle(
+                          title: 'Save changes',
+                          subtitle:
+                              'Keep your location, notifications, and role-ready account preferences in sync.',
+                        ),
+                        const SizedBox(height: 14),
+                        PrimaryAction(
+                          label: 'Save settings',
+                          isBusy: _saving,
+                          onPressed: () async {
+                            setState(() => _saving = true);
+                            await Future.wait([
+                              ref.read(discoveryRepositoryProvider).updatePreferences(
+                                    defaultTown: _townController.text.trim(),
+                                    defaultArea: _areaController.text.trim(),
+                                    serviceRadius:
+                                        int.tryParse(_radiusController.text.trim()) ??
+                                        10,
+                                    notificationPreferences: _notificationPreferences,
+                                  ),
+                              ref.read(discoveryRepositoryProvider).updateProfile(
+                                    name: profileSummary?.user.name ?? auth.user?.name ?? '',
+                                    phone: profileSummary?.user.phone ?? auth.user?.phone ?? '',
+                                    email: profileSummary?.user.email,
+                                    location: profileSummary?.user.location ?? '',
+                                    defaultTown: _townController.text.trim(),
+                                    defaultArea: _areaController.text.trim(),
+                                    bio: profileSummary?.user.bio ?? '',
+                                    profession: profileSummary?.user.profession ?? '',
+                                    businessName: profileSummary?.user.businessName ?? '',
+                                    whatsapp: profileSummary?.user.whatsapp ?? '',
+                                    secondaryPhone: profileSummary?.user.secondaryPhone ?? '',
+                                    profileVisibility: profileSummary?.user.profileVisibility ?? 'public',
+                                    roles: profileSummary?.user.roles ?? const ['citizen'],
+                                    interests: prefs.interests,
+                                  ),
+                            ]);
+                            await ref.read(authControllerProvider.notifier).refreshCurrentUser();
+                            ref.invalidate(profileSummaryProvider);
+                            ref.invalidate(preferencesProvider);
+                            if (!context.mounted) return;
+                            setState(() => _saving = false);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Settings saved')),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               );

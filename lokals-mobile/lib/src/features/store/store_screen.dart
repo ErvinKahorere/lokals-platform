@@ -114,62 +114,80 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
                 onChanged: (_) => setState(() {}),
               ),
               const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.purpleSoftAlt,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  _areaController.text.isEmpty ? AppConfig.pilotTown : '${_areaController.text}, ${AppConfig.pilotTown}',
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.primaryPurple,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: _categoryChips
-                      .map(
-                        (chip) => Padding(
-                          padding: const EdgeInsets.only(right: 10),
-                          child: _CategoryChip(
-                            icon: chip.$3,
-                            label: chip.$2,
-                            background: chip.$4,
-                            iconColor: chip.$5,
-                            selected: _selectedCategory == chip.$1,
-                            onTap: () => setState(() => _selectedCategory = chip.$1),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: SectionTitle(
+                            title: 'Browse smarter',
+                            subtitle:
+                                'Keep category, seller, and sale filters together in one clean marketplace control area.',
                           ),
                         ),
-                      )
-                      .toList(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.purpleSoftAlt,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            _areaController.text.isEmpty ? AppConfig.pilotTown : '${_areaController.text}, ${AppConfig.pilotTown}',
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.primaryPurple,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: _categoryChips
+                            .map(
+                              (chip) => Padding(
+                                padding: const EdgeInsets.only(right: 10),
+                                child: _CategoryChip(
+                                  icon: chip.$3,
+                                  label: chip.$2,
+                                  background: chip.$4,
+                                  iconColor: chip.$5,
+                                  selected: _selectedCategory == chip.$1,
+                                  onTap: () => setState(() => _selectedCategory = chip.$1),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        ChoiceChip(
+                          label: const Text('Sale items'),
+                          selected: _saleOnly,
+                          onSelected: (_) => setState(() => _saleOnly = !_saleOnly),
+                        ),
+                        ChoiceChip(
+                          label: const Text('Verified sellers'),
+                          selected: _verifiedOnly,
+                          onSelected: (_) => setState(() => _verifiedOnly = !_verifiedOnly),
+                        ),
+                        ChoiceChip(
+                          label: Text(_sortBy == 'price_low_high' ? 'Price low-high' : _sortBy == 'price_high_low' ? 'Price high-low' : 'Newest'),
+                          selected: true,
+                          onSelected: (_) => _showSortSheet(),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 14),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  ChoiceChip(
-                    label: const Text('Sale items'),
-                    selected: _saleOnly,
-                    onSelected: (_) => setState(() => _saleOnly = !_saleOnly),
-                  ),
-                  ChoiceChip(
-                    label: const Text('Verified sellers'),
-                    selected: _verifiedOnly,
-                    onSelected: (_) => setState(() => _verifiedOnly = !_verifiedOnly),
-                  ),
-                  ChoiceChip(
-                    label: Text(_sortBy == 'price_low_high' ? 'Price low-high' : _sortBy == 'price_high_low' ? 'Price high-low' : 'Newest'),
-                    selected: true,
-                    onSelected: (_) => _showSortSheet(),
-                  ),
-                ],
               ),
               const SizedBox(height: 18),
               SectionTitle(

@@ -128,64 +128,77 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
               suggestions: const ['Weekend market', 'Workshop', 'Music night', 'Public meeting'],
             ),
             const SizedBox(height: 14),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final item in const [
-                  'all',
-                  'community',
-                  'business',
-                  'entertainment',
-                  'sport',
-                  'church',
-                  'school',
-                  'municipal',
-                  'training',
-                  'market',
-                  'workshop',
-                  'health',
-                  'charity',
-                ])
-                  ChoiceChip(
-                    label: Text(item == 'all' ? 'All' : item),
-                    selected: _category == item,
-                    onSelected: (_) => setState(() => _category = item),
-                    selectedColor: AppColors.primaryPurple,
-                    labelStyle: TextStyle(
-                      color: _category == item ? Colors.white : AppColors.deepCharcoal,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    backgroundColor: AppColors.surfaceWhite,
-                    side: const BorderSide(color: AppColors.border),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SectionTitle(
+                    title: 'Refine the event feed',
+                    subtitle:
+                        'Filter by event type and timing without losing the premium local calendar layout.',
                   ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final item in const [
-                  ('all', 'All'),
-                  ('today', 'Today'),
-                  ('tomorrow', 'Tomorrow'),
-                  ('weekend', 'Weekend'),
-                  ('month', 'This Month'),
-                ])
-                  ChoiceChip(
-                    label: Text(item.$2),
-                    selected: _dateFilter == item.$1,
-                    onSelected: (_) => setState(() => _dateFilter = item.$1),
-                    selectedColor: AppColors.primaryPurple,
-                    labelStyle: TextStyle(
-                      color: _dateFilter == item.$1 ? Colors.white : AppColors.deepCharcoal,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    backgroundColor: AppColors.surfaceWhite,
-                    side: const BorderSide(color: AppColors.border),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final item in const [
+                        'all',
+                        'community',
+                        'business',
+                        'entertainment',
+                        'sport',
+                        'church',
+                        'school',
+                        'municipal',
+                        'training',
+                        'market',
+                        'workshop',
+                        'health',
+                        'charity',
+                      ])
+                        ChoiceChip(
+                          label: Text(item == 'all' ? 'All' : item),
+                          selected: _category == item,
+                          onSelected: (_) => setState(() => _category = item),
+                          selectedColor: AppColors.primaryPurple,
+                          labelStyle: TextStyle(
+                            color: _category == item ? Colors.white : AppColors.deepCharcoal,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          backgroundColor: AppColors.softBackground,
+                          side: const BorderSide(color: AppColors.border),
+                        ),
+                    ],
                   ),
-              ],
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final item in const [
+                        ('all', 'All'),
+                        ('today', 'Today'),
+                        ('tomorrow', 'Tomorrow'),
+                        ('weekend', 'Weekend'),
+                        ('month', 'This Month'),
+                      ])
+                        ChoiceChip(
+                          label: Text(item.$2),
+                          selected: _dateFilter == item.$1,
+                          onSelected: (_) => setState(() => _dateFilter = item.$1),
+                          selectedColor: AppColors.primaryPurple,
+                          labelStyle: TextStyle(
+                            color: _dateFilter == item.$1 ? Colors.white : AppColors.deepCharcoal,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          backgroundColor: AppColors.softBackground,
+                          side: const BorderSide(color: AppColors.border),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 18),
             if (events.isLoading)

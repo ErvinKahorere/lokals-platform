@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { EmptyState, PageHeader, QueryState, SectionCard } from '../../components/Ui'
+import { Card, EmptyState, PageHeader, QueryState, SectionCard } from '../../components/Ui'
 import { useSavedItems } from '../../hooks/queries'
 
 const groups = [
@@ -31,14 +31,21 @@ export function SavedItemsPage() {
                 <SectionCard key={group.key} className="bg-white">
                   <div className="flex items-center justify-between gap-3">
                     <h2 className="text-lg font-semibold text-lokals-charcoal">{group.label}</h2>
-                    <span className="text-sm text-lokals-muted">{groupItems.length}</span>
+                    <span className="rounded-full bg-lokals-purple/10 px-3 py-1 text-xs font-semibold text-lokals-purple">{groupItems.length}</span>
                   </div>
                   <div className="mt-4 grid gap-3 md:grid-cols-2">
                     {groupItems.map((item) => (
-                      <Link key={`${item.kind}-${item.id}`} to={item.route} className="rounded-[18px] border border-lokals-border px-4 py-3 transition hover:bg-slate-50">
-                        <p className="font-semibold text-lokals-charcoal">{item.title}</p>
-                        <p className="mt-1 text-sm text-lokals-muted">{[item.subtitle, item.area, item.town].filter(Boolean).join(' • ')}</p>
-                      </Link>
+                      <Card key={`${item.kind}-${item.id}`} interactive className="p-0">
+                        <Link to={item.route} className="block p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="font-semibold text-lokals-charcoal">{item.title}</p>
+                              <p className="mt-1 text-sm text-lokals-muted">{[item.subtitle, item.area, item.town].filter(Boolean).join(' - ')}</p>
+                            </div>
+                            <span className="rounded-full bg-lokals-purple/10 px-3 py-1 text-xs font-semibold text-lokals-purple">Open</span>
+                          </div>
+                        </Link>
+                      </Card>
                     ))}
                   </div>
                 </SectionCard>

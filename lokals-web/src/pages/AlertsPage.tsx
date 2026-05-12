@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { BellRing, Megaphone, ShieldAlert } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { PageHeader, QueryState } from '../components/Ui'
+import { Card, PageHeader, QueryState, SectionCard } from '../components/Ui'
 import { useAlertsFeed, useFollowingFeed } from '../hooks/queries'
 
 const tabs = ['all', 'following', 'urgent', 'municipal', 'promotions'] as const
@@ -61,18 +61,31 @@ export function AlertsPage() {
         actions={<Link to="/notifications" className="text-sm font-semibold text-lokals-purple">Open notifications</Link>}
       />
 
-      <div className="flex flex-wrap gap-2">
-        {tabs.map((item) => (
-          <button
-            key={item}
-            type="button"
-            onClick={() => setTab(item)}
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${tab === item ? 'bg-lokals-purple text-white' : 'border border-lokals-border bg-white text-lokals-charcoal'}`}
-          >
-            {item === 'all' ? 'All' : item === 'following' ? 'Following' : item === 'urgent' ? 'Urgent' : item === 'municipal' ? 'Municipal' : 'Promotions'}
-          </button>
-        ))}
-      </div>
+      <SectionCard className="bg-white">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-purple">Feed view</p>
+            <h2 className="mt-1 text-lg font-semibold text-lokals-charcoal">Prioritize the alerts that need action first</h2>
+          </div>
+          <span className="rounded-full bg-lokals-purple/10 px-3 py-1.5 text-xs font-semibold text-lokals-purple">{items.length} updates</span>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {tabs.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setTab(item)}
+              className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                tab === item
+                  ? 'border-lokals-purple bg-lokals-purple text-white shadow-card'
+                  : 'border-lokals-border bg-lokals-bg text-lokals-charcoal hover:border-lokals-purple/30 hover:bg-white'
+              }`}
+            >
+              {item === 'all' ? 'All' : item === 'following' ? 'Following' : item === 'urgent' ? 'Urgent' : item === 'municipal' ? 'Municipal' : 'Promotions'}
+            </button>
+          ))}
+        </div>
+      </SectionCard>
 
       <QueryState isLoading={alertsQuery.isLoading || followingFeedQuery.isLoading} error={alertsQuery.error ?? followingFeedQuery.error} empty={items.length === 0}>
         <div className="grid gap-4 xl:grid-cols-2">
@@ -83,8 +96,9 @@ export function AlertsPage() {
             const tone = isCritical ? 'text-red-600 bg-red-50' : isPromotion ? 'text-amber-700 bg-amber-50' : 'text-lokals-purple bg-violet-50'
 
             return (
-              <Link key={item.key} to={item.to} className="rounded-[24px] border border-lokals-border bg-white p-5 shadow-card transition hover:-translate-y-0.5">
-                <div className="flex items-start gap-3">
+              <Card key={item.key} interactive className="p-0">
+                <Link to={item.to} className="block p-5">
+                  <div className="flex items-start gap-3">
                   <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${tone}`}>
                     <Icon className="h-5 w-5" />
                   </div>
@@ -103,8 +117,9 @@ export function AlertsPage() {
                       <span className="text-sm font-semibold text-lokals-purple">{item.type === 'following' ? 'Open activity' : item.type === 'job' ? 'View job' : 'Open alert'}</span>
                     </div>
                   </div>
-                </div>
-              </Link>
+                  </div>
+                </Link>
+              </Card>
             )
           })}
         </div>

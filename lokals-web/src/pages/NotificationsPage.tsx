@@ -1,11 +1,10 @@
 import { Button, PageHeader, QueryState, SectionCard } from '../components/Ui'
 import { NotificationList } from '../components/experience/NotificationList'
-import { useMarkAllNotificationsRead, useMarkNotificationRead, useNotifications } from '../hooks/queries'
+import { useMarkAllNotificationsRead, useNotifications } from '../hooks/queries'
 
 export function NotificationsPage() {
   const notificationsQuery = useNotifications()
   const markAllRead = useMarkAllNotificationsRead()
-  const markRead = useMarkNotificationRead()
   const notifications = notificationsQuery.data ?? []
 
   return (
@@ -23,15 +22,7 @@ export function NotificationsPage() {
 
       <SectionCard className="bg-white">
         <QueryState isLoading={notificationsQuery.isLoading} error={notificationsQuery.error} empty={notifications.length === 0}>
-          <NotificationList
-            items={notifications}
-            onMarkRead={(id) => markRead.mutate(id)}
-            onOpen={(notification) => {
-              if (!notification.read_at) {
-                markRead.mutate(notification.id)
-              }
-            }}
-          />
+          <NotificationList items={notifications} />
         </QueryState>
       </SectionCard>
     </div>

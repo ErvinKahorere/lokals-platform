@@ -108,33 +108,45 @@ export function StorePage() {
         }
       />
 
-      <div className="flex flex-wrap gap-3">
-        {categories.map((item) => (
-          <button
-            key={item}
-            type="button"
-            onClick={() => setCategory(item)}
-            className={`rounded-[18px] px-4 py-2 text-sm font-semibold transition ${category === item ? 'bg-lokals-purple text-white shadow-card' : 'bg-white text-lokals-charcoal shadow-soft'}`}
-          >
-            {item === 'all' ? 'All' : item === 'more' ? 'More' : item.charAt(0).toUpperCase() + item.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      <div className="grid gap-3 md:grid-cols-4">
-        <Select value={town} onChange={(event) => setTown(event.target.value)}>
-          <option value="all">All towns</option>
-          <option value="Okahandja">Okahandja</option>
-          <option value="Swakopmund">Swakopmund</option>
-        </Select>
-        <Select value={sortBy} onChange={(event) => setSortBy(event.target.value as typeof sortBy)}>
-          <option value="newest">Newest</option>
-          <option value="price_low_high">Price low-high</option>
-          <option value="price_high_low">Price high-low</option>
-        </Select>
-        <Button variant={saleOnly ? 'primary' : 'secondary'} onClick={() => setSaleOnly((value) => !value)}>Sale items</Button>
-        <Button variant={verifiedOnly ? 'primary' : 'secondary'} onClick={() => setVerifiedOnly((value) => !value)}>Verified sellers</Button>
-      </div>
+      <SectionCard className="bg-white">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-purple">Browse smarter</p>
+            <h2 className="mt-1 text-lg font-semibold text-lokals-charcoal">Filter products, sellers, and local deals without losing context</h2>
+          </div>
+          <span className="rounded-full bg-lokals-purple/10 px-3 py-1.5 text-xs font-semibold text-lokals-purple">{products.length} listings</span>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-3">
+          {categories.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setCategory(item)}
+              className={`rounded-[18px] border px-4 py-2 text-sm font-semibold transition ${
+                category === item
+                  ? 'border-lokals-purple bg-lokals-purple text-white shadow-card'
+                  : 'border-lokals-border bg-lokals-bg text-lokals-charcoal hover:border-lokals-purple/30 hover:bg-white'
+              }`}
+            >
+              {item === 'all' ? 'All' : item === 'more' ? 'More' : item.charAt(0).toUpperCase() + item.slice(1)}
+            </button>
+          ))}
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-4">
+          <Select value={town} onChange={(event) => setTown(event.target.value)}>
+            <option value="all">All towns</option>
+            <option value="Okahandja">Okahandja</option>
+            <option value="Swakopmund">Swakopmund</option>
+          </Select>
+          <Select value={sortBy} onChange={(event) => setSortBy(event.target.value as typeof sortBy)}>
+            <option value="newest">Newest</option>
+            <option value="price_low_high">Price low-high</option>
+            <option value="price_high_low">Price high-low</option>
+          </Select>
+          <Button variant={saleOnly ? 'primary' : 'secondary'} onClick={() => setSaleOnly((value) => !value)}>Sale items</Button>
+          <Button variant={verifiedOnly ? 'primary' : 'secondary'} onClick={() => setVerifiedOnly((value) => !value)}>Verified sellers</Button>
+        </div>
+      </SectionCard>
 
       <section className="grid gap-4 lg:grid-cols-[1.4fr_0.8fr]">
         <SectionCard className="bg-white">

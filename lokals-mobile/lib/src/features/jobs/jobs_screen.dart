@@ -489,55 +489,102 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _ModeChip(
-                    label: 'Find Help',
-                    active: _tab == 'find-help',
-                    onTap: () => setState(() => _tab = 'find-help'),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: SectionTitle(
+                          title: 'Local work flow',
+                          subtitle:
+                              'Switch between hiring and earning without losing your area, search, or skill filters.',
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.purpleSoftAlt,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          auth.user?.defaultArea ?? AppConfig.pilotTown,
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.primaryPurple,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _ModeChip(
-                    label: 'Earn Money',
-                    active: _tab == 'earn-money',
-                    onTap: () => setState(() => _tab = 'earn-money'),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _ModeChip(
+                          label: 'Find Help',
+                          active: _tab == 'find-help',
+                          onTap: () => setState(() => _tab = 'find-help'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _ModeChip(
+                          label: 'Earn Money',
+                          active: _tab == 'earn-money',
+                          onTap: () => setState(() => _tab = 'earn-money'),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            AppSearchBar(
-              controller: _searchController,
-              hintText: 'Search jobs or workers in Okahandja...',
-              recentKey: 'jobs',
-              suggestions: const ['Cleaner needed', 'Painter nearby', 'Driver work', 'Tutor jobs'],
-              shortcuts: const ['Near me', 'Urgent', 'Verified', 'New'],
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 38,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _skillFilters.length,
-                separatorBuilder: (context, index) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final item = _skillFilters[index];
-                  final active = item == _skillFilter;
-                  return FilterChip(
-                    selected: active,
-                    label: Text(item),
-                    onSelected: (_) => setState(() => _skillFilter = item),
-                    selectedColor: AppColors.primaryPurple,
-                    labelStyle: TextStyle(color: active ? Colors.white : AppColors.deepCharcoal, fontWeight: FontWeight.w600),
-                    checkmarkColor: Colors.white,
-                    backgroundColor: Colors.white,
-                    shape: StadiumBorder(side: BorderSide(color: active ? AppColors.primaryPurple : AppColors.border)),
-                  );
-                },
+                  const SizedBox(height: 16),
+                  AppSearchBar(
+                    controller: _searchController,
+                    hintText: 'Search jobs or workers in Okahandja...',
+                    recentKey: 'jobs',
+                    suggestions: const ['Cleaner needed', 'Painter nearby', 'Driver work', 'Tutor jobs'],
+                    shortcuts: const ['Near me', 'Urgent', 'Verified', 'New'],
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 38,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _skillFilters.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: 8),
+                      itemBuilder: (context, index) {
+                        final item = _skillFilters[index];
+                        final active = item == _skillFilter;
+                        return FilterChip(
+                          selected: active,
+                          label: Text(item),
+                          onSelected: (_) => setState(() => _skillFilter = item),
+                          selectedColor: AppColors.primaryPurple,
+                          labelStyle: TextStyle(
+                            color:
+                                active ? Colors.white : AppColors.deepCharcoal,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          checkmarkColor: Colors.white,
+                          backgroundColor: AppColors.softBackground,
+                          shape: StadiumBorder(
+                            side: BorderSide(
+                              color: active
+                                  ? AppColors.primaryPurple
+                                  : AppColors.border,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 16),

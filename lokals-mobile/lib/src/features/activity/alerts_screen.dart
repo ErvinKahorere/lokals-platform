@@ -127,44 +127,75 @@ class _AlertsScreenState extends ConsumerState<AlertsScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            Text(
-              'View',
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.mutedText,
-                fontWeight: FontWeight.w700,
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: SectionTitle(
+                          title: 'Feed view',
+                          subtitle:
+                              'Filter urgent notices, followed updates, and promotions without leaving the main feed.',
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.purpleSoftAlt,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          '${_buildEntries(
+                            alerts.asData?.value ?? const <AlertFeedModel>[],
+                            following.asData?.value ?? const <Map<String, dynamic>>[],
+                          ).length} updates',
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.primaryPurple,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _AlertTabChip(
+                        label: 'All',
+                        isActive: _tab == 'all',
+                        onTap: () => setState(() => _tab = 'all'),
+                      ),
+                      _AlertTabChip(
+                        label: 'Following',
+                        isActive: _tab == 'following',
+                        onTap: () => setState(() => _tab = 'following'),
+                      ),
+                      _AlertTabChip(
+                        label: 'Urgent',
+                        isActive: _tab == 'urgent',
+                        onTap: () => setState(() => _tab = 'urgent'),
+                      ),
+                      _AlertTabChip(
+                        label: 'Municipal',
+                        isActive: _tab == 'municipal',
+                        onTap: () => setState(() => _tab = 'municipal'),
+                      ),
+                      _AlertTabChip(
+                        label: 'Promotions',
+                        isActive: _tab == 'promotions',
+                        onTap: () => setState(() => _tab = 'promotions'),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _AlertTabChip(
-                  label: 'All',
-                  isActive: _tab == 'all',
-                  onTap: () => setState(() => _tab = 'all'),
-                ),
-                _AlertTabChip(
-                  label: 'Following',
-                  isActive: _tab == 'following',
-                  onTap: () => setState(() => _tab = 'following'),
-                ),
-                _AlertTabChip(
-                  label: 'Urgent',
-                  isActive: _tab == 'urgent',
-                  onTap: () => setState(() => _tab = 'urgent'),
-                ),
-                _AlertTabChip(
-                  label: 'Municipal',
-                  isActive: _tab == 'municipal',
-                  onTap: () => setState(() => _tab = 'municipal'),
-                ),
-                _AlertTabChip(
-                  label: 'Promotions',
-                  isActive: _tab == 'promotions',
-                  onTap: () => setState(() => _tab = 'promotions'),
-                ),
-              ],
             ),
             const SizedBox(height: 16),
             if (alerts.isLoading || following.isLoading)

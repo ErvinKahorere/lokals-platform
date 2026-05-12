@@ -112,33 +112,43 @@ export function JobsPage() {
         />
       </section>
 
-      <div className="inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1.5 text-sm font-semibold text-lokals-purple">
-        {user?.default_area ? `${user.default_area}, ${PILOT_TOWN}` : PILOT_TOWN}
-      </div>
-
-      <Tabs
-        value={mode}
-        onChange={(value) => setMode(value as 'find-help' | 'earn-money')}
-        items={[
-          { label: 'Find Help', value: 'find-help' },
-          { label: 'Earn Money', value: 'earn-money' },
-        ]}
-      />
-
-      <div className="flex flex-wrap gap-2">
-        {skillFilters.map((item) => (
-          <button
-            key={item}
-            type="button"
-            onClick={() => setSkill(item)}
-            className={`rounded-full border px-3 py-2 text-sm font-semibold transition ${
-              skill === item ? 'border-lokals-purple bg-lokals-purple text-white' : 'border-lokals-border bg-white text-lokals-charcoal hover:border-lokals-purple/40'
-            }`}
-          >
-            {item}
-          </button>
-        ))}
-      </div>
+      <SectionCard className="bg-white">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-purple">Local work flow</p>
+            <h2 className="mt-1 text-lg font-semibold text-lokals-charcoal">Hire fast or find work without leaving Okahandja</h2>
+          </div>
+          <div className="inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1.5 text-sm font-semibold text-lokals-purple">
+            {user?.default_area ? `${user.default_area}, ${PILOT_TOWN}` : PILOT_TOWN}
+          </div>
+        </div>
+        <div className="mt-4">
+          <Tabs
+            value={mode}
+            onChange={(value) => setMode(value as 'find-help' | 'earn-money')}
+            items={[
+              { label: 'Find Help', value: 'find-help' },
+              { label: 'Earn Money', value: 'earn-money' },
+            ]}
+          />
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {skillFilters.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setSkill(item)}
+              className={`rounded-full border px-3 py-2 text-sm font-semibold transition ${
+                skill === item
+                  ? 'border-lokals-purple bg-lokals-purple text-white shadow-card'
+                  : 'border-lokals-border bg-lokals-bg text-lokals-charcoal hover:border-lokals-purple/40 hover:bg-white'
+              }`}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      </SectionCard>
 
       {feedback ? <SectionCard className="border border-emerald-200 bg-emerald-50 text-sm font-medium text-emerald-700">{feedback}</SectionCard> : null}
       {jobError ? <SectionCard className="border border-red-200 bg-red-50 text-sm font-medium text-red-700">{jobError}</SectionCard> : null}
@@ -251,9 +261,9 @@ export function JobsPage() {
               </div>
               <div className="mt-4 flex flex-wrap gap-2 text-xs text-lokals-muted">
                 <span className="rounded-full bg-lokals-gold-soft px-3 py-2 font-semibold text-lokals-charcoal">Near me</span>
-                <span className="rounded-full bg-slate-100 px-3 py-2 font-semibold">New</span>
-                <span className="rounded-full bg-slate-100 px-3 py-2 font-semibold">Urgent</span>
-                <span className="rounded-full bg-slate-100 px-3 py-2 font-semibold">Verified workers</span>
+                <span className="rounded-full border border-lokals-border bg-lokals-bg px-3 py-2 font-semibold">New</span>
+                <span className="rounded-full border border-lokals-border bg-lokals-bg px-3 py-2 font-semibold">Urgent</span>
+                <span className="rounded-full border border-lokals-border bg-lokals-bg px-3 py-2 font-semibold">Verified workers</span>
               </div>
             </SectionCard>
           </>
