@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronRight, MapPin, SlidersHorizontal } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
-import { Badge, Button, PageHeader, QueryState, Select } from '../components/Ui'
+import { Badge, Button, Card, EmptyState, QueryState, Select } from '../components/Ui'
 import { CategoryIcon } from '../components/ui/CategoryIcon'
 import { ProviderCard } from '../components/ui/ProviderCard'
 import { SearchBar } from '../components/ui/SearchBar'
@@ -104,8 +104,10 @@ export function ServicesPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[28px] bg-gradient-to-br from-[#2B1E8C] via-[#3F2BCB] to-[#5B46E8] p-6 text-white shadow-card">
-        <PageHeader eyebrow="Services" title="Services" description="Find trusted local help for home, business, and everyday life." actions={null} />
+      <section className="rounded-[28px] bg-gradient-to-br from-lokals-purple-deep via-lokals-purple to-[#5B46E8] p-6 text-white shadow-card">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/70">Services</p>
+        <h1 className="mt-2 text-3xl font-semibold">Trusted help near you</h1>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-white/78">Find trusted local help for home, business, and everyday life across Okahandja with clearer filters, better trust signals, and faster actions.</p>
         <div className="mt-4 grid gap-3 md:grid-cols-[1fr,220px]">
           <SearchBar
             value={search}
@@ -136,14 +138,15 @@ export function ServicesPage() {
         </div>
         <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-5">
           {popularServices.map((item) => (
-            <button
+            <Card
               key={item.label}
+              interactive
               onClick={() => setCategory(item.key)}
-              className={`rounded-lokals-xl border p-4 text-left shadow-card transition ${category === item.key ? 'border-lokals-purple bg-violet-50' : 'border-lokals-border bg-white hover:border-lokals-purple/20 hover:bg-violet-50/30'}`}
+              className={`p-4 text-left ${category === item.key ? 'border-lokals-purple bg-lokals-purple-soft' : ''}`}
             >
               <CategoryIcon category={item.icon} />
               <p className="mt-4 text-sm font-semibold text-lokals-charcoal">{item.label}</p>
-            </button>
+            </Card>
           ))}
         </div>
       </section>
@@ -155,11 +158,12 @@ export function ServicesPage() {
         </div>
         <div className="grid gap-3 md:grid-cols-2">
           {categoryRows.map((row) => (
-            <button
+            <Card
               key={row.label}
-              type="button"
+              role="button"
+              tabIndex={0}
               onClick={() => setCategory(row.key)}
-              className="flex items-center gap-3 rounded-[20px] border border-lokals-border bg-white p-4 text-left shadow-card transition hover:border-lokals-purple/20 hover:bg-violet-50/30"
+              className="flex items-center gap-3 p-4 text-left"
             >
               <CategoryIcon category={row.icon} />
               <div className="min-w-0 flex-1">
@@ -167,17 +171,18 @@ export function ServicesPage() {
                 <p className="mt-1 text-sm text-lokals-muted">{row.hint}</p>
               </div>
               <ChevronRight className="h-4 w-4 text-lokals-muted" />
-            </button>
+            </Card>
           ))}
         </div>
       </section>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <Card className="p-4">
+        <div className="flex flex-wrap items-center gap-3">
         <button type="button" onClick={() => setVerifiedOnly((value) => !value)}><Badge tone={verifiedOnly ? 'success' : 'neutral'}>Verified</Badge></button>
         <button type="button" onClick={() => setBookableOnly((value) => !value)}><Badge tone={bookableOnly ? 'success' : 'neutral'}>Bookable</Badge></button>
         <button type="button" onClick={() => setOpenOnly((value) => !value)}><Badge tone={openOnly ? 'info' : 'neutral'}>Open now</Badge></button>
         <button type="button" onClick={() => setSortBy('nearest')}><Badge tone={sortBy === 'nearest' ? 'info' : 'neutral'}>Near me</Badge></button>
-        <div className="inline-flex items-center gap-2 rounded-full border border-lokals-border bg-white px-3 py-2 text-sm text-lokals-muted shadow-sm">
+        <div className="inline-flex items-center gap-2 rounded-full border border-lokals-border bg-white px-3 py-2 text-sm text-lokals-muted shadow-card">
           <SlidersHorizontal className="h-4 w-4 text-lokals-purple" />
           <span>{activeFilters || 'All services'}</span>
         </div>
@@ -197,7 +202,8 @@ export function ServicesPage() {
             {OKAHANDJA_AREAS.map((item) => <option key={item} value={item}>{item}</option>)}
           </Select>
         </div>
-      </div>
+        </div>
+      </Card>
 
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-3">
@@ -219,13 +225,11 @@ export function ServicesPage() {
       </section>
 
       {providers.length === 0 && !providerQuery.isLoading && !providerQuery.error ? (
-        <div className="rounded-[24px] border border-lokals-border bg-white p-6 text-center shadow-card">
-          <h3 className="text-lg font-semibold text-lokals-charcoal">No services found nearby</h3>
-          <p className="mt-2 text-sm text-lokals-muted">Try another Okahandja area, remove one filter, or switch to a broader category.</p>
-          <div className="mt-4">
-            <Button variant="secondary" onClick={() => { setCategory('all'); setSearch(''); setArea('all'); setVerifiedOnly(false); setBookableOnly(false); setOpenOnly(false) }}>Show all services</Button>
-          </div>
-        </div>
+        <EmptyState
+          title="No services found nearby"
+          body="Try another Okahandja area, remove one filter, or switch to a broader category."
+          action={<Button variant="secondary" onClick={() => { setCategory('all'); setSearch(''); setArea('all'); setVerifiedOnly(false); setBookableOnly(false); setOpenOnly(false) }}>Show all services</Button>}
+        />
       ) : null}
     </div>
   )

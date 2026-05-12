@@ -14,8 +14,8 @@ export function EmptyState({
   retry?: () => void
 }) {
   return (
-    <Card className="py-10 text-center">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[18px] bg-violet-50 text-lokals-purple">
+    <Card className="overflow-hidden py-10 text-center">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[20px] bg-lokals-purple-soft text-lokals-purple shadow-card">
         <Inbox className="h-6 w-6" />
       </div>
       <h3 className="mt-4 text-lg font-semibold text-lokals-charcoal">{title}</h3>

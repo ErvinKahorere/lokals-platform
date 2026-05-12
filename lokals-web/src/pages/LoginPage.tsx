@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { ArrowRight, LockKeyhole, MapPin, Phone, ShieldCheck } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Button, Input, PageHeader } from '../components/Ui'
+import { Button, Card, Input, PageHeader, StatusBadge } from '../components/Ui'
 import { api, getApiErrorMessage } from '../lib/api'
 import { demoLogins } from '../data/demo'
 import { getRoleHomePath } from '../lib/roles'
@@ -36,17 +36,18 @@ export function LoginPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6">
       <PageHeader eyebrow="Sign in" title="Phone-first access for city life" description={prompt || 'Keep login short now, and keep the account ready for OTP and profile completion later.'} />
-      <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="overflow-hidden rounded-[28px] border border-violet-100 bg-white p-8 shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
+      <div className="grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
+        <Card variant="dashboard" className="overflow-hidden p-8">
           <img src="/brand/lokals-logo.svg" alt="LOKALS" className="h-10 w-auto" />
-          <p className="mt-5 inline-flex rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-lokals-purple">Local life in one place</p>
+          <p className="mt-5 inline-flex rounded-full bg-lokals-purple-soft px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-lokals-purple">Local life in one place</p>
           <h2 className="mt-4 text-4xl font-semibold text-lokals-charcoal">Everything in your city.</h2>
           <p className="mt-4 max-w-xl text-sm text-lokals-muted">Find services, follow public providers, discover products, browse accommodation, report city issues, and keep local life moving from one account.</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700"><ShieldCheck className="h-4 w-4" />Trusted local access</div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-lokals-success-soft px-3 py-2 text-xs font-semibold text-lokals-green"><ShieldCheck className="h-4 w-4" />Trusted local access</div>
             <div className="inline-flex items-center gap-2 rounded-full bg-lokals-gold-soft px-3 py-2 text-xs font-semibold text-lokals-charcoal"><LockKeyhole className="h-4 w-4" />Fast sign-in</div>
+            <StatusBadge value="Okahandja ready" tone="accent" />
           </div>
           <div className="mt-8 grid gap-3">
             {[
@@ -54,9 +55,9 @@ export function LoginPage() {
               { icon: MapPin, title: 'Location-aware home', body: 'Results adapt to Okahandja, your town, and your area.' },
               { icon: ArrowRight, title: 'Tap -> confirm -> act', body: 'Friction stays low across booking, selling, and reporting.' },
             ].map(({ icon: Icon, title, body }) => (
-              <div key={title} className="rounded-[22px] border border-slate-100 bg-slate-50/90 p-4">
+              <div key={title} className="rounded-[22px] border border-white/70 bg-[linear-gradient(180deg,#ffffff,#fbfcff)] p-4 shadow-card">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-50 text-lokals-purple">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-lokals-purple-soft text-lokals-purple">
                     <Icon className="h-4 w-4" />
                   </div>
                   <div>
@@ -67,9 +68,9 @@ export function LoginPage() {
               </div>
             ))}
           </div>
-        </div>
+        </Card>
 
-        <div className="rounded-[24px] border border-lokals-border bg-white p-6 shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
+        <Card className="p-6">
           <form className="space-y-4" onSubmit={submit}>
             <div className="space-y-2">
               <label className="text-sm font-semibold text-lokals-charcoal">Phone number</label>
@@ -81,7 +82,7 @@ export function LoginPage() {
             </div>
             {error ? <p className="text-sm text-lokals-danger">{error}</p> : null}
             <Button className="w-full" isLoading={loading} loadingLabel="Signing you in...">Continue</Button>
-            <button type="button" onClick={() => navigate('/home')} className="w-full rounded-lokals-xl border border-lokals-border bg-lokals-surface px-4 py-3 text-sm font-semibold text-lokals-charcoal">
+            <button type="button" onClick={() => navigate('/home')} className="w-full rounded-lokals-xl border border-lokals-border bg-lokals-surface px-4 py-3 text-sm font-semibold text-lokals-charcoal shadow-card transition hover:border-lokals-purple/15 hover:bg-lokals-purple-soft/40">
               Browse as guest
             </button>
           </form>
@@ -92,13 +93,13 @@ export function LoginPage() {
           <div className="mt-6 space-y-3">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-lokals-muted">Demo accounts</p>
             {demoLogins.map((demo) => (
-              <button key={demo.label} className="w-full rounded-[20px] border border-lokals-border bg-lokals-surface px-4 py-3 text-left transition hover:border-lokals-purple/20 hover:bg-violet-50/40" onClick={() => { setPhone(demo.phone); setPassword(demo.password) }}>
+              <button key={demo.label} className="w-full rounded-[20px] border border-lokals-border bg-lokals-surface px-4 py-3 text-left shadow-card transition hover:border-lokals-purple/20 hover:bg-lokals-purple-soft/40" onClick={() => { setPhone(demo.phone); setPassword(demo.password) }}>
                 <p className="font-semibold text-lokals-charcoal">{demo.label}</p>
                 <p className="mt-1 text-sm text-lokals-muted">{demo.phone}</p>
               </button>
             ))}
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   )

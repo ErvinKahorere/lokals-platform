@@ -37,11 +37,11 @@ class _SosScreenState extends ConsumerState<SosScreen> with SingleTickerProvider
   ];
 
   static const List<String> _locations = [
-    'Nau-Aib football ground',
-    'Okahandja State Clinic',
-    'Okahandja Police Station',
-    'Okahandja Town Council',
-    'Osona Village entrance',
+    'Central Okahandja',
+    'Nau-Aib',
+    'Five Rand',
+    'Okahandja Park',
+    'Gross Barmen Road',
   ];
 
   String _emergencyType = _types.first;
@@ -188,11 +188,11 @@ class _SosScreenState extends ConsumerState<SosScreen> with SingleTickerProvider
                     Text(_location, style: const TextStyle(color: AppColors.mutedText)),
                   ],
                 ),
-              primaryLabel: 'View activity',
-              onPrimary: () => context.go('/activity'),
-              secondaryLabel: 'Back home',
-              onSecondary: () => context.go('/'),
-            )
+                primaryLabel: 'View alerts',
+                onPrimary: () => context.go('/alerts'),
+                secondaryLabel: 'Back home',
+                onSecondary: () => context.go('/'),
+              )
             else
               AppCard(
                 variant: AppCardVariant.emergency,
@@ -225,7 +225,7 @@ class _SosScreenState extends ConsumerState<SosScreen> with SingleTickerProvider
                       runSpacing: 8,
                       children: [
                         AppBadge(label: _location, tone: AppBadgeTone.danger),
-                        AppBadge(label: AppConfig.pilotTown, tone: AppBadgeTone.danger),
+                        const AppBadge(label: AppConfig.pilotTown, tone: AppBadgeTone.danger),
                       ],
                     ),
                     if (_error != null) ...[
@@ -278,7 +278,7 @@ class _SosScreenState extends ConsumerState<SosScreen> with SingleTickerProvider
               ),
             ),
             const SizedBox(height: 18),
-            const Text('SOS history', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+            const Text('Recent SOS alerts', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
             const SizedBox(height: 12),
             sosFeed.when(
               data: (items) => items.isEmpty
@@ -311,11 +311,7 @@ class _SosScreenState extends ConsumerState<SosScreen> with SingleTickerProvider
                         );
                       }).toList(),
                     ),
-              loading: () => const AppCard(
-                variant: AppCardVariant.emergency,
-                color: Colors.white,
-                child: LoadingSkeleton(height: 96),
-              ),
+              loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
               error: (error, _) => const Text(
                 'Failed to load SOS feed right now.',
                 style: TextStyle(color: Colors.white),

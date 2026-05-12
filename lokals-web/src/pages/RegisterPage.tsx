@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Button, Input, PageHeader, Select } from '../components/Ui'
+import { Button, Card, Input, PageHeader, Select, StatusBadge } from '../components/Ui'
 import { api, getApiErrorMessage } from '../lib/api'
 import { OKAHANDJA_AREAS, PILOT_LOCATION_MESSAGE, PILOT_TOWN } from '../lib/pilot'
 import { useAuthStore } from '../store/auth'
@@ -44,13 +44,18 @@ export function RegisterPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeader eyebrow="Create profile" title="Start with your phone. Grow the rest later." description="A short setup keeps LOKALS fast to join while saving your Okahandja area from day one." />
-      <div className="overflow-hidden rounded-[28px] border border-violet-100 bg-white p-8 shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
+      <Card variant="dashboard" className="overflow-hidden p-8">
         <img src="/brand/lokals-logo.svg" alt="LOKALS" className="h-10 w-auto" />
         <p className="mt-4 text-sm font-semibold uppercase tracking-[0.28em] text-lokals-purple">Everything in your city</p>
         <h2 className="mt-3 text-3xl font-semibold text-lokals-charcoal">Create your LOKALS profile</h2>
         <p className="mt-3 max-w-2xl text-sm text-lokals-muted">{PILOT_LOCATION_MESSAGE} Your first account opens as a citizen, and you can switch roles later if your work in the city grows.</p>
-      </div>
-      <div className="rounded-[24px] border border-lokals-border bg-white p-6 shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
+        <div className="mt-5 flex flex-wrap gap-3">
+          <StatusBadge value="Citizen first" tone="accent" />
+          <StatusBadge value="Area saved" tone="success" />
+          <StatusBadge value="Fast setup" tone="neutral" />
+        </div>
+      </Card>
+      <Card className="p-6">
         <form className="grid gap-4 md:grid-cols-2" onSubmit={submit}>
           <div className="space-y-2">
             <label className="text-sm font-semibold text-lokals-charcoal">Full name</label>
@@ -87,7 +92,7 @@ export function RegisterPage() {
           <span>Already have a profile?</span>
           <Link to="/login" className="font-semibold text-lokals-green">Sign in</Link>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

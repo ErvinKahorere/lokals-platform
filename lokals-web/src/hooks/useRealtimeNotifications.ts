@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
+import { getNotificationTarget } from '../lib/notificationRouting'
 import { useAuthStore } from '../store/auth'
 import type { NotificationItem } from '../types'
-import { resolveNotificationHref } from '../lib/notificationRoutes'
 
 function isPreferenceEnabled(notification: NotificationItem, preferences?: Record<string, boolean>) {
   if (!preferences) return true
@@ -49,6 +50,7 @@ export function useRealtimeNotifications() {
   const token = useAuthStore((state) => state.token)
   const user = useAuthStore((state) => state.user)
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const seen = useRef<Set<string>>(new Set())
   const [queue, setQueue] = useState<NotificationItem[]>([])
   const preferences = user?.preferences?.notification_preferences
@@ -66,6 +68,7 @@ export function useRealtimeNotifications() {
       try {
         const response = await api.get('/notifications/unread', { params: { unread: 1, per_page: 10 } })
         const items = (response.data?.data ?? []).map(toNotificationItem)
+        queryClient.setQueryData(['notifications'], items)
 
         if (cancelled) return
 
@@ -89,7 +92,7 @@ export function useRealtimeNotifications() {
       cancelled = true
       window.clearInterval(interval)
     }
-  }, [preferences, token])
+  }, [preferences, queryClient, token])
 
   const active = queue[0] ?? null
 
@@ -103,9 +106,8 @@ export function useRealtimeNotifications() {
 
   const openNotification = useMemo(() => {
     return (notification: NotificationItem) => {
-      const href = resolveNotificationHref(notification)
+      const href = getNotificationTarget(notification)
       setQueue((current) => current.filter((item) => item.id !== notification.id))
-      void api.post(`/notifications/${notification.id}/read`).catch(() => undefined)
       navigate(href)
     }
   }, [navigate])

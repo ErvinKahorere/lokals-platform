@@ -1,6 +1,6 @@
 import { AlertTriangle, Bell, BriefcaseBusiness, Building2, Newspaper, Phone, ShieldAlert, Store } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { Button, PageHeader, QueryState, SectionCard, StatusBadge } from '../components/Ui'
+import { Button, Card, PageHeader, QueryState, SectionCard, StatusBadge } from '../components/Ui'
 import { useAccommodations, useAlertsFeed, useDirectory, useEvents, useJobs, useNewsLocal, useProducts } from '../hooks/queries'
 import { PILOT_TOWN } from '../lib/pilot'
 
@@ -22,9 +22,13 @@ export function TownPortalPage() {
     <div className="space-y-6">
       <PageHeader eyebrow="Town Portal" title="Okahandja Town" description="Your digital town hub" actions={<Link to="/report-issue"><Button>Report Issue</Button></Link>} />
 
-      <section className="rounded-[28px] bg-gradient-to-br from-[#2B1E8C] via-[#4B31CC] to-[#6A53F0] p-6 text-white shadow-card">
+      <section className="rounded-[28px] bg-gradient-to-br from-lokals-purple-deep via-lokals-purple to-[#6A53F0] p-6 text-white shadow-card">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/70">LOKALS {PILOT_TOWN}</p>
         <h2 className="mt-3 text-3xl font-semibold">Town updates, services, and local action in one place.</h2>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <StatusBadge value="Official pilot" tone="neutral" className="bg-white/14 text-white border-white/15" />
+          <StatusBadge value="Municipality-ready" tone="neutral" className="bg-white/14 text-white border-white/15" />
+        </div>
         <div className="mt-5 flex flex-wrap gap-3">
           <Link to="/report-issue"><Button className="bg-white text-lokals-charcoal hover:bg-white/90">Report Issue</Button></Link>
           <Link to="/alerts"><Button variant="secondary">View Alerts</Button></Link>
@@ -40,10 +44,12 @@ export function TownPortalPage() {
           ['Public Services', 'Council, police, clinics, and facilities', <Building2 className="h-5 w-5" />, '/directory'],
           ['Emergency Contacts', 'Fast access to key contacts', <ShieldAlert className="h-5 w-5" />, '/directory'],
         ].map(([title, body, icon, href]) => (
-          <Link key={title as string} to={href as string} className="rounded-[24px] border border-lokals-border bg-white p-5 shadow-card transition hover:-translate-y-0.5">
+          <Link key={title as string} to={href as string} className="block">
+            <Card interactive className="p-5">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple">{icon}</div>
             <p className="mt-4 font-semibold text-lokals-charcoal">{title}</p>
             <p className="mt-2 text-sm text-lokals-muted">{body}</p>
+            </Card>
           </Link>
         ))}
       </div>
@@ -60,7 +66,7 @@ export function TownPortalPage() {
           <QueryState isLoading={alertsQuery.isLoading} error={alertsQuery.error} empty={(alertsQuery.data?.data ?? []).length === 0}>
             <div className="mt-4 space-y-3">
               {(alertsQuery.data?.data ?? []).slice(0, 4).map((item) => (
-                <div key={item.id} className="rounded-[18px] border border-lokals-border px-4 py-3">
+                <div key={item.id} className="rounded-[18px] border border-lokals-border bg-[linear-gradient(180deg,#ffffff,#fbfcff)] px-4 py-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-semibold text-lokals-charcoal">{item.title}</p>
@@ -85,7 +91,7 @@ export function TownPortalPage() {
           <QueryState isLoading={servicesQuery.isLoading} error={servicesQuery.error} empty={(servicesQuery.data?.data ?? []).length === 0}>
             <div className="mt-4 space-y-3">
               {(servicesQuery.data?.data ?? []).slice(0, 5).map((item) => (
-                <div key={item.id} className="rounded-[18px] border border-lokals-border px-4 py-3">
+                <div key={item.id} className="rounded-[18px] border border-lokals-border bg-[linear-gradient(180deg,#ffffff,#fbfcff)] px-4 py-3">
                   <p className="font-semibold text-lokals-charcoal">{item.name}</p>
                   <p className="mt-1 text-sm text-lokals-muted">{item.category} | {item.area ?? item.town ?? item.location ?? PILOT_TOWN}</p>
                 </div>
@@ -102,7 +108,7 @@ export function TownPortalPage() {
           <QueryState isLoading={servicesQuery.isLoading} error={servicesQuery.error} empty={emergencyContacts.length === 0}>
             <div className="mt-4 space-y-3">
               {emergencyContacts.map((item) => (
-                <div key={item.id} className="rounded-[18px] border border-lokals-border px-4 py-3">
+                <div key={item.id} className="rounded-[18px] border border-lokals-border bg-[linear-gradient(180deg,#ffffff,#fbfcff)] px-4 py-3">
                   <p className="font-semibold text-lokals-charcoal">{item.name}</p>
                   <p className="mt-1 text-sm text-lokals-muted">{item.phone ?? 'Call details available from the council desk'}</p>
                   <div className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-lokals-green">
@@ -125,10 +131,12 @@ export function TownPortalPage() {
           ['Store Listings', productsQuery.data?.data?.length ?? 0, <Store className="h-5 w-5" />, '/store'],
           ['Accommodation', accommodationQuery.data?.data?.length ?? 0, <Building2 className="h-5 w-5" />, '/accommodation'],
         ].map(([title, count, icon, href]) => (
-          <Link key={title as string} to={href as string} className="rounded-[24px] border border-lokals-border bg-white p-5 shadow-card transition hover:-translate-y-0.5">
+          <Link key={title as string} to={href as string} className="block">
+            <Card interactive className="p-5">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lokals-green-soft text-lokals-green">{icon}</div>
             <p className="mt-4 font-semibold text-lokals-charcoal">{title}</p>
             <p className="mt-1 text-sm text-lokals-muted">{count} items ready for the pilot view.</p>
+            </Card>
           </Link>
         ))}
       </div>

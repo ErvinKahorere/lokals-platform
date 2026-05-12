@@ -132,8 +132,8 @@ export function HomePage() {
   }
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-[28px] border border-lokals-border bg-white px-6 py-6 shadow-card">
+    <div className="space-y-7">
+      <section className="overflow-hidden rounded-[28px] border border-white/70 bg-[linear-gradient(180deg,#ffffff,#fbfcff)] px-6 py-6 shadow-soft">
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
@@ -144,7 +144,7 @@ export function HomePage() {
               </p>
               <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-lokals-green">{PILOT_LOCATION_MESSAGE}</p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-lokals-green-soft px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-lokals-green">
+                <span className="rounded-full bg-lokals-purple-soft px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-lokals-purple">
                   {currentUser ? activeRole.replaceAll('_', ' ') : 'Guest'}
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-lokals-charcoal">
@@ -178,7 +178,7 @@ export function HomePage() {
           />
 
           {search.trim() ? (
-            <div className="rounded-[24px] border border-lokals-border bg-lokals-surface p-5">
+            <div className="rounded-[24px] border border-lokals-purple/10 bg-[linear-gradient(180deg,#f9faff,#ffffff)] p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-lokals-green">Search preview</p>
               <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {[
@@ -336,7 +336,7 @@ export function HomePage() {
         error={currentUser ? newsFeedQuery.error : newsLocalQuery.error}
       />
 
-      <div className="rounded-[24px] border border-lokals-border bg-white p-5 shadow-card">
+      <div className="rounded-[24px] border border-white/70 bg-[linear-gradient(180deg,#ffffff,#fbfcff)] p-5 shadow-card">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-green">More nearby</p>

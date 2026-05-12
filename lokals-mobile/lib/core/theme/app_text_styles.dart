@@ -4,20 +4,21 @@ import 'app_colors.dart';
 
 class AppTextStyles {
   static const h1 = TextStyle(
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: FontWeight.w800,
     color: AppColors.deepCharcoal,
-    height: 1.15,
+    height: 1.1,
   );
 
   static const h2 = TextStyle(
     fontSize: 22,
     fontWeight: FontWeight.w700,
     color: AppColors.deepCharcoal,
+    height: 1.15,
   );
 
   static const h3 = TextStyle(
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: FontWeight.w700,
     color: AppColors.deepCharcoal,
   );
@@ -39,7 +40,7 @@ class AppTextStyles {
     fontSize: 14,
     fontWeight: FontWeight.w500,
     color: AppColors.mutedText,
-    height: 1.4,
+    height: 1.45,
   );
 
   static const caption = TextStyle(

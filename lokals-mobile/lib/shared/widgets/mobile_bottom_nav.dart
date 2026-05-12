@@ -21,8 +21,8 @@ class MobileBottomNav extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 28,
-              offset: const Offset(0, 12),
+              blurRadius: 32,
+              offset: const Offset(0, 14),
             ),
           ],
         ),

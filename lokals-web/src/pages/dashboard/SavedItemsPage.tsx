@@ -18,17 +18,10 @@ export function SavedItemsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        eyebrow="Saved"
-        title="Saved items"
-        description="Products, events, accommodation, providers, listings, and followed local sources together in one place."
-      />
+      <PageHeader eyebrow="Saved" title="Saved items" description="Products, events, accommodation, providers, local news, and followed organizations together in one place." />
       <QueryState isLoading={savedItemsQuery.isLoading} error={savedItemsQuery.error} empty={items.length === 0}>
         {items.length === 0 ? (
-          <EmptyState
-            title="Nothing saved yet."
-            body="Save products, accommodation, events, local providers, or news and they will appear here."
-          />
+          <EmptyState title="Nothing saved yet." body="Save products, accommodation, events, news, or local providers and they will appear here." />
         ) : (
           <div className="space-y-5">
             {groups.map((group) => {
@@ -42,15 +35,9 @@ export function SavedItemsPage() {
                   </div>
                   <div className="mt-4 grid gap-3 md:grid-cols-2">
                     {groupItems.map((item) => (
-                      <Link
-                        key={`${item.kind}-${item.id}`}
-                        to={item.route}
-                        className="rounded-[18px] border border-lokals-border px-4 py-3 transition hover:bg-slate-50"
-                      >
+                      <Link key={`${item.kind}-${item.id}`} to={item.route} className="rounded-[18px] border border-lokals-border px-4 py-3 transition hover:bg-slate-50">
                         <p className="font-semibold text-lokals-charcoal">{item.title}</p>
-                        <p className="mt-1 text-sm text-lokals-muted">
-                          {[item.subtitle, item.area, item.town].filter(Boolean).join(' | ')}
-                        </p>
+                        <p className="mt-1 text-sm text-lokals-muted">{[item.subtitle, item.area, item.town].filter(Boolean).join(' • ')}</p>
                       </Link>
                     ))}
                   </div>

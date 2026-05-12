@@ -21,7 +21,7 @@ export function DashboardShell({
   children: ReactNode
 }) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <PageHeader eyebrow={eyebrow} title={title} description={description} actions={actions} />
       <QueryState isLoading={isLoading} error={error}>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -29,7 +29,9 @@ export function DashboardShell({
             <StatCard key={key} label={key.replaceAll('_', ' ')} value={String(value)} hint="Role snapshot" />
           ))}
         </div>
-        {children}
+        <div className="rounded-[28px] border border-lokals-purple/10 bg-[linear-gradient(180deg,#ffffff,#fbfcff)] p-4 shadow-card md:p-5">
+          {children}
+        </div>
       </QueryState>
     </div>
   )

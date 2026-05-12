@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/experience_helpers.dart';
-import '../../core/role_routing.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../widgets/cards.dart';
@@ -33,14 +32,14 @@ class ProfileScreen extends ConsumerWidget {
           final stats = summary.stats;
           final menu = [
             ('/my-bookings', 'My Bookings', 'Appointments, rides, and deliveries.', Icons.calendar_month_outlined),
-            ('/my-reports', 'My Reports', 'Issue reports, municipal updates, and follow-up actions.', Icons.report_problem_outlined),
             ('/my-tickets', 'My Tickets', 'Reserved and confirmed event tickets.', Icons.confirmation_number_outlined),
             ('/jobs', 'My Jobs', 'Job posts, applications, and worker tools.', Icons.work_outline_rounded),
             ('/marketplace', 'My Listings', 'Marketplace posts and listing shortcuts.', Icons.storefront_outlined),
             ('/store', 'My Products', 'Store items and seller shortcuts.', Icons.shopping_bag_outlined),
             ('/accommodation', 'My Accommodation', 'Property and short-stay listings.', Icons.home_work_outlined),
-            ('/saved-items', 'Saved Items', 'Saved products, providers, accommodation, and news.', Icons.bookmark_outline_rounded),
+            ('/saved-items', 'Saved Items', 'Saved products, events, providers, and local updates.', Icons.bookmark_outline_rounded),
             ('/activity', 'Activity', 'Notifications, alerts, and account history.', Icons.notifications_active_outlined),
+            ('/dashboard', 'Manage My Business', 'Business, service, and organization tools.', Icons.business_center_outlined),
             ('/settings', 'Settings', 'Preferences, roles, privacy, and support.', Icons.settings_outlined),
           ];
 
@@ -128,8 +127,8 @@ class ProfileScreen extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: MetricCard(
-                      label: 'Reports',
-                      value: '${stats['reports'] ?? 0}',
+                      label: 'Jobs',
+                      value: '${stats['jobs_applications'] ?? 0}',
                     ),
                   ),
                 ],
@@ -139,8 +138,8 @@ class ProfileScreen extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: MetricCard(
-                      label: 'Tickets',
-                      value: '${stats['tickets'] ?? 0}',
+                      label: 'Listings',
+                      value: '${(stats['listings'] ?? 0) + (stats['products'] ?? 0)}',
                       color: AppColors.primaryGreen,
                     ),
                   ),
@@ -168,18 +167,12 @@ class ProfileScreen extends ConsumerWidget {
                     RoleSwitcher(
                       roles: summary.user.roles,
                       currentRole: currentRole,
-                            isBusy: authState.isLoading,
-                            onSelected: (role) async {
-                        final nextUser = await ref
-                            .read(authControllerProvider.notifier)
-                            .switchRole(role);
+                      isBusy: authState.isLoading,
+                      onSelected: (role) async {
+                        await ref.read(authControllerProvider.notifier).switchRole(role);
                         ref.invalidate(profileSummaryProvider);
-                        if (!context.mounted) {
-                          return;
-                        }
-                        context.go(roleHomePath(nextUser?.currentRole ?? role));
-                            },
-                          ),
+                      },
+                    ),
                   ],
                 ),
               ),

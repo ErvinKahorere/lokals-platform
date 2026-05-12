@@ -9,7 +9,6 @@ import { isDemoMode } from '../config/appMode'
 import { useCreateDelivery, useDeliveries } from '../hooks/queries'
 import { getApiErrorMessage } from '../lib/api'
 import { navigateToLogin } from '../lib/authNavigation'
-import { PILOT_TOWN } from '../lib/pilot'
 import { useAuthStore } from '../store/auth'
 import type { DeliveryItem } from '../types'
 
@@ -19,7 +18,7 @@ const parcelSizes = [
   { value: 'large', label: 'Large box', detail: 'Bulkier items needing extra care', estimate: 120 },
 ]
 
-const quickLocations = ['Home', 'Work', 'Okahandja taxi rank', 'Okahandja State Clinic', 'Nau-Aib Community Hall', 'Okahandja Town Council']
+const quickLocations = ['Home', 'Work', 'Okahandja taxi rank', 'Okahandja State Clinic', 'Okahandja Town Council', 'Five Rand']
 
 const deliverySteps = ['requested', 'accepted', 'picked_up', 'delivered', 'cancelled']
 
@@ -105,7 +104,7 @@ export function DeliveryPage() {
         {[
           { title: 'Fast handoff', body: 'Choose common pickup and drop-off spots without typing every field.', Icon: Truck, className: 'bg-lokals-gold-soft text-lokals-charcoal' },
           { title: 'Visible estimate', body: 'Parcel size keeps the likely delivery amount visible before you submit.', Icon: Clock3, className: 'bg-sky-50 text-sky-700' },
-          { title: 'Trusted routing', body: `You can jump into request status right after submit instead of waiting blindly around ${PILOT_TOWN}.`, Icon: MapPin, className: 'bg-emerald-50 text-emerald-700' },
+          { title: 'Trusted routing', body: 'You can jump into request status right after submit instead of waiting blindly.', Icon: MapPin, className: 'bg-emerald-50 text-emerald-700' },
         ].map(({ title, body, Icon, className }) => (
           <SectionCard key={title} className="bg-white">
             <div className="flex items-start gap-3">

@@ -57,7 +57,7 @@ export function SearchBar({ recentKey, suggestions = [], shortcuts = [], onValue
         <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-lokals-muted" />
         <Input
           {...props}
-          className={`pl-11 ${props.className ?? ''}`}
+          className={`pl-11 shadow-card ${props.className ?? ''}`}
           onFocus={(event) => {
             setFocused(true)
             props.onFocus?.(event)
@@ -70,11 +70,11 @@ export function SearchBar({ recentKey, suggestions = [], shortcuts = [], onValue
         />
       </label>
       {(focused || recent.length > 0) && (shortcuts.length > 0 || recent.length > 0 || visibleSuggestions.length > 0) ? (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 rounded-[20px] border border-lokals-border bg-white p-3 shadow-soft-lg">
+        <div className="absolute left-0 right-0 top-[calc(100%+0.65rem)] z-20 rounded-[24px] border border-white/70 bg-white/98 p-3 shadow-soft-lg">
           {visibleSuggestions.length > 0 ? (
             <div className="mb-3 flex flex-wrap gap-2">
               {visibleSuggestions.map((item) => (
-                <button key={item} type="button" onMouseDown={() => selectValue(item)} className="rounded-full bg-lokals-green-soft px-3 py-2 text-xs font-semibold text-lokals-green">
+                <button key={item} type="button" onMouseDown={() => selectValue(item)} className="rounded-full bg-lokals-purple-soft px-3 py-2 text-xs font-semibold text-lokals-purple">
                   {item}
                 </button>
               ))}
@@ -96,7 +96,7 @@ export function SearchBar({ recentKey, suggestions = [], shortcuts = [], onValue
           {shortcuts.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {shortcuts.map((shortcut) => (
-                <button key={shortcut.value} type="button" onMouseDown={() => selectValue(shortcut.value)} className="rounded-full border border-lokals-border bg-lokals-surface px-3 py-2 text-xs font-semibold text-lokals-charcoal">
+                <button key={shortcut.value} type="button" onMouseDown={() => selectValue(shortcut.value)} className="rounded-full border border-lokals-border bg-lokals-surface px-3 py-2 text-xs font-semibold text-lokals-charcoal hover:border-lokals-purple/20 hover:bg-lokals-purple-soft/50">
                   {shortcut.label}
                 </button>
               ))}

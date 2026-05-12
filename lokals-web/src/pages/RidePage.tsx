@@ -9,7 +9,6 @@ import { isDemoMode } from '../config/appMode'
 import { useCreateRide, useRides } from '../hooks/queries'
 import { getApiErrorMessage } from '../lib/api'
 import { navigateToLogin } from '../lib/authNavigation'
-import { PILOT_TOWN } from '../lib/pilot'
 import { useAuthStore } from '../store/auth'
 import type { RideItem } from '../types'
 
@@ -26,11 +25,10 @@ const savedStops = [
   'Okahandja taxi rank',
   'Okahandja Town Council',
   'Okahandja State Clinic',
-  'Nau-Aib Community Hall',
-  'Osona Village entrance',
+  'Gross Barmen Road',
 ]
 
-const tripPurposes = ['Daily commute', 'Clinic visit', 'School pickup', 'Town errand', 'Late shift ride']
+const tripPurposes = ['Daily commute', 'Clinic visit', 'School pickup', 'Airport trip', 'Late shift ride']
 
 export function RidePage() {
   const [pickupLocation, setPickupLocation] = useState(savedStops[0])
@@ -52,7 +50,7 @@ export function RidePage() {
 
   const estimatedFare = useMemo(() => {
     const routeBonus = pickupLocation === dropoffLocation ? 0 : 12
-    const purposeBonus = tripPurpose === 'Town errand' ? 18 : tripPurpose === 'Late shift ride' ? 20 : 0
+    const purposeBonus = tripPurpose === 'Airport trip' ? 85 : tripPurpose === 'Late shift ride' ? 20 : 0
     return selectedRide.baseFare + routeBonus + purposeBonus
   }, [dropoffLocation, pickupLocation, selectedRide.baseFare, tripPurpose])
 
@@ -95,7 +93,7 @@ export function RidePage() {
         <PageHeader
           eyebrow="Ride"
           title="Request a taxi with trusted local defaults"
-          description={`Pick your route, choose a ride type, and confirm a clear fare range before sending the request in ${PILOT_TOWN}.`}
+          description="Pick your route, choose a ride type, and confirm a clear fare range before sending the request."
           actions={<Link to="/sos"><Button variant="danger">Open SOS</Button></Link>}
         />
       </GlassPanel>
@@ -143,22 +141,16 @@ export function RidePage() {
                   </div>
 
                   <div className="flex flex-wrap gap-2">
-                    {['Home', 'Work', 'Clinic'].map((label) => (
+                    {['Home', 'Work', 'Airport'].map((label) => (
                       <button
                         key={label}
                         type="button"
-                        onClick={() => setDropoffLocation(label === 'Clinic' ? 'Okahandja State Clinic' : label)}
+                        onClick={() => setDropoffLocation(label === 'Airport' ? 'Hosea Kutako International Airport' : label)}
                         className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-lokals-charcoal transition hover:bg-slate-200"
                       >
                         {label}
                       </button>
                     ))}
-                  </div>
-
-                  <div className="rounded-2xl border border-lokals-border bg-slate-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-purple">Operator</p>
-                    <p className="mt-2 font-semibold text-lokals-charcoal">Verified local taxi operator</p>
-                    <p className="mt-1 text-sm text-lokals-muted">Ride requests are prioritised around Okahandja service corridors.</p>
                   </div>
 
                   <div className="grid gap-3 md:grid-cols-3">

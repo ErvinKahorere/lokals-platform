@@ -41,6 +41,28 @@ class DemoTownManagerSeeder extends Seeder
             ],
         );
 
+        $organizationAdmin = $this->upsertUser(
+            'orgadmin@lokals.app',
+            [
+                'name' => 'Selma Uiras',
+                'phone' => '+264810001020',
+                'location' => 'Town Centre, Okahandja',
+                'default_town' => 'Okahandja',
+                'default_area' => 'Central Okahandja',
+                'current_role' => 'organization_admin',
+                'whatsapp' => '+264810001020',
+                'lat' => -21.9835,
+                'lng' => 16.9180,
+            ],
+            ['organization_admin'],
+            [
+                'bio' => 'Demo organization admin account for public updates, events, and civic communication.',
+            ],
+            [
+                'interests' => ['Community updates', 'Events', 'Public information'],
+            ],
+        );
+
         $resident = $this->upsertUser(
             'resident@lokals.app',
             [
@@ -64,13 +86,13 @@ class DemoTownManagerSeeder extends Seeder
         );
 
         $council = $this->upsertOrganization('Okahandja Town Council', [
-            'owner_user_id' => $manager->id,
+            'owner_user_id' => $organizationAdmin->id,
             'category' => 'government',
             'subcategory' => 'municipal_office',
             'description' => 'Service desk for rates, permits, outages, public notices, and resident support.',
             'phone' => '+264610001001',
-            'email' => 'manager@lokals.app',
-            'whatsapp' => '+264810001001',
+            'email' => 'orgadmin@lokals.app',
+            'whatsapp' => '+264810001020',
             'location' => 'Town Centre, Okahandja',
             'town' => 'Okahandja',
             'area' => 'Town Centre',

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../config/app_config.dart';
 import '../../widgets/cards.dart';
@@ -53,7 +54,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       body: SafeArea(
         child: Form(
           child: ListView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
             children: [
               Align(
                 alignment: Alignment.centerLeft,
@@ -102,25 +103,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 style: AppTextStyles.bodyMuted,
               ),
               const SizedBox(height: 18),
-              Container(
+              AppCard(
+                variant: AppCardVariant.dashboard,
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: AppColors.primaryPurple.withValues(alpha: 0.14)),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x140F172A),
-                      blurRadius: 28,
-                      offset: Offset(0, 12),
-                    ),
-                  ],
-                ),
                 child: const Row(
                   children: [
                     CircleAvatar(
                       radius: 22,
-                      backgroundColor: Color(0xFFF3E8FF),
+                      backgroundColor: AppColors.purpleSoft,
                       child: Icon(Icons.place_outlined, color: AppColors.primaryPurple),
                     ),
                     SizedBox(width: 12),
@@ -143,7 +133,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.md),
               LokalsCard(
                 child: Column(
                   children: [
@@ -204,7 +194,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: AppColors.purpleSoftAlt,
+                        color: AppColors.purpleSoft,
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(color: AppColors.purpleBorder),
                       ),
@@ -237,7 +227,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: AppSpacing.lg),
               const Text(
                 'Demo accounts',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
@@ -246,16 +236,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ..._demoAccounts.map(
                 (account) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: LokalsCard(
-                    child: ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(account.label),
-                      subtitle: Text(account.phone),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.primaryPurple),
-                      onTap: () {
-                        _phoneController.text = account.phone;
-                        _passwordController.text = account.password;
-                      },
+                  child: LokalsSurfaceTile(
+                    onTap: () {
+                      _phoneController.text = account.phone;
+                      _passwordController.text = account.password;
+                    },
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppColors.purpleSoft,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Icon(Icons.person_outline_rounded, color: AppColors.primaryPurple),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(account.label, style: const TextStyle(fontWeight: FontWeight.w700)),
+                              const SizedBox(height: 2),
+                              Text(account.phone, style: AppTextStyles.bodyMuted),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.primaryPurple),
+                      ],
                     ),
                   ),
                 ),
@@ -278,6 +287,8 @@ class _DemoAccount {
 
 const _demoAccounts = [
   _DemoAccount('Citizen', '+264810001050', 'Password123!'),
+  _DemoAccount('Business owner', '+264810001101', 'Password123!'),
+  _DemoAccount('Organization admin', '+264810001020', 'Password123!'),
   _DemoAccount('Town manager', '+264810001001', 'Password123!'),
   _DemoAccount('Service provider', '+264810002203', 'Password123!'),
   _DemoAccount('Super admin', '+264810001000', 'Password123!'),

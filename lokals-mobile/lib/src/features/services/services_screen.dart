@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/category_tile.dart';
 import '../../../shared/widgets/provider_card.dart';
@@ -115,13 +116,13 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
             });
 
           return ListView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
             children: [
               Container(
                 padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [AppColors.primaryPurple, AppColors.deepPurple],
+                    colors: [AppColors.deepPurple, AppColors.primaryPurple],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -139,7 +140,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.md),
               AppSearchBar(
                 controller: _searchController,
                 hintText: 'Search services in Okahandja...',
@@ -148,7 +149,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                 shortcuts: const ['Cleaning', 'Plumbing', 'Electrical', 'Moving'],
                 onChanged: (_) => setState(() {}),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: AppSpacing.lg),
               Row(
                 children: [
                   const Expanded(
@@ -177,73 +178,73 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                   CategoryTile(icon: Icons.more_horiz_rounded, label: 'More', onTap: () => setState(() => _selectedCategory = 'all'), color: AppColors.neutralSoft, iconColor: AppColors.deepCharcoal),
                 ],
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: AppSpacing.lg),
               const Text('All Categories', style: AppTextStyles.h3),
               const SizedBox(height: 12),
               ..._categoryRows.map(
                 (row) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(20),
+                  child: LokalsSurfaceTile(
                     onTap: () => setState(() => _selectedCategory = row.$1),
-                    child: AppCard(
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: AppColors.purpleSoftAlt,
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: const Icon(Icons.apps_rounded, color: AppColors.primaryPurple),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppColors.purpleSoft,
+                            borderRadius: BorderRadius.circular(14),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(row.$2, style: const TextStyle(fontWeight: FontWeight.w700)),
-                                const SizedBox(height: 4),
-                                Text(row.$3, style: const TextStyle(color: AppColors.mutedText)),
-                              ],
-                            ),
+                          child: const Icon(Icons.apps_rounded, color: AppColors.primaryPurple),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(row.$2, style: const TextStyle(fontWeight: FontWeight.w700)),
+                              const SizedBox(height: 4),
+                              Text(row.$3, style: const TextStyle(color: AppColors.mutedText)),
+                            ],
                           ),
-                          const Icon(Icons.chevron_right_rounded, color: AppColors.mutedText),
-                        ],
-                      ),
+                        ),
+                        const Icon(Icons.chevron_right_rounded, color: AppColors.mutedText),
+                      ],
                     ),
                   ),
                 ),
               ),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  ChoiceChip(
-                    label: const Text('Near me'),
-                    selected: _nearMeOnly,
-                    onSelected: (_) => setState(() => _nearMeOnly = !_nearMeOnly),
-                  ),
-                  ChoiceChip(
-                    label: const Text('Open now'),
-                    selected: _openNowOnly,
-                    onSelected: (_) => setState(() => _openNowOnly = !_openNowOnly),
-                  ),
-                  ChoiceChip(
-                    label: const Text('Verified'),
-                    selected: _verifiedOnly,
-                    onSelected: (_) => setState(() => _verifiedOnly = !_verifiedOnly),
-                  ),
-                  ChoiceChip(
-                    label: const Text('Bookable'),
-                    selected: _bookableOnly,
-                    onSelected: (_) => setState(() => _bookableOnly = !_bookableOnly),
-                  ),
-                ],
+              AppCard(
+                padding: const EdgeInsets.all(14),
+                child: Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    ChoiceChip(
+                      label: const Text('Near me'),
+                      selected: _nearMeOnly,
+                      onSelected: (_) => setState(() => _nearMeOnly = !_nearMeOnly),
+                    ),
+                    ChoiceChip(
+                      label: const Text('Open now'),
+                      selected: _openNowOnly,
+                      onSelected: (_) => setState(() => _openNowOnly = !_openNowOnly),
+                    ),
+                    ChoiceChip(
+                      label: const Text('Verified'),
+                      selected: _verifiedOnly,
+                      onSelected: (_) => setState(() => _verifiedOnly = !_verifiedOnly),
+                    ),
+                    ChoiceChip(
+                      label: const Text('Bookable'),
+                      selected: _bookableOnly,
+                      onSelected: (_) => setState(() => _bookableOnly = !_bookableOnly),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: AppSpacing.lg),
               Row(
                 children: [
                   const Expanded(child: Text('Top Providers Near You', style: AppTextStyles.h3)),
@@ -260,9 +261,22 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
               ),
               const SizedBox(height: 12),
               if (filtered.isEmpty)
-                const EmptyStateView(
+                EmptyStateView(
                   title: 'No services found nearby.',
                   body: 'Try another area or remove one filter to widen your search.',
+                  action: AppButton(
+                    label: 'Reset filters',
+                    expanded: false,
+                    variant: AppButtonVariant.secondary,
+                    onPressed: () => setState(() {
+                      _selectedCategory = 'all';
+                      _nearMeOnly = true;
+                      _verifiedOnly = false;
+                      _bookableOnly = false;
+                      _openNowOnly = false;
+                      _searchController.clear();
+                    }),
+                  ),
                 )
               else
                 ...filtered.take(5).map((provider) => Padding(
@@ -273,7 +287,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
           );
         },
         loading: () => ListView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
           children: const [
             LoadingSkeleton(height: 160),
             SizedBox(height: 16),

@@ -5,11 +5,11 @@ import clsx from 'clsx'
 type CardVariant = 'default' | 'service' | 'marketplace' | 'job' | 'dashboard' | 'emergency'
 
 const variantClasses: Record<CardVariant, string> = {
-  default: 'border border-lokals-border bg-lokals-surface shadow-[0_14px_34px_rgba(15,23,42,0.08)]',
-  service: 'border border-violet-100 bg-lokals-surface shadow-[0_16px_36px_rgba(15,23,42,0.08)]',
-  marketplace: 'border border-slate-200 bg-lokals-surface shadow-[0_16px_36px_rgba(15,23,42,0.08)]',
-  job: 'border border-indigo-100 bg-lokals-surface shadow-[0_16px_36px_rgba(15,23,42,0.08)]',
-  dashboard: 'border border-slate-200 bg-lokals-surface shadow-[0_12px_28px_rgba(15,23,42,0.07)]',
+  default: 'border border-white/70 bg-[linear-gradient(180deg,#ffffff,#fbfdff)] shadow-card',
+  service: 'border border-lokals-purple/10 bg-[linear-gradient(180deg,#ffffff,#fafbff)] shadow-soft',
+  marketplace: 'border border-lokals-gold/20 bg-[linear-gradient(180deg,#ffffff,#fffef7)] shadow-soft',
+  job: 'border border-indigo-100 bg-[linear-gradient(180deg,#ffffff,#fbfcff)] shadow-soft',
+  dashboard: 'border border-lokals-purple/10 bg-[linear-gradient(180deg,#ffffff,#f9faff)] shadow-card',
   emergency: 'border border-rose-200 bg-[linear-gradient(180deg,#fff5f5,#ffffff)] shadow-[0_18px_40px_rgba(239,68,68,0.12)]',
 }
 

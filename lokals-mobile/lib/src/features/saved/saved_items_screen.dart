@@ -19,6 +19,13 @@ class SavedItemsScreen extends ConsumerWidget {
     ('listings', 'Listings'),
   ];
 
+  String _resolveRoute(String route) {
+    if (route.startsWith('/marketplace/')) {
+      return '/marketplace';
+    }
+    return route;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final savedItems = ref.watch(savedItemsProvider);
@@ -33,8 +40,7 @@ class SavedItemsScreen extends ConsumerWidget {
             return const Center(
               child: EmptyStateView(
                 title: 'Nothing saved yet.',
-                body:
-                    'Save products, accommodation, events, providers, or local news to find them here later.',
+                body: 'Save products, accommodation, events, and local providers to find them here later.',
               ),
             );
           }
@@ -48,36 +54,29 @@ class SavedItemsScreen extends ConsumerWidget {
               if (entries.isEmpty) {
                 return const SizedBox.shrink();
               }
+
               return Padding(
                 padding: const EdgeInsets.only(bottom: 14),
                 child: AppCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        group.$2,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                      Text(group.$2, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 10),
-                      ...entries.map((item) {
-                        final subtitle = [
-                          item['subtitle']?.toString(),
-                          item['area']?.toString(),
-                          item['town']?.toString(),
-                        ]
-                            .whereType<String>()
-                            .where((entry) => entry.isNotEmpty)
-                            .join(' | ');
-                        return ListTile(
+                      ...entries.map(
+                        (item) => ListTile(
                           contentPadding: EdgeInsets.zero,
                           title: Text(item['title']?.toString() ?? 'Saved item'),
-                          subtitle: subtitle.isEmpty ? null : Text(subtitle),
-                          onTap: () => context.go(item['route']?.toString() ?? '/'),
-                        );
-                      }),
+                          subtitle: Text(
+                            [
+                              item['subtitle']?.toString(),
+                              item['area']?.toString(),
+                              item['town']?.toString(),
+                            ].whereType<String>().where((entry) => entry.isNotEmpty).join(' • '),
+                          ),
+                          onTap: () => context.go(_resolveRoute(item['route']?.toString() ?? '/')),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -85,10 +84,11 @@ class SavedItemsScreen extends ConsumerWidget {
             }).toList(),
           );
         },
-        loading: () => const LokalsLoadingScreen(
-          title: 'Loading saved items',
-          message:
-              'Collecting your saved products, events, listings, and local follows...',
+        loading: () => const Center(
+          child: LokalsLoadingScreen(
+            title: 'Loading saved items',
+            message: 'Pulling together your saved products, places, and updates...',
+          ),
         ),
         error: (error, _) => Center(
           child: EmptyStateView(

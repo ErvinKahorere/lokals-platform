@@ -7,11 +7,6 @@ class SellerDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const BusinessDashboardScreen(
-      title: 'Seller Dashboard',
-      dashboardTitle: 'Seller dashboard',
-      subtitle:
-          'Products, local enquiries, promotions, and shop activity in one focused workspace.',
-    );
+    return const BusinessDashboardScreen();
   }
 }

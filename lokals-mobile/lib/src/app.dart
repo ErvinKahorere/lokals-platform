@@ -22,6 +22,7 @@ import 'features/dashboard/dashboard_router_screen.dart';
 import 'features/dashboard/worker_dashboard_screen.dart';
 import 'features/dashboard/seller_dashboard_screen.dart';
 import 'features/dashboard/business_dashboard_screen.dart';
+import 'features/dashboard/seller_dashboard_screen.dart';
 import 'features/dashboard/organization_dashboard_screen.dart';
 import 'features/dashboard/service_provider_dashboard_screen.dart';
 import 'features/dashboard/town_manager_dashboard_screen.dart';

@@ -6,12 +6,12 @@ import { ButtonLoader } from './LoadingSkeleton'
 type Variant = 'primary' | 'secondary' | 'accent' | 'dark' | 'danger' | 'ghost'
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-lokals-green text-white shadow-[0_14px_28px_rgba(22,163,74,0.24)] hover:shadow-[0_18px_34px_rgba(22,163,74,0.28)]',
-  secondary: 'border border-lokals-border bg-lokals-surface text-lokals-charcoal shadow-card hover:border-lokals-green/25 hover:bg-emerald-50/40',
+  primary: 'bg-lokals-green text-white shadow-[0_16px_34px_rgba(22,163,74,0.24)] hover:shadow-[0_20px_40px_rgba(22,163,74,0.28)]',
+  secondary: 'border border-lokals-border bg-lokals-surface text-lokals-charcoal shadow-card hover:border-lokals-purple/15 hover:bg-lokals-purple-soft/60',
   accent: 'bg-lokals-gold text-lokals-charcoal shadow-gold',
-  dark: 'bg-lokals-purple text-white shadow-[0_14px_28px_rgba(124,58,237,0.24)]',
+  dark: 'bg-lokals-purple text-white shadow-[0_16px_36px_rgba(63,43,203,0.24)]',
   danger: 'bg-lokals-danger text-white shadow-soft-lg hover:shadow-[0_18px_36px_rgba(239,68,68,0.22)]',
-  ghost: 'bg-transparent text-lokals-charcoal hover:bg-lokals-purple/5',
+  ghost: 'bg-transparent text-lokals-charcoal hover:bg-lokals-purple-soft/70',
 }
 
 export function Button({

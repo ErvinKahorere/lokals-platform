@@ -7,21 +7,23 @@
   --background: 248 250 252;
   --surface-glass: 255 255 255;
   --card: 255 255 255;
-  --text-primary: 15 23 42;
-  --text-secondary: 100 116 139;
+  --text-primary: 17 24 39;
+  --text-secondary: 107 114 128;
   --border: 229 231 235;
   --primary: 63 43 203;
   --brand-purple: 63 43 203;
-  --primary-deep: 43 30 140;
+  --primary-deep: 36 20 109;
   --primary-electric: 91 68 224;
+  --primary-soft: 238 242 255;
   --gold: 250 204 21;
-  --gold-soft: 254 243 199;
+  --gold-soft: 254 249 195;
   --danger: 239 68 68;
   --success: 22 163 74;
-  --success-soft: 234 248 239;
+  --success-soft: 220 252 231;
+  --danger-soft: 254 226 226;
   --warning: 245 158 11;
   --info: 37 99 235;
-  --info-soft: 232 240 255;
+  --info-soft: 239 244 255;
   --shadow-rgb: 15 23 42;
   --glass-alpha: 1;
   --app-gradient: none;
@@ -52,11 +54,12 @@ body {
   margin: 0;
   min-width: 320px;
   background:
-    radial-gradient(circle at top left, rgba(var(--brand-purple), 0.06), transparent 26%),
-    radial-gradient(circle at top right, rgba(var(--gold), 0.08), transparent 22%),
+    radial-gradient(circle at top left, rgba(var(--brand-purple), 0.09), transparent 26%),
+    radial-gradient(circle at top right, rgba(var(--gold), 0.12), transparent 22%),
+    linear-gradient(180deg, rgba(255,255,255,0.85), rgba(248,250,252,1)),
     rgb(var(--background));
   color: rgb(var(--text-primary));
-  font-family: Inter, 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Plus Jakarta Sans', Inter, 'Segoe UI', system-ui, sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   transition: background 200ms ease, color 200ms ease;
@@ -87,7 +90,7 @@ button {
   border: 1px solid rgba(var(--border), 1);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  box-shadow: 0 16px 34px rgba(var(--shadow-rgb), 0.08);
+  box-shadow: 0 20px 48px rgba(var(--shadow-rgb), 0.08);
 }
 
 .line-clamp-2 {

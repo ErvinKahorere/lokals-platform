@@ -22,7 +22,7 @@ class TownPortalScreen extends ConsumerWidget {
       title: 'Okahandja Portal',
       showBack: true,
       child: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
         children: [
           const SectionTitle(
             title: 'Okahandja Town',
@@ -40,6 +40,15 @@ class TownPortalScreen extends ConsumerWidget {
                 Text('LOKALS ${AppConfig.pilotTown}', style: const TextStyle(fontWeight: FontWeight.w800)),
                 const SizedBox(height: 8),
                 const Text('Town alerts, services, public updates, and local action in one place.'),
+                const SizedBox(height: 10),
+                const Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    AppBadge(label: 'Official', tone: AppBadgeTone.neutral),
+                    AppBadge(label: 'Municipality-ready', tone: AppBadgeTone.success),
+                  ],
+                ),
                 const SizedBox(height: 14),
                 Wrap(
                   spacing: 10,

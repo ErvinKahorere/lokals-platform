@@ -11,7 +11,6 @@ import '../../config/app_config.dart';
 import '../../core/models.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
-import '../auth/auth_controller.dart';
 import '../discovery/discovery_repository.dart';
 import 'accommodation_card.dart';
 
@@ -27,8 +26,6 @@ class _AccommodationScreenState extends ConsumerState<AccommodationScreen> {
   String _tab = 'rental';
   String _town = AppConfig.pilotTown;
   String _area = 'all';
-  String _minPrice = '';
-  String _maxPrice = '';
   String _bedrooms = 'any';
   String _bathrooms = 'any';
   String _pricePeriod = 'any';
@@ -51,7 +48,6 @@ class _AccommodationScreenState extends ConsumerState<AccommodationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = ref.watch(authControllerProvider);
     final accommodationsQuery = ref.watch(accommodationsProvider);
 
     return LokalsShell(
@@ -81,7 +77,7 @@ class _AccommodationScreenState extends ConsumerState<AccommodationScreen> {
                       children: const [
                         Text('Accommodation', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800)),
                         SizedBox(height: 6),
-                        Text('Rentals, property sales, B&Bs, guesthouses, and rooms around Okahandja.', style: AppTextStyles.bodyMuted),
+                        Text('Rentals, property sales, B&Bs, guesthouses, and rooms nearby.', style: AppTextStyles.bodyMuted),
                       ],
                     ),
                   ),
@@ -94,28 +90,11 @@ class _AccommodationScreenState extends ConsumerState<AccommodationScreen> {
               const SizedBox(height: 14),
               AppSearchBar(
                 controller: _searchController,
-                hintText: 'Search stays in Okahandja...',
+                hintText: 'Search rentals, B&Bs, rooms...',
                 recentKey: 'accommodation',
                 suggestions: const ['Room in Nau-Aib', 'B&B near Gross Barmen Road', 'Guesthouse in Okahandja Park', 'House for sale in Osona'],
                 shortcuts: const ['Rentals', 'B&B', 'Property sale', 'Rooms'],
                 onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.purpleSoftAlt,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  auth.user?.defaultArea == null || auth.user!.defaultArea!.isEmpty
-                      ? AppConfig.pilotTown
-                      : '${auth.user!.defaultArea}, ${AppConfig.pilotTown}',
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.primaryPurple,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
               ),
               const SizedBox(height: 14),
               SizedBox(
@@ -306,17 +285,15 @@ class _AccommodationScreenState extends ConsumerState<AccommodationScreen> {
           (item.area?.toLowerCase().contains(query) ?? false) ||
           (item.town?.toLowerCase().contains(query) ?? false);
       final matchesTab = _tab == 'short_stay'
-          ? item.type == 'bnb' || item.type == 'short_stay' || item.type == 'guesthouse'
+          ? item.type == 'bnb' || item.type == 'short_stay'
           : item.type == _tab;
       final matchesTown = _town == 'all' || item.town == _town;
       final matchesArea = _area == 'all' || item.area == _area;
       final matchesBedrooms = _bedrooms == 'any' || (item.bedrooms ?? 0) >= int.parse(_bedrooms);
       final matchesBathrooms = _bathrooms == 'any' || (item.bathrooms ?? 0) >= int.parse(_bathrooms);
       final matchesPricePeriod = _pricePeriod == 'any' || item.pricePeriod == _pricePeriod;
-      final matchesMinPrice = _minPrice.isEmpty || double.tryParse(item.price)?.compareTo(double.tryParse(_minPrice) ?? 0) != -1;
-      final matchesMaxPrice = _maxPrice.isEmpty || double.tryParse(item.price)?.compareTo(double.tryParse(_maxPrice) ?? double.infinity) != 1;
       final matchesVerified = !_verifiedOnly || item.ownerVerified || item.businessVerified;
-      return matchesQuery && matchesTab && matchesTown && matchesArea && matchesBedrooms && matchesBathrooms && matchesPricePeriod && matchesMinPrice && matchesMaxPrice && matchesVerified;
+      return matchesQuery && matchesTab && matchesTown && matchesArea && matchesBedrooms && matchesBathrooms && matchesPricePeriod && matchesVerified;
     }).toList();
 
     if (_recentOnly) {
@@ -360,8 +337,6 @@ class _AccommodationScreenState extends ConsumerState<AccommodationScreen> {
   }
 
   Future<void> _openFiltersSheet() async {
-    final minPriceController = TextEditingController(text: _minPrice);
-    final maxPriceController = TextEditingController(text: _maxPrice);
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -382,28 +357,6 @@ class _AccommodationScreenState extends ConsumerState<AccommodationScreen> {
                   children: [
                     const Expanded(child: Text('Filters', style: AppTextStyles.h3)),
                     IconButton(onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.close_rounded)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: LokalsTextField(
-                        controller: minPriceController,
-                        label: 'Min price',
-                        hint: '0',
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: LokalsTextField(
-                        controller: maxPriceController,
-                        label: 'Max price',
-                        hint: '15000',
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -453,8 +406,6 @@ class _AccommodationScreenState extends ConsumerState<AccommodationScreen> {
                       child: AppButton(
                         label: 'Apply',
                         onPressed: () {
-                          _minPrice = minPriceController.text.trim();
-                          _maxPrice = maxPriceController.text.trim();
                           setState(() {});
                           Navigator.of(context).pop();
                         },
@@ -471,13 +422,12 @@ class _AccommodationScreenState extends ConsumerState<AccommodationScreen> {
   }
 
   Future<void> _openPostAccommodationSheet() async {
-    final auth = ref.read(authControllerProvider);
     final titleController = TextEditingController();
     final priceController = TextEditingController();
     final townController = TextEditingController(text: _town);
     final areaController = TextEditingController(text: _area == 'all' ? AppConfig.okahandjaAreas.first : _area);
-    final phoneController = TextEditingController(text: auth.user?.phone ?? '');
-    final whatsappController = TextEditingController(text: auth.user?.whatsapp ?? auth.user?.phone ?? '');
+    final phoneController = TextEditingController();
+    final whatsappController = TextEditingController();
     final bedroomsController = TextEditingController();
     final bathroomsController = TextEditingController();
     final amenitiesController = TextEditingController();

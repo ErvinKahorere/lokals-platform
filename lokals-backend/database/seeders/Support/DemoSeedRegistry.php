@@ -14,6 +14,7 @@ class DemoSeedRegistry
         return [
             'admin@lokals.app',
             'manager@lokals.app',
+            'orgadmin@lokals.app',
             'resident@lokals.app',
             'market@lokals.app',
             'pharmacy@lokals.app',

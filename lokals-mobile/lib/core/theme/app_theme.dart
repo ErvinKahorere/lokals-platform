@@ -54,7 +54,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: surfaceColor,
         elevation: 0,
-        shadowColor: Colors.black.withValues(alpha: 0.08),
+        shadowColor: Colors.black.withValues(alpha: 0.07),
         shape: RoundedRectangleBorder(
           side: BorderSide(color: borderColor),
           borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -71,7 +71,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: colorScheme.secondary, width: 1.4),
+          borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
       ),

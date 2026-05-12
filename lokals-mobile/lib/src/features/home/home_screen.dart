@@ -142,7 +142,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return LokalsShell(
       title: 'LOKALS',
       child: ListView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
             children: [
               AppCard(
                 child: Column(
@@ -164,10 +164,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               const Text(
                                 'What do you need in Okahandja today?',
                                 style: TextStyle(
-                                  fontSize: 28,
+                                  fontSize: 30,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.deepCharcoal,
-                                  height: 1.08,
+                                  height: 1.04,
                                 ),
                               ),
                             ],
@@ -248,13 +248,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
               ],
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
               const HomeHeroCard(),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
               const HomeQuickActions(),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
               RoleHomeCard(role: role, isGuest: user == null),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
               HomeSection(
                 eyebrow: 'Local updates',
                 title: 'What is happening near you',
@@ -285,7 +285,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   )).toList(),
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
               HomeSection(
                 eyebrow: 'Nearby services',
                 title: 'Trusted providers around you',
@@ -303,7 +303,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   )).toList(),
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
               HomeSection(
                 eyebrow: 'Events near you',
                 title: 'Upcoming events nearby',
@@ -321,7 +321,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   )).toList(),
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
               HomeSection(
                 eyebrow: 'Store deals',
                 title: 'Local products and offers',
@@ -370,7 +370,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   )).toList(),
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
               HomeSection(
                 eyebrow: role == 'worker' ? 'Work first' : 'Work opportunities',
                 title: 'Jobs near you',
@@ -419,7 +419,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   )).toList(),
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
               newsFeed.when(
                 data: (items) => NewsFeedSection(
                   title: 'Local news',
@@ -432,7 +432,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   body: 'Please try again in a moment.',
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
               AppCard(
                 child: Row(
                   children: [

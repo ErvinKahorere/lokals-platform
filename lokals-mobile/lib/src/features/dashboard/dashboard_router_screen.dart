@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/auth_controller.dart';
 import 'citizen_dashboard_screen.dart';
 import 'business_dashboard_screen.dart';
+import 'seller_dashboard_screen.dart';
 import 'organization_dashboard_screen.dart';
 import 'seller_dashboard_screen.dart';
 import 'service_provider_dashboard_screen.dart';

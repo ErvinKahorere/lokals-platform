@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../config/app_config.dart';
 import '../../widgets/cards.dart';
@@ -51,8 +52,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       body: SafeArea(
         child: Form(
           child: ListView(
-            padding: const EdgeInsets.all(20),
-        children: [
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            children: [
               Align(
                 alignment: Alignment.centerLeft,
                 child: IconButton(
@@ -98,147 +99,136 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 style: AppTextStyles.bodyMuted,
               ),
               const SizedBox(height: 16),
-              Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.primaryPurple.withValues(alpha: 0.14)),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x140F172A),
-                  blurRadius: 28,
-                  offset: Offset(0, 12),
-                ),
-              ],
-            ),
-            child: const Row(
-              children: [
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor: Color(0xFFF3E8FF),
-                  child: Icon(Icons.how_to_reg_outlined, color: AppColors.primaryPurple),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Start simple, personalize later',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              AppCard(
+                variant: AppCardVariant.dashboard,
+                padding: const EdgeInsets.all(16),
+                child: const Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 22,
+                      backgroundColor: AppColors.purpleSoft,
+                      child: Icon(Icons.how_to_reg_outlined, color: AppColors.primaryPurple),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Start simple, personalize later',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            '${AppConfig.pilotLocationMessage} Your first account opens as a citizen, with your area saved from day one.',
+                            style: TextStyle(color: AppColors.mutedText),
+                          ),
+                        ],
                       ),
-                      SizedBox(height: 4),
-                      Text(
-                        '${AppConfig.pilotLocationMessage} Your first account opens as a citizen, with your area saved from day one.',
-                        style: TextStyle(color: AppColors.mutedText),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.md),
               LokalsCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                LokalsTextField(controller: _nameController, label: 'Full name', hint: 'Enter your name'),
-                const SizedBox(height: 12),
-                LokalsTextField(
-                  controller: _phoneController,
-                  label: 'Phone number',
-                  hint: '+264...',
-                  keyboardType: TextInputType.phone,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LokalsTextField(controller: _nameController, label: 'Full name', hint: 'Enter your name'),
+                    const SizedBox(height: 12),
+                    LokalsTextField(
+                      controller: _phoneController,
+                      label: 'Phone number',
+                      hint: '+264...',
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: 12),
+                    LokalsTextField(
+                      controller: _passwordController,
+                      label: 'Password',
+                      hint: 'Create a password',
+                      obscureText: true,
+                    ),
+                    const SizedBox(height: 12),
+                    LokalsTextField(
+                      controller: _confirmPasswordController,
+                      label: 'Confirm password',
+                      hint: 'Repeat your password',
+                      obscureText: true,
+                    ),
+                    const SizedBox(height: 12),
+                    InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'Pilot town',
+                      ),
+                      child: Text(
+                        AppConfig.pilotTown,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedArea,
+                      items: AppConfig.okahandjaAreas
+                          .map((area) => DropdownMenuItem(value: area, child: Text(area)))
+                          .toList(),
+                      decoration: const InputDecoration(labelText: 'Area'),
+                      onChanged: (value) => setState(() => _selectedArea = value ?? _selectedArea),
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 12),
+                      Text(_error!, style: const TextStyle(color: AppColors.danger)),
+                    ],
+                    const SizedBox(height: 16),
+                    PrimaryAction(
+                      label: 'Create Account',
+                      isBusy: auth.isLoading,
+                      onPressed: () async {
+                        final name = _nameController.text.trim();
+                        final phone = _phoneController.text.trim();
+                        final password = _passwordController.text.trim();
+                        final confirmPassword = _confirmPasswordController.text.trim();
+                        setState(() => _error = null);
+                        if (name.isEmpty) {
+                          setState(() => _error = 'Enter your name.');
+                          return;
+                        }
+                        if (phone.length < 8) {
+                          setState(() => _error = 'Enter a valid phone number.');
+                          return;
+                        }
+                        if (password.length < 8) {
+                          setState(() => _error = 'Use at least 8 characters for your password.');
+                          return;
+                        }
+                        if (password != confirmPassword) {
+                          setState(() => _error = 'Passwords do not match.');
+                          return;
+                        }
+                        try {
+                          await ref.read(authControllerProvider.notifier).register(
+                            name: name,
+                            phone: phone,
+                            password: password,
+                            town: AppConfig.pilotTown,
+                            area: _selectedArea,
+                          );
+                          if (!context.mounted) return;
+                          context.go('/home');
+                        } on DioException catch (error) {
+                          setState(() => _error = _buildRegisterError(error));
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () => context.go('/login'),
+                      child: const Text('Already have a profile? Sign in'),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                LokalsTextField(
-                  controller: _passwordController,
-                  label: 'Password',
-                  hint: 'Create a password',
-                  obscureText: true,
-                ),
-                const SizedBox(height: 12),
-                LokalsTextField(
-                  controller: _confirmPasswordController,
-                  label: 'Confirm password',
-                  hint: 'Repeat your password',
-                  obscureText: true,
-                ),
-                const SizedBox(height: 12),
-                InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Pilot town',
-                  ),
-                  child: Text(
-                    AppConfig.pilotTown,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedArea,
-                  items: AppConfig.okahandjaAreas
-                      .map((area) => DropdownMenuItem(value: area, child: Text(area)))
-                      .toList(),
-                  decoration: const InputDecoration(labelText: 'Area'),
-                  onChanged: (value) => setState(() => _selectedArea = value ?? _selectedArea),
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 12),
-                  Text(_error!, style: const TextStyle(color: AppColors.danger)),
-                ],
-                const SizedBox(height: 16),
-                PrimaryAction(
-                  label: 'Create Account',
-                  isBusy: auth.isLoading,
-                  onPressed: () async {
-                    final name = _nameController.text.trim();
-                    final phone = _phoneController.text.trim();
-                    final password = _passwordController.text.trim();
-                    final confirmPassword = _confirmPasswordController.text.trim();
-                    setState(() => _error = null);
-                    if (name.isEmpty) {
-                      setState(() => _error = 'Enter your name.');
-                      return;
-                    }
-                    if (phone.length < 8) {
-                      setState(() => _error = 'Enter a valid phone number.');
-                      return;
-                    }
-                    if (password.length < 8) {
-                      setState(() => _error = 'Use at least 8 characters for your password.');
-                      return;
-                    }
-                    if (password != confirmPassword) {
-                      setState(() => _error = 'Passwords do not match.');
-                      return;
-                    }
-                    try {
-                      await ref.read(authControllerProvider.notifier).register(
-                        name: name,
-                        phone: phone,
-                        password: password,
-                        town: AppConfig.pilotTown,
-                        area: _selectedArea,
-                      );
-                      if (!context.mounted) return;
-                      context.go('/home');
-                    } on DioException catch (error) {
-                      setState(() => _error = _buildRegisterError(error));
-                    }
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: () => context.go('/login'),
-                  child: const Text('Already have a profile? Sign in'),
-                ),
-              ],
-            ),
               ),
-        ],
+            ],
           ),
         ),
       ),

@@ -194,6 +194,7 @@ export default function App() {
           <Route path="/dashboard/business-shortcuts" element={<ProtectedRoute><Navigate to="/dashboard" replace /></ProtectedRoute>} />
           <Route path="/dashboard/seller" element={<BusinessRoute><SellerDashboardPage /></BusinessRoute>} />
           <Route path="/dashboard/business" element={<BusinessRoute><BusinessDashboardPage /></BusinessRoute>} />
+          <Route path="/dashboard/seller" element={<BusinessRoute><BusinessDashboardPage /></BusinessRoute>} />
           <Route path="/dashboard/service-provider" element={<ServiceProviderRoute><ServiceProviderDashboardPage /></ServiceProviderRoute>} />
           <Route path="/dashboard/organization" element={<OrganizationRoute><OrganizationDashboardPage /></OrganizationRoute>} />
           <Route path="/dashboard/municipality" element={<MunicipalityRoute><MunicipalityDashboardPage /></MunicipalityRoute>} />

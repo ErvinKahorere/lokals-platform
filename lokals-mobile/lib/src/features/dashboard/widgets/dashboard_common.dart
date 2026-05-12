@@ -191,7 +191,7 @@ class DashboardScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
       children: [
         SectionTitle(title: title, subtitle: subtitle),
         const SizedBox(height: 16),

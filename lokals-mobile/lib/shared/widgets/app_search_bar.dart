@@ -93,8 +93,8 @@ class _AppSearchBarState extends State<AppSearchBar> {
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: _focused ? 0.08 : 0.05),
-                  blurRadius: 24,
-                  offset: const Offset(0, 12),
+                  blurRadius: 30,
+                  offset: const Offset(0, 14),
                 ),
               ],
             ),
