@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../shared/widgets/app_network_image.dart';
 import '../../../widgets/cards.dart';
 
 class AvatarUploader extends StatelessWidget {
@@ -27,30 +28,23 @@ class AvatarUploader extends StatelessWidget {
   Widget build(BuildContext context) {
     final initials = name.isEmpty ? 'L' : name.characters.first.toUpperCase();
 
-    ImageProvider<Object>? imageProvider;
-    if (avatarFile != null) {
-      imageProvider = FileImage(File(avatarFile!.path));
-    } else if (networkUrl != null && networkUrl!.isNotEmpty) {
-      imageProvider = NetworkImage(networkUrl!);
-    }
-
     return AppCard(
       variant: AppCardVariant.dashboard,
       child: Column(
         children: [
-          CircleAvatar(
-            radius: 46,
-            backgroundColor: AppColors.purpleSoft,
-            backgroundImage: imageProvider,
-            child: imageProvider == null
-                ? Text(
-                    initials,
-                    style: AppTextStyles.h2.copyWith(
-                      color: AppColors.primaryPurple,
-                    ),
-                  )
-                : null,
-          ),
+          if (avatarFile != null)
+            CircleAvatar(
+              radius: 46,
+              backgroundColor: AppColors.purpleSoft,
+              backgroundImage: FileImage(File(avatarFile!.path)),
+            )
+          else
+            AppAvatarImage(
+              name: initials,
+              imageUrl: networkUrl,
+              radius: 46,
+              backgroundColor: AppColors.purpleSoft,
+            ),
           const SizedBox(height: 14),
           AppButton(
             label: isUploading ? 'Uploading photo...' : 'Choose photo',

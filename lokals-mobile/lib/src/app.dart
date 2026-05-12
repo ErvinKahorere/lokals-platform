@@ -17,6 +17,22 @@ import 'features/bookings/booking_screen.dart';
 import 'features/bookings/my_bookings_screen.dart';
 import 'features/bookings/provider_bookings_screen.dart';
 import 'features/common/feature_placeholder_screen.dart';
+import 'features/community_projects/community_project_details_screen.dart';
+import 'features/community_projects/community_project_list_screen.dart';
+import 'features/community_projects/community_project_review_queue_screen.dart';
+import 'features/community_projects/community_project_review_screen.dart';
+import 'features/community_projects/community_project_updates_screen.dart';
+import 'features/community_projects/get_involved_home_screen.dart';
+import 'features/community_projects/my_community_pledges_screen.dart';
+import 'features/community_projects/my_community_projects_screen.dart';
+import 'features/community_projects/submit_community_project_screen.dart';
+import 'features/community_impact/community_impact_dashboard_screen.dart';
+import 'features/community_impact/community_impact_history_screen.dart';
+import 'features/community_impact/community_impact_leaderboard_screen.dart';
+import 'features/community_impact/community_impact_pending_screen.dart';
+import 'features/community_impact/community_impact_privacy_screen.dart';
+import 'features/community_impact/community_impact_redemptions_screen.dart';
+import 'features/community_impact/community_impact_rewards_screen.dart';
 import 'features/directory/directory_screen.dart';
 import 'features/directory/directory_details_screen.dart';
 import 'features/dashboard/dashboard_router_screen.dart';
@@ -101,6 +117,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         '/profile',
         '/saved-items',
         '/dashboard',
+        '/get-involved/my',
+        '/get-involved/submit',
       ];
       final needsAuth = protectedPrefixes.any(
         (prefix) => state.matchedLocation.startsWith(prefix),
@@ -129,8 +147,78 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
       GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
       GoRoute(
+        path: '/get-involved',
+        builder: (context, state) => const GetInvolvedHomeScreen(),
+      ),
+      GoRoute(
+        path: '/get-involved/list',
+        builder: (context, state) => const CommunityProjectListScreen(),
+      ),
+      GoRoute(
+        path: '/get-involved/submit',
+        builder: (context, state) => const SubmitCommunityProjectScreen(),
+      ),
+      GoRoute(
+        path: '/get-involved/my-projects',
+        builder: (context, state) => const MyCommunityProjectsScreen(),
+      ),
+      GoRoute(
+        path: '/get-involved/my-pledges',
+        builder: (context, state) => const MyCommunityPledgesScreen(),
+      ),
+      GoRoute(
+        path: '/get-involved/:slug/updates',
+        builder: (context, state) => CommunityProjectUpdatesScreen(
+          slug: state.pathParameters['slug']!,
+        ),
+      ),
+      GoRoute(
+        path: '/get-involved/:slug',
+        builder: (context, state) => CommunityProjectDetailsScreen(
+          slug: state.pathParameters['slug']!,
+        ),
+      ),
+      GoRoute(
+        path: '/community-impact',
+        builder: (context, state) => const CommunityImpactDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/community-impact/history',
+        builder: (context, state) => const CommunityImpactHistoryScreen(),
+      ),
+      GoRoute(
+        path: '/community-impact/rewards',
+        builder: (context, state) => const CommunityImpactRewardsScreen(),
+      ),
+      GoRoute(
+        path: '/community-impact/redemptions',
+        builder: (context, state) => const CommunityImpactRedemptionsScreen(),
+      ),
+      GoRoute(
+        path: '/community-impact/leaderboard',
+        builder: (context, state) => const CommunityImpactLeaderboardScreen(),
+      ),
+      GoRoute(
+        path: '/community-impact/privacy',
+        builder: (context, state) => const CommunityImpactPrivacyScreen(),
+      ),
+      GoRoute(
+        path: '/dashboard/town-manager/community-impact/pending',
+        builder: (context, state) => const CommunityImpactPendingScreen(),
+      ),
+      GoRoute(
         path: '/dashboard',
         builder: (context, state) => const DashboardRouterScreen(),
+      ),
+      GoRoute(
+        path: '/dashboard/community-projects/pending',
+        builder: (context, state) => const CommunityProjectReviewQueueScreen(),
+      ),
+      GoRoute(
+        path: '/dashboard/community-projects/pending/:id',
+        builder: (context, state) => CommunityProjectReviewScreen(
+          projectId: int.parse(state.pathParameters['id']!),
+        ),
       ),
       GoRoute(
         path: '/dashboard/citizen',

@@ -9,6 +9,7 @@ import { EventReminderButton } from '../components/events/EventReminderButton'
 import { SaveEventButton } from '../components/events/SaveEventButton'
 import { TicketTypeCard } from '../components/events/TicketTypeCard'
 import { ContactActions } from '../components/experience/ContactActions'
+import { ImageWithFallback } from '../components/ui/ImageWithFallback'
 import { useCreateFollow, useDeleteFollow, useEvent, useFollows, useReserveEventTicket } from '../hooks/queries'
 import { resolveMediaUrl } from '../lib/display'
 import { navigateToLogin } from '../lib/authNavigation'
@@ -50,11 +51,12 @@ export function EventDetailsPage() {
           <PageHeader eyebrow="Events" title={event.title} description={event.description ?? 'Local event details, tickets, reminders, and calendar actions.'} />
           <div className="overflow-hidden rounded-[28px] border border-lokals-border bg-white shadow-card">
             <div className="relative h-72 bg-slate-100">
-              {event.image_url ? (
-                <img src={resolveMediaUrl(event.image_url) ?? event.image_url} alt={event.title} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full items-center justify-center text-sm text-lokals-muted">Event image</div>
-              )}
+              <ImageWithFallback
+                src={resolveMediaUrl(event.image_url) ?? event.image_url}
+                alt={event.title}
+                className="h-full w-full"
+                fallback={<div className="text-sm text-lokals-muted">Event image</div>}
+              />
               <div className="absolute left-5 top-5">
                 <EventDateBadge startsAt={event.starts_at} endsAt={event.ends_at} />
               </div>

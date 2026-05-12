@@ -154,8 +154,10 @@ class NotificationItemCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(item.body, style: AppTextStyles.bodyMuted),
                   const SizedBox(height: 8),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -172,14 +174,9 @@ class NotificationItemCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _timeLabel(item.createdAt),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.caption,
-                        ),
+                      Text(
+                        _timeLabel(item.createdAt),
+                        style: AppTextStyles.caption,
                       ),
                       if (isUnread && onMarkRead != null)
                         TextButton(

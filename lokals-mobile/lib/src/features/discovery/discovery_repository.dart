@@ -138,6 +138,38 @@ final searchResultsProvider = FutureProvider.family<Map<String, dynamic>, String
   return ref.read(discoveryRepositoryProvider).fetchSearchResults(query);
 });
 
+final communityProjectCategoriesProvider = FutureProvider<List<CommunityProjectCategoryModel>>((ref) async {
+  return ref.read(discoveryRepositoryProvider).fetchCommunityProjectCategories();
+});
+
+final communityProjectsProvider = FutureProvider.family<List<CommunityProjectModel>, Map<String, dynamic>?>((ref, params) async {
+  return ref.read(discoveryRepositoryProvider).fetchCommunityProjects(params: params);
+});
+
+final featuredCommunityProjectsProvider = FutureProvider<List<CommunityProjectModel>>((ref) async {
+  return ref.read(discoveryRepositoryProvider).fetchFeaturedCommunityProjects();
+});
+
+final communityProjectDetailsProvider = FutureProvider.family<CommunityProjectModel, String>((ref, slug) async {
+  return ref.read(discoveryRepositoryProvider).fetchCommunityProject(slug);
+});
+
+final myCommunityProjectsProvider = FutureProvider<List<CommunityProjectModel>>((ref) async {
+  return ref.read(discoveryRepositoryProvider).fetchMyCommunityProjects();
+});
+
+final myCommunityPledgesProvider = FutureProvider<List<CommunityProjectPledgeModel>>((ref) async {
+  return ref.read(discoveryRepositoryProvider).fetchMyCommunityPledges();
+});
+
+final pendingCommunityProjectsProvider = FutureProvider<List<CommunityProjectModel>>((ref) async {
+  return ref.read(discoveryRepositoryProvider).fetchAdminCommunityProjects(pendingOnly: true);
+});
+
+final adminCommunityProjectDetailsProvider = FutureProvider.family<CommunityProjectModel, int>((ref, id) async {
+  return ref.read(discoveryRepositoryProvider).fetchAdminCommunityProject(id);
+});
+
 class DiscoveryRepository {
   DiscoveryRepository(this.ref);
 
@@ -370,6 +402,64 @@ class DiscoveryRepository {
       body: 'Save on water drums, cleaning stock, and refill containers this weekend.',
       location: 'Central Okahandja',
       publishedAt: DateTime.now().subtract(const Duration(hours: 6)),
+    ),
+  ];
+
+  static final List<CommunityProjectModel> _demoCommunityProjects = [
+    CommunityProjectModel(
+      id: 9101,
+      slug: 'nau-aib-cleanup-drive',
+      referenceCode: 'CP-OKA-1001',
+      title: 'Nau-Aib Cleanup Drive',
+      summary: 'Weekend cleanup support around the Nau-Aib bus stop and market lanes.',
+      description: 'Residents, businesses, and schools are teaming up to clean sidewalks, clear dumping spots, and make the route safer before the next school week.',
+      supportNeeded: const ['Volunteers', 'Materials', 'Community cleanup support'],
+      targetVolunteers: 35,
+      currentVolunteers: 12,
+      locationText: 'Nau-Aib market lanes and bus stop',
+      town: AppConfig.pilotTown,
+      area: 'Nau-Aib',
+      contactName: 'Meriam Kambatuku',
+      contactPhone: '+264810001050',
+      contactWhatsapp: '+264810001050',
+      contactEmail: 'resident@lokals.app',
+      status: 'active',
+      verificationStatus: 'approved',
+      isVerified: true,
+      isFeatured: true,
+      progressPercent: 34,
+      category: CommunityProjectCategoryModel(
+        id: 1,
+        name: 'Community Cleanup',
+        slug: 'community-cleanup',
+        icon: 'delete_sweep',
+      ),
+    ),
+    CommunityProjectModel(
+      id: 9102,
+      slug: 'winter-school-shoe-drive',
+      referenceCode: 'CP-OKA-1002',
+      title: 'Winter School Shoe Drive',
+      summary: 'Collecting school shoes and warm jerseys for vulnerable learners.',
+      description: 'A local support drive for shoes, jerseys, and small sponsorships for learners who need help before the colder weeks arrive.',
+      supportNeeded: const ['School support', 'Clothing support', 'Sponsorship'],
+      targetAmount: '8500',
+      currentAmount: '2200',
+      locationText: 'Pickup coordination across Nau-Aib and Town Centre',
+      town: AppConfig.pilotTown,
+      area: 'Town Centre',
+      contactName: 'Meriam Kambatuku',
+      contactPhone: '+264810001050',
+      status: 'needs_support',
+      verificationStatus: 'approved',
+      isVerified: true,
+      progressPercent: 26,
+      category: CommunityProjectCategoryModel(
+        id: 2,
+        name: 'School Support',
+        slug: 'school-support',
+        icon: 'school',
+      ),
     ),
   ];
 
@@ -715,6 +805,14 @@ class DiscoveryRepository {
 
   Future<void> markAllNotificationsRead() async {
     await ref.read(dioProvider).post('/notifications/mark-read');
+  }
+
+  Map<String, dynamic> _unwrapMap(dynamic data) {
+    if (data is Map<String, dynamic> && data['data'] is Map<String, dynamic>) {
+      return Map<String, dynamic>.from(data['data'] as Map);
+    }
+
+    return Map<String, dynamic>.from(data as Map);
   }
 
   Future<void> markNotificationRead(String id) async {
@@ -1116,5 +1214,201 @@ class DiscoveryRepository {
       'area': area,
     });
     return SosModel.fromJson((response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>);
+  }
+
+  Future<List<CommunityProjectCategoryModel>> fetchCommunityProjectCategories() async {
+    final response = await ref.read(dioProvider).get('/community-project-categories');
+    final items = _unwrapList(response.data)
+        .map((item) => CommunityProjectCategoryModel.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList();
+    return _withDemoFallback(items, _demoCommunityProjects.map((item) => item.category!).toSet().toList());
+  }
+
+  Future<List<CommunityProjectModel>> fetchCommunityProjects({Map<String, dynamic>? params}) async {
+    final response = await ref.read(dioProvider).get('/community-projects', queryParameters: _pilotParams(params));
+    final items = _unwrapList(response.data)
+        .map((item) => CommunityProjectModel.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList();
+    return _withDemoFallback(items, _demoCommunityProjects);
+  }
+
+  Future<List<CommunityProjectModel>> fetchFeaturedCommunityProjects() async {
+    final response = await ref.read(dioProvider).get('/community-projects/featured', queryParameters: _pilotParams());
+    final items = _unwrapList(response.data)
+        .map((item) => CommunityProjectModel.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList();
+    return _withDemoFallback(items, _demoCommunityProjects.where((item) => item.isFeatured).toList());
+  }
+
+  Future<CommunityProjectModel> fetchCommunityProject(String slug) async {
+    final response = await ref.read(dioProvider).get('/community-projects/$slug');
+    return CommunityProjectModel.fromJson(_unwrapMap(response.data));
+  }
+
+  Future<List<CommunityProjectModel>> fetchMyCommunityProjects() async {
+    final response = await ref.read(dioProvider).get('/my/community-projects');
+    final items = _unwrapList(response.data)
+        .map((item) => CommunityProjectModel.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList();
+    return _withDemoFallback(items, _demoCommunityProjects);
+  }
+
+  Future<CommunityProjectModel> fetchMyCommunityProject(int id) async {
+    final response = await ref.read(dioProvider).get('/my/community-projects/$id');
+    return CommunityProjectModel.fromJson(_unwrapMap(response.data));
+  }
+
+  Future<List<CommunityProjectPledgeModel>> fetchMyCommunityPledges() async {
+    final response = await ref.read(dioProvider).get('/my/community-project-pledges');
+    final items = _unwrapList(response.data)
+        .map((item) => CommunityProjectPledgeModel.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList();
+    return items;
+  }
+
+  Future<CommunityProjectModel> createCommunityProject({
+    int? organizationId,
+    required int categoryId,
+    required String title,
+    required String summary,
+    required String description,
+    required List<String> supportNeeded,
+    String? targetAmount,
+    List<Map<String, dynamic>> targetItems = const [],
+    int? targetVolunteers,
+    required String locationText,
+    String? town,
+    String? area,
+    String? contactName,
+    String? contactPhone,
+    String? contactWhatsapp,
+    String? contactEmail,
+    DateTime? startsAt,
+    DateTime? endsAt,
+    bool saveAsDraft = false,
+    List<XFile> attachments = const [],
+  }) async {
+    final data = <String, dynamic>{
+      if (organizationId != null) 'organization_id': organizationId,
+      'category_id': categoryId,
+      'title': title,
+      'summary': summary,
+      'description': description,
+      'support_needed': supportNeeded,
+      if (targetAmount != null && targetAmount.isNotEmpty) 'target_amount': targetAmount,
+      if (targetItems.isNotEmpty) 'target_items': targetItems,
+      if (targetVolunteers != null) 'target_volunteers': targetVolunteers,
+      'location_text': locationText,
+      'town': town ?? AppConfig.pilotTown,
+      if (area != null && area.isNotEmpty) 'area': area,
+      'contact_name': contactName,
+      if (contactPhone != null && contactPhone.isNotEmpty) 'contact_phone': contactPhone,
+      if (contactWhatsapp != null && contactWhatsapp.isNotEmpty) 'contact_whatsapp': contactWhatsapp,
+      if (contactEmail != null && contactEmail.isNotEmpty) 'contact_email': contactEmail,
+      if (startsAt != null) 'starts_at': startsAt.toIso8601String(),
+      if (endsAt != null) 'ends_at': endsAt.toIso8601String(),
+      'status': saveAsDraft ? 'draft' : 'submitted',
+      'submit_for_review': !saveAsDraft,
+    };
+
+    if (attachments.isNotEmpty) {
+      data['attachments[]'] = await Future.wait(
+        attachments.map((file) => MultipartFile.fromFile(file.path, filename: file.name)),
+      );
+    }
+
+    final response = await ref.read(dioProvider).post('/community-projects', data: FormData.fromMap(data));
+    return CommunityProjectModel.fromJson(_unwrapMap(response.data));
+  }
+
+  Future<CommunityProjectPledgeModel> createCommunityProjectPledge({
+    required int projectId,
+    required String pledgeType,
+    required String description,
+    String? amount,
+    int? quantity,
+    String? contactPhone,
+    String? contactEmail,
+  }) async {
+    final response = await ref.read(dioProvider).post('/community-projects/$projectId/pledges', data: {
+      'pledge_type': pledgeType,
+      'pledge_description': description,
+      if (amount != null && amount.isNotEmpty) 'amount': amount,
+      if (quantity != null) 'quantity': quantity,
+      if (contactPhone != null && contactPhone.isNotEmpty) 'contact_phone': contactPhone,
+      if (contactEmail != null && contactEmail.isNotEmpty) 'contact_email': contactEmail,
+    });
+    return CommunityProjectPledgeModel.fromJson(_unwrapMap(response.data));
+  }
+
+  Future<void> followCommunityProject(int projectId) async {
+    await ref.read(dioProvider).post('/community-projects/$projectId/follow');
+  }
+
+  Future<void> unfollowCommunityProject(int projectId) async {
+    await ref.read(dioProvider).delete('/community-projects/$projectId/follow');
+  }
+
+  Future<CommunityProjectModel> postCommunityProjectUpdate({
+    required int projectId,
+    required String title,
+    required String body,
+    String? statusAfterUpdate,
+    int? progressPercent,
+    List<XFile> attachments = const [],
+  }) async {
+    final data = <String, dynamic>{
+      'title': title,
+      'body': body,
+      if (statusAfterUpdate != null && statusAfterUpdate.isNotEmpty) 'status_after_update': statusAfterUpdate,
+      if (progressPercent != null) 'progress_percent': progressPercent,
+    };
+
+    if (attachments.isNotEmpty) {
+      data['attachments[]'] = await Future.wait(
+        attachments.map((file) => MultipartFile.fromFile(file.path, filename: file.name)),
+      );
+    }
+
+    final response = await ref.read(dioProvider).post('/community-projects/$projectId/updates', data: FormData.fromMap(data));
+    return CommunityProjectModel.fromJson(_unwrapMap(response.data));
+  }
+
+  Future<List<CommunityProjectModel>> fetchAdminCommunityProjects({bool pendingOnly = false}) async {
+    final response = await ref.read(dioProvider).get(pendingOnly ? '/admin/community-projects/pending' : '/admin/community-projects');
+    return _unwrapList(response.data)
+        .map((item) => CommunityProjectModel.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList();
+  }
+
+  Future<CommunityProjectModel> fetchAdminCommunityProject(int id) async {
+    final response = await ref.read(dioProvider).get('/admin/community-projects/$id');
+    return CommunityProjectModel.fromJson(_unwrapMap(response.data));
+  }
+
+  Future<CommunityProjectModel> reviewCommunityProject({
+    required int projectId,
+    required String action,
+    String? reason,
+    String? status,
+    bool? isFeatured,
+  }) async {
+    final endpoint = switch (action) {
+      'approve' => '/admin/community-projects/$projectId/approve',
+      'reject' => '/admin/community-projects/$projectId/reject',
+      'request_changes' => '/admin/community-projects/$projectId/request-changes',
+      'feature' => '/admin/community-projects/$projectId/feature',
+      'status' => '/admin/community-projects/$projectId/status',
+      _ => '/admin/community-projects/$projectId/approve',
+    };
+
+    final response = await ref.read(dioProvider).patch(endpoint, data: {
+      if (reason != null && reason.isNotEmpty && action == 'approve') 'verification_notes': reason,
+      if (reason != null && reason.isNotEmpty && action != 'approve') 'reason': reason,
+      if (status != null && status.isNotEmpty) 'status': status,
+      if (isFeatured != null) 'is_featured': isFeatured,
+    });
+
+    return CommunityProjectModel.fromJson(_unwrapMap(response.data));
   }
 }

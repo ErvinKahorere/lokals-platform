@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -33,7 +34,7 @@ class AccommodationResource extends JsonResource
             'area' => $this->area,
             'lat' => $this->lat,
             'lng' => $this->lng,
-            'image_url' => $this->image_path,
+            'image_url' => MediaUrl::resolve($this->image_path),
             'status' => $this->status,
             'metadata' => $this->metadata,
             'created_at' => optional($this->created_at)?->toIso8601String(),
@@ -44,13 +45,32 @@ class AccommodationResource extends JsonResource
                 'name' => $ownerName,
                 'phone' => $ownerPhone,
                 'whatsapp' => $ownerWhatsapp,
-                'avatar' => $business?->logo_url ?? $user?->avatar,
+                'avatar' => MediaUrl::resolve($business?->logo_url ?? $user?->avatar),
                 'is_verified' => (bool) ($business?->is_verified ?? false),
                 'location' => $ownerLocation ?: null,
             ],
             'is_verified_owner' => (bool) ($business?->is_verified ?? false),
-            'business' => $business?->only(['id', 'name', 'category', 'phone', 'whatsapp', 'logo_url', 'town', 'area', 'is_verified']),
-            'user' => $user?->only(['id', 'name', 'phone', 'whatsapp', 'avatar', 'location', 'default_town', 'default_area']),
+            'business' => $business ? [
+                'id' => $business->id,
+                'name' => $business->name,
+                'category' => $business->category,
+                'phone' => $business->phone,
+                'whatsapp' => $business->whatsapp,
+                'logo_url' => MediaUrl::resolve($business->logo_url),
+                'town' => $business->town,
+                'area' => $business->area,
+                'is_verified' => $business->is_verified,
+            ] : null,
+            'user' => $user ? [
+                'id' => $user->id,
+                'name' => $user->name,
+                'phone' => $user->phone,
+                'whatsapp' => $user->whatsapp,
+                'avatar' => MediaUrl::resolve($user->avatar),
+                'location' => $user->location,
+                'default_town' => $user->default_town,
+                'default_area' => $user->default_area,
+            ] : null,
         ];
     }
 }

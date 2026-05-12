@@ -646,3 +646,197 @@ export interface SavedItemsPayload {
   news: SavedItemEntry[]
   listings: SavedItemEntry[]
 }
+
+export interface CommunityProjectCategory {
+  id: number
+  name: string
+  slug: string
+  icon?: string | null
+  sort_order?: number
+}
+
+export interface CommunityProjectAttachment {
+  id: number
+  file_url?: string | null
+  file_path?: string | null
+  mime_type?: string | null
+  file_type: 'image' | 'video' | 'audio' | 'document'
+  original_name?: string | null
+  size?: number
+  caption?: string | null
+  created_at?: string | null
+}
+
+export interface CommunityProjectUpdate {
+  id: number
+  title: string
+  body: string
+  status_after_update?: string | null
+  progress_percent?: number | null
+  approved_by_town_manager?: boolean
+  attachments?: Array<Record<string, unknown>>
+  created_at?: string | null
+  user?: Pick<User, 'id' | 'name' | 'avatar'> | null
+}
+
+export interface CommunityProjectVerification {
+  id: number
+  action: string
+  notes?: string | null
+  status_after?: string | null
+  verification_status_after?: string | null
+  created_at?: string | null
+  reviewer?: Pick<User, 'id' | 'name'> | null
+}
+
+export interface CommunityProjectPledge {
+  id: number
+  pledge_type: 'money' | 'item' | 'volunteer' | 'service' | 'other'
+  pledge_description: string
+  amount?: string | number | null
+  quantity?: number | null
+  contact_phone?: string | null
+  contact_email?: string | null
+  status?: string | null
+  created_at?: string | null
+  user?: Pick<User, 'id' | 'name'> | null
+  project?: CommunityProject | null
+}
+
+export interface CommunityProject {
+  id: number
+  slug: string
+  reference_code: string
+  title: string
+  summary: string
+  description: string
+  support_needed?: string[]
+  target_amount?: string | number | null
+  target_items?: Array<Record<string, unknown>>
+  target_volunteers?: number | null
+  current_amount?: string | number | null
+  current_items?: Array<Record<string, unknown>>
+  current_volunteers?: number | null
+  location_text?: string | null
+  town?: string | null
+  area?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  contact_name?: string | null
+  contact_phone?: string | null
+  contact_whatsapp?: string | null
+  contact_email?: string | null
+  status: string
+  verification_status: string
+  verification_notes?: string | null
+  rejection_reason?: string | null
+  is_verified?: boolean
+  is_featured?: boolean
+  starts_at?: string | null
+  ends_at?: string | null
+  approved_at?: string | null
+  completed_at?: string | null
+  created_at?: string | null
+  updated_at?: string | null
+  category?: CommunityProjectCategory | null
+  user?: Pick<User, 'id' | 'name' | 'phone' | 'avatar'> | null
+  organization?: Pick<Organization, 'id' | 'name' | 'logo_url' | 'category' | 'is_verified'> | null
+  attachments?: CommunityProjectAttachment[]
+  updates?: CommunityProjectUpdate[]
+  latest_update?: CommunityProjectUpdate | null
+  pledges?: CommunityProjectPledge[]
+  pledges_count?: number
+  followers_count?: number
+  progress_percent?: number
+  is_following?: boolean
+  verification_history?: CommunityProjectVerification[]
+}
+
+export interface CommunityImpactBadge {
+  id?: number
+  title: string
+  description?: string | null
+  icon?: string | null
+  category?: string | null
+  points_threshold?: number | null
+  rule_key?: string | null
+  is_active?: boolean
+}
+
+export interface CommunityImpactAccount {
+  user_id?: number
+  total_points: number
+  available_points: number
+  lifetime_points: number
+  redeemed_points: number
+  current_level: string
+  public_leaderboard_opt_in: boolean
+  public_display_name?: string | null
+  privacy_mode: 'private' | 'initials' | 'display_name'
+  last_awarded_at?: string | null
+  current_badge?: CommunityImpactBadge | { data: CommunityImpactBadge } | null
+  next_badge?: CommunityImpactBadge | { data: CommunityImpactBadge } | null
+}
+
+export interface CommunityImpactTransaction {
+  id: number
+  user_id?: number
+  source_type?: string | null
+  source_id?: number | null
+  points: number
+  type: 'earned' | 'redeemed' | 'adjusted' | 'reversed'
+  reason: string
+  category: string
+  verification_status: 'pending' | 'approved' | 'rejected' | 'reversed'
+  verified_by?: number | null
+  verified_at?: string | null
+  internal_notes?: string | null
+  public_summary?: string | null
+  is_public?: boolean
+  created_at?: string | null
+  verifier?: { id?: number | null; name?: string | null } | null
+}
+
+export interface CommunityImpactReward {
+  id: number
+  title: string
+  description?: string | null
+  reward_type: 'airtime' | 'voucher' | 'money' | 'goods' | 'service' | 'recognition' | 'other'
+  points_required: number
+  quantity_available?: number | null
+  sponsor_name?: string | null
+  sponsor_logo?: string | null
+  terms?: string | null
+  is_active: boolean
+}
+
+export interface CommunityImpactRedemption {
+  id: number
+  user_id?: number
+  reward_id: number
+  points_spent: number
+  status: 'requested' | 'approved' | 'fulfilled' | 'rejected' | 'cancelled'
+  fulfillment_notes?: string | null
+  fulfilled_by?: number | null
+  fulfilled_at?: string | null
+  created_at?: string | null
+  reward?: CommunityImpactReward | { data: CommunityImpactReward } | null
+  user?: Pick<User, 'id' | 'name'> | null
+  fulfiller?: Pick<User, 'id' | 'name'> | null
+}
+
+export interface CommunityImpactLeaderboardEntry {
+  rank: number
+  points: number
+  level: string
+  display_name: string
+  privacy_mode: string
+  avatar_placeholder?: string | null
+  category_totals?: Array<{ category: string; points: number }>
+}
+
+export interface CommunityImpactDashboardPayload {
+  account: { data: CommunityImpactAccount } | CommunityImpactAccount
+  recent_approved: PaginatedResult<CommunityImpactTransaction> | { data: CommunityImpactTransaction[] }
+  pending_transactions: PaginatedResult<CommunityImpactTransaction> | { data: CommunityImpactTransaction[] }
+}

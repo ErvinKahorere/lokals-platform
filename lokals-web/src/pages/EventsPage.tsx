@@ -5,8 +5,10 @@ import { EmptyState, QueryState } from '../components/Ui'
 import { NotificationBell } from '../components/experience/NotificationBell'
 import { EventCard } from '../components/events/EventCard'
 import { EventCategoryChips } from '../components/events/EventCategoryChips'
+import { ImageWithFallback } from '../components/ui/ImageWithFallback'
 import { SearchBar } from '../components/ui/SearchBar'
 import { useEvents, useFollows, useMe, useNearbyEvents, useNotifications, useUpcomingEvents } from '../hooks/queries'
+import { resolveMediaUrl } from '../lib/display'
 
 export function EventsPage() {
   const meQuery = useMe()
@@ -129,11 +131,12 @@ export function EventsPage() {
         <section className="overflow-hidden rounded-[28px] border border-lokals-border bg-white shadow-card">
           <div className="grid lg:grid-cols-[1.1fr_0.9fr]">
             <div className="h-72 bg-slate-100">
-              {featuredEvent.image_url ? (
-                <img src={featuredEvent.image_url} alt={featuredEvent.title} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full items-center justify-center text-sm text-lokals-muted">Featured event</div>
-              )}
+              <ImageWithFallback
+                src={resolveMediaUrl(featuredEvent.image_url) ?? featuredEvent.image_url}
+                alt={featuredEvent.title}
+                className="h-full w-full"
+                fallback={<div className="text-sm text-lokals-muted">Featured event</div>}
+              />
             </div>
             <div className="space-y-4 p-6">
               <div className="inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-lokals-purple">

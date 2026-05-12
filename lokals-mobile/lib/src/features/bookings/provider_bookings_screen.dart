@@ -26,32 +26,28 @@ class ProviderBookingsScreen extends ConsumerWidget {
 
             return BookingCard(
               booking: booking,
-              footer: Row(
+              footer: Column(
                 children: [
-                  Expanded(
-                    child: AppButton(
-                      label: 'Confirm',
-                      variant: AppButtonVariant.secondary,
-                      onPressed: () async {
-                        await ref
-                            .read(bookingsRepositoryProvider)
-                            .updateStatus(booking.id, 'confirmed');
-                        ref.invalidate(providerBookingsProvider);
-                      },
-                    ),
+                  AppButton(
+                    label: 'Confirm',
+                    variant: AppButtonVariant.secondary,
+                    onPressed: () async {
+                      await ref
+                          .read(bookingsRepositoryProvider)
+                          .updateStatus(booking.id, 'confirmed');
+                      ref.invalidate(providerBookingsProvider);
+                    },
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: AppButton(
-                      label: 'Reject',
-                      variant: AppButtonVariant.danger,
-                      onPressed: () async {
-                        await ref
-                            .read(bookingsRepositoryProvider)
-                            .updateStatus(booking.id, 'cancelled');
-                        ref.invalidate(providerBookingsProvider);
-                      },
-                    ),
+                  const SizedBox(height: 10),
+                  AppButton(
+                    label: 'Reject',
+                    variant: AppButtonVariant.danger,
+                    onPressed: () async {
+                      await ref
+                          .read(bookingsRepositoryProvider)
+                          .updateStatus(booking.id, 'cancelled');
+                      ref.invalidate(providerBookingsProvider);
+                    },
                   ),
                 ],
               ),

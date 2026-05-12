@@ -179,9 +179,34 @@ class User extends Authenticatable
         return $this->hasMany(DeviceToken::class);
     }
 
+    public function communityProjects(): HasMany
+    {
+        return $this->hasMany(CommunityProject::class);
+    }
+
+    public function communityProjectPledges(): HasMany
+    {
+        return $this->hasMany(CommunityProjectPledge::class);
+    }
+
     public function postDrafts(): HasMany
     {
         return $this->hasMany(PostDraft::class);
+    }
+
+    public function communityImpactAccount(): HasOne
+    {
+        return $this->hasOne(CommunityImpactAccount::class);
+    }
+
+    public function communityImpactTransactions(): HasMany
+    {
+        return $this->hasMany(CommunityImpactTransaction::class);
+    }
+
+    public function communityImpactRedemptions(): HasMany
+    {
+        return $this->hasMany(CommunityImpactRedemption::class);
     }
 
     public function hasTownManagerRole(): bool

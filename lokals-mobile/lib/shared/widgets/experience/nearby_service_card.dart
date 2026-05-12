@@ -23,10 +23,13 @@ class NearbyServiceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final priceLabel = fromPrice == null ? 'Book now' : 'From ${getDisplayPrice(fromPrice)}';
+              final isCompact = constraints.maxWidth < 290;
+
+              if (isCompact) {
+                return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -40,14 +43,50 @@ class NearbyServiceCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, height: 1.2),
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      priceLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                    ),
                   ],
-                ),
-              ),
-              Text(
-                fromPrice == null ? 'Book now' : 'From ${getDisplayPrice(fromPrice)}',
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-              ),
-            ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          (provider.subcategory ?? provider.category).toUpperCase(),
+                          style: const TextStyle(color: Color(0xFF64748B), fontSize: 11, fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          provider.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, height: 1.2),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: Text(
+                      priceLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 8),
           Text(

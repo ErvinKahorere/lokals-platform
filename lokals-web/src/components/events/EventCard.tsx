@@ -5,6 +5,7 @@ import { resolveMediaUrl } from '../../lib/display'
 import type { EventItem } from '../../types'
 import { EventDateBadge } from './EventDateBadge'
 import { SaveEventButton } from './SaveEventButton'
+import { ImageWithFallback } from '../ui/ImageWithFallback'
 
 export function EventCard({ event }: { event: EventItem }) {
   const locationLabel = event.venue_name ?? event.location_label ?? event.location ?? ([event.area, event.town].filter(Boolean).join(', ') || 'Okahandja')
@@ -17,11 +18,7 @@ export function EventCard({ event }: { event: EventItem }) {
   return (
     <article className="overflow-hidden rounded-[24px] border border-lokals-border bg-white shadow-card transition duration-200 hover:-translate-y-1 hover:shadow-soft-lg">
       <div className="h-44 bg-slate-100">
-        {event.image_url ? (
-          <img src={resolveMediaUrl(event.image_url) ?? event.image_url} alt={event.title} className="h-full w-full object-cover" loading="lazy" />
-        ) : (
-          <div className="flex h-full items-center justify-center text-sm text-lokals-muted">Event image</div>
-        )}
+        <ImageWithFallback src={resolveMediaUrl(event.image_url) ?? event.image_url} alt={event.title} className="h-full w-full" fallback={<div className="text-sm text-lokals-muted">Event image</div>} />
       </div>
       <div className="space-y-4 p-5">
         <div className="flex items-start justify-between gap-3">

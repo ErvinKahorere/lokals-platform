@@ -1,6 +1,8 @@
 import { Clock3, MapPin, Newspaper } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { NewsItem } from '../../types'
+import { resolveMediaUrl } from '../../lib/display'
+import { ImageWithFallback } from '../ui/ImageWithFallback'
 
 function formatRelative(value?: string | null) {
   if (!value) return 'Latest update'
@@ -23,7 +25,12 @@ export function NewsCard({ item }: { item: NewsItem }) {
   return (
     <article className="overflow-hidden rounded-[24px] border border-lokals-border bg-white shadow-card">
       <div className="h-44 bg-[linear-gradient(135deg,#ede9fe,#eff6ff)]">
-        {item.image_url ? <img src={item.image_url} alt={item.title} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-lokals-purple"><Newspaper className="h-10 w-10" /></div>}
+        <ImageWithFallback
+          src={resolveMediaUrl(item.image_url) ?? item.image_url}
+          alt={item.title}
+          className="h-full w-full"
+          fallback={<Newspaper className="h-10 w-10" />}
+        />
       </div>
       <div className="space-y-3 p-5">
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em]">

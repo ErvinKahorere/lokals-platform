@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -18,7 +19,7 @@ class UserResource extends JsonResource
             'lat' => $this->lat,
             'lng' => $this->lng,
             'status' => $this->status,
-            'avatar' => $this->avatar,
+            'avatar' => MediaUrl::resolve($this->avatar),
             'bio' => $this->bio,
             'whatsapp' => $this->whatsapp,
             'secondary_phone' => $this->secondary_phone,

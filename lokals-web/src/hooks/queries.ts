@@ -6,6 +6,9 @@ import type {
   AlertFeedItem,
   NewsItem,
   Booking,
+  CommunityProject,
+  CommunityProjectCategory,
+  CommunityProjectPledge,
   Accommodation,
   DeliveryItem,
   EventItem,
@@ -33,6 +36,12 @@ import type {
   UnifiedSearchResponse,
   Worker,
   UserPreference,
+  CommunityImpactAccount,
+  CommunityImpactDashboardPayload,
+  CommunityImpactLeaderboardEntry,
+  CommunityImpactRedemption,
+  CommunityImpactReward,
+  CommunityImpactTransaction,
 } from '../types'
 
 const toPaginated = <T,>(payload: any): PaginatedResult<T> => {
@@ -278,6 +287,64 @@ export const useSavedItems = (enabled = true) =>
     queryFn: async () => (await api.get('/saved-items')).data as SavedItemsPayload,
   })
 
+export const useCommunityProjectCategories = () =>
+  useQuery({
+    queryKey: ['community-project-categories'],
+    queryFn: async () => toPaginated<CommunityProjectCategory>((await api.get('/community-project-categories')).data),
+  })
+
+export const useCommunityProjects = (params?: Record<string, string | number | boolean | undefined>) =>
+  useQuery({
+    queryKey: ['community-projects', params],
+    queryFn: async () => toPaginated<CommunityProject>((await api.get('/community-projects', { params: applyPilotLocation(params) })).data),
+  })
+
+export const useFeaturedCommunityProjects = () =>
+  useQuery({
+    queryKey: ['community-projects-featured'],
+    queryFn: async () => toPaginated<CommunityProject>((await api.get('/community-projects/featured', { params: applyPilotLocation() })).data),
+  })
+
+export const useCommunityProject = (slug?: string) =>
+  useQuery({
+    enabled: Boolean(slug),
+    queryKey: ['community-project', slug],
+    queryFn: async () => unwrapOne<CommunityProject>((await api.get(`/community-projects/${slug}`)).data),
+  })
+
+export const useMyCommunityProjects = (enabled = true) =>
+  useQuery({
+    enabled,
+    queryKey: ['my-community-projects'],
+    queryFn: async () => toPaginated<CommunityProject>((await api.get('/my/community-projects')).data),
+  })
+
+export const useMyCommunityPledges = (enabled = true) =>
+  useQuery({
+    enabled,
+    queryKey: ['my-community-pledges'],
+    queryFn: async () => toPaginated<CommunityProjectPledge>((await api.get('/my/community-project-pledges')).data),
+  })
+
+export const useAdminCommunityProjects = (params?: Record<string, string | number | boolean | undefined>) =>
+  useQuery({
+    queryKey: ['admin-community-projects', params],
+    queryFn: async () => toPaginated<CommunityProject>((await api.get('/admin/community-projects', { params })).data),
+  })
+
+export const usePendingCommunityProjects = () =>
+  useQuery({
+    queryKey: ['admin-community-projects-pending'],
+    queryFn: async () => toPaginated<CommunityProject>((await api.get('/admin/community-projects/pending')).data),
+  })
+
+export const useAdminCommunityProject = (id?: string) =>
+  useQuery({
+    enabled: Boolean(id),
+    queryKey: ['admin-community-project', id],
+    queryFn: async () => unwrapOne<CommunityProject>((await api.get(`/admin/community-projects/${id}`)).data),
+  })
+
 export const usePreferences = () =>
   useQuery({
     enabled: Boolean(useAuthStore((state) => state.token)),
@@ -509,6 +576,169 @@ export const useCreateListing = () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['listings'] }),
         queryClient.invalidateQueries({ queryKey: ['my-listings'] }),
+      ])
+    },
+  })
+}
+
+export const useCreateCommunityProject = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: FormData) => (await api.post('/community-projects', payload)).data,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['community-projects'] }),
+        queryClient.invalidateQueries({ queryKey: ['community-projects-featured'] }),
+        queryClient.invalidateQueries({ queryKey: ['my-community-projects'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-community-projects-pending'] }),
+      ])
+    },
+  })
+}
+
+export const useCommunityImpactDashboard = () =>
+  useQuery({
+    queryKey: ['community-impact-dashboard'],
+    queryFn: async () => (await api.get('/community-impact/me')).data as CommunityImpactDashboardPayload,
+  })
+
+export const useCommunityImpactTransactions = () =>
+  useQuery({
+    queryKey: ['community-impact-transactions'],
+    queryFn: async () => toPaginated<CommunityImpactTransaction>((await api.get('/community-impact/my-transactions')).data),
+  })
+
+export const useCommunityImpactRewards = () =>
+  useQuery({
+    queryKey: ['community-impact-rewards'],
+    queryFn: async () => toPaginated<CommunityImpactReward>((await api.get('/community-impact/rewards')).data),
+  })
+
+export const useCommunityImpactRedemptions = () =>
+  useQuery({
+    queryKey: ['community-impact-redemptions'],
+    queryFn: async () => toPaginated<CommunityImpactRedemption>((await api.get('/community-impact/my-redemptions')).data),
+  })
+
+export const useCommunityImpactLeaderboard = (period = 'all_time') =>
+  useQuery({
+    queryKey: ['community-impact-leaderboard', period],
+    queryFn: async () => ((await api.get('/community-impact/leaderboard', { params: { period } })).data?.data ?? []) as CommunityImpactLeaderboardEntry[],
+  })
+
+export const usePendingCommunityImpactTransactions = () =>
+  useQuery({
+    queryKey: ['admin-community-impact-pending'],
+    queryFn: async () => toPaginated<CommunityImpactTransaction>((await api.get('/admin/community-impact/pending')).data),
+  })
+
+export const useCommunityImpactRedemptionsAdmin = () =>
+  useQuery({
+    queryKey: ['admin-community-impact-redemptions'],
+    queryFn: async () => toPaginated<CommunityImpactRedemption>((await api.get('/admin/community-impact/redemptions')).data),
+  })
+
+export const useCommunityImpactUserProfile = (userId?: string) =>
+  useQuery({
+    enabled: Boolean(userId),
+    queryKey: ['admin-community-impact-user', userId],
+    queryFn: async () => (await api.get(`/admin/community-impact/users/${userId}`)).data as {
+      user: { id: number; name: string; email?: string | null; phone?: string | null }
+      account: { data: CommunityImpactAccount } | CommunityImpactAccount
+      transactions: { data: CommunityImpactTransaction[] } | CommunityImpactTransaction[]
+      redemptions: { data: CommunityImpactRedemption[] } | CommunityImpactRedemption[]
+    },
+  })
+
+export const useCreateCommunityProjectPledge = (projectId?: number) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => {
+      if (!projectId) throw new Error('Project id is required')
+      return (await api.post(`/community-projects/${projectId}/pledges`, payload)).data
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['community-project'] }),
+        queryClient.invalidateQueries({ queryKey: ['my-community-pledges'] }),
+      ])
+    },
+  })
+}
+
+export const useFollowCommunityProject = (projectId?: number) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!projectId) throw new Error('Project id is required')
+      return (await api.post(`/community-projects/${projectId}/follow`)).data
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['community-project'] }),
+        queryClient.invalidateQueries({ queryKey: ['community-projects'] }),
+      ])
+    },
+  })
+}
+
+export const useUnfollowCommunityProject = (projectId?: number) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!projectId) throw new Error('Project id is required')
+      return (await api.delete(`/community-projects/${projectId}/follow`)).data
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['community-project'] }),
+        queryClient.invalidateQueries({ queryKey: ['community-projects'] }),
+      ])
+    },
+  })
+}
+
+export const useCreateCommunityProjectUpdate = (projectId?: number) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: FormData) => {
+      if (!projectId) throw new Error('Project id is required')
+      return (await api.post(`/community-projects/${projectId}/updates`, payload)).data
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['community-project'] }),
+        queryClient.invalidateQueries({ queryKey: ['my-community-projects'] }),
+      ])
+    },
+  })
+}
+
+export const useReviewCommunityProject = (projectId?: string) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      action,
+      payload,
+    }: {
+      action: 'approve' | 'reject' | 'request-changes' | 'feature' | 'status'
+      payload?: Record<string, unknown>
+    }) => {
+      if (!projectId) throw new Error('Project id is required')
+      return (await api.patch(`/admin/community-projects/${projectId}/${action}`, payload ?? {})).data
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-community-project', projectId] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-community-projects'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-community-projects-pending'] }),
+        queryClient.invalidateQueries({ queryKey: ['community-projects'] }),
       ])
     },
   })
@@ -891,6 +1121,148 @@ export const useMarkNotificationRead = () => {
     mutationFn: async (id: string) => (await api.post(`/notifications/${id}/read`)).data,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['notifications'] })
+    },
+  })
+}
+
+export const useRedeemCommunityImpactReward = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (rewardId: number) => (await api.post(`/community-impact/rewards/${rewardId}/redeem`)).data,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['community-impact-redemptions'] }),
+        queryClient.invalidateQueries({ queryKey: ['community-impact-dashboard'] }),
+      ])
+    },
+  })
+}
+
+export const useUpdateCommunityImpactPrivacy = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: { public_leaderboard_opt_in: boolean; privacy_mode: string; public_display_name?: string | null }) =>
+      (await api.patch('/community-impact/privacy-settings', payload)).data,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['community-impact-dashboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['community-impact-leaderboard'] }),
+      ])
+    },
+  })
+}
+
+export const useAwardCommunityImpact = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => (await api.post('/admin/community-impact/award', payload)).data,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['admin-community-impact-pending'] })
+    },
+  })
+}
+
+export const useApproveCommunityImpactTransaction = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, internal_notes }: { id: number; internal_notes?: string }) =>
+      (await api.patch(`/admin/community-impact/transactions/${id}/approve`, { internal_notes })).data,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-community-impact-pending'] }),
+        queryClient.invalidateQueries({ queryKey: ['community-impact-dashboard'] }),
+      ])
+    },
+  })
+}
+
+export const useRejectCommunityImpactTransaction = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, internal_notes }: { id: number; internal_notes?: string }) =>
+      (await api.patch(`/admin/community-impact/transactions/${id}/reject`, { internal_notes })).data,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['admin-community-impact-pending'] })
+    },
+  })
+}
+
+export const useReverseCommunityImpactTransaction = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, internal_notes }: { id: number; internal_notes?: string }) =>
+      (await api.patch(`/admin/community-impact/transactions/${id}/reverse`, { internal_notes })).data,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['admin-community-impact-pending'] })
+    },
+  })
+}
+
+export const useCreateCommunityImpactReward = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => (await api.post('/admin/community-impact/rewards', payload)).data,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['community-impact-rewards'] }),
+      ])
+    },
+  })
+}
+
+export const useUpdateCommunityImpactReward = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, payload }: { id: number; payload: Record<string, unknown> }) =>
+      (await api.patch(`/admin/community-impact/rewards/${id}`, payload)).data,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['community-impact-rewards'] }),
+      ])
+    },
+  })
+}
+
+export const useApproveCommunityImpactRedemption = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, fulfillment_notes }: { id: number; fulfillment_notes?: string }) =>
+      (await api.patch(`/admin/community-impact/redemptions/${id}/approve`, { fulfillment_notes })).data,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['admin-community-impact-redemptions'] })
+    },
+  })
+}
+
+export const useFulfillCommunityImpactRedemption = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, fulfillment_notes }: { id: number; fulfillment_notes?: string }) =>
+      (await api.patch(`/admin/community-impact/redemptions/${id}/fulfill`, { fulfillment_notes })).data,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['admin-community-impact-redemptions'] })
+    },
+  })
+}
+
+export const useRejectCommunityImpactRedemption = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, fulfillment_notes }: { id: number; fulfillment_notes?: string }) =>
+      (await api.patch(`/admin/community-impact/redemptions/${id}/reject`, { fulfillment_notes })).data,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['admin-community-impact-redemptions'] })
     },
   })
 }

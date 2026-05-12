@@ -175,10 +175,10 @@ export function resolveMediaUrl(path?: string | null) {
     return null
   }
 
-  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('blob:') || path.startsWith('data:')) {
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('//') || path.startsWith('blob:') || path.startsWith('data:')) {
     return path
   }
 
-  const base = (import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000').replace(/\/api(?:\/.*)?\/?$/, '')
+  const base = (import.meta.env.VITE_API_BASE_URL ?? import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000').replace(/\/api(?:\/.*)?\/?$/, '')
   return `${base}${path.startsWith('/') ? path : `/${path}`}`
 }

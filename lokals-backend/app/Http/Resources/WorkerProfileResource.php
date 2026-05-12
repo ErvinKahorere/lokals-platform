@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,7 +21,17 @@ class WorkerProfileResource extends JsonResource
             'lat' => $this->lat,
             'lng' => $this->lng,
             'distance_km' => $this->when(isset($this->distance_km), $this->distance_km),
-            'user' => $this->user?->only(['id', 'name', 'phone', 'avatar', 'whatsapp', 'business_name', 'location', 'default_town', 'default_area']),
+            'user' => $this->user ? [
+                'id' => $this->user->id,
+                'name' => $this->user->name,
+                'phone' => $this->user->phone,
+                'avatar' => MediaUrl::resolve($this->user->avatar),
+                'whatsapp' => $this->user->whatsapp,
+                'business_name' => $this->user->business_name,
+                'location' => $this->user->location,
+                'default_town' => $this->user->default_town,
+                'default_area' => $this->user->default_area,
+            ] : null,
         ];
     }
 }

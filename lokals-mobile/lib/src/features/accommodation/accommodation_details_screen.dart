@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/widgets/app_network_image.dart';
 import '../../../shared/widgets/experience/contact_actions.dart';
 import '../../../shared/widgets/experience/save_button.dart';
 import '../../core/experience_helpers.dart';
@@ -52,19 +53,12 @@ class AccommodationDetailsScreen extends ConsumerWidget {
                   children: [
                     Stack(
                       children: [
-                        Container(
+                        AppNetworkImage(
+                          imageUrl: imageUrl,
+                          fallbackIcon: Icons.home_work_outlined,
                           height: 240,
                           width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: AppColors.neutralSoft,
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                            image: imageUrl != null ? DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover) : null,
-                          ),
-                          child: imageUrl == null
-                              ? const Center(
-                                  child: Icon(Icons.home_work_outlined, size: 52, color: AppColors.mutedText),
-                                )
-                              : null,
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                         ),
                         Positioned(
                           left: 12,

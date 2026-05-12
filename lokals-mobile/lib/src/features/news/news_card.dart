@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/widgets/app_network_image.dart';
+import '../../core/experience_helpers.dart';
 import '../../core/models.dart';
 import '../../widgets/cards.dart';
 
@@ -26,6 +28,8 @@ class NewsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final imageUrl = resolveMediaUrl(item.imageUrl);
+
     return InkWell(
       borderRadius: BorderRadius.circular(24),
       onTap: () => context.push('/news/${item.id}'),
@@ -39,12 +43,13 @@ class NewsCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 color: AppColors.neutralSoft,
               ),
-              child: item.imageUrl == null
-                  ? const Center(child: Icon(Icons.newspaper_rounded, size: 40, color: AppColors.primaryPurple))
-                  : ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Image.network(item.imageUrl!, fit: BoxFit.cover, width: double.infinity),
-                    ),
+              child: AppNetworkImage(
+                imageUrl: imageUrl,
+                fallbackIcon: Icons.newspaper_rounded,
+                width: double.infinity,
+                height: 150,
+                borderRadius: BorderRadius.circular(20),
+              ),
             ),
             const SizedBox(height: 14),
             Wrap(
@@ -60,28 +65,49 @@ class NewsCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(item.summary, style: AppTextStyles.bodyMuted, maxLines: 3, overflow: TextOverflow.ellipsis),
             const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final button = AppButton(
+                  label: 'Read Full Story',
+                  expanded: false,
+                  compact: constraints.maxWidth < 340,
+                  variant: AppButtonVariant.secondary,
+                  onPressed: () => context.push(
+                    '/article?url=${Uri.encodeComponent(item.externalUrl)}&source=${Uri.encodeComponent(item.sourceName)}&title=${Uri.encodeComponent(item.title)}',
+                  ),
+                );
+
+                if (constraints.maxWidth < 340) {
+                  return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(item.sourceName, style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w700)),
                       const SizedBox(height: 4),
                       Text(_formatPublishedAt(), style: AppTextStyles.caption),
+                      const SizedBox(height: 10),
+                      button,
                     ],
-                  ),
-                ),
-                AppButton(
-                  label: 'Read Full Story',
-                  expanded: false,
-                  variant: AppButtonVariant.secondary,
-                  onPressed: () => context.push(
-                    '/article?url=${Uri.encodeComponent(item.externalUrl)}&source=${Uri.encodeComponent(item.sourceName)}&title=${Uri.encodeComponent(item.title)}',
-                  ),
-                ),
-              ],
+                  );
+                }
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(item.sourceName, style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w700)),
+                          const SizedBox(height: 4),
+                          Text(_formatPublishedAt(), style: AppTextStyles.caption),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    button,
+                  ],
+                );
+              },
             ),
           ],
         ),

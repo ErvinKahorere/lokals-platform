@@ -4,8 +4,10 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { PageHeader, QueryState } from '../components/Ui'
 import { NewsCategoryChips } from '../components/news/NewsCategoryChips'
 import { NewsCard } from '../components/news/NewsCard'
+import { ImageWithFallback } from '../components/ui/ImageWithFallback'
 import { SearchBar } from '../components/ui/SearchBar'
 import { useMe, useNewsFeed, useNewsLocal, useNewsTrending, useNotifications } from '../hooks/queries'
+import { resolveMediaUrl } from '../lib/display'
 
 export function NewsPage() {
   const meQuery = useMe()
@@ -73,7 +75,7 @@ export function NewsPage() {
         <section className="overflow-hidden rounded-[28px] border border-lokals-border bg-white shadow-card">
           <div className="grid gap-0 lg:grid-cols-[1.15fr,0.85fr]">
             <div className="min-h-[280px] bg-[linear-gradient(135deg,#ede9fe,#eff6ff)]">
-              {featuredItem.image_url ? <img src={featuredItem.image_url} alt={featuredItem.title} className="h-full w-full object-cover" /> : null}
+              <ImageWithFallback src={resolveMediaUrl(featuredItem.image_url) ?? featuredItem.image_url} alt={featuredItem.title} className="h-full w-full min-h-[280px]" />
             </div>
             <div className="space-y-4 p-6">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-purple">Featured story</p>

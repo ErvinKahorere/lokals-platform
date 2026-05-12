@@ -38,6 +38,10 @@ class NotificationPayload
             'delivery_update' => 'delivery',
             'ride_update' => 'ride',
             'news_update' => 'news',
+            'community_project_submitted',
+            'community_project_reviewed',
+            'community_project_update',
+            'community_project_pledge' => 'community_project',
             default => 'system',
         };
     }
@@ -55,6 +59,8 @@ class NotificationPayload
             'delivery_update' => $targetId ? '/delivery/'.$targetId : '/delivery',
             'ride_update' => $targetId ? '/ride/'.$targetId : '/ride',
             'news_update' => $targetId ? '/news/'.$targetId : '/news',
+            'community_project_submitted' => $targetId ? '/dashboard/town-manager/community-projects/'.$targetId : '/dashboard/town-manager/community-projects',
+            'community_project_reviewed', 'community_project_update', 'community_project_pledge' => $targetId ? '/get-involved/'.$targetId : '/get-involved',
             default => '/notifications',
         };
     }

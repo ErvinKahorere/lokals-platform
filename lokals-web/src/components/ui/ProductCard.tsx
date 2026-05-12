@@ -7,6 +7,7 @@ import { QuickCallButton } from '../experience/QuickCallButton'
 import { Button } from './Button'
 import { Badge } from './Badge'
 import { Card } from './Card'
+import { ImageWithFallback } from './ImageWithFallback'
 
 export function ProductCard({
   product,
@@ -23,11 +24,7 @@ export function ProductCard({
   return (
     <Card className="overflow-hidden bg-white p-0">
       <div className={`relative overflow-hidden bg-slate-100 ${compact ? 'aspect-[4/3]' : 'aspect-[4/3]'}`}>
-        {image ? (
-          <img src={image} alt={product.title} className="h-full w-full object-cover" loading="lazy" />
-        ) : (
-          <div className="flex h-full items-center justify-center text-sm text-lokals-muted">Product photo</div>
-        )}
+        <ImageWithFallback src={image} alt={product.title} className="h-full w-full" fallback={<div className="text-sm text-lokals-muted">Product photo</div>} />
         <div className="absolute left-3 top-3 flex items-center gap-2">
           {product.sale_price ? <Badge tone="warning">Sale</Badge> : null}
         </div>

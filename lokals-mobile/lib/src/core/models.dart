@@ -1432,3 +1432,366 @@ class ProfileSummaryModel {
     );
   }
 }
+
+class CommunityProjectCategoryModel {
+  CommunityProjectCategoryModel({
+    required this.id,
+    required this.name,
+    required this.slug,
+    this.icon,
+    this.sortOrder = 0,
+  });
+
+  final int id;
+  final String name;
+  final String slug;
+  final String? icon;
+  final int sortOrder;
+
+  factory CommunityProjectCategoryModel.fromJson(Map<String, dynamic> json) {
+    return CommunityProjectCategoryModel(
+      id: json['id'] as int,
+      name: (json['name'] ?? 'Category').toString(),
+      slug: (json['slug'] ?? '').toString(),
+      icon: json['icon'] as String?,
+      sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+class CommunityProjectAttachmentModel {
+  CommunityProjectAttachmentModel({
+    required this.id,
+    this.fileUrl,
+    this.filePath,
+    this.mimeType,
+    this.fileType = 'image',
+    this.originalName,
+    this.size = 0,
+    this.caption,
+  });
+
+  final int id;
+  final String? fileUrl;
+  final String? filePath;
+  final String? mimeType;
+  final String fileType;
+  final String? originalName;
+  final int size;
+  final String? caption;
+
+  factory CommunityProjectAttachmentModel.fromJson(Map<String, dynamic> json) {
+    return CommunityProjectAttachmentModel(
+      id: json['id'] as int,
+      fileUrl: json['file_url'] as String?,
+      filePath: json['file_path'] as String?,
+      mimeType: json['mime_type'] as String?,
+      fileType: (json['file_type'] ?? 'image').toString(),
+      originalName: json['original_name'] as String?,
+      size: (json['size'] as num?)?.toInt() ?? 0,
+      caption: json['caption'] as String?,
+    );
+  }
+}
+
+class CommunityProjectVerificationModel {
+  CommunityProjectVerificationModel({
+    required this.id,
+    required this.action,
+    this.notes,
+    this.statusAfter,
+    this.verificationStatusAfter,
+    this.createdAt,
+    this.reviewer,
+  });
+
+  final int id;
+  final String action;
+  final String? notes;
+  final String? statusAfter;
+  final String? verificationStatusAfter;
+  final String? createdAt;
+  final Map<String, dynamic>? reviewer;
+
+  factory CommunityProjectVerificationModel.fromJson(Map<String, dynamic> json) {
+    return CommunityProjectVerificationModel(
+      id: json['id'] as int,
+      action: (json['action'] ?? 'submitted').toString(),
+      notes: json['notes'] as String?,
+      statusAfter: json['status_after'] as String?,
+      verificationStatusAfter: json['verification_status_after'] as String?,
+      createdAt: json['created_at'] as String?,
+      reviewer: (json['reviewer'] as Map?)?.cast<String, dynamic>(),
+    );
+  }
+}
+
+class CommunityProjectUpdateModel {
+  CommunityProjectUpdateModel({
+    required this.id,
+    required this.title,
+    required this.body,
+    this.statusAfterUpdate,
+    this.progressPercent,
+    this.approvedByTownManager = true,
+    this.attachments = const [],
+    this.createdAt,
+    this.user,
+  });
+
+  final int id;
+  final String title;
+  final String body;
+  final String? statusAfterUpdate;
+  final int? progressPercent;
+  final bool approvedByTownManager;
+  final List<Map<String, dynamic>> attachments;
+  final String? createdAt;
+  final Map<String, dynamic>? user;
+
+  factory CommunityProjectUpdateModel.fromJson(Map<String, dynamic> json) {
+    return CommunityProjectUpdateModel(
+      id: json['id'] as int,
+      title: (json['title'] ?? 'Update').toString(),
+      body: (json['body'] ?? '').toString(),
+      statusAfterUpdate: json['status_after_update'] as String?,
+      progressPercent: (json['progress_percent'] as num?)?.toInt(),
+      approvedByTownManager: json['approved_by_town_manager'] as bool? ?? true,
+      attachments: (json['attachments'] as List<dynamic>? ?? const [])
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList(),
+      createdAt: json['created_at'] as String?,
+      user: (json['user'] as Map?)?.cast<String, dynamic>(),
+    );
+  }
+}
+
+class CommunityProjectPledgeModel {
+  CommunityProjectPledgeModel({
+    required this.id,
+    required this.pledgeType,
+    required this.pledgeDescription,
+    this.amount,
+    this.quantity,
+    this.contactPhone,
+    this.contactEmail,
+    this.status,
+    this.createdAt,
+    this.user,
+    this.project,
+  });
+
+  final int id;
+  final String pledgeType;
+  final String pledgeDescription;
+  final String? amount;
+  final int? quantity;
+  final String? contactPhone;
+  final String? contactEmail;
+  final String? status;
+  final String? createdAt;
+  final Map<String, dynamic>? user;
+  final CommunityProjectModel? project;
+
+  factory CommunityProjectPledgeModel.fromJson(Map<String, dynamic> json) {
+    return CommunityProjectPledgeModel(
+      id: json['id'] as int,
+      pledgeType: (json['pledge_type'] ?? 'other').toString(),
+      pledgeDescription: (json['pledge_description'] ?? '').toString(),
+      amount: json['amount']?.toString(),
+      quantity: (json['quantity'] as num?)?.toInt(),
+      contactPhone: json['contact_phone'] as String?,
+      contactEmail: json['contact_email'] as String?,
+      status: json['status']?.toString(),
+      createdAt: json['created_at'] as String?,
+      user: (json['user'] as Map?)?.cast<String, dynamic>(),
+      project: (json['project'] as Map<String, dynamic>?) == null
+          ? null
+          : CommunityProjectModel.fromJson(
+              json['project'] as Map<String, dynamic>,
+            ),
+    );
+  }
+}
+
+class CommunityProjectModel {
+  CommunityProjectModel({
+    required this.id,
+    required this.slug,
+    required this.referenceCode,
+    required this.title,
+    required this.summary,
+    required this.description,
+    this.supportNeeded = const [],
+    this.targetAmount,
+    this.targetItems = const [],
+    this.targetVolunteers,
+    this.currentAmount,
+    this.currentItems = const [],
+    this.currentVolunteers,
+    this.locationText,
+    this.town,
+    this.area,
+    this.contactName,
+    this.contactPhone,
+    this.contactWhatsapp,
+    this.contactEmail,
+    this.status = 'draft',
+    this.verificationStatus = 'pending',
+    this.verificationNotes,
+    this.rejectionReason,
+    this.isVerified = false,
+    this.isFeatured = false,
+    this.startsAt,
+    this.endsAt,
+    this.approvedAt,
+    this.completedAt,
+    this.createdAt,
+    this.updatedAt,
+    this.progressPercent = 0,
+    this.followersCount = 0,
+    this.pledgesCount = 0,
+    this.isFollowing = false,
+    this.category,
+    this.user,
+    this.organization,
+    this.attachments = const [],
+    this.updates = const [],
+    this.latestUpdate,
+    this.pledges = const [],
+    this.verificationHistory = const [],
+  });
+
+  final int id;
+  final String slug;
+  final String referenceCode;
+  final String title;
+  final String summary;
+  final String description;
+  final List<String> supportNeeded;
+  final String? targetAmount;
+  final List<Map<String, dynamic>> targetItems;
+  final int? targetVolunteers;
+  final String? currentAmount;
+  final List<Map<String, dynamic>> currentItems;
+  final int? currentVolunteers;
+  final String? locationText;
+  final String? town;
+  final String? area;
+  final String? contactName;
+  final String? contactPhone;
+  final String? contactWhatsapp;
+  final String? contactEmail;
+  final String status;
+  final String verificationStatus;
+  final String? verificationNotes;
+  final String? rejectionReason;
+  final bool isVerified;
+  final bool isFeatured;
+  final String? startsAt;
+  final String? endsAt;
+  final String? approvedAt;
+  final String? completedAt;
+  final String? createdAt;
+  final String? updatedAt;
+  final int progressPercent;
+  final int followersCount;
+  final int pledgesCount;
+  final bool isFollowing;
+  final CommunityProjectCategoryModel? category;
+  final Map<String, dynamic>? user;
+  final Map<String, dynamic>? organization;
+  final List<CommunityProjectAttachmentModel> attachments;
+  final List<CommunityProjectUpdateModel> updates;
+  final CommunityProjectUpdateModel? latestUpdate;
+  final List<CommunityProjectPledgeModel> pledges;
+  final List<CommunityProjectVerificationModel> verificationHistory;
+
+  factory CommunityProjectModel.fromJson(Map<String, dynamic> json) {
+    return CommunityProjectModel(
+      id: json['id'] as int,
+      slug: (json['slug'] ?? '').toString(),
+      referenceCode: (json['reference_code'] ?? '').toString(),
+      title: (json['title'] ?? 'Project').toString(),
+      summary: (json['summary'] ?? '').toString(),
+      description: (json['description'] ?? '').toString(),
+      supportNeeded: (json['support_needed'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .toList(),
+      targetAmount: json['target_amount']?.toString(),
+      targetItems: (json['target_items'] as List<dynamic>? ?? const [])
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList(),
+      targetVolunteers: (json['target_volunteers'] as num?)?.toInt(),
+      currentAmount: json['current_amount']?.toString(),
+      currentItems: (json['current_items'] as List<dynamic>? ?? const [])
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList(),
+      currentVolunteers: (json['current_volunteers'] as num?)?.toInt(),
+      locationText: json['location_text'] as String?,
+      town: json['town'] as String?,
+      area: json['area'] as String?,
+      contactName: json['contact_name'] as String?,
+      contactPhone: json['contact_phone'] as String?,
+      contactWhatsapp: json['contact_whatsapp'] as String?,
+      contactEmail: json['contact_email'] as String?,
+      status: (json['status'] ?? 'draft').toString(),
+      verificationStatus: (json['verification_status'] ?? 'pending').toString(),
+      verificationNotes: json['verification_notes'] as String?,
+      rejectionReason: json['rejection_reason'] as String?,
+      isVerified: json['is_verified'] as bool? ?? false,
+      isFeatured: json['is_featured'] as bool? ?? false,
+      startsAt: json['starts_at'] as String?,
+      endsAt: json['ends_at'] as String?,
+      approvedAt: json['approved_at'] as String?,
+      completedAt: json['completed_at'] as String?,
+      createdAt: json['created_at'] as String?,
+      updatedAt: json['updated_at'] as String?,
+      progressPercent: (json['progress_percent'] as num?)?.toInt() ?? 0,
+      followersCount: (json['followers_count'] as num?)?.toInt() ?? 0,
+      pledgesCount: (json['pledges_count'] as num?)?.toInt() ?? 0,
+      isFollowing: json['is_following'] as bool? ?? false,
+      category: (json['category'] as Map<String, dynamic>?) == null
+          ? null
+          : CommunityProjectCategoryModel.fromJson(
+              json['category'] as Map<String, dynamic>,
+            ),
+      user: (json['user'] as Map?)?.cast<String, dynamic>(),
+      organization: (json['organization'] as Map?)?.cast<String, dynamic>(),
+      attachments: (json['attachments'] as List<dynamic>? ?? const [])
+          .map(
+            (item) => CommunityProjectAttachmentModel.fromJson(
+              item as Map<String, dynamic>,
+            ),
+          )
+          .toList(),
+      updates: (json['updates'] as List<dynamic>? ?? const [])
+          .map(
+            (item) => CommunityProjectUpdateModel.fromJson(
+              item as Map<String, dynamic>,
+            ),
+          )
+          .toList(),
+      latestUpdate: (json['latest_update'] as Map<String, dynamic>?) == null
+          ? null
+          : CommunityProjectUpdateModel.fromJson(
+              json['latest_update'] as Map<String, dynamic>,
+            ),
+      pledges: (json['pledges'] as List<dynamic>? ?? const [])
+          .map(
+            (item) => CommunityProjectPledgeModel.fromJson(
+              item as Map<String, dynamic>,
+            ),
+          )
+          .toList(),
+      verificationHistory:
+          (json['verification_history'] as List<dynamic>? ?? const [])
+              .map(
+                (item) => CommunityProjectVerificationModel.fromJson(
+                  item as Map<String, dynamic>,
+                ),
+              )
+              .toList(),
+    );
+  }
+}

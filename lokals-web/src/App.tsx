@@ -22,6 +22,13 @@ import { NotificationsPage } from './pages/NotificationsPage'
 import { NewsPage } from './pages/NewsPage'
 import { NewsDetailsPage } from './pages/NewsDetailsPage'
 import { ArticleBrowserPage } from './pages/ArticleBrowserPage'
+import { CommunityProjectsPage } from './pages/CommunityProjectsPage'
+import { CommunityProjectDetailsPage } from './pages/CommunityProjectDetailsPage'
+import { SubmitCommunityProjectPage } from './pages/SubmitCommunityProjectPage'
+import { MyCommunityProjectsPage } from './pages/MyCommunityProjectsPage'
+import { MyCommunityPledgesPage } from './pages/MyCommunityPledgesPage'
+import { TownManagerCommunityProjectsPage } from './pages/TownManagerCommunityProjectsPage'
+import { TownManagerCommunityProjectReviewPage } from './pages/TownManagerCommunityProjectReviewPage'
 import { EventsPage } from './pages/EventsPage'
 import { EventDetailsPage } from './pages/EventDetailsPage'
 import { EventCalendarPage } from './pages/EventCalendarPage'
@@ -58,6 +65,16 @@ import { SearchResultsPage } from './pages/SearchResultsPage'
 import { ActivityPage } from './pages/ActivityPage'
 import { SavedItemsPage } from './pages/dashboard/SavedItemsPage'
 import { TownPortalPage } from './pages/TownPortalPage'
+import { CommunityImpactDashboardPage } from './pages/community/CommunityImpactDashboardPage'
+import { CommunityImpactHistoryPage } from './pages/community/CommunityImpactHistoryPage'
+import { CommunityImpactLeaderboardPage } from './pages/community/CommunityImpactLeaderboardPage'
+import { CommunityImpactPrivacyPage } from './pages/community/CommunityImpactPrivacyPage'
+import { CommunityImpactRedemptionsPage } from './pages/community/CommunityImpactRedemptionsPage'
+import { CommunityImpactRewardsPage } from './pages/community/CommunityImpactRewardsPage'
+import { CommunityImpactPendingPage } from './pages/admin/CommunityImpactPendingPage'
+import { CommunityImpactRewardsManagePage } from './pages/admin/CommunityImpactRewardsManagePage'
+import { CommunityImpactRedemptionsAdminPage } from './pages/admin/CommunityImpactRedemptionsPage'
+import { CommunityImpactUserProfilePage } from './pages/admin/CommunityImpactUserProfilePage'
 import { FeaturePlaceholderPage } from './pages/FeaturePlaceholderPage'
 import { getRoleHomePath, hasActiveRole } from './lib/roles'
 import { useAuthStore } from './store/auth'
@@ -170,6 +187,9 @@ export default function App() {
           <Route path="/jobs/:id" element={<JobDetailsPage />} />
           <Route path="/directory" element={<DirectoryPage />} />
           <Route path="/directory/:id" element={<DirectoryDetailsPage />} />
+          <Route path="/get-involved" element={<CommunityProjectsPage />} />
+          <Route path="/get-involved/submit" element={<ProtectedRoute><SubmitCommunityProjectPage /></ProtectedRoute>} />
+          <Route path="/get-involved/:slug" element={<CommunityProjectDetailsPage />} />
           <Route path="/town/okahandja" element={<TownPortalPage />} />
           <Route path="/okahandja" element={<TownPortalPage />} />
           <Route path="/organizations" element={<ProtectedRoute><FeaturePlaceholderPage title="Organizations" description="A fuller organizations browser is being prepared. Use your followed organizations feed for now to keep community groups and updates close." ctaLabel="Open followed organizations" ctaTo="/dashboard/feed" icon={Building2} /></ProtectedRoute>} />
@@ -178,6 +198,12 @@ export default function App() {
           <Route path="/support" element={<FeaturePlaceholderPage title="Help and support" description="A dedicated support hub is being refined. Settings still gives you the quickest access to account controls and preferences." ctaLabel="Open settings" ctaTo="/settings" icon={CircleHelp} />} />
           <Route path="/verification" element={<ProtectedRoute><FeaturePlaceholderPage title="Verification" description="Verification tools are being consolidated into a cleaner trust workflow. Use your profile page for identity and account updates in the meantime." ctaLabel="Open profile" ctaTo="/dashboard/profile" icon={Verified} /></ProtectedRoute>} />
           <Route path="/following-organizations" element={<ProtectedRoute><FollowingFeedPage /></ProtectedRoute>} />
+          <Route path="/community-impact" element={<ProtectedRoute><CommunityImpactDashboardPage /></ProtectedRoute>} />
+          <Route path="/community-impact/history" element={<ProtectedRoute><CommunityImpactHistoryPage /></ProtectedRoute>} />
+          <Route path="/community-impact/rewards" element={<ProtectedRoute><CommunityImpactRewardsPage /></ProtectedRoute>} />
+          <Route path="/community-impact/redemptions" element={<ProtectedRoute><CommunityImpactRedemptionsPage /></ProtectedRoute>} />
+          <Route path="/community-impact/leaderboard" element={<ProtectedRoute><CommunityImpactLeaderboardPage /></ProtectedRoute>} />
+          <Route path="/community-impact/privacy" element={<ProtectedRoute><CommunityImpactPrivacyPage /></ProtectedRoute>} />
 
           <Route path="/dashboard/feed" element={<ProtectedRoute><FollowingFeedPage /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
@@ -192,6 +218,8 @@ export default function App() {
           <Route path="/dashboard/reports/:id" element={<ProtectedRoute><ReportDetailsPage /></ProtectedRoute>} />
           <Route path="/dashboard/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           <Route path="/dashboard/profile/edit" element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
+          <Route path="/dashboard/community-projects" element={<ProtectedRoute><MyCommunityProjectsPage /></ProtectedRoute>} />
+          <Route path="/dashboard/community-project-pledges" element={<ProtectedRoute><MyCommunityPledgesPage /></ProtectedRoute>} />
           <Route path="/dashboard/products" element={<ProtectedRoute><Navigate to="/store" replace /></ProtectedRoute>} />
           <Route path="/dashboard/accommodation" element={<ProtectedRoute><Navigate to="/accommodation" replace /></ProtectedRoute>} />
           <Route path="/dashboard/saved" element={<ProtectedRoute><SavedItemsPage /></ProtectedRoute>} />
@@ -205,6 +233,12 @@ export default function App() {
           <Route path="/dashboard/organization" element={<OrganizationRoute><OrganizationDashboardPage /></OrganizationRoute>} />
           <Route path="/dashboard/municipality" element={<MunicipalityRoute><MunicipalityDashboardPage /></MunicipalityRoute>} />
           <Route path="/dashboard/town-manager" element={<MunicipalityRoute><MunicipalityDashboardPage /></MunicipalityRoute>} />
+          <Route path="/dashboard/town-manager/community-projects" element={<MunicipalityRoute><TownManagerCommunityProjectsPage /></MunicipalityRoute>} />
+          <Route path="/dashboard/town-manager/community-projects/:id" element={<MunicipalityRoute><TownManagerCommunityProjectReviewPage /></MunicipalityRoute>} />
+          <Route path="/dashboard/town-manager/community-impact/pending" element={<MunicipalityRoute><CommunityImpactPendingPage /></MunicipalityRoute>} />
+          <Route path="/dashboard/town-manager/community-impact/rewards" element={<MunicipalityRoute><CommunityImpactRewardsManagePage /></MunicipalityRoute>} />
+          <Route path="/dashboard/town-manager/community-impact/redemptions" element={<MunicipalityRoute><CommunityImpactRedemptionsAdminPage /></MunicipalityRoute>} />
+          <Route path="/dashboard/town-manager/community-impact/users/:userId" element={<MunicipalityRoute><CommunityImpactUserProfilePage /></MunicipalityRoute>} />
           <Route path="/dashboard/town-manager/reports" element={<MunicipalityRoute><AdminReportsPage /></MunicipalityRoute>} />
           <Route path="/dashboard/town-manager/reports/:id" element={<MunicipalityRoute><ReportDetailsPage /></MunicipalityRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />

@@ -5,6 +5,7 @@ import type { Listing } from '../../types'
 import { getDisplayPrice, resolveMediaUrl } from '../../lib/display'
 import { ContactActions } from '../experience/ContactActions'
 import { SaveButton } from '../experience/SaveButton'
+import { ImageWithFallback } from './ImageWithFallback'
 
 export function ListingCard({ listing }: { listing: Listing }) {
   const image = resolveMediaUrl(listing.image_url ?? listing.user?.avatar ?? null)
@@ -12,7 +13,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
   return (
     <Card interactive variant="marketplace" className="overflow-hidden p-0">
       <div className="relative aspect-[4/3] overflow-hidden bg-[linear-gradient(135deg,#e2e8f0,#cbd5e1,#f8fafc)]">
-        {image ? <img src={image} alt={listing.title} className="h-full w-full object-cover" loading="lazy" /> : null}
+        <ImageWithFallback src={image} alt={listing.title} className="h-full w-full" />
         <div className="absolute right-4 top-4">
           <SaveButton label={listing.title} itemId={listing.id} itemType="listing" />
         </div>

@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import {
   Activity,
+  Award,
   BadgeCheck,
   BriefcaseBusiness,
   CalendarClock,
@@ -50,6 +51,7 @@ export function ProfilePage() {
     { to: '/dashboard/products', label: 'My Products', icon: Package, description: 'Product posts and store shortcuts.' },
     { to: '/dashboard/accommodation', label: 'My Accommodation', icon: Home, description: 'Property and short-stay listings.' },
     { to: '/dashboard/saved', label: 'Saved Items', icon: HeartHandshake, description: 'Saved products, providers, accommodation, listings, and news.' },
+    { to: '/community-impact', label: 'Community Impact', icon: Award, description: 'Verified contribution points, rewards, leaderboard visibility, and privacy settings.' },
     { to: '/activity', label: 'Activity', icon: Activity, description: 'Notifications, alerts, and local updates.' },
     { to: '/settings', label: 'Settings', icon: Settings, description: 'Roles, preferences, privacy, and appearance.' },
   ]

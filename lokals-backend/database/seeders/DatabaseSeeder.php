@@ -30,6 +30,11 @@ class DatabaseSeeder extends Seeder
             Role::findOrCreate($role, 'sanctum');
         }
 
+        $this->call([
+            CommunityProjectCategorySeeder::class,
+            CommunityImpactSeeder::class,
+        ]);
+
         if (! $this->demoSeedingEnabled()) {
             $this->command?->info('Skipping demo seed data. Set SEED_DEMO_DATA=true to enable demo seeding outside local/testing.');
             return;
@@ -50,6 +55,7 @@ class DatabaseSeeder extends Seeder
             DemoMarketplaceSeeder::class,
             DemoEventSeeder::class,
             DemoNewsSeeder::class,
+            DemoCommunityProjectSeeder::class,
         ]);
     }
 

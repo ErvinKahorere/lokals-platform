@@ -6,10 +6,12 @@ use App\Events\BookingCreated;
 use App\Listeners\SendBookingNotifications;
 use App\Models\Booking;
 use App\Models\CityReport;
+use App\Models\CommunityProject;
 use App\Models\Listing;
 use App\Models\ServiceProvider as ServiceProviderModel;
 use App\Policies\BookingPolicy;
 use App\Policies\CityReportPolicy;
+use App\Policies\CommunityProjectPolicy;
 use App\Policies\ListingPolicy;
 use App\Policies\ServiceProviderPolicy;
 use Illuminate\Support\Facades\Event;
@@ -33,6 +35,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(Booking::class, BookingPolicy::class);
         Gate::policy(CityReport::class, CityReportPolicy::class);
+        Gate::policy(CommunityProject::class, CommunityProjectPolicy::class);
         Gate::policy(Listing::class, ListingPolicy::class);
         Gate::policy(ServiceProviderModel::class, ServiceProviderPolicy::class);
 

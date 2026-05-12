@@ -1,4 +1,4 @@
-import { ChevronDown, LayoutDashboard, LogOut, MapPin, Menu, Search, Settings, Ticket, UserRound, Bookmark, Bell, BookOpen, CircleHelp } from 'lucide-react'
+import { Award, ChevronDown, LayoutDashboard, LogOut, MapPin, Menu, Search, Settings, Ticket, UserRound, Bookmark, Bell, BookOpen, CircleHelp } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useMe, useNotifications, usePreferences, useUpdatePreferences, useUpdateProfile } from '../../hooks/queries'
@@ -16,6 +16,7 @@ const desktopLinks = [
   { to: '/home', label: 'Home' },
   { to: '/services', label: 'Services' },
   { to: '/store', label: 'Market' },
+  { to: '/get-involved', label: 'Get Involved' },
   { to: '/activity', label: 'Activity' },
   { to: '/directory', label: 'Directory' },
   { to: '/events', label: 'Events' },
@@ -27,6 +28,7 @@ const mobileLinks = [
   { to: '/home', label: 'Home' },
   { to: '/services', label: 'Services' },
   { to: '/store', label: 'Market' },
+  { to: '/get-involved', label: 'Involved' },
   { to: '/activity', label: 'Activity' },
   { to: '/directory', label: 'Directory' },
   { to: '/events', label: 'Events' },
@@ -146,6 +148,7 @@ export function AppShell() {
       { to: '/saved-items', label: 'Saved Items', icon: Bookmark, show: Boolean(currentUser) },
       { to: '/activity', label: 'Activity', icon: Bell, show: Boolean(currentUser) },
       { to: '/notifications', label: 'Notifications', icon: Bell, show: Boolean(currentUser) },
+      { to: '/community-impact', label: 'Community Impact', icon: Award, show: Boolean(currentUser) },
       { to: '/dashboard/bookings', label: 'My Bookings', icon: BookOpen, show: Boolean(currentUser) },
       { to: '/my-tickets', label: 'My Tickets', icon: Ticket, show: Boolean(currentUser) },
       { to: dashboardLink, label: 'Dashboard', icon: LayoutDashboard, show: Boolean(currentUser) },

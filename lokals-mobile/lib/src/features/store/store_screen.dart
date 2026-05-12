@@ -64,7 +64,7 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
   @override
   Widget build(BuildContext context) {
     final safeBottom = MediaQuery.viewPaddingOf(context).bottom;
-    final scrollBottomPadding = safeBottom + 100;
+    final scrollBottomPadding = safeBottom + 132;
     final productsQuery = ref.watch(storeProductsProvider);
     final alertsQuery = ref.watch(saleAlertsProvider);
 
@@ -731,17 +731,22 @@ class _ProductGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: items.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.7,
-      ),
-      itemBuilder: (context, index) => ProductCard(product: items[index]),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final singleColumn = constraints.maxWidth < 380;
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: items.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: singleColumn ? 1 : 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: singleColumn ? 1.42 : 0.7,
+          ),
+          itemBuilder: (context, index) => ProductCard(product: items[index]),
+        );
+      },
     );
   }
 }

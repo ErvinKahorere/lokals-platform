@@ -6,6 +6,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/app_card.dart';
+import '../../shared/widgets/app_network_image.dart';
 import '../../shared/widgets/app_search_bar.dart';
 import '../../shared/widgets/app_text_field.dart';
 import '../../shared/widgets/app_badge.dart';
@@ -172,27 +173,26 @@ class LokalsAvatar extends StatelessWidget {
   const LokalsAvatar({
     super.key,
     required this.label,
+    this.imageUrl,
     this.radius = 24,
     this.backgroundColor = AppColors.purpleSoftAlt,
     this.foregroundColor = AppColors.primaryPurple,
   });
 
   final String label;
+  final String? imageUrl;
   final double radius;
   final Color backgroundColor;
   final Color foregroundColor;
 
   @override
   Widget build(BuildContext context) {
-    final safeLabel = label.trim().isEmpty ? 'L' : label.trim().characters.first.toUpperCase();
-
-    return CircleAvatar(
+    return AppAvatarImage(
+      name: label,
+      imageUrl: imageUrl,
       radius: radius,
       backgroundColor: backgroundColor,
-      child: Text(
-        safeLabel,
-        style: AppTextStyles.h3.copyWith(color: foregroundColor),
-      ),
+      foregroundColor: foregroundColor,
     );
   }
 }

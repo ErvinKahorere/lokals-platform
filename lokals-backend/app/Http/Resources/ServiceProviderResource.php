@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -35,7 +36,7 @@ class ServiceProviderResource extends JsonResource
             'description' => $this->description,
             'about' => $this->description ?: 'This provider keeps their profile short and practical. Call or WhatsApp for the latest details.',
             'phone' => $this->phone,
-            'avatar_url' => $this->avatar_url,
+            'avatar_url' => MediaUrl::resolve($this->avatar_url),
             'whatsapp' => $this->whatsapp,
             'location' => $this->location,
             'town' => $organization?->town,

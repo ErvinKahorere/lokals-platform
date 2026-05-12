@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -23,9 +24,16 @@ class ListingResource extends JsonResource
             'distance_km' => $this->when(isset($this->distance_km), $this->distance_km),
             'status' => $this->status,
             'metadata' => $this->metadata,
-            'image_url' => data_get($this->metadata, 'image_url'),
+            'image_url' => MediaUrl::resolve(data_get($this->metadata, 'image_url')),
             'organization' => $this->organization?->only(['id', 'name', 'category']),
-            'user' => $this->user?->only(['id', 'name', 'phone', 'avatar', 'profession', 'business_name']),
+            'user' => $this->user ? [
+                'id' => $this->user->id,
+                'name' => $this->user->name,
+                'phone' => $this->user->phone,
+                'avatar' => MediaUrl::resolve($this->user->avatar),
+                'profession' => $this->user->profession,
+                'business_name' => $this->user->business_name,
+            ] : null,
         ];
     }
 }

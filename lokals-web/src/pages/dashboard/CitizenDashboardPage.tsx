@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarDays, Package, Search } from 'lucide-react'
+import { AlertTriangle, Award, CalendarDays, Package, Search } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { DashboardSection } from '../../components/dashboard/DashboardSection'
@@ -29,6 +29,7 @@ export function CitizenDashboardPage() {
             <QuickActionTile to="/report-issue" title="Report Issue" body="Send a city issue or public concern fast." icon={AlertTriangle} />
             <QuickActionTile to="/delivery" title="Send Parcel" body="Request a delivery with a few taps." icon={Package} />
             <QuickActionTile to="/alerts" title="View Alerts" body="Keep up with urgent and followed updates." icon={CalendarDays} />
+            <QuickActionTile to="/community-impact" title="Community Impact" body="See approved points, rewards, and privacy-first visibility settings." icon={Award} />
           </div>
         </DashboardSection>
         <DashboardSection title="Pending tasks" description="What still needs your attention.">

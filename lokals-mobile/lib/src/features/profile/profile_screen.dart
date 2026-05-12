@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/experience_helpers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/widgets/app_network_image.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../auth/auth_controller.dart';
@@ -67,18 +68,12 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   child: Column(
                     children: [
-                      CircleAvatar(
+                      AppAvatarImage(
+                        name: summary.user.name,
+                        imageUrl: avatarUrl,
                         radius: 46,
                         backgroundColor: Colors.white,
-                        backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                        child: avatarUrl == null
-                            ? Text(
-                                summary.user.name.characters.first.toUpperCase(),
-                                style: AppTextStyles.h2.copyWith(
-                                  color: AppColors.primaryPurple,
-                                ),
-                              )
-                            : null,
+                        foregroundColor: AppColors.primaryPurple,
                       ),
                       const SizedBox(height: 14),
                       Text(

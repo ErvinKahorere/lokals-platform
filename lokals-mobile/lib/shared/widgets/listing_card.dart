@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import 'app_badge.dart';
 import 'app_card.dart';
+import 'app_network_image.dart';
 import 'experience/contact_actions.dart';
 import 'experience/save_button.dart';
 
@@ -27,25 +28,12 @@ class ListingCard extends StatelessWidget {
               SizedBox(
                 height: 140,
                 width: double.infinity,
-                child: ClipRRect(
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(20)),
-                  child: resolveMediaUrl(listing.imageUrl ?? listing.userAvatar) !=
-                          null
-                      ? Image.network(
-                          resolveMediaUrl(listing.imageUrl ?? listing.userAvatar)!,
-                          fit: BoxFit.cover,
-                        )
-                      : Container(
-                          color: AppColors.neutralSoft,
-                          child: const Center(
-                            child: Icon(
-                              Icons.storefront_rounded,
-                              color: AppColors.mutedText,
-                              size: 40,
-                            ),
-                          ),
-                        ),
+                child: AppNetworkImage(
+                  imageUrl: resolveMediaUrl(listing.imageUrl ?? listing.userAvatar),
+                  fallbackIcon: Icons.storefront_rounded,
+                  height: 140,
+                  width: double.infinity,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                 ),
               ),
               Positioned(

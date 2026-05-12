@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -16,7 +17,7 @@ class ProfileResource extends JsonResource
             'location' => $this->location,
             'lat' => $this->lat,
             'lng' => $this->lng,
-            'avatar_url' => $this->avatar_url,
+            'avatar_url' => MediaUrl::resolve($this->avatar_url),
             'profession' => $this->user?->profession,
             'business_name' => $this->user?->business_name,
             'default_town' => $this->user?->default_town,

@@ -139,6 +139,15 @@ export function MunicipalityDashboardPage() {
               <p className="mt-1 text-sm text-lokals-muted">Publish municipal events if you need them during the pitch.</p>
             </div>
           </Link>
+          <Link to="/dashboard/town-manager/community-impact/pending" className="flex min-h-24 items-start gap-3 rounded-[22px] border border-lokals-border bg-lokals-bg px-4 py-4 transition hover:-translate-y-0.5 hover:border-lokals-purple/30">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple">
+              <Megaphone className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-semibold text-lokals-charcoal">Impact approvals</p>
+              <p className="mt-1 text-sm text-lokals-muted">Review verified positive contribution points privately.</p>
+            </div>
+          </Link>
         </div>
       </DashboardSection>
 

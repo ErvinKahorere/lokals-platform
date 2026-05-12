@@ -3,7 +3,9 @@ import { Link, useParams } from 'react-router-dom'
 import { PageHeader, QueryState } from '../components/Ui'
 import { FollowSourceButton } from '../components/news/FollowSourceButton'
 import { RelatedNewsList } from '../components/news/RelatedNewsList'
+import { ImageWithFallback } from '../components/ui/ImageWithFallback'
 import { useNewsItem } from '../hooks/queries'
+import { resolveMediaUrl } from '../lib/display'
 
 function formatPublishedAt(value?: string | null) {
   if (!value) return 'Latest update'
@@ -29,7 +31,12 @@ export function NewsDetailsPage() {
             <PageHeader eyebrow="Local News" title={item.title} description="LOKALS shows a source-attributed summary only. Continue to the original publisher for the full article." />
             <article className="overflow-hidden rounded-[28px] border border-lokals-border bg-white shadow-card">
               <div className="h-64 bg-[linear-gradient(135deg,#ede9fe,#eff6ff)]">
-                {item.image_url ? <img src={item.image_url} alt={item.title} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-lokals-purple"><Newspaper className="h-12 w-12" /></div>}
+                <ImageWithFallback
+                  src={resolveMediaUrl(item.image_url) ?? item.image_url}
+                  alt={item.title}
+                  className="h-full w-full"
+                  fallback={<div className="flex h-full items-center justify-center text-lokals-purple"><Newspaper className="h-12 w-12" /></div>}
+                />
               </div>
               <div className="space-y-4 p-6">
                 <div className="flex flex-wrap gap-2">

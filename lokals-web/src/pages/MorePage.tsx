@@ -1,4 +1,4 @@
-import { Bell, BriefcaseBusiness, Building2, CalendarDays, CircleHelp, Home, Newspaper, ShieldAlert, ShoppingBag, Store, UserRound, Verified } from 'lucide-react'
+import { Award, Bell, BriefcaseBusiness, Building2, CalendarDays, CircleHelp, Home, Newspaper, ShieldAlert, ShoppingBag, Store, UserRound, Verified } from 'lucide-react'
 import { useMemo } from 'react'
 import { ActionTile, PageHeader, SectionCard } from '../components/Ui'
 import { getRoleHomePath } from '../lib/roles'
@@ -65,6 +65,7 @@ export function MorePage() {
     { to: '/news', label: 'News', subtitle: 'Local stories and updates', icon: Newspaper },
     { to: '/dashboard/feed', label: 'Organisations', subtitle: 'Followed groups and updates', icon: Building2 },
     { to: '/activity', label: 'Activity', subtitle: 'Requests and account history', icon: Bell },
+    { to: '/community-impact', label: 'Community Impact', subtitle: 'Verified contribution rewards and privacy-first points', icon: Award },
     { to: '/dashboard/profile', label: 'Profile', subtitle: 'Profile and identity tools', icon: UserRound },
     { to: '/saved-items', label: 'Saved', subtitle: 'Bookmarked providers and listings', icon: Verified },
     { to: '/support', label: 'Help', subtitle: 'Support and help center', icon: CircleHelp },

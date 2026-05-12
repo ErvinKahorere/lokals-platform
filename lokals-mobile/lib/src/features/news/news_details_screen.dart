@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/widgets/app_network_image.dart';
+import '../../core/experience_helpers.dart';
 import '../../core/models.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
@@ -43,6 +45,7 @@ class _NewsDetailsScreenState extends ConsumerState<NewsDetailsScreen> {
         data: (payload) {
           final item = payload['data'] as NewsItemModel;
           final related = payload['related'] as List<NewsItemModel>;
+          final imageUrl = resolveMediaUrl(item.imageUrl);
           final sourceEntity = item.sourceEntity;
           final isFollowing = sourceEntity == null
               ? false
@@ -108,12 +111,13 @@ class _NewsDetailsScreenState extends ConsumerState<NewsDetailsScreen> {
                   borderRadius: BorderRadius.circular(24),
                   color: AppColors.neutralSoft,
                 ),
-                child: item.imageUrl == null
-                    ? const Center(child: Icon(Icons.newspaper_rounded, size: 48, color: AppColors.primaryPurple))
-                    : ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
-                        child: Image.network(item.imageUrl!, fit: BoxFit.cover, width: double.infinity),
-                      ),
+                child: AppNetworkImage(
+                  imageUrl: imageUrl,
+                  fallbackIcon: Icons.newspaper_rounded,
+                  width: double.infinity,
+                  height: 220,
+                  borderRadius: BorderRadius.circular(24),
+                ),
               ),
               const SizedBox(height: 16),
               LokalsCard(

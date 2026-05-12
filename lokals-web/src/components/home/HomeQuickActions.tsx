@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { Bell, BriefcaseBusiness, Building2, CalendarDays, CircleHelp, FileWarning, HeartHandshake, Home, Newspaper, ShieldAlert, ShoppingBag, Store, UserRound, Verified, WalletCards } from 'lucide-react'
+import { Award, Bell, BriefcaseBusiness, Building2, CalendarDays, CircleHelp, FileWarning, HeartHandshake, Home, Newspaper, ShieldAlert, ShoppingBag, Store, UserRound, Verified, WalletCards } from 'lucide-react'
 import { ActionTile, Button, Card } from '../Ui'
 import { Link } from 'react-router-dom'
 
@@ -20,6 +20,8 @@ const primaryActions: ActionItem[] = [
   { to: '/report-issue', label: 'Report', icon: FileWarning, color: 'bg-orange-50 text-orange-700' },
   { to: '/alerts', label: 'Alerts', icon: Bell, color: 'bg-sky-50 text-sky-700' },
   { to: '/directory', label: 'Directory', icon: Building2, color: 'bg-slate-100 text-slate-700' },
+  { to: '/get-involved', label: 'Involved', icon: HeartHandshake, color: 'bg-violet-50 text-violet-700' },
+  { to: '/community-impact', label: 'Impact', icon: Award, color: 'bg-emerald-50 text-emerald-700' },
 ]
 
 const exploreActions: ActionItem[] = [
@@ -71,6 +73,7 @@ function roleActions(activeRole: string, isGuest: boolean): ActionItem[] {
   if (['town_manager', 'municipality_admin', 'super_admin', 'operator'].includes(activeRole)) {
     return [
       { to: activeRole === 'super_admin' || activeRole === 'operator' ? '/admin' : '/dashboard/town-manager', label: 'Portal', icon: Building2, color: 'bg-violet-50 text-violet-700' },
+      { to: '/dashboard/town-manager/community-projects', label: 'Projects', icon: HeartHandshake, color: 'bg-emerald-50 text-emerald-700' },
       { to: '/dashboard/reports', label: 'Reports', icon: FileWarning, color: 'bg-orange-50 text-orange-700' },
       { to: '/alerts', label: 'Alerts', icon: Bell, color: 'bg-sky-50 text-sky-700' },
     ]

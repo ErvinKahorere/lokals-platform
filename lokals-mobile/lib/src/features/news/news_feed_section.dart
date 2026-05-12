@@ -10,11 +10,13 @@ class NewsFeedSection extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.items,
+    this.horizontal = false,
   });
 
   final String title;
   final String subtitle;
   final List<NewsItemModel> items;
+  final bool horizontal;
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +29,19 @@ class NewsFeedSection extends StatelessWidget {
           const EmptyStateView(
             title: 'No local news yet',
             body: 'Stories will appear here once local sources update.',
+          )
+        else if (horizontal)
+          SizedBox(
+            height: 490,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: items.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 12),
+              itemBuilder: (context, index) => SizedBox(
+                width: 320,
+                child: NewsCard(item: items[index]),
+              ),
+            ),
           )
         else
           ...items.map((item) => Padding(

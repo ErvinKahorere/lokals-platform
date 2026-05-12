@@ -7,6 +7,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/app_badge.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_network_image.dart';
 import '../../../shared/widgets/experience/save_button.dart';
 import '../../core/experience_helpers.dart';
 import '../../core/models.dart';
@@ -33,7 +34,8 @@ class AccommodationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imageUrl = resolveMediaUrl(item.imageUrl);
-    final locationLabel = [item.area, item.town].whereType<String>().where((value) => value.isNotEmpty).join(', ');
+    final locationLabel =
+        [item.area, item.town].whereType<String>().where((value) => value.isNotEmpty).join(', ');
     final phone = item.ownerPhone ?? item.businessPhone ?? item.userPhone;
 
     return InkWell(
@@ -49,18 +51,11 @@ class AccommodationCard extends StatelessWidget {
               children: [
                 AspectRatio(
                   aspectRatio: 4 / 3,
-                  child: Container(
+                  child: AppNetworkImage(
+                    imageUrl: imageUrl,
+                    fallbackIcon: Icons.home_work_outlined,
                     width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: AppColors.neutralSoft,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                      image: imageUrl != null ? DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover) : null,
-                    ),
-                    child: imageUrl == null
-                        ? const Center(
-                            child: Icon(Icons.home_work_outlined, size: 38, color: AppColors.mutedText),
-                          )
-                        : null,
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                   ),
                 ),
                 Positioned(
@@ -70,8 +65,12 @@ class AccommodationCard extends StatelessWidget {
                     spacing: 6,
                     runSpacing: 6,
                     children: [
-                      AppBadge(label: _typeLabels[item.type] ?? item.type.replaceAll('_', ' '), tone: AppBadgeTone.info),
-                      if (item.pricePeriod != null) AppBadge(label: 'Per ${item.pricePeriod}', tone: AppBadgeTone.info),
+                      AppBadge(
+                        label: _typeLabels[item.type] ?? item.type.replaceAll('_', ' '),
+                        tone: AppBadgeTone.info,
+                      ),
+                      if (item.pricePeriod != null)
+                        AppBadge(label: 'Per ${item.pricePeriod}', tone: AppBadgeTone.info),
                     ],
                   ),
                 ),

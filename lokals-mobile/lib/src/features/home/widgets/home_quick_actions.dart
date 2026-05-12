@@ -24,6 +24,8 @@ class HomeQuickActions extends StatelessWidget {
     _QuickActionItem('Report', '/report-issue', Icons.report_problem_outlined, AppColors.warningSoft, Color(0xFFD97706)),
     _QuickActionItem('Alerts', '/alerts', Icons.campaign_outlined, AppColors.purpleSoftAlt, AppColors.primaryPurple),
     _QuickActionItem('Directory', '/directory', Icons.business_outlined, AppColors.neutralSoft, AppColors.deepCharcoal),
+    _QuickActionItem('Involved', '/get-involved', Icons.volunteer_activism_outlined, AppColors.purpleSoftAlt, AppColors.primaryPurple),
+    _QuickActionItem('Impact', '/community-impact', Icons.workspace_premium_outlined, AppColors.successSoft, AppColors.primaryGreen),
   ];
 
   static const _exploreActions = <_QuickActionItem>[
@@ -80,6 +82,7 @@ class HomeQuickActions extends StatelessWidget {
             AppColors.purpleSoftAlt,
             AppColors.primaryPurple,
           ),
+          const _QuickActionItem('Projects', '/dashboard/community-projects/pending', Icons.verified_outlined, AppColors.successSoft, AppColors.primaryGreen),
           const _QuickActionItem('Reports', '/my-reports', Icons.assignment_late_outlined, AppColors.warningSoft, Color(0xFFD97706)),
           const _QuickActionItem('Alerts', '/alerts', Icons.campaign_outlined, AppColors.infoSoft, AppColors.softBlue),
           const _QuickActionItem('Requests', '/activity', Icons.mark_email_unread_outlined, AppColors.successSoft, AppColors.primaryGreen),
@@ -101,6 +104,7 @@ class HomeQuickActions extends StatelessWidget {
           _QuickActionItem('Portal', '/okahandja', Icons.account_balance_outlined, AppColors.purpleSoftAlt, AppColors.primaryPurple),
           _QuickActionItem('Activity', '/activity', Icons.history_rounded, AppColors.infoSoft, AppColors.softBlue),
           _QuickActionItem('Saved', '/saved-items', Icons.bookmark_outline_rounded, AppColors.neutralSoft, AppColors.deepCharcoal),
+          _QuickActionItem('Impact', '/community-impact', Icons.workspace_premium_outlined, AppColors.successSoft, AppColors.primaryGreen),
           _QuickActionItem('Support', '/support', Icons.support_agent_outlined, AppColors.successSoft, AppColors.primaryGreen),
         ];
     }

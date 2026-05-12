@@ -90,6 +90,25 @@ class _TownManagerDashboardScreenState extends ConsumerState<TownManagerDashboar
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SectionTitle(
+                    title: 'Community Impact approvals',
+                    subtitle: 'Review only verified positive contributions before points become available.',
+                  ),
+                  const SizedBox(height: 12),
+                  DashboardQuickActionTile(
+                    label: 'Open pending approvals',
+                    body: 'Approve, reject, or reverse Community Impact points privately.',
+                    icon: Icons.workspace_premium_outlined,
+                    onTap: () => context.go('/dashboard/town-manager/community-impact/pending'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            LokalsCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SectionTitle(
                     title: 'Publish municipal alert',
                     subtitle: 'Use the existing alerts system so residents see urgent service updates in the normal app flow.',
                   ),

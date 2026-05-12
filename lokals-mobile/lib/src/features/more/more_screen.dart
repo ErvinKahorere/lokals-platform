@@ -70,6 +70,7 @@ class MoreScreen extends ConsumerWidget {
       (label: 'Events', description: 'Local events, tickets, and reminders', icon: Icons.event_outlined, route: '/events'),
       (label: 'News', description: 'Aggregated local stories and announcements', icon: Icons.newspaper_outlined, route: '/news'),
       (label: 'Activity', description: 'Requests, notifications, and city updates', icon: Icons.notifications_active_outlined, route: '/activity'),
+      (label: 'Community Impact', description: 'Verified positive contribution rewards and privacy settings.', icon: Icons.workspace_premium_outlined, route: '/community-impact'),
       (label: 'Saved Items', description: 'Saved products, providers, and local updates', icon: Icons.bookmark_outline_rounded, route: '/saved-items'),
       (label: 'Notifications', description: 'Unread alerts, reminders, and booking changes', icon: Icons.notifications_none_rounded, route: '/notifications'),
       (label: 'Profile', description: 'Identity, verification, and personal shortcuts', icon: Icons.person_outline_rounded, route: '/profile'),

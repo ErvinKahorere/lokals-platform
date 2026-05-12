@@ -3,14 +3,15 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../config/app_config.dart';
-import '../../core/experience_helpers.dart';
-import '../../core/models.dart';
 import '../../../shared/widgets/app_badge.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_network_image.dart';
 import '../../../shared/widgets/experience/quick_call_button.dart';
 import '../../../shared/widgets/experience/save_button.dart';
+import '../../config/app_config.dart';
+import '../../core/experience_helpers.dart';
+import '../../core/models.dart';
 
 class ProductCard extends StatelessWidget {
   const ProductCard({
@@ -23,8 +24,10 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imageUrl = resolveMediaUrl(product.imageUrl);
-    final sellerName = product.businessName ?? product.userBusinessName ?? product.userName ?? 'Local seller';
-    final locationLabel = [product.area, product.town].whereType<String>().where((value) => value.isNotEmpty).join(', ');
+    final sellerName =
+        product.businessName ?? product.userBusinessName ?? product.userName ?? 'Local seller';
+    final locationLabel =
+        [product.area, product.town].whereType<String>().where((value) => value.isNotEmpty).join(', ');
     final sellerPhone = product.businessPhone ?? product.userPhone;
 
     return InkWell(
@@ -39,23 +42,11 @@ class ProductCard extends StatelessWidget {
             Expanded(
               child: Stack(
                 children: [
-                  Container(
+                  AppNetworkImage(
+                    imageUrl: imageUrl,
+                    fallbackIcon: Icons.storefront_rounded,
                     width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: AppColors.neutralSoft,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                      image: imageUrl != null
-                          ? DecorationImage(
-                              image: NetworkImage(imageUrl),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                    child: imageUrl == null
-                        ? const Center(
-                            child: Icon(Icons.storefront_rounded, color: AppColors.mutedText, size: 36),
-                          )
-                        : null,
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                   ),
                   Positioned(
                     right: 8,
@@ -113,7 +104,10 @@ class ProductCard extends StatelessWidget {
                     sellerName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.caption.copyWith(color: AppColors.deepCharcoal, fontWeight: FontWeight.w700),
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.deepCharcoal,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Row(
@@ -131,20 +125,44 @@ class ProductCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: QuickCallButton(phone: sellerPhone),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: AppButton(
-                          label: 'View',
-                          expanded: false,
-                          onPressed: () => context.push('/store/${product.id}'),
-                        ),
-                      ),
-                    ],
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      if (constraints.maxWidth < 230) {
+                        return Column(
+                          children: [
+                            SizedBox(
+                              width: double.infinity,
+                              child: QuickCallButton(phone: sellerPhone, compact: true),
+                            ),
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              width: double.infinity,
+                              child: AppButton(
+                                label: 'View',
+                                compact: true,
+                                onPressed: () => context.push('/store/${product.id}'),
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: QuickCallButton(phone: sellerPhone, compact: true),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: AppButton(
+                              label: 'View',
+                              compact: true,
+                              onPressed: () => context.push('/store/${product.id}'),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),

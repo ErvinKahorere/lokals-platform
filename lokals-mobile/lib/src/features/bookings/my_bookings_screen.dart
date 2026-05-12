@@ -59,11 +59,15 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: BookingCard(
                     booking: booking,
-                    footer: Row(
+                    footer: Column(
                       children: [
-                        const QuickCallButton(phone: null),
-                        const SizedBox(width: 10),
-                        Expanded(
+                        const SizedBox(
+                          width: double.infinity,
+                          child: QuickCallButton(phone: null),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
                           child: ContactActions(
                             name: booking.providerName ?? 'provider',
                           ),

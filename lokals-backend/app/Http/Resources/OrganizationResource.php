@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -34,7 +35,7 @@ class OrganizationResource extends JsonResource
             'description' => $this->description,
             'phone' => $this->phone,
             'email' => $this->email,
-            'logo_url' => $this->logo_url,
+            'logo_url' => MediaUrl::resolve($this->logo_url),
             'whatsapp' => $this->whatsapp,
             'location' => $this->location,
             'town' => $this->town,

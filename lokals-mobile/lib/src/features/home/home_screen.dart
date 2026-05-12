@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/widgets/app_network_image.dart';
 import '../../../shared/widgets/experience/nearby_service_card.dart';
 import '../../config/app_config.dart';
+import '../../core/experience_helpers.dart';
 import '../../core/models.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
@@ -29,6 +31,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _searchController = TextEditingController();
+  String _homeEventFilter = 'this_week';
 
   @override
   void initState() {
@@ -45,6 +48,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final query = value.trim();
     if (query.isEmpty) return;
     context.go('/search?q=${Uri.encodeComponent(query)}');
+  }
+
+  bool _matchesHomeEventFilter(EventModel event) {
+    if (_homeEventFilter == 'all' || event.startsAt == null) {
+      return true;
+    }
+
+    final startsAt = DateTime.tryParse(event.startsAt!);
+    if (startsAt == null) {
+      return true;
+    }
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final eventDay = DateTime(startsAt.year, startsAt.month, startsAt.day);
+    final currentWeekStart = today.subtract(Duration(days: today.weekday - 1));
+    final nextWeekStart = currentWeekStart.add(const Duration(days: 7));
+    final nextWeekEnd = nextWeekStart.add(const Duration(days: 7));
+    final monthEnd = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+    final yearEnd = DateTime(now.year, 12, 31, 23, 59, 59);
+
+    switch (_homeEventFilter) {
+      case 'today':
+        return eventDay == today;
+      case 'this_week':
+        return !startsAt.isBefore(currentWeekStart) &&
+            startsAt.isBefore(nextWeekStart);
+      case 'next_week':
+        return !startsAt.isBefore(nextWeekStart) &&
+            startsAt.isBefore(nextWeekEnd);
+      case 'this_month':
+        return !startsAt.isBefore(today) && startsAt.isBefore(monthEnd);
+      case 'this_year':
+        return !startsAt.isBefore(today) && startsAt.isBefore(yearEnd);
+      default:
+        return true;
+    }
   }
 
   @override
@@ -67,9 +107,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       'town': town,
       ...?(area == null ? null : {'area': area}),
     };
-    final newsFeed = ref.watch(
-      auth.token == null ? newsProvider(localNewsParams) : newsFeedProvider,
-    );
+    final localNewsSource =
+        auth.token == null ? newsProvider(localNewsParams) : newsFeedProvider;
+    final newsFeed = ref.watch(localNewsSource);
     final role =
         user?.currentRole ??
         (user?.roles.isNotEmpty == true ? user!.roles.first : 'guest');
@@ -77,8 +117,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         newsFeed.asData?.value.take(3).toList() ?? const <NewsItemModel>[];
     final providerItems =
         providers.asData?.value.toList() ?? const <ProviderModel>[];
-    final eventItems =
-        events.asData?.value.take(3).toList() ?? const <EventModel>[];
+    final allEventItems = events.asData?.value ?? const <EventModel>[];
+    final eventItems = allEventItems
+        .where(_matchesHomeEventFilter)
+        .take(5)
+        .toList();
     final productItems =
         products.asData?.value.take(3).toList() ?? const <ProductModel>[];
     final jobItems = jobs.asData?.value.take(3).toList() ?? const <JobModel>[];
@@ -377,7 +420,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: providerItems.isEmpty
                 ? const SizedBox.shrink()
                 : SizedBox(
-                    height: 284,
+                    height: 328,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: providerItems.length,
@@ -406,14 +449,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 : null,
             onRetry: () => ref.invalidate(eventsProvider),
             child: Column(
-              children: eventItems
-                  .map(
-                    (item) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: EventCard(event: item),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (final item in const [
+                        ('today', 'Today'),
+                        ('this_week', 'This week'),
+                        ('next_week', 'Next week'),
+                        ('this_month', 'This month'),
+                        ('this_year', 'This year'),
+                        ('all', 'All'),
+                      ])
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(item.$2),
+                            selected: _homeEventFilter == item.$1,
+                            onSelected: (_) => setState(() => _homeEventFilter = item.$1),
+                            selectedColor: AppColors.primaryPurple,
+                            labelStyle: TextStyle(
+                              color: _homeEventFilter == item.$1
+                                  ? Colors.white
+                                  : AppColors.deepCharcoal,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            backgroundColor: AppColors.softBackground,
+                            side: const BorderSide(color: AppColors.border),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                if (eventItems.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 586,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: eventItems.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: 12),
+                      itemBuilder: (context, index) => SizedBox(
+                        width: 320,
+                        child: EventCard(event: eventItems[index]),
+                      ),
                     ),
-                  )
-                  .toList(),
+                  ),
+                ],
+              ],
             ),
           ),
           const SizedBox(height: 20),
@@ -442,45 +528,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         borderRadius: BorderRadius.circular(24),
                         onTap: () => context.go('/store/${item.id}'),
                         child: AppCard(
-                          child: Row(
+                          padding: EdgeInsets.zero,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                width: 52,
-                                height: 52,
-                                decoration: BoxDecoration(
-                                  color: AppColors.greenSoft,
-                                  borderRadius: BorderRadius.circular(18),
+                              AppNetworkImage(
+                                imageUrl: resolveMediaUrl(item.imageUrl),
+                                fallbackIcon: Icons.shopping_bag_outlined,
+                                height: 148,
+                                width: double.infinity,
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(20),
                                 ),
-                                child: const Icon(
-                                  Icons.shopping_bag_outlined,
-                                  color: AppColors.lokalsGreen,
-                                ),
+                                backgroundColor: AppColors.neutralSoft,
                               ),
-                              const SizedBox(width: 14),
-                              Expanded(
+                              Padding(
+                                padding: const EdgeInsets.all(14),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       item.title,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w700,
+                                        fontSize: 18,
+                                        height: 1.25,
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
+                                    const SizedBox(height: 6),
                                     Text(
                                       item.businessName ??
                                           item.userName ??
                                           'Local seller',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
                                         color: AppColors.mutedText,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 10),
                                     Text(
                                       item.salePrice ?? item.price,
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w800,
+                                        fontSize: 18,
                                       ),
                                     ),
                                   ],
@@ -581,11 +675,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               subtitle:
                   'Aggregated local stories with clear source attribution.',
               items: items.take(3).toList(),
+              horizontal: true,
             ),
             loading: () => const LoadingSkeleton(height: 180),
-            error: (error, _) => const EmptyStateView(
+            error: (error, _) => EmptyStateView(
               title: 'News unavailable',
               body: 'Please try again in a moment.',
+              action: AppButton(
+                label: 'Retry',
+                expanded: false,
+                variant: AppButtonVariant.secondary,
+                onPressed: () => ref.invalidate(localNewsSource),
+              ),
             ),
           ),
           const SizedBox(height: 20),

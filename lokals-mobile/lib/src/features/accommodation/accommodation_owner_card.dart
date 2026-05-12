@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/app_badge.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_network_image.dart';
 import '../../core/experience_helpers.dart';
 import '../../core/models.dart';
 
@@ -20,7 +20,8 @@ class AccommodationOwnerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ownerName = item.ownerName ?? item.businessName ?? item.userName ?? 'Local owner';
-    final ownerLocation = item.ownerLocation ?? [item.area, item.town].whereType<String>().where((value) => value.isNotEmpty).join(', ');
+    final ownerLocation =
+        item.ownerLocation ?? [item.area, item.town].whereType<String>().where((value) => value.isNotEmpty).join(', ');
     final avatarUrl = resolveMediaUrl(item.ownerAvatar ?? item.businessLogoUrl ?? item.userAvatar);
 
     return AppCard(
@@ -29,16 +30,10 @@ class AccommodationOwnerCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
+              AppAvatarImage(
+                name: ownerName,
+                imageUrl: avatarUrl,
                 radius: 28,
-                backgroundColor: AppColors.purpleSoftAlt,
-                backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                child: avatarUrl == null
-                    ? Text(
-                        ownerName.characters.first.toUpperCase(),
-                        style: AppTextStyles.h4.copyWith(color: AppColors.primaryPurple),
-                      )
-                    : null,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -48,7 +43,8 @@ class AccommodationOwnerCard extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(child: Text(ownerName, style: AppTextStyles.h4)),
-                        if (item.ownerVerified || item.businessVerified) const AppBadge(label: 'Verified', tone: AppBadgeTone.success),
+                        if (item.ownerVerified || item.businessVerified)
+                          const AppBadge(label: 'Verified', tone: AppBadgeTone.success),
                       ],
                     ),
                     const SizedBox(height: 4),
