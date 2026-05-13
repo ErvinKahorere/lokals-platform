@@ -63,6 +63,8 @@ export function MorePage() {
     { to: '/accommodation', label: 'Rentals', subtitle: 'Accommodation and stays', icon: Home },
     { to: '/events', label: 'Events', subtitle: 'Events and tickets', icon: CalendarDays },
     { to: '/news', label: 'News', subtitle: 'Local stories and updates', icon: Newspaper },
+    { to: '/feed', label: 'Feed', subtitle: 'Moderated local updates and highlights', icon: Newspaper },
+    { to: '/conversations', label: 'Inbox', subtitle: 'Messages and live conversation threads', icon: Bell },
     { to: '/dashboard/feed', label: 'Organisations', subtitle: 'Followed groups and updates', icon: Building2 },
     { to: '/activity', label: 'Activity', subtitle: 'Requests and account history', icon: Bell },
     { to: '/community-impact', label: 'Community Impact', subtitle: 'Verified contribution rewards and privacy-first points', icon: Award },

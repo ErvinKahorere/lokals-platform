@@ -48,11 +48,14 @@ import 'features/events/event_details_screen.dart';
 import 'features/events/events_screen.dart';
 import 'features/events/my_tickets_screen.dart';
 import 'features/events/ticket_details_screen.dart';
+import 'features/feed/feed_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/home/onboarding_screen.dart';
 import 'features/jobs/job_details_screen.dart';
 import 'features/jobs/jobs_screen.dart';
 import 'features/marketplace/marketplace_screen.dart';
+import 'features/messages/conversation_screen.dart';
+import 'features/messages/inbox_screen.dart';
 import 'features/more/more_screen.dart';
 import 'features/news/news_screen.dart';
 import 'features/news/news_details_screen.dart';
@@ -75,6 +78,7 @@ import 'features/sos/sos_screen.dart';
 import 'features/splash/splash_screen.dart';
 import 'features/store/store_screen.dart';
 import 'features/store/product_details_screen.dart';
+import 'features/support/support_screen.dart';
 import 'features/town_portal/town_portal_screen.dart';
 import 'features/workers/worker_profile_screen.dart';
 import 'features/workers/workers_screen.dart';
@@ -255,6 +259,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/dashboard/admin',
         builder: (context, state) => const SuperAdminDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/feed',
+        builder: (context, state) => const FeedScreen(),
+      ),
+      GoRoute(
+        path: '/inbox',
+        builder: (context, state) => const InboxScreen(),
+      ),
+      GoRoute(
+        path: '/conversations/:id',
+        builder: (context, state) => ConversationScreen(
+          id: state.pathParameters['id']!,
+        ),
       ),
       GoRoute(
         path: '/activity',
@@ -460,13 +478,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/support',
-        builder: (context, state) => const FeaturePlaceholderScreen(
-          title: 'Help and support',
-          description: 'Support tools are being organized into a cleaner help hub. Use settings for account controls while the dedicated support experience is in progress.',
-          primaryLabel: 'Open settings',
-          primaryRoute: '/settings',
-          icon: Icons.support_agent_outlined,
-        ),
+        builder: (context, state) => const SupportScreen(),
       ),
     ],
   );

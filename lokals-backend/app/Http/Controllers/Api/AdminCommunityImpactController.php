@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\RewardApproved;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CommunityImpactAccountResource;
 use App\Http\Resources\CommunityImpactRedemptionResource;
@@ -70,12 +71,12 @@ class AdminCommunityImpactController extends Controller
     {
         $transaction = CommunityImpactTransaction::query()->whereKey($id)->firstOrFail();
         $validated = $request->validate(['internal_notes' => ['nullable', 'string', 'max:2000']]);
+        $approved = $this->service->approveTransaction($transaction, $request->user(), $validated['internal_notes'] ?? null);
+        broadcast(new RewardApproved($approved));
 
         return response()->json([
             'message' => 'Community Impact transaction approved.',
-            'data' => CommunityImpactTransactionResource::make(
-                $this->service->approveTransaction($transaction, $request->user(), $validated['internal_notes'] ?? null)
-            ),
+            'data' => CommunityImpactTransactionResource::make($approved),
         ]);
     }
 

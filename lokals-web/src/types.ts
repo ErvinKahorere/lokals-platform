@@ -840,3 +840,139 @@ export interface CommunityImpactDashboardPayload {
   recent_approved: PaginatedResult<CommunityImpactTransaction> | { data: CommunityImpactTransaction[] }
   pending_transactions: PaginatedResult<CommunityImpactTransaction> | { data: CommunityImpactTransaction[] }
 }
+
+export interface FeedCategory {
+  id: number
+  name: string
+  slug: string
+  description?: string | null
+  icon?: string | null
+  priority?: number
+}
+
+export interface FeedPost {
+  id: number
+  title: string
+  summary?: string | null
+  body?: string | null
+  media_url?: string | null
+  external_url?: string | null
+  town?: string | null
+  area?: string | null
+  status: 'draft' | 'pending' | 'approved' | 'rejected' | 'archived'
+  is_featured?: boolean
+  priority?: number
+  published_at?: string | null
+  rejection_reason?: string | null
+  category?: FeedCategory | null
+  source?: { id?: number; name?: string | null; source_type?: string | null } | null
+  metadata?: Record<string, unknown>
+}
+
+export interface UserFeedPreference {
+  id?: number
+  interests?: string[]
+  hidden_category_ids?: number[]
+  muted_source_ids?: number[]
+  preferred_town?: string | null
+  preferred_area?: string | null
+  prioritize_followed_organizations?: boolean
+}
+
+export interface AiAssistSuggestion {
+  id: number
+  suggestion_type: string
+  content: Record<string, unknown>
+  is_primary: boolean
+}
+
+export interface AiAssistRequest {
+  id: number
+  module: string
+  provider_key: string
+  status: string
+  original_media_url?: string | null
+  original_filename?: string | null
+  payload?: Record<string, unknown>
+  safety_status: 'clear' | 'flagged' | 'blocked'
+  confidence_score?: number | string | null
+  needs_user_review: boolean
+  suggestions?: AiAssistSuggestion[]
+}
+
+export interface SupportMessage {
+  id: number
+  sender_type: 'user' | 'bot' | 'agent' | 'channel_system'
+  body: string
+  intent_key?: string | null
+  attachments?: unknown[]
+  metadata?: Record<string, unknown>
+  created_at?: string | null
+}
+
+export interface SupportEscalation {
+  id: number
+  reason: string
+  status: 'pending' | 'assigned' | 'resolved' | 'cancelled'
+  notes?: string | null
+  resolved_at?: string | null
+}
+
+export interface SupportConversation {
+  id: number
+  channel: 'in_app' | 'whatsapp' | 'sms'
+  status: 'open' | 'pending_human' | 'resolved' | 'closed'
+  topic?: string | null
+  last_message_at?: string | null
+  messages?: SupportMessage[]
+  escalations?: SupportEscalation[]
+}
+
+export interface ConversationParticipant {
+  id: number
+  user_id: number
+  role: string
+  status: string
+  joined_at?: string | null
+  last_read_at?: string | null
+  user?: Pick<User, 'id' | 'name' | 'phone' | 'avatar'> | null
+}
+
+export interface ConversationMessage {
+  id: number
+  conversation_id: number
+  user_id?: number | null
+  message_type: string
+  body?: string | null
+  status: string
+  is_system: boolean
+  metadata?: Record<string, unknown>
+  created_at?: string | null
+  user?: Pick<User, 'id' | 'name' | 'avatar'> | null
+  attachments?: Array<{
+    id: number
+    file_url?: string | null
+    thumbnail_url?: string | null
+    file_type?: string | null
+    mime_type?: string | null
+    file_size?: number | null
+  }>
+  read_receipts?: Array<{
+    user_id: number
+    read_at?: string | null
+  }>
+}
+
+export interface ConversationThread {
+  id: number
+  context: string
+  subject?: string | null
+  status: string
+  conversationable_type?: string | null
+  conversationable_id?: number | null
+  last_message_at?: string | null
+  metadata?: Record<string, unknown>
+  participants?: ConversationParticipant[]
+  last_message?: ConversationMessage | null
+  messages?: ConversationMessage[]
+}

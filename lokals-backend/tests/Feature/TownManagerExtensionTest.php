@@ -76,12 +76,18 @@ class TownManagerExtensionTest extends TestCase
             'notifiable_type' => User::class,
         ]);
 
-        $notification = DatabaseNotification::query()
+        $notificationTypes = DatabaseNotification::query()
             ->where('notifiable_id', $reportOwner->id)
             ->latest()
-            ->firstOrFail();
+            ->pluck('data')
+            ->map(fn (array $payload): ?string => $payload['type'] ?? null)
+            ->filter()
+            ->values();
 
-        $this->assertSame('report_update', $notification->data['type']);
+        $this->assertTrue(
+            $notificationTypes->contains('report_update'),
+            'Expected the report owner to receive a report_update notification after status changes.',
+        );
     }
 
     public function test_municipal_alert_appears_in_alerts_feed(): void

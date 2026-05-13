@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\ModerationActionTaken;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Moderation\StoreModerationFlagRequest;
 use App\Models\JobPost;
 use App\Models\Listing;
+use App\Models\ModerationAction;
 use App\Models\ModerationFlag;
+use App\Models\ModerationReport;
 use App\Models\Organization;
 use App\Models\ServiceProvider;
 use Illuminate\Http\JsonResponse;
@@ -50,6 +53,16 @@ class ModerationController extends Controller
             'status' => 'pending',
         ]);
 
+        ModerationReport::query()->create([
+            'reporter_id' => $request->user()->id,
+            'reportable_type' => $class,
+            'reportable_id' => $model->getKey(),
+            'reason' => $request->string('reason')->value(),
+            'details' => $request->string('details')->value() ?: null,
+            'status' => 'open',
+            'severity_score' => 25,
+        ]);
+
         return response()->json($flag, 201);
     }
 
@@ -62,6 +75,15 @@ class ModerationController extends Controller
         ]);
 
         $moderationFlag->update($validated);
+        $action = ModerationAction::query()->create([
+            'actor_id' => $request->user()->id,
+            'actionable_type' => ModerationFlag::class,
+            'actionable_id' => $moderationFlag->id,
+            'action' => 'flag_'.$validated['status'],
+            'notes' => 'Moderation flag status updated to '.$validated['status'],
+            'metadata' => ['status' => $validated['status']],
+        ]);
+        broadcast(new ModerationActionTaken($action));
 
         return response()->json($moderationFlag);
     }

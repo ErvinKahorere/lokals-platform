@@ -42,6 +42,13 @@ import type {
   CommunityImpactRedemption,
   CommunityImpactReward,
   CommunityImpactTransaction,
+  FeedCategory,
+  FeedPost,
+  UserFeedPreference,
+  AiAssistRequest,
+  SupportConversation,
+  ConversationThread,
+  ConversationMessage,
 } from '../types'
 
 const toPaginated = <T,>(payload: any): PaginatedResult<T> => {
@@ -79,10 +86,10 @@ const unwrapOne = <T,>(payload: any): T => {
   return payload as T
 }
 
-export const useFeed = () =>
+export const useFeed = (params?: Record<string, unknown>) =>
   useQuery({
-    queryKey: ['feed'],
-    queryFn: async () => (await api.get('/feed')).data,
+    queryKey: ['feed', params],
+    queryFn: async () => toPaginated<FeedPost>((await api.get('/feed', { params })).data),
   })
 
 export const useMe = () =>
@@ -793,6 +800,204 @@ export const usePreviewPostDraft = () =>
         },
       })).data,
   })
+
+export const useFeedCategories = () =>
+  useQuery({
+    queryKey: ['feed-categories'],
+    queryFn: async () => ((await api.get('/feed-categories')).data?.data ?? []) as FeedCategory[],
+  })
+
+export const useFeedPreferences = () =>
+  useQuery({
+    queryKey: ['feed-preferences'],
+    queryFn: async () => (((await api.get('/my/feed-preferences')).data?.data ?? {}) as UserFeedPreference),
+  })
+
+export const useUpdateFeedPreferences = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => (await api.patch('/my/feed-preferences', payload)).data,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['feed-preferences'] })
+    },
+  })
+}
+
+export const useSaveFeedPost = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (id: number) => (await api.post(`/feed/${id}/save`)).data,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['feed'] })
+    },
+  })
+}
+
+export const useHideFeedPost = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (id: number) => (await api.post(`/feed/${id}/hide`)).data,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['feed'] })
+    },
+  })
+}
+
+export const useReportFeedPost = () => {
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: number; reason?: string }) => (await api.post(`/feed/${id}/report`, { reason })).data,
+  })
+}
+
+export const usePendingFeedPosts = () =>
+  useQuery({
+    queryKey: ['admin-feed-pending'],
+    queryFn: async () => ((await api.get('/admin/feed/pending')).data?.data ?? []) as FeedPost[],
+  })
+
+export const useCreateFeedPost = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => (await api.post('/admin/feed', payload)).data,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['admin-feed-pending'] })
+    },
+  })
+}
+
+export const useApproveFeedPost = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, notes }: { id: number; notes?: string }) => (await api.patch(`/admin/feed/${id}/approve`, { notes })).data,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-feed-pending'] }),
+        queryClient.invalidateQueries({ queryKey: ['feed'] }),
+      ])
+    },
+  })
+}
+
+export const useRejectFeedPost = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: number; reason: string }) => (await api.patch(`/admin/feed/${id}/reject`, { reason })).data,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['admin-feed-pending'] })
+    },
+  })
+}
+
+export const useFeatureFeedPost = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, is_featured }: { id: number; is_featured: boolean }) => (await api.patch(`/admin/feed/${id}/feature`, { is_featured })).data,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-feed-pending'] }),
+        queryClient.invalidateQueries({ queryKey: ['feed'] }),
+      ])
+    },
+  })
+}
+
+export const useAiAssist = (module: 'marketplace' | 'issue-report' | 'community-project' | 'business') =>
+  useMutation({
+    mutationFn: async (payload: FormData) =>
+      (await api.post(`/ai/assist/${module}`, payload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })).data as { data: AiAssistRequest },
+  })
+
+export const useSupportConversations = () =>
+  useQuery({
+    queryKey: ['support-conversations'],
+    queryFn: async () => ((await api.get('/support/conversations')).data?.data ?? []) as SupportConversation[],
+  })
+
+export const useSupportChat = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ message, conversationId }: { message: string; conversationId?: number }) =>
+      (conversationId
+        ? (await api.post(`/support/conversations/${conversationId}/messages`, { message })).data
+        : (await api.post('/support/chat', { message })).data) as { data: SupportConversation },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['support-conversations'] })
+    },
+  })
+}
+
+export const useEscalateSupportConversation = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ conversationId, reason, notes }: { conversationId: number; reason: string; notes?: string }) =>
+      (await api.post(`/support/conversations/${conversationId}/escalate`, { reason, notes })).data,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['support-conversations'] })
+    },
+  })
+}
+
+export const useConversations = () =>
+  useQuery({
+    queryKey: ['conversations'],
+    queryFn: async () => toPaginated<ConversationThread>((await api.get('/conversations')).data),
+  })
+
+export const useConversation = (id?: string) =>
+  useQuery({
+    enabled: Boolean(id),
+    queryKey: ['conversation', id],
+    queryFn: async () => (await api.get(`/conversations/${id}`)).data as { data: ConversationThread },
+  })
+
+export const useCreateConversation = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: { participant_ids: number[]; context?: string; subject?: string; message?: string }) =>
+      (await api.post('/conversations', payload)).data as { data: ConversationThread },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['conversations'] })
+    },
+  })
+}
+
+export const useSendConversationMessage = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ conversationId, body, messageType }: { conversationId: number; body: string; messageType?: string }) =>
+      (await api.post(`/conversations/${conversationId}/messages`, { body, message_type: messageType ?? 'text' })).data as { data: ConversationMessage },
+    onSuccess: (_result, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ['conversation', String(variables.conversationId)] })
+      void queryClient.invalidateQueries({ queryKey: ['conversations'] })
+    },
+  })
+}
+
+export const useMarkConversationMessageRead = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (messageId: number) => (await api.post(`/messages/${messageId}/read`)).data,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['conversations'] })
+    },
+  })
+}
 
 export const useUpdateProfile = () => {
   const queryClient = useQueryClient()

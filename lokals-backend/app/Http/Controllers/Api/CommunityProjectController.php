@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\CommunityProjectUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CommunityProjectCategoryResource;
 use App\Http\Resources\CommunityProjectPledgeResource;
@@ -16,6 +17,7 @@ use App\Models\Follow;
 use App\Models\Organization;
 use App\Models\User;
 use App\Notifications\SystemNotification;
+use App\Services\AnalyticsService;
 use App\Support\MediaUrl;
 use App\Support\PilotLocation;
 use Illuminate\Database\Eloquent\Builder;
@@ -29,6 +31,11 @@ use Illuminate\Support\Str;
 
 class CommunityProjectController extends Controller
 {
+    public function __construct(
+        private readonly AnalyticsService $analytics,
+    ) {
+    }
+
     private const PROJECT_STATUSES = [
         'draft',
         'submitted',
@@ -365,6 +372,14 @@ class CommunityProjectController extends Controller
 
         $this->recordVerification($project, $request->user(), 'status_updated', 'Project posted a new public update.');
         $this->notifyFollowersOfUpdate($project, $update, $request->user());
+        broadcast(new CommunityProjectUpdated($project->fresh()));
+        $this->analytics->record($request->user(), 'community_project_update_posted', [
+            'category' => 'community_project',
+            'town' => $project->town,
+            'area' => $project->area,
+            'subject_type' => CommunityProject::class,
+            'subject_id' => $project->id,
+        ]);
 
         return response()->json([
             'message' => 'Project update posted.',

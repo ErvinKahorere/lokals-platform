@@ -130,8 +130,24 @@ final activityFeedProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   return ref.read(discoveryRepositoryProvider).fetchActivityFeed();
 });
 
+final communityFeedProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  return ref.read(discoveryRepositoryProvider).fetchCommunityFeed();
+});
+
 final savedItemsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   return ref.read(discoveryRepositoryProvider).fetchSavedItems();
+});
+
+final supportConversationsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  return ref.read(discoveryRepositoryProvider).fetchSupportConversations();
+});
+
+final conversationsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  return ref.read(discoveryRepositoryProvider).fetchConversations();
+});
+
+final conversationProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, id) async {
+  return ref.read(discoveryRepositoryProvider).fetchConversation(id);
 });
 
 final searchResultsProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, query) async {
@@ -1410,5 +1426,98 @@ class DiscoveryRepository {
     });
 
     return CommunityProjectModel.fromJson(_unwrapMap(response.data));
+  }
+
+  Future<List<Map<String, dynamic>>> fetchCommunityFeed({String? category}) async {
+    final response = await ref.read(dioProvider).get('/feed', queryParameters: {
+      if (category != null && category.isNotEmpty) 'category': category,
+      'town': AppConfig.pilotTown,
+    });
+
+    return _unwrapList(response.data)
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList();
+  }
+
+  Future<Map<String, dynamic>> requestAiAssist({
+    required String module,
+    String? title,
+    String? description,
+    String? location,
+    XFile? media,
+  }) async {
+    final data = <String, dynamic>{
+      if (title != null && title.isNotEmpty) 'title': title,
+      if (description != null && description.isNotEmpty) 'description': description,
+      if (location != null && location.isNotEmpty) 'location': location,
+    };
+
+    if (media != null) {
+      data['media'] = await MultipartFile.fromFile(media.path, filename: media.name);
+    }
+
+    final response = await ref.read(dioProvider).post(
+      '/ai/assist/$module',
+      data: FormData.fromMap(data),
+    );
+
+    return _unwrapMap(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchSupportConversations() async {
+    final response = await ref.read(dioProvider).get('/support/conversations');
+    return _unwrapList(response.data)
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchConversations() async {
+    final response = await ref.read(dioProvider).get('/conversations');
+    return _unwrapList(response.data)
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList();
+  }
+
+  Future<Map<String, dynamic>> fetchConversation(String id) async {
+    final response = await ref.read(dioProvider).get('/conversations/$id');
+    return _unwrapMap(response.data);
+  }
+
+  Future<Map<String, dynamic>> sendSupportMessage({
+    required String message,
+    int? conversationId,
+  }) async {
+    final response = conversationId == null
+        ? await ref.read(dioProvider).post('/support/chat', data: {'message': message})
+        : await ref.read(dioProvider).post('/support/conversations/$conversationId/messages', data: {'message': message});
+
+    return _unwrapMap(response.data);
+  }
+
+  Future<void> escalateSupportConversation({
+    required int conversationId,
+    required String reason,
+    String? notes,
+  }) async {
+    await ref.read(dioProvider).post('/support/conversations/$conversationId/escalate', data: {
+      'reason': reason,
+      if (notes != null && notes.isNotEmpty) 'notes': notes,
+    });
+  }
+
+  Future<Map<String, dynamic>> sendConversationMessage({
+    required int conversationId,
+    required String body,
+    String messageType = 'text',
+  }) async {
+    final response = await ref.read(dioProvider).post(
+      '/conversations/$conversationId/messages',
+      data: {
+        'body': body,
+        'message_type': messageType,
+      },
+    );
+
+    return _unwrapMap(response.data);
   }
 }

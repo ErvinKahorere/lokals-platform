@@ -29,6 +29,7 @@ const exploreActions: ActionItem[] = [
   { to: '/accommodation', label: 'Rentals', icon: Home, color: 'bg-emerald-50 text-emerald-700' },
   { to: '/events', label: 'Events', icon: CalendarDays, color: 'bg-amber-50 text-amber-700' },
   { to: '/news', label: 'News', icon: Newspaper, color: 'bg-slate-100 text-slate-700' },
+  { to: '/feed', label: 'Feed', icon: Newspaper, color: 'bg-slate-100 text-slate-700' },
   { to: '/dashboard/feed', label: 'Orgs', icon: Building2, color: 'bg-violet-50 text-violet-700' },
   { to: '/saved-items', label: 'Saved', icon: HeartHandshake, color: 'bg-slate-100 text-slate-700' },
   { to: '/support', label: 'Help', icon: CircleHelp, color: 'bg-sky-50 text-sky-700' },

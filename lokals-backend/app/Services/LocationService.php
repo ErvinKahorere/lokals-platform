@@ -11,12 +11,23 @@ class LocationService
         }
 
         $earthRadius = 6371;
-        $dLat = deg2rad($toLat - $fromLat);
-        $dLng = deg2rad($toLng - $fromLng);
+        $latDelta = deg2rad($toLat - $fromLat);
+        $lngDelta = deg2rad($toLng - $fromLng);
+        $a = sin($latDelta / 2) ** 2
+            + cos(deg2rad($fromLat)) * cos(deg2rad($toLat)) * sin($lngDelta / 2) ** 2;
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
-        $a = sin($dLat / 2) ** 2
-            + cos(deg2rad($fromLat)) * cos(deg2rad($toLat)) * sin($dLng / 2) ** 2;
+        return round($earthRadius * $c, 1);
+    }
 
-        return round($earthRadius * 2 * atan2(sqrt($a), sqrt(1 - $a)), 2);
+    public function mapsUrl(?float $lat, ?float $lng, ?string $label = null): ?string
+    {
+        if ($lat === null || $lng === null) {
+            return null;
+        }
+
+        $query = $label ? urlencode($label) : $lat.','.$lng;
+
+        return "https://www.google.com/maps/search/?api=1&query={$query}";
     }
 }

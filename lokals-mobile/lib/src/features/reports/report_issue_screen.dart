@@ -22,6 +22,7 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
   final _locationController = TextEditingController();
   XFile? _photo;
   bool _isBusy = false;
+  bool _isAnalyzing = false;
   String? _message;
   String _category = 'water';
   String _priority = 'medium';
@@ -94,6 +95,47 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
                     if (file == null) return;
                     setState(() => _photo = file);
                   },
+                ),
+                const SizedBox(height: 12),
+                AppButton(
+                  label: _isAnalyzing ? 'Analyzing...' : 'Analyze with AI',
+                  expanded: false,
+                  variant: AppButtonVariant.secondary,
+                  onPressed: _isAnalyzing
+                      ? null
+                      : () async {
+                          setState(() => _isAnalyzing = true);
+                          try {
+                            final response = await ref.read(discoveryRepositoryProvider).requestAiAssist(
+                                  module: 'issue-report',
+                                  title: _titleController.text.trim(),
+                                  description: _descriptionController.text.trim(),
+                                  location: _locationController.text.trim(),
+                                  media: _photo,
+                                );
+                            final suggestions = ((response['suggestions'] as List?) ?? const []);
+                            final suggestion = suggestions.isEmpty
+                                ? const <String, dynamic>{}
+                                : Map<String, dynamic>.from((suggestions.first as Map)['content'] as Map? ?? const {});
+
+                            setState(() {
+                              if ((_titleController.text.trim()).isEmpty && (suggestion['title']?.toString() ?? '').isNotEmpty) {
+                                _titleController.text = suggestion['title'].toString();
+                              }
+                              if ((_descriptionController.text.trim()).isEmpty && (suggestion['description']?.toString() ?? '').isNotEmpty) {
+                                _descriptionController.text = suggestion['description'].toString();
+                              }
+                              if ((suggestion['category']?.toString() ?? '').isNotEmpty) {
+                                _category = suggestion['category'].toString();
+                              }
+                              _message = 'AI suggestions added. Review and edit before submitting.';
+                            });
+                          } finally {
+                            if (mounted) {
+                              setState(() => _isAnalyzing = false);
+                            }
+                          }
+                        },
                 ),
                 if (_message != null) ...[
                   const SizedBox(height: 12),

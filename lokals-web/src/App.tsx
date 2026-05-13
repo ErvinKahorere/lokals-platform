@@ -1,4 +1,4 @@
-import { Building2, CircleHelp, Verified } from 'lucide-react'
+import { Building2, Verified } from 'lucide-react'
 import { lazy, Suspense, type ReactElement } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AppShell } from './components/ui/AppShell'
@@ -29,6 +29,9 @@ import { MyCommunityProjectsPage } from './pages/MyCommunityProjectsPage'
 import { MyCommunityPledgesPage } from './pages/MyCommunityPledgesPage'
 import { TownManagerCommunityProjectsPage } from './pages/TownManagerCommunityProjectsPage'
 import { TownManagerCommunityProjectReviewPage } from './pages/TownManagerCommunityProjectReviewPage'
+import { FeedPage } from './pages/FeedPage'
+import { InboxPage } from './pages/InboxPage'
+import { ConversationPage } from './pages/ConversationPage'
 import { EventsPage } from './pages/EventsPage'
 import { EventDetailsPage } from './pages/EventDetailsPage'
 import { EventCalendarPage } from './pages/EventCalendarPage'
@@ -75,7 +78,9 @@ import { CommunityImpactPendingPage } from './pages/admin/CommunityImpactPending
 import { CommunityImpactRewardsManagePage } from './pages/admin/CommunityImpactRewardsManagePage'
 import { CommunityImpactRedemptionsAdminPage } from './pages/admin/CommunityImpactRedemptionsPage'
 import { CommunityImpactUserProfilePage } from './pages/admin/CommunityImpactUserProfilePage'
+import { FeedModerationPage } from './pages/admin/FeedModerationPage'
 import { FeaturePlaceholderPage } from './pages/FeaturePlaceholderPage'
+import { SupportPage } from './pages/SupportPage'
 import { getRoleHomePath, hasActiveRole } from './lib/roles'
 import { useAuthStore } from './store/auth'
 
@@ -187,6 +192,9 @@ export default function App() {
           <Route path="/jobs/:id" element={<JobDetailsPage />} />
           <Route path="/directory" element={<DirectoryPage />} />
           <Route path="/directory/:id" element={<DirectoryDetailsPage />} />
+          <Route path="/feed" element={<FeedPage />} />
+          <Route path="/conversations" element={<ProtectedRoute><InboxPage /></ProtectedRoute>} />
+          <Route path="/conversations/:id" element={<ProtectedRoute><ConversationPage /></ProtectedRoute>} />
           <Route path="/get-involved" element={<CommunityProjectsPage />} />
           <Route path="/get-involved/submit" element={<ProtectedRoute><SubmitCommunityProjectPage /></ProtectedRoute>} />
           <Route path="/get-involved/:slug" element={<CommunityProjectDetailsPage />} />
@@ -195,7 +203,7 @@ export default function App() {
           <Route path="/organizations" element={<ProtectedRoute><FeaturePlaceholderPage title="Organizations" description="A fuller organizations browser is being prepared. Use your followed organizations feed for now to keep community groups and updates close." ctaLabel="Open followed organizations" ctaTo="/dashboard/feed" icon={Building2} /></ProtectedRoute>} />
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/report-issue" element={<ProtectedRoute><ReportIssuePage /></ProtectedRoute>} />
-          <Route path="/support" element={<FeaturePlaceholderPage title="Help and support" description="A dedicated support hub is being refined. Settings still gives you the quickest access to account controls and preferences." ctaLabel="Open settings" ctaTo="/settings" icon={CircleHelp} />} />
+          <Route path="/support" element={<ProtectedRoute><SupportPage /></ProtectedRoute>} />
           <Route path="/verification" element={<ProtectedRoute><FeaturePlaceholderPage title="Verification" description="Verification tools are being consolidated into a cleaner trust workflow. Use your profile page for identity and account updates in the meantime." ctaLabel="Open profile" ctaTo="/dashboard/profile" icon={Verified} /></ProtectedRoute>} />
           <Route path="/following-organizations" element={<ProtectedRoute><FollowingFeedPage /></ProtectedRoute>} />
           <Route path="/community-impact" element={<ProtectedRoute><CommunityImpactDashboardPage /></ProtectedRoute>} />
@@ -239,6 +247,7 @@ export default function App() {
           <Route path="/dashboard/town-manager/community-impact/rewards" element={<MunicipalityRoute><CommunityImpactRewardsManagePage /></MunicipalityRoute>} />
           <Route path="/dashboard/town-manager/community-impact/redemptions" element={<MunicipalityRoute><CommunityImpactRedemptionsAdminPage /></MunicipalityRoute>} />
           <Route path="/dashboard/town-manager/community-impact/users/:userId" element={<MunicipalityRoute><CommunityImpactUserProfilePage /></MunicipalityRoute>} />
+          <Route path="/dashboard/town-manager/feed/pending" element={<MunicipalityRoute><FeedModerationPage /></MunicipalityRoute>} />
           <Route path="/dashboard/town-manager/reports" element={<MunicipalityRoute><AdminReportsPage /></MunicipalityRoute>} />
           <Route path="/dashboard/town-manager/reports/:id" element={<MunicipalityRoute><ReportDetailsPage /></MunicipalityRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />

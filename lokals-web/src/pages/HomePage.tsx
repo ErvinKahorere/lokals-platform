@@ -13,13 +13,12 @@ import { NotificationBell } from '../components/experience/NotificationBell'
 import { Button } from '../components/ui/Button'
 import { SearchBar } from '../components/ui/SearchBar'
 import { StatusPill } from '../components/Ui'
-import { useAlertsFeed, useEvents, useFeed, useFollowingFeed, useJobs, useMe, useNewsFeed, useNewsLocal, useNotifications, usePreferences, useProducts, useProviders, useSearchResults } from '../hooks/queries'
+import { useAlertsFeed, useEvents, useFollowingFeed, useJobs, useMe, useNewsFeed, useNewsLocal, useNotifications, usePreferences, useProducts, useProviders, useSearchResults } from '../hooks/queries'
 import { getDisplayPrice } from '../lib/display'
 import { normalizePilotArea, PILOT_LOCATION_MESSAGE, PILOT_TOWN } from '../lib/pilot'
 import { useAuthStore } from '../store/auth'
 
 export function HomePage() {
-  const { data } = useFeed()
   const user = useAuthStore((state) => state.user)
   const meQuery = useMe()
   const preferencesQuery = usePreferences()
@@ -45,7 +44,7 @@ export function HomePage() {
   const jobs = jobsQuery.data?.data?.slice(0, 3) ?? []
   const unreadCount = notificationsQuery.data?.filter((item) => item.read_at == null).length ?? 0
   const localNews = (currentUser ? newsFeedQuery.data?.data : newsLocalQuery.data?.data)?.slice(0, 3) ?? []
-  const alerts = alertsFeedQuery.data?.data ?? data?.alerts ?? []
+  const alerts = alertsFeedQuery.data?.data ?? []
   const sortedAlerts = useMemo(() => {
     const severityWeight: Record<string, number> = { critical: 4, high: 3, urgent: 3, medium: 2, normal: 1 }
     return [...alerts].sort((a: any, b: any) => {

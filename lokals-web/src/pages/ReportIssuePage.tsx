@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Camera } from 'lucide-react'
 import { PageHeader, SectionCard, Input, Select, TextArea } from '../components/Ui'
-import { useCreateReport } from '../hooks/queries'
+import { useAiAssist, useCreateReport } from '../hooks/queries'
 import { OKAHANDJA_AREAS, PILOT_TOWN } from '../lib/pilot'
 
 export function ReportIssuePage() {
@@ -10,6 +10,7 @@ export function ReportIssuePage() {
   const [preview, setPreview] = useState('')
   const [area, setArea] = useState('Nau-Aib')
   const createReport = useCreateReport()
+  const aiAssist = useAiAssist('issue-report')
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -72,6 +73,32 @@ export function ReportIssuePage() {
               setPreview(file ? URL.createObjectURL(file) : '')
             }} />
           </label>
+          <button
+            type="button"
+            className="w-full rounded-2xl border border-lokals-border bg-white px-4 py-3 font-semibold text-lokals-charcoal"
+            onClick={async () => {
+              const form = document.querySelector('form')
+              if (!(form instanceof HTMLFormElement)) return
+              const formData = new FormData(form)
+              const payload = new FormData()
+              payload.append('title', String(formData.get('title') ?? ''))
+              payload.append('description', String(formData.get('description') ?? ''))
+              payload.append('location', String(formData.get('location') ?? ''))
+              const photo = formData.get('photo')
+              if (photo instanceof File && photo.size > 0) {
+                payload.append('media', photo)
+              }
+              const response = await aiAssist.mutateAsync(payload)
+              const suggestion = response.data.suggestions?.[0]?.content ?? {}
+              const titleInput = form.querySelector<HTMLInputElement>('input[name="title"]')
+              const descriptionInput = form.querySelector<HTMLTextAreaElement>('textarea[name="description"]')
+              if (titleInput && !titleInput.value) titleInput.value = String(suggestion.title ?? '')
+              if (descriptionInput && !descriptionInput.value) descriptionInput.value = String(suggestion.description ?? '')
+              setMessage('AI suggestions added. Review and edit before submitting.')
+            }}
+          >
+            {aiAssist.isPending ? 'Analyzing...' : 'Analyze with AI'}
+          </button>
           {message ? <p className="text-sm text-[var(--accent)]">{message}</p> : null}
           <button className="w-full rounded-2xl bg-[var(--brand)] px-4 py-3 font-semibold text-white" disabled={createReport.isPending}>
             {createReport.isPending ? 'Submitting...' : 'Report issue'}

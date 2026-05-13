@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarPlus2, ClipboardList, Megaphone, Siren } from 'lucide-react'
+import { CalendarPlus2, ClipboardList, Megaphone, Newspaper, Siren } from 'lucide-react'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { DashboardSection } from '../../components/dashboard/DashboardSection'
 import { RecentActivityList } from '../../components/dashboard/RecentActivityList'
@@ -146,6 +146,15 @@ export function MunicipalityDashboardPage() {
             <div>
               <p className="font-semibold text-lokals-charcoal">Impact approvals</p>
               <p className="mt-1 text-sm text-lokals-muted">Review verified positive contribution points privately.</p>
+            </div>
+          </Link>
+          <Link to="/dashboard/town-manager/feed/pending" className="flex min-h-24 items-start gap-3 rounded-[22px] border border-lokals-border bg-lokals-bg px-4 py-4 transition hover:-translate-y-0.5 hover:border-lokals-purple/30">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple">
+              <Newspaper className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-semibold text-lokals-charcoal">Feed approvals</p>
+              <p className="mt-1 text-sm text-lokals-muted">Moderate local posts before they reach the public feed.</p>
             </div>
           </Link>
         </div>

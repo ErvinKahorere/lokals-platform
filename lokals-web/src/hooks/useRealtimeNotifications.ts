@@ -6,6 +6,14 @@ import { getNotificationTarget } from '../lib/notificationRouting'
 import { useAuthStore } from '../store/auth'
 import type { NotificationItem } from '../types'
 
+declare global {
+  interface Window {
+    Echo?: {
+      private: (name: string) => { listen: (event: string, callback: (payload: unknown) => void) => unknown; stopListening?: (event: string) => unknown }
+    }
+  }
+}
+
 function isPreferenceEnabled(notification: NotificationItem, preferences?: Record<string, boolean>) {
   if (!preferences) return true
 
@@ -63,6 +71,7 @@ export function useRealtimeNotifications() {
     }
 
     let cancelled = false
+    const channel = window.Echo?.private?.(`users.${user?.id ?? ''}`)
 
     const poll = async () => {
       try {
@@ -87,12 +96,20 @@ export function useRealtimeNotifications() {
 
     void poll()
     const interval = window.setInterval(() => void poll(), 45000)
+    channel?.listen?.('.support.message.received', () => void poll())
+    channel?.listen?.('.issue.status.updated', () => void poll())
+    channel?.listen?.('.reward.approved', () => void poll())
+    channel?.listen?.('.marketplace.message.received', () => void poll())
 
     return () => {
       cancelled = true
       window.clearInterval(interval)
+      channel?.stopListening?.('.support.message.received')
+      channel?.stopListening?.('.issue.status.updated')
+      channel?.stopListening?.('.reward.approved')
+      channel?.stopListening?.('.marketplace.message.received')
     }
-  }, [preferences, queryClient, token])
+  }, [preferences, queryClient, token, user?.id])
 
   const active = queue[0] ?? null
 

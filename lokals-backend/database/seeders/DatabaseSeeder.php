@@ -33,6 +33,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CommunityProjectCategorySeeder::class,
             CommunityImpactSeeder::class,
+            RealtimeInfrastructureSeeder::class,
+            FeedFoundationSeeder::class,
+            SupportFoundationSeeder::class,
         ]);
 
         if (! $this->demoSeedingEnabled()) {
@@ -56,6 +59,7 @@ class DatabaseSeeder extends Seeder
             DemoEventSeeder::class,
             DemoNewsSeeder::class,
             DemoCommunityProjectSeeder::class,
+            FeedFoundationSeeder::class,
         ]);
     }
 

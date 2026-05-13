@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\IssueStatusUpdated;
+use App\Events\NewTownAnnouncement;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\City\StoreCityReportRequest;
 use App\Models\Alert;
@@ -12,12 +14,20 @@ use App\Models\Organization;
 use App\Support\PilotLocation;
 use App\Models\User;
 use App\Notifications\SystemNotification;
+use App\Services\AnalyticsService;
+use App\Services\EmergencyAlertService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class CityServiceController extends Controller
 {
+    public function __construct(
+        private readonly AnalyticsService $analytics,
+        private readonly EmergencyAlertService $emergencyAlerts,
+    ) {
+    }
+
     public function announcements(Request $request): JsonResponse
     {
         return response()->json(Announcement::query()->latest('published_at')->paginate((int) $request->integer('per_page', 12)));
@@ -37,6 +47,13 @@ class CityServiceController extends Controller
         }
 
         $report = $request->user()->cityReports()->create($validated);
+        $this->analytics->record($request->user(), 'issue_report_created', [
+            'category' => $report->category,
+            'town' => $report->town,
+            'area' => $report->area,
+            'subject_type' => CityReport::class,
+            'subject_id' => $report->id,
+        ]);
 
         User::query()
             ->whereKeyNot($request->user()->id)
@@ -154,6 +171,15 @@ class CityServiceController extends Controller
             ]
         ));
 
+        broadcast(new IssueStatusUpdated($report->fresh()));
+        $this->analytics->record($request->user(), 'issue_status_updated', [
+            'category' => $report->category,
+            'town' => $report->town,
+            'area' => $report->area,
+            'subject_type' => CityReport::class,
+            'subject_id' => $report->id,
+        ]);
+
         return response()->json($report);
     }
 
@@ -227,6 +253,20 @@ class CityServiceController extends Controller
             );
         }
 
+        broadcast(new NewTownAnnouncement([
+            'id' => $announcement->id,
+            'title' => $announcement->title,
+            'body' => $announcement->body,
+            'town' => $request->user()->default_town ?? 'Okahandja',
+            'type' => 'announcement',
+        ]));
+        $this->analytics->record($request->user(), 'announcement_created', [
+            'category' => 'announcement',
+            'town' => $request->user()->default_town,
+            'subject_type' => Announcement::class,
+            'subject_id' => $announcement->id,
+        ]);
+
         return response()->json($announcement, 201);
     }
 
@@ -297,6 +337,34 @@ class CityServiceController extends Controller
                     ],
                 ],
             )));
+
+        if ($alert->type === 'emergency_alert') {
+            $this->emergencyAlerts->publish([
+                'title' => $alert->title,
+                'body' => $alert->body,
+                'emergency_type' => $alert->type,
+                'priority' => $alert->priority,
+                'town' => $alert->town,
+                'area' => $alert->area,
+            ], $request->user());
+        }
+
+        broadcast(new NewTownAnnouncement([
+            'id' => $alert->id,
+            'title' => $alert->title,
+            'body' => $alert->body,
+            'town' => $alert->town,
+            'area' => $alert->area,
+            'type' => $alert->type,
+            'priority' => $alert->priority,
+        ]));
+        $this->analytics->record($request->user(), 'alert_created', [
+            'category' => $alert->type,
+            'town' => $alert->town,
+            'area' => $alert->area,
+            'subject_type' => Alert::class,
+            'subject_id' => $alert->id,
+        ]);
 
         return response()->json($alert, 201);
     }

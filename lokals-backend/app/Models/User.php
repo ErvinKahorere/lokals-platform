@@ -209,6 +209,56 @@ class User extends Authenticatable
         return $this->hasMany(CommunityImpactRedemption::class);
     }
 
+    public function feedPreference(): HasOne
+    {
+        return $this->hasOne(UserFeedPreference::class);
+    }
+
+    public function supportConversations(): HasMany
+    {
+        return $this->hasMany(SupportConversation::class);
+    }
+
+    public function aiAssistRequests(): HasMany
+    {
+        return $this->hasMany(AiAssistRequest::class);
+    }
+
+    public function conversations(): HasMany
+    {
+        return $this->hasMany(ConversationParticipant::class);
+    }
+
+    public function sentMessages(): HasMany
+    {
+        return $this->hasMany(Message::class);
+    }
+
+    public function analyticsEvents(): HasMany
+    {
+        return $this->hasMany(AnalyticsEvent::class);
+    }
+
+    public function engagementMetrics(): HasMany
+    {
+        return $this->hasMany(UserEngagementMetric::class);
+    }
+
+    public function blockedUsers(): HasMany
+    {
+        return $this->hasMany(BlockedUser::class);
+    }
+
+    public function trustMetrics(): HasMany
+    {
+        return $this->hasMany(UserTrustMetric::class);
+    }
+
+    public function verificationRequests(): HasMany
+    {
+        return $this->hasMany(VerificationRequest::class);
+    }
+
     public function hasTownManagerRole(): bool
     {
         return $this->hasAnyRole(['town_manager', 'municipality_admin']);

@@ -92,6 +92,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
     final priceController = TextEditingController();
     String selectedType = 'product';
     XFile? image;
+    var isAnalyzing = false;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -160,6 +161,53 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
                         ],
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  AppButton(
+                    label: isAnalyzing ? 'Analyzing...' : 'Analyze with AI',
+                    expanded: false,
+                    variant: AppButtonVariant.secondary,
+                    onPressed: isAnalyzing
+                        ? null
+                        : () async {
+                            setModalState(() => isAnalyzing = true);
+                            try {
+                              final response = await ref.read(discoveryRepositoryProvider).requestAiAssist(
+                                    module: 'marketplace',
+                                    title: titleController.text.trim(),
+                                    description: descriptionController.text.trim(),
+                                    location: locationController.text.trim(),
+                                    media: image,
+                                  );
+                              final suggestions = ((response['suggestions'] as List?) ?? const []);
+                              final suggestion = suggestions.isEmpty
+                                  ? const <String, dynamic>{}
+                                  : Map<String, dynamic>.from((suggestions.first as Map)['content'] as Map? ?? const {});
+
+                              if (titleController.text.trim().isEmpty && (suggestion['title']?.toString() ?? '').isNotEmpty) {
+                                titleController.text = suggestion['title'].toString();
+                              }
+                              if (descriptionController.text.trim().isEmpty && (suggestion['description']?.toString() ?? '').isNotEmpty) {
+                                descriptionController.text = suggestion['description'].toString();
+                              }
+                              if (locationController.text.trim().isEmpty && (suggestion['location_hint']?.toString() ?? '').isNotEmpty) {
+                                locationController.text = suggestion['location_hint'].toString();
+                              }
+                              if (priceController.text.trim().isEmpty && suggestion['price_estimate'] != null) {
+                                priceController.text = suggestion['price_estimate'].toString();
+                              }
+                              if ((suggestion['category']?.toString() ?? '').isNotEmpty) {
+                                selectedType = suggestion['category'].toString() == 'delivery' ? 'delivery' : selectedType;
+                              }
+                              if (mounted) {
+                                ScaffoldMessenger.of(this.context).showSnackBar(
+                                  const SnackBar(content: Text('AI suggestions added. Review before publishing.')),
+                                );
+                              }
+                            } finally {
+                              setModalState(() => isAnalyzing = false);
+                            }
+                          },
                   ),
                   const SizedBox(height: 16),
                   LokalsTextField(controller: titleController, label: 'Title', hint: 'What are you selling?'),

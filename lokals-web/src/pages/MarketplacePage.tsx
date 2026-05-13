@@ -4,7 +4,7 @@ import { Camera, CheckCircle2, Sparkles } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { Badge, Button, EmptyState, Input, ListingCard, PageHeader, QueryState, SearchBar, SectionCard, Select, TextArea } from '../components/Ui'
 import { isDemoMode } from '../config/appMode'
-import { useCreateListing, useListings } from '../hooks/queries'
+import { useAiAssist, useCreateListing, useListings } from '../hooks/queries'
 import { getDisplayPrice } from '../lib/display'
 import { useAuthStore } from '../store/auth'
 
@@ -26,6 +26,7 @@ export function MarketplacePage() {
   const token = useAuthStore((state) => state.token)
   const listingsQuery = useListings(search ? { search } : undefined)
   const createListing = useCreateListing()
+  const aiAssist = useAiAssist('marketplace')
   const listings = useMemo(() => {
     const items = [...(listingsQuery.data?.data ?? [])]
     return items.sort((a, b) => {
@@ -135,6 +136,35 @@ export function MarketplacePage() {
                 }
               }} />
             </label>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={aiAssist.isPending}
+                onClick={async () => {
+                  const payload = new FormData()
+                  payload.append('title', draft.title)
+                  payload.append('description', draft.description)
+                  payload.append('location', draft.location)
+                  if (draft.imageFile) {
+                    payload.append('media', draft.imageFile)
+                  }
+                  const response = await aiAssist.mutateAsync(payload)
+                  const suggestion = response.data.suggestions?.[0]?.content ?? {}
+                  setDraft((current) => ({
+                    ...current,
+                    title: current.title || String(suggestion.title ?? ''),
+                    description: current.description || String(suggestion.description ?? ''),
+                    location: current.location || String(suggestion.location_hint ?? ''),
+                    price: current.price || String(suggestion.price_estimate ?? ''),
+                  }))
+                  setPostStep(4)
+                }}
+              >
+                {aiAssist.isPending ? 'Analyzing...' : 'Analyze with AI'}
+              </Button>
+              <p className="self-center text-sm text-lokals-muted">Suggestions stay editable and never auto-publish.</p>
+            </div>
 
             <div className="grid gap-3 md:grid-cols-2">
               <Input value={draft.title} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder="Suggested title" required />

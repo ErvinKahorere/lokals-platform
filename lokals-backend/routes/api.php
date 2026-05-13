@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\BusinessController;
 use App\Http\Controllers\Api\CityServiceController;
 use App\Http\Controllers\Api\CommunityProjectController;
 use App\Http\Controllers\Api\CommunityImpactController;
+use App\Http\Controllers\Api\ConversationController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DeliveryController;
 use App\Http\Controllers\Api\DeviceTokenController;
@@ -18,6 +19,8 @@ use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\FollowFeedController;
 use App\Http\Controllers\Api\JobController;
 use App\Http\Controllers\Api\AccommodationController;
+use App\Http\Controllers\Api\AdminFeedController;
+use App\Http\Controllers\Api\AiAssistController;
 use App\Http\Controllers\Api\ListingController;
 use App\Http\Controllers\Api\MeController;
 use App\Http\Controllers\Api\ModerationController;
@@ -34,6 +37,7 @@ use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\SavedItemController;
 use App\Http\Controllers\Api\ServiceProviderController;
 use App\Http\Controllers\Api\SosController;
+use App\Http\Controllers\Api\SupportController;
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\AdminCommunityProjectController;
@@ -54,6 +58,8 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/auth/login', [AuthController::class, 'login']);
 
     Route::get('/feed', [FeedController::class, 'index']);
+    Route::get('/feed/{feedPost}', [FeedController::class, 'show']);
+    Route::get('/feed-categories', [FeedController::class, 'categories']);
     Route::get('/marketplace', [ListingController::class, 'index']);
     Route::get('/marketplace/{listing}', [ListingController::class, 'show']);
     Route::get('/jobs', [JobController::class, 'index']);
@@ -129,6 +135,21 @@ Route::prefix('v1')->group(function (): void {
         Route::delete('/community-projects/{id}/follow', [CommunityProjectController::class, 'unfollow']);
         Route::get('/following-feed', [FollowFeedController::class, 'index']);
         Route::get('/activity', [ActivityController::class, 'index']);
+        Route::post('/feed/{feedPost}/save', [FeedController::class, 'save']);
+        Route::post('/feed/{feedPost}/hide', [FeedController::class, 'hide']);
+        Route::post('/feed/{feedPost}/report', [FeedController::class, 'report']);
+        Route::get('/my/feed-preferences', [FeedController::class, 'preferences']);
+        Route::patch('/my/feed-preferences', [FeedController::class, 'updatePreferences']);
+        Route::post('/ai/assist/marketplace', [AiAssistController::class, 'marketplace']);
+        Route::post('/ai/assist/issue-report', [AiAssistController::class, 'issueReport']);
+        Route::post('/ai/assist/community-project', [AiAssistController::class, 'communityProject']);
+        Route::post('/ai/assist/business', [AiAssistController::class, 'business']);
+        Route::get('/ai/assist/{aiAssistRequest}', [AiAssistController::class, 'show']);
+        Route::post('/support/chat', [SupportController::class, 'chat']);
+        Route::get('/support/conversations', [SupportController::class, 'conversations']);
+        Route::get('/support/conversations/{conversation}', [SupportController::class, 'show']);
+        Route::post('/support/conversations/{conversation}/messages', [SupportController::class, 'message']);
+        Route::post('/support/conversations/{conversation}/escalate', [SupportController::class, 'escalate']);
         Route::get('/community-impact/me', [CommunityImpactController::class, 'me']);
         Route::get('/community-impact/my-transactions', [CommunityImpactController::class, 'myTransactions']);
         Route::get('/community-impact/rewards', [CommunityImpactController::class, 'rewards']);
@@ -187,6 +208,11 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/notifications/mark-read', [NotificationController::class, 'markAllRead']);
         Route::post('/device-tokens', [DeviceTokenController::class, 'store']);
         Route::delete('/device-tokens/{deviceToken}', [DeviceTokenController::class, 'destroy']);
+        Route::get('/conversations', [ConversationController::class, 'index']);
+        Route::get('/conversations/{conversation}', [ConversationController::class, 'show']);
+        Route::post('/conversations', [ConversationController::class, 'store']);
+        Route::post('/conversations/{conversation}/messages', [ConversationController::class, 'message']);
+        Route::post('/messages/{message}/read', [ConversationController::class, 'markRead']);
 
         Route::get('/deliveries', [DeliveryController::class, 'index']);
         Route::post('/deliveries', [DeliveryController::class, 'store']);
@@ -253,6 +279,11 @@ Route::prefix('v1')->group(function (): void {
             Route::patch('/admin/community-impact/redemptions/{id}/reject', [AdminCommunityImpactController::class, 'rejectRedemption']);
             Route::post('/admin/community-impact/rewards', [AdminCommunityImpactController::class, 'createReward']);
             Route::patch('/admin/community-impact/rewards/{id}', [AdminCommunityImpactController::class, 'updateReward']);
+            Route::get('/admin/feed/pending', [AdminFeedController::class, 'pending']);
+            Route::post('/admin/feed', [AdminFeedController::class, 'store']);
+            Route::patch('/admin/feed/{feedPost}/approve', [AdminFeedController::class, 'approve']);
+            Route::patch('/admin/feed/{feedPost}/reject', [AdminFeedController::class, 'reject']);
+            Route::patch('/admin/feed/{feedPost}/feature', [AdminFeedController::class, 'feature']);
         });
 
         Route::middleware('role:organization_admin|business_owner|super_admin')->group(function (): void {
