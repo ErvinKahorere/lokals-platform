@@ -40,7 +40,7 @@ class DatabaseSeeder extends Seeder
             return;
         }
 
-        if ($this->hasProductionUsers()) {
+        if (! $this->forceDemoSeedingEnabled() && $this->hasProductionUsers()) {
             $this->command?->warn('Skipping demo seed data because non-demo users already exist.');
             return;
         }
@@ -68,6 +68,11 @@ class DatabaseSeeder extends Seeder
         }
 
         return filter_var($flag, FILTER_VALIDATE_BOOL);
+    }
+
+    private function forceDemoSeedingEnabled(): bool
+    {
+        return filter_var(env('SEED_DEMO_DATA_FORCE', false), FILTER_VALIDATE_BOOL);
     }
 
     private function hasProductionUsers(): bool
