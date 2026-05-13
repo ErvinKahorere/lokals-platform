@@ -3,6 +3,7 @@ import { Activity, Bell, ChartColumn, ClipboardList } from 'lucide-react'
 import { PageHeader, QueryState, StatCard } from '../Ui'
 import { SidebarLayout } from './SidebarLayout'
 import type { DashboardMode } from '../../lib/dashboardConfig'
+import { useDashboardRealtimeState } from '../../lib/dashboardRealtime'
 
 export function DashboardShell({
   eyebrow,
@@ -25,6 +26,7 @@ export function DashboardShell({
   children: ReactNode
   mode?: DashboardMode
 }) {
+  const realtime = useDashboardRealtimeState()
   const content = (
     <div className="space-y-6">
       <PageHeader eyebrow={eyebrow} title={title} description={description} actions={actions} />
@@ -35,7 +37,8 @@ export function DashboardShell({
               key={key}
               label={key.replaceAll('_', ' ')}
               value={String(value)}
-              hint="Role snapshot"
+              hint={realtime.updatedKeys.includes(key) ? 'Updated now' : 'Role snapshot'}
+              className={realtime.updatedKeys.includes(key) ? 'ring-1 ring-lokals-green/30 bg-[linear-gradient(180deg,#ffffff,#f4fff6)]' : undefined}
               icon={
                 index === 0 ? <ClipboardList className="h-4 w-4" /> : index === 1 ? <Bell className="h-4 w-4" /> : index === 2 ? <Activity className="h-4 w-4" /> : <ChartColumn className="h-4 w-4" />
               }

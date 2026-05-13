@@ -9,7 +9,8 @@ import type { NotificationItem } from '../types'
 declare global {
   interface Window {
     Echo?: {
-      private: (name: string) => { listen: (event: string, callback: (payload: unknown) => void) => unknown; stopListening?: (event: string) => unknown }
+      private?: (name: string) => { listen: (event: string, callback: (payload: unknown) => void) => unknown; stopListening?: (event: string) => unknown }
+      channel?: (name: string) => { listen: (event: string, callback: (payload: unknown) => void) => unknown; stopListening?: (event: string) => unknown }
     }
   }
 }

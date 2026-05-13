@@ -2,15 +2,25 @@ import { Menu } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import { NotificationBell } from '../experience/NotificationBell'
 import { type DashboardMode, getDashboardConfig, getNavItemMeta } from '../../lib/dashboardConfig'
+import type { DashboardRealtimeStatus } from '../../lib/realtimeTypes'
+
+function formatUpdatedAt(updatedAt?: number | null) {
+  if (!updatedAt) return 'Waiting for updates'
+  return 'Updated now'
+}
 
 export function DashboardTopbar({
   mode,
   onOpenSidebar,
   unreadCount = 0,
+  realtimeStatus = 'offline',
+  updatedAt,
 }: {
   mode: DashboardMode
   onOpenSidebar: () => void
   unreadCount?: number
+  realtimeStatus?: DashboardRealtimeStatus
+  updatedAt?: number | null
 }) {
   const config = getDashboardConfig(mode)
   const location = useLocation()
@@ -40,7 +50,14 @@ export function DashboardTopbar({
           </div>
         </div>
       </div>
-      <NotificationBell count={unreadCount} to="/notifications" />
+      <div className="flex items-center gap-3">
+        <div className="hidden rounded-full border border-lokals-border bg-white px-3 py-2 md:flex md:items-center md:gap-2">
+          <span className={`h-2.5 w-2.5 rounded-full ${realtimeStatus === 'live' ? 'bg-emerald-500 shadow-[0_0_0_6px_rgba(34,197,94,0.12)]' : realtimeStatus === 'polling' ? 'bg-amber-400' : 'bg-slate-300'}`} />
+          <span className="text-xs font-semibold text-lokals-charcoal">{realtimeStatus === 'live' ? 'Live' : realtimeStatus === 'polling' ? 'Fallback sync' : 'Offline'}</span>
+          <span className="text-xs text-lokals-muted">{formatUpdatedAt(updatedAt)}</span>
+        </div>
+        <NotificationBell count={unreadCount} to="/notifications" />
+      </div>
     </div>
   )
 }
