@@ -149,6 +149,7 @@ export function AppShell() {
       { to: '/activity', label: 'Activity', icon: Bell, show: Boolean(currentUser) },
       { to: '/notifications', label: 'Notifications', icon: Bell, show: Boolean(currentUser) },
       { to: '/community-impact', label: 'Community Impact', icon: Award, show: Boolean(currentUser) },
+      { to: '/dashboard/modes', label: 'Modes & Roles', icon: LayoutDashboard, show: Boolean(currentUser) },
       { to: '/dashboard/bookings', label: 'My Bookings', icon: BookOpen, show: Boolean(currentUser) },
       { to: '/my-tickets', label: 'My Tickets', icon: Ticket, show: Boolean(currentUser) },
       { to: dashboardLink, label: 'Dashboard', icon: LayoutDashboard, show: Boolean(currentUser) },

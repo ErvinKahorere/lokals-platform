@@ -13,6 +13,7 @@ import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../auth/auth_controller.dart';
 import '../auth/auth_navigation.dart';
+import '../discovery/discovery_repository.dart';
 import 'services_repository.dart';
 
 class ProviderDetailsScreen extends ConsumerStatefulWidget {
@@ -26,6 +27,46 @@ class ProviderDetailsScreen extends ConsumerStatefulWidget {
 
 class _ProviderDetailsScreenState extends ConsumerState<ProviderDetailsScreen> {
   bool _followBusy = false;
+
+  Future<void> _openConversation({
+    required int participantId,
+    required String subject,
+    required String contextKey,
+  }) async {
+    final auth = ref.read(authControllerProvider);
+    if (auth.token == null) {
+      promptSignIn(
+        context,
+        next: GoRouterState.of(context).uri.toString(),
+      );
+      return;
+    }
+
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      final payload = await ref.read(discoveryRepositoryProvider).createConversation(
+            participantIds: [participantId],
+            context: contextKey,
+            subject: subject,
+          );
+      if (!mounted) return;
+      final data = Map<String, dynamic>.from((payload['data'] as Map?) ?? payload);
+      final conversationId = data['id']?.toString();
+      if (conversationId == null || conversationId.isEmpty) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('We could not open this conversation right now.')),
+        );
+        return;
+      }
+      context.push('/conversations/$conversationId');
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(content: Text('We could not open this conversation right now.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -319,7 +360,18 @@ class _ProviderDetailsScreenState extends ConsumerState<ProviderDetailsScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  ContactActions(name: item.name, phone: item.phone, whatsapp: item.whatsapp),
+                  ContactActions(
+                    name: item.name,
+                    phone: item.phone,
+                    whatsapp: item.whatsapp,
+                    onMessage: item.userId == null
+                        ? null
+                        : () => _openConversation(
+                              participantId: item.userId!,
+                              subject: item.name,
+                              contextKey: 'service',
+                            ),
+                  ),
                   const SizedBox(height: 18),
                   const Text('Provider updates', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 12),

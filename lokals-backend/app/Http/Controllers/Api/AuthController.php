@@ -122,6 +122,7 @@ class AuthController extends Controller
     {
         return match ($role) {
             'business_owner' => ['seller'],
+            'courier' => ['courier'],
             'organization_representative' => ['municipality_admin', 'town_manager'],
             'municipality_admin', 'town_manager' => ['municipality_admin', 'town_manager'],
             default => [$role],

@@ -1,7 +1,7 @@
 import { ChevronDown, LoaderCircle } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useSwitchRole } from '../../hooks/queries'
+import { useMyModes, useUpdateCurrentMode } from '../../hooks/queries'
 import { getRoleHomePath } from '../../lib/roles'
 import type { User } from '../../types'
 
@@ -17,9 +17,11 @@ export function RoleSwitcher({
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement | null>(null)
-  const switchRole = useSwitchRole()
+  const modesQuery = useMyModes()
+  const switchMode = useUpdateCurrentMode()
   const navigate = useNavigate()
-  const visible = roles.filter(Boolean)
+  const visible = ((modesQuery.data?.available_modes as string[] | undefined) ?? roles).filter(Boolean)
+  const pending = modesQuery.data?.pending_modes ?? []
   const active = currentRole && visible.includes(currentRole) ? currentRole : visible[0] ?? 'citizen'
   const extraCount = Math.max(visible.length - 1, 0)
 
@@ -43,7 +45,7 @@ export function RoleSwitcher({
       >
         <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-semibold text-lokals-purple">{formatRole(active)}</span>
         {extraCount > 0 ? <span className="text-xs text-lokals-muted">+{extraCount}</span> : null}
-        {switchRole.isPending ? <LoaderCircle className="h-4 w-4 animate-spin text-lokals-muted" /> : <ChevronDown className="h-4 w-4 text-lokals-muted" />}
+        {switchMode.isPending ? <LoaderCircle className="h-4 w-4 animate-spin text-lokals-muted" /> : <ChevronDown className="h-4 w-4 text-lokals-muted" />}
       </button>
       {open ? (
         <div className="absolute right-0 top-[calc(100%+0.5rem)] z-40 min-w-56 rounded-[20px] border border-lokals-border bg-white p-2 shadow-soft-lg">
@@ -55,9 +57,9 @@ export function RoleSwitcher({
                 <button
                   key={role}
                   type="button"
-                  disabled={isActive || switchRole.isPending}
+                  disabled={isActive || switchMode.isPending}
                   onClick={async () => {
-                    const payload = await switchRole.mutateAsync(role)
+                    const payload = await switchMode.mutateAsync(role)
                     setOpen(false)
                     navigate(getRoleHomePath((payload.user?.data ?? payload.user) as User))
                   }}
@@ -70,6 +72,13 @@ export function RoleSwitcher({
                 </button>
               )
             })}
+            {pending.length ? <p className="px-3 pt-3 text-xs font-semibold uppercase tracking-[0.2em] text-lokals-muted">Pending applications</p> : null}
+            {pending.map((application) => (
+              <div key={application.id} className="flex items-center justify-between rounded-2xl border border-lokals-border bg-slate-50 px-3 py-3 text-sm">
+                <span className="font-medium text-lokals-charcoal">{formatRole(application.requested_role)}</span>
+                <span className="text-xs text-lokals-muted">{application.status.replaceAll('_', ' ')}</span>
+              </div>
+            ))}
           </div>
         </div>
       ) : null}

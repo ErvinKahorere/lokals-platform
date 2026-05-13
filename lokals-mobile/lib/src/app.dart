@@ -37,12 +37,15 @@ import 'features/directory/directory_screen.dart';
 import 'features/directory/directory_details_screen.dart';
 import 'features/dashboard/dashboard_router_screen.dart';
 import 'features/dashboard/worker_dashboard_screen.dart';
+import 'features/dashboard/driver_dashboard_screen.dart';
+import 'features/dashboard/courier_dashboard_screen.dart';
 import 'features/dashboard/seller_dashboard_screen.dart';
 import 'features/dashboard/business_dashboard_screen.dart';
 import 'features/dashboard/organization_dashboard_screen.dart';
 import 'features/dashboard/service_provider_dashboard_screen.dart';
 import 'features/dashboard/town_manager_dashboard_screen.dart';
 import 'features/dashboard/super_admin_dashboard_screen.dart';
+import 'features/dashboard/role_applications_review_screen.dart';
 import 'features/events/event_calendar_screen.dart';
 import 'features/events/event_details_screen.dart';
 import 'features/events/events_screen.dart';
@@ -62,6 +65,7 @@ import 'features/news/news_details_screen.dart';
 import 'features/news/article_browser_screen.dart';
 import 'features/profile/profile_screen.dart';
 import 'features/profile/edit_profile_screen.dart';
+import 'features/profile/role_modes_screen.dart';
 import 'features/requests/delivery_request_screen.dart';
 import 'features/requests/delivery_details_screen.dart';
 import 'features/requests/ride_request_screen.dart';
@@ -233,6 +237,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const WorkerDashboardScreen(),
       ),
       GoRoute(
+        path: '/dashboard/driver',
+        builder: (context, state) => const DriverDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/dashboard/courier',
+        builder: (context, state) => const CourierDashboardScreen(),
+      ),
+      GoRoute(
         path: '/dashboard/seller',
         builder: (context, state) => const SellerDashboardScreen(),
       ),
@@ -255,6 +267,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/dashboard/town-manager',
         builder: (context, state) => const TownManagerDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/dashboard/town-manager/role-applications',
+        builder: (context, state) => const RoleApplicationsReviewScreen(),
       ),
       GoRoute(
         path: '/dashboard/admin',
@@ -451,6 +467,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile/edit',
         builder: (context, state) => const EditProfileScreen(),
+      ),
+      GoRoute(
+        path: '/profile/modes',
+        builder: (context, state) => const RoleModesScreen(),
       ),
       GoRoute(
         path: '/settings',

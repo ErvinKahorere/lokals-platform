@@ -12,6 +12,8 @@ import '../../core/experience_helpers.dart';
 import '../../core/models.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
+import '../auth/auth_controller.dart';
+import '../auth/auth_navigation.dart';
 import '../discovery/discovery_repository.dart';
 import 'product_card.dart';
 
@@ -26,6 +28,46 @@ class ProductDetailsScreen extends ConsumerStatefulWidget {
 
 class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
   bool _followBusy = false;
+
+  Future<void> _openConversation({
+    required int participantId,
+    required String subject,
+    required String contextKey,
+  }) async {
+    final auth = ref.read(authControllerProvider);
+    if (auth.token == null) {
+      promptSignIn(
+        context,
+        next: GoRouterState.of(context).uri.toString(),
+      );
+      return;
+    }
+
+    final scaffold = ScaffoldMessenger.of(context);
+
+    try {
+      final payload = await ref.read(discoveryRepositoryProvider).createConversation(
+            participantIds: [participantId],
+            context: contextKey,
+            subject: subject,
+          );
+      if (!mounted) return;
+      final data = Map<String, dynamic>.from((payload['data'] as Map?) ?? payload);
+      final conversationId = data['id']?.toString();
+      if (conversationId == null || conversationId.isEmpty) {
+        scaffold.showSnackBar(
+          const SnackBar(content: Text('We could not open this conversation right now.')),
+        );
+        return;
+      }
+      context.push('/conversations/$conversationId');
+    } catch (_) {
+      if (!mounted) return;
+      scaffold.showSnackBar(
+        const SnackBar(content: Text('We could not open this conversation right now.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -235,7 +277,12 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                               const SizedBox(height: 4),
                               Text(locationLabel.isEmpty ? AppConfig.pilotTown : locationLabel, style: AppTextStyles.bodyMuted),
                               const SizedBox(height: 4),
-                              const Text('Replies by call or WhatsApp for now.', style: AppTextStyles.caption),
+                              Text(
+                                item.userId != null
+                                    ? 'Message, call, or WhatsApp this seller directly.'
+                                    : 'Replies by call or WhatsApp for now.',
+                                style: AppTextStyles.caption,
+                              ),
                             ],
                           ),
                         ),
@@ -252,7 +299,18 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              ContactActions(name: sellerName, phone: sellerPhone, whatsapp: sellerWhatsapp),
+              ContactActions(
+                name: sellerName,
+                phone: sellerPhone,
+                whatsapp: sellerWhatsapp,
+                onMessage: item.userId == null
+                    ? null
+                    : () => _openConversation(
+                          participantId: item.userId!,
+                          subject: item.title,
+                          contextKey: 'marketplace',
+                        ),
+              ),
               if (sellerProducts.isNotEmpty) ...[
                 const SizedBox(height: 18),
                 const Text('Recent from this seller', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),

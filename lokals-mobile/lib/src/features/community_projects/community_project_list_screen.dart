@@ -78,7 +78,7 @@ class _CommunityProjectListScreenState extends ConsumerState<CommunityProjectLis
                     ],
                   ),
                   loading: () => const LoadingSkeleton(height: 56),
-                  error: (_, __) => const Text('Categories unavailable right now.'),
+                  error: (_, _) => const Text('Categories unavailable right now.'),
                 ),
                 const SizedBox(height: 12),
                 Wrap(
@@ -128,7 +128,7 @@ class _CommunityProjectListScreenState extends ConsumerState<CommunityProjectLis
               );
             },
             loading: () => const LoadingSkeleton(height: 340),
-            error: (_, __) => AppCard(
+            error: (_, _) => AppCard(
               child: AppButton(
                 label: 'Retry loading projects',
                 expanded: false,

@@ -20,11 +20,21 @@ class DeliveryRequest extends Model
         'parcel_description',
         'notes',
         'parcel_size',
+        'weight_kg',
+        'urgency',
         'status',
         'price',
         'estimated_price',
         'driver_id',
         'photo_url',
+        'assigned_at',
+        'picked_up_at',
+        'in_transit_at',
+        'delivered_at',
+        'cancelled_at',
+        'cancel_reason',
+        'rating',
+        'rating_comment',
     ];
 
     protected function casts(): array
@@ -32,6 +42,12 @@ class DeliveryRequest extends Model
         return [
             'price' => 'decimal:2',
             'estimated_price' => 'decimal:2',
+            'weight_kg' => 'decimal:2',
+            'assigned_at' => 'datetime',
+            'picked_up_at' => 'datetime',
+            'in_transit_at' => 'datetime',
+            'delivered_at' => 'datetime',
+            'cancelled_at' => 'datetime',
         ];
     }
 
@@ -41,6 +57,11 @@ class DeliveryRequest extends Model
     }
 
     public function driver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'driver_id');
+    }
+
+    public function courier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'driver_id');
     }

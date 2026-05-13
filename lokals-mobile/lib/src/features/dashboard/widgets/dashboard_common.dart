@@ -269,6 +269,21 @@ IconData dashboardActionIcon(String label) {
       return Icons.notifications_active_outlined;
     case 'View Jobs':
       return Icons.work_outline_rounded;
+    case 'Go Online':
+      return Icons.power_settings_new_rounded;
+    case 'Available Rides':
+      return Icons.local_taxi_outlined;
+    case 'Trip History':
+      return Icons.history_toggle_off_outlined;
+    case 'Documents':
+      return Icons.description_outlined;
+    case 'Available Deliveries':
+      return Icons.delivery_dining_outlined;
+    case 'Delivery History':
+      return Icons.history_toggle_off_outlined;
+    case 'Pending Approvals':
+    case 'All Approvals':
+      return Icons.fact_check_outlined;
     case 'Edit Worker Profile':
       return Icons.edit_outlined;
     case 'Update Availability':
@@ -335,6 +350,8 @@ String normalizeDashboardHref(String href) {
     case '/admin/reports':
     case '/admin/overview':
       return '/dashboard/admin';
+    case '/dashboard/town-manager/role-applications':
+      return '/dashboard/town-manager/role-applications';
     default:
       return href;
   }

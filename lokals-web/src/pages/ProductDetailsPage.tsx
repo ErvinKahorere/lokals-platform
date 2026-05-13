@@ -82,7 +82,9 @@ export function ProductDetailsPage() {
                         {product.business?.is_verified ? <StatusBadge value="Verified" tone="success" /> : null}
                       </div>
                       <p className="mt-2 text-sm text-lokals-muted">{[product.business?.area ?? product.user?.default_area, product.business?.town ?? product.user?.default_town ?? product.user?.location].filter(Boolean).join(', ') || 'Okahandja'}</p>
-                      <p className="mt-1 text-sm text-lokals-muted">Replies by call or WhatsApp for now.</p>
+                      <p className="mt-1 text-sm text-lokals-muted">
+                        {product.user?.id ? 'Message, call, or WhatsApp this seller directly.' : 'Replies by call or WhatsApp for now.'}
+                      </p>
                     </div>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -114,6 +116,9 @@ export function ProductDetailsPage() {
                     name={product.business?.name ?? product.user?.business_name ?? product.user?.name ?? product.title}
                     phone={product.business?.phone ?? product.user?.phone ?? undefined}
                     whatsapp={product.business?.whatsapp ?? product.user?.whatsapp ?? product.user?.phone ?? undefined}
+                    conversationUserId={product.user?.id}
+                    conversationSubject={product.title}
+                    conversationContext="marketplace"
                     className="grid gap-2 sm:grid-cols-3"
                   />
                 </div>

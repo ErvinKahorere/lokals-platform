@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { BellRing, Clock3, MapPin, MessageSquare, Phone } from 'lucide-react'
-import { useCreateFollow, useDeleteFollow, useFollows, useProvider } from '../hooks/queries'
+import { useCreateConversation, useCreateFollow, useDeleteFollow, useFollows, useProvider } from '../hooks/queries'
 import { Avatar } from '../components/ui/Avatar'
 import { Button, EmptyState, QueryState, SectionCard, StatusBadge } from '../components/Ui'
 import { ContactActions } from '../components/experience/ContactActions'
@@ -29,6 +29,7 @@ export function ServiceProviderDetailsPage() {
   const navigate = useNavigate()
   const providerQuery = useProvider(id)
   const followsQuery = useFollows(Boolean(token))
+  const createConversation = useCreateConversation()
   const createFollow = useCreateFollow()
   const deleteFollow = useDeleteFollow()
   const provider = providerQuery.data as Provider | undefined
@@ -62,6 +63,28 @@ export function ServiceProviderDetailsPage() {
 
     await createFollow.mutateAsync({ type: 'service_provider', id: provider.id })
     setMessageNotice('Following')
+  }
+
+  const openConversation = async () => {
+    if (!provider?.user_id) {
+      setMessageNotice('Call or WhatsApp this provider for now.')
+      return
+    }
+    if (!token) {
+      navigateToLogin(navigate)
+      return
+    }
+
+    try {
+      const response = await createConversation.mutateAsync({
+        participant_ids: [provider.user_id],
+        context: 'service',
+        subject: provider.name,
+      })
+      navigate(`/conversations/${response.data.id}`)
+    } catch {
+      setMessageNotice('We could not open this conversation right now.')
+    }
   }
 
   return (
@@ -98,9 +121,9 @@ export function ServiceProviderDetailsPage() {
                 </div>
               </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row lg:flex-col">
-                <Button variant="secondary" onClick={() => setMessageNotice('Messaging is coming soon. Please call or WhatsApp for now.')}>
+                <Button variant="secondary" disabled={createConversation.isPending} onClick={() => void openConversation()}>
                   <MessageSquare className="h-4 w-4" />
-                  Message
+                  {createConversation.isPending ? 'Opening...' : 'Message'}
                 </Button>
                 <QuickCallButton phone={getProviderPhone(provider)} />
                 <Button

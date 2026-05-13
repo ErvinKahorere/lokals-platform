@@ -46,7 +46,7 @@ class CommunityProjectReviewQueueScreen extends ConsumerWidget {
           ],
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => Center(
+        error: (_, _) => Center(
           child: AppCard(
             child: AppButton(
               label: 'Retry queue',

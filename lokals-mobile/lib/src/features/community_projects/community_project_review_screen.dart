@@ -102,7 +102,7 @@ class _CommunityProjectReviewScreenState extends ConsumerState<CommunityProjectR
           ],
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => Center(
+        error: (_, _) => Center(
           child: AppCard(
             child: AppButton(
               label: 'Retry loading review',

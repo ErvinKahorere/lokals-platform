@@ -22,6 +22,7 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
   @override
   Widget build(BuildContext context) {
     final conversationsAsync = ref.watch(supportConversationsProvider);
+    final messenger = ScaffoldMessenger.of(context);
 
     return LokalsShell(
       title: 'Help and support',
@@ -83,7 +84,7 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
                                       reason: 'Resident asked for human help',
                                     );
                                 if (!mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(
+                                messenger.showSnackBar(
                                   const SnackBar(content: Text('Support request escalated for human follow-up.')),
                                 );
                                 ref.invalidate(supportConversationsProvider);

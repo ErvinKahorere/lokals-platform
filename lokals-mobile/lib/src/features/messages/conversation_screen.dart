@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
+import '../auth/auth_controller.dart';
 import '../discovery/discovery_repository.dart';
 
 class ConversationScreen extends ConsumerStatefulWidget {
@@ -29,6 +30,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
   Widget build(BuildContext context) {
     final conversation = ref.watch(conversationProvider(widget.id));
     final safeBottom = MediaQuery.viewPaddingOf(context).bottom;
+    final currentUserId = ref.watch(authControllerProvider).user?.id;
 
     return LokalsShell(
       title: 'Conversation',
@@ -43,6 +45,19 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                   .map((item) => Map<String, dynamic>.from(item as Map))
                   .toList();
 
+              for (final message in messages) {
+                final messageUserId = message['user_id'];
+                final isOwn = currentUserId != null && messageUserId == currentUserId;
+                final readAt = message['read_at']?.toString();
+                final messageId = message['id'];
+                if (!isOwn && readAt == null && messageId is int) {
+                  Future<void>.microtask(() async {
+                    await ref.read(discoveryRepositoryProvider).markConversationMessageRead(messageId);
+                    ref.invalidate(conversationsProvider);
+                  });
+                }
+              }
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -53,7 +68,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                   ),
                   const SizedBox(height: 16),
                   ...messages.map((message) {
-                    final isOwn = message['user_id'] != null;
+                    final isOwn = currentUserId != null && message['user_id'] == currentUserId;
                     return Align(
                       alignment: isOwn ? Alignment.centerRight : Alignment.centerLeft,
                       child: Container(

@@ -202,6 +202,7 @@ class ProviderModel {
     required this.category,
     required this.location,
     required this.isVerified,
+    this.userId,
     this.description,
     this.phone,
     this.avatarUrl,
@@ -230,6 +231,7 @@ class ProviderModel {
   final String category;
   final String location;
   final bool isVerified;
+  final int? userId;
   final String status;
   final String? description;
   final String? phone;
@@ -253,13 +255,14 @@ class ProviderModel {
   final List<AvailabilitySlotModel> availabilitySlots;
 
   factory ProviderModel.fromJson(Map<String, dynamic> json) {
-    return ProviderModel(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      category: json['category'] as String,
-      location: json['location'] as String,
-      isVerified: json['is_verified'] as bool? ?? false,
-      status: json['status']?.toString() ?? 'active',
+      return ProviderModel(
+        id: json['id'] as int,
+        name: json['name'] as String,
+        category: json['category'] as String,
+        location: json['location'] as String,
+        isVerified: json['is_verified'] as bool? ?? false,
+        userId: json['user_id'] as int?,
+        status: json['status']?.toString() ?? 'active',
       description: json['description'] as String?,
       phone: json['phone'] as String?,
       avatarUrl: json['avatar_url'] as String?,
@@ -390,6 +393,7 @@ class JobModel {
     required this.description,
     required this.employmentType,
     required this.status,
+    this.posterUserId,
     this.compensation,
     this.location,
     this.skills = const [],
@@ -406,6 +410,7 @@ class JobModel {
   final String description;
   final String employmentType;
   final String status;
+  final int? posterUserId;
   final String? compensation;
   final String? location;
   final List<String> skills;
@@ -419,13 +424,14 @@ class JobModel {
   factory JobModel.fromJson(Map<String, dynamic> json) {
     final organization = json['organization'] as Map<String, dynamic>?;
     final user = json['user'] as Map<String, dynamic>?;
-    return JobModel(
-      id: json['id'] as int,
-      title: json['title'] as String,
-      description: (json['description'] as String?) ?? 'Local job opportunity posted nearby.',
-      employmentType: json['employment_type'] as String,
-      status: json['status']?.toString() ?? 'open',
-      compensation: json['compensation']?.toString(),
+      return JobModel(
+        id: json['id'] as int,
+        title: json['title'] as String,
+        description: (json['description'] as String?) ?? 'Local job opportunity posted nearby.',
+        employmentType: json['employment_type'] as String,
+        status: json['status']?.toString() ?? 'open',
+        posterUserId: user?['id'] as int?,
+        compensation: json['compensation']?.toString(),
       location: json['location'] as String?,
       skills: (json['skills'] as List<dynamic>? ?? const []).map((item) => item.toString()).toList(),
       organizationId: organization?['id'] as int?,
@@ -1429,6 +1435,85 @@ class ProfileSummaryModel {
           .toList(),
       stats: ((json['stats'] as Map<String, dynamic>?) ?? const {})
           .map((key, value) => MapEntry(key, (value as num?)?.toInt() ?? 0)),
+    );
+  }
+}
+
+class RoleApplicationModel {
+  RoleApplicationModel({
+    required this.id,
+    required this.requestedRole,
+    required this.status,
+    required this.fullName,
+    required this.phone,
+    this.email,
+    this.townName,
+    this.address,
+    this.licenseNumber,
+    this.vehicleRegistration,
+    this.vehicleType,
+    this.rejectionReason,
+    this.submittedAt,
+  });
+
+  final int id;
+  final String requestedRole;
+  final String status;
+  final String fullName;
+  final String phone;
+  final String? email;
+  final String? townName;
+  final String? address;
+  final String? licenseNumber;
+  final String? vehicleRegistration;
+  final String? vehicleType;
+  final String? rejectionReason;
+  final String? submittedAt;
+
+  factory RoleApplicationModel.fromJson(Map<String, dynamic> json) {
+    return RoleApplicationModel(
+      id: json['id'] as int,
+      requestedRole: json['requested_role']?.toString() ?? 'citizen',
+      status: json['status']?.toString() ?? 'draft',
+      fullName: json['full_name']?.toString() ?? 'Applicant',
+      phone: json['phone']?.toString() ?? '',
+      email: json['email'] as String?,
+      townName: json['town_name'] as String?,
+      address: json['address'] as String?,
+      licenseNumber: json['license_number'] as String?,
+      vehicleRegistration: json['vehicle_registration'] as String?,
+      vehicleType: json['vehicle_type'] as String?,
+      rejectionReason: json['rejection_reason'] as String?,
+      submittedAt: json['submitted_at'] as String?,
+    );
+  }
+}
+
+class ModeSummaryModel {
+  ModeSummaryModel({
+    required this.currentMode,
+    this.availableModes = const [],
+    this.pendingModes = const [],
+    this.canApplyFor = const [],
+  });
+
+  final String currentMode;
+  final List<String> availableModes;
+  final List<RoleApplicationModel> pendingModes;
+  final List<String> canApplyFor;
+
+  factory ModeSummaryModel.fromJson(Map<String, dynamic> json) {
+    return ModeSummaryModel(
+      currentMode: json['current_mode']?.toString() ?? 'citizen',
+      availableModes: (json['available_modes'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .toList(),
+      pendingModes: (json['pending_modes'] as List<dynamic>? ?? const [])
+          .map((item) => RoleApplicationModel.fromJson(item as Map<String, dynamic>))
+          .toList(),
+      canApplyFor: (json['can_apply_for'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .toList(),
     );
   }
 }

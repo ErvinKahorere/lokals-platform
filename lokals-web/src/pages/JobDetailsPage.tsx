@@ -91,7 +91,14 @@ export function JobDetailsPage() {
                 ) : (
                   <Link to="/login"><Button className="w-full">Login to apply</Button></Link>
                 )}
-                <ContactActions name={job.user?.name ?? job.organization?.name ?? job.title} phone={job.user?.phone} className="flex flex-wrap gap-2" />
+                <ContactActions
+                  name={job.user?.name ?? job.organization?.name ?? job.title}
+                  phone={job.user?.phone}
+                  conversationUserId={job.user?.id}
+                  conversationSubject={job.title}
+                  conversationContext="job"
+                  className="flex flex-wrap gap-2"
+                />
               </div>
             </SectionCard>
           </div>

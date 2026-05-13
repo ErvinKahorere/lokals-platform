@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/auth_controller.dart';
 import 'citizen_dashboard_screen.dart';
 import 'business_dashboard_screen.dart';
+import 'courier_dashboard_screen.dart';
+import 'driver_dashboard_screen.dart';
 import 'seller_dashboard_screen.dart';
 import 'organization_dashboard_screen.dart';
 import 'service_provider_dashboard_screen.dart';
@@ -25,8 +27,11 @@ class DashboardRouterScreen extends ConsumerWidget {
       case 'seller':
         return const SellerDashboardScreen();
       case 'business_owner':
-      case 'driver':
         return const BusinessDashboardScreen();
+      case 'driver':
+        return const DriverDashboardScreen();
+      case 'courier':
+        return const CourierDashboardScreen();
       case 'service_provider':
         return const ServiceProviderDashboardScreen();
       case 'organization_admin':

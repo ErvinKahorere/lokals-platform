@@ -13,6 +13,7 @@ class ContactActions extends StatelessWidget {
     this.whatsapp,
     this.whatsappMessage,
     this.compact = false,
+    this.onMessage,
   });
 
   final String name;
@@ -20,6 +21,7 @@ class ContactActions extends StatelessWidget {
   final String? whatsapp;
   final String? whatsappMessage;
   final bool compact;
+  final VoidCallback? onMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +34,7 @@ class ContactActions extends StatelessWidget {
           variant: AppButtonVariant.secondary,
           expanded: false,
           compact: compact,
-          onPressed: () => showMessagePlaceholderSheet(context, name: name, phone: phone),
+          onPressed: onMessage ?? () => showMessagePlaceholderSheet(context, name: name, phone: phone),
         ),
         QuickCallButton(phone: phone, compact: compact),
         AppButton(

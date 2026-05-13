@@ -115,7 +115,7 @@ class GetInvolvedHomeScreen extends ConsumerWidget {
               );
             },
             loading: () => const LoadingSkeleton(height: 280),
-            error: (_, __) => AppCard(
+            error: (_, _) => AppCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -165,7 +165,7 @@ class GetInvolvedHomeScreen extends ConsumerWidget {
               );
             },
             loading: () => const LoadingSkeleton(height: 220),
-            error: (_, __) => AppCard(
+            error: (_, _) => AppCard(
               child: AppButton(
                 label: 'Retry loading initiatives',
                 expanded: false,

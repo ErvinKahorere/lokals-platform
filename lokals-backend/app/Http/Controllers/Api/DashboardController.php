@@ -8,6 +8,9 @@ use App\Models\Alert;
 use App\Models\Announcement;
 use App\Models\Booking;
 use App\Models\CityReport;
+use App\Models\CourierProfile;
+use App\Models\DeliveryRequest;
+use App\Models\DriverProfile;
 use App\Models\Event;
 use App\Models\EventSave;
 use App\Models\EventTicket;
@@ -18,6 +21,8 @@ use App\Models\Listing;
 use App\Models\ModerationFlag;
 use App\Models\Organization;
 use App\Models\Product;
+use App\Models\RideRequest;
+use App\Models\RoleApplication;
 use App\Models\Service;
 use App\Models\ServiceProvider;
 use App\Models\User;
@@ -38,6 +43,8 @@ class DashboardController extends Controller
             'role' => $role,
             'dashboard_endpoint' => match ($role) {
                 'worker' => '/dashboard/worker',
+                'driver' => '/dashboard/driver',
+                'courier' => '/dashboard/courier',
                 'seller' => '/dashboard/seller',
                 'business_owner' => '/dashboard/business',
                 'service_provider' => '/dashboard/service-provider',
@@ -149,6 +156,116 @@ class DashboardController extends Controller
                     'title' => $application->job?->title ?? 'Job application',
                     'body' => $application->status,
                     'timestamp' => optional($application->updated_at)->toIso8601String(),
+                ]),
+            ]),
+        ]);
+    }
+
+    public function driver(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user->hasAnyRole(['driver', 'super_admin']), 403);
+        $profile = DriverProfile::query()->where('user_id', $user->id)->first();
+        $activeTrip = RideRequest::query()
+            ->where('driver_id', $user->id)
+            ->whereIn('status', ['accepted', 'driver_en_route', 'arrived', 'in_progress'])
+            ->latest()
+            ->first();
+
+        return response()->json([
+            'role' => 'driver',
+            'stats' => [
+                'online' => $profile?->is_online ? 1 : 0,
+                'available_requests' => RideRequest::query()->whereIn('status', ['requested', 'searching'])->count(),
+                'active_trips' => RideRequest::query()->where('driver_id', $user->id)->whereIn('status', ['accepted', 'driver_en_route', 'arrived', 'in_progress'])->count(),
+                'completed_trips' => RideRequest::query()->where('driver_id', $user->id)->where('status', 'completed')->count(),
+                'earnings_today' => RideRequest::query()->where('driver_id', $user->id)->whereDate('completed_at', today())->sum('fare_estimate'),
+            ],
+            'quick_actions' => [
+                ['label' => 'Go Online', 'href' => '/dashboard/driver', 'icon' => 'power'],
+                ['label' => 'Available Rides', 'href' => '/ride', 'icon' => 'car'],
+                ['label' => 'Trip History', 'href' => '/dashboard/driver', 'icon' => 'history'],
+                ['label' => 'Documents', 'href' => '/dashboard/driver', 'icon' => 'file-text'],
+            ],
+            'pending_tasks' => [
+                ['label' => 'Approval items', 'count' => $profile?->is_verified ? 0 : 1],
+                ['label' => 'Current trip', 'count' => $activeTrip ? 1 : 0],
+            ],
+            'driver_profile' => $profile,
+            'active_trip' => $activeTrip?->load(['user:id,name,phone']),
+            'available_requests' => RideRequest::query()
+                ->with(['user:id,name,phone'])
+                ->whereIn('status', ['requested', 'searching'])
+                ->latest()
+                ->limit(6)
+                ->get(),
+            'trip_history' => RideRequest::query()
+                ->with(['user:id,name,phone'])
+                ->where('driver_id', $user->id)
+                ->latest()
+                ->limit(6)
+                ->get(),
+            'recent_activity' => $this->mergeActivity([
+                RideRequest::query()->where('driver_id', $user->id)->latest()->limit(5)->get()->map(fn (RideRequest $ride) => [
+                    'type' => 'trip',
+                    'title' => $ride->pickup_location.' -> '.$ride->dropoff_location,
+                    'body' => $ride->status,
+                    'timestamp' => optional($ride->updated_at)->toIso8601String(),
+                ]),
+            ]),
+        ]);
+    }
+
+    public function courier(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user->hasAnyRole(['courier', 'super_admin']), 403);
+        $profile = CourierProfile::query()->where('user_id', $user->id)->first();
+        $activeDelivery = DeliveryRequest::query()
+            ->where('driver_id', $user->id)
+            ->whereIn('status', ['accepted', 'pickup_confirmed', 'in_transit'])
+            ->latest()
+            ->first();
+
+        return response()->json([
+            'role' => 'courier',
+            'stats' => [
+                'online' => $profile?->is_online ? 1 : 0,
+                'available_deliveries' => DeliveryRequest::query()->whereIn('status', ['requested', 'searching'])->count(),
+                'active_deliveries' => DeliveryRequest::query()->where('driver_id', $user->id)->whereIn('status', ['accepted', 'pickup_confirmed', 'in_transit'])->count(),
+                'completed_deliveries' => DeliveryRequest::query()->where('driver_id', $user->id)->where('status', 'delivered')->count(),
+                'earnings_today' => DeliveryRequest::query()->where('driver_id', $user->id)->whereDate('delivered_at', today())->sum('estimated_price'),
+            ],
+            'quick_actions' => [
+                ['label' => 'Go Online', 'href' => '/dashboard/courier', 'icon' => 'power'],
+                ['label' => 'Available Deliveries', 'href' => '/delivery', 'icon' => 'package'],
+                ['label' => 'Delivery History', 'href' => '/dashboard/courier', 'icon' => 'history'],
+                ['label' => 'Documents', 'href' => '/dashboard/courier', 'icon' => 'file-text'],
+            ],
+            'pending_tasks' => [
+                ['label' => 'Approval items', 'count' => $profile?->is_verified ? 0 : 1],
+                ['label' => 'Current delivery', 'count' => $activeDelivery ? 1 : 0],
+            ],
+            'courier_profile' => $profile,
+            'active_delivery' => $activeDelivery?->load(['user:id,name,phone']),
+            'available_deliveries' => DeliveryRequest::query()
+                ->with(['user:id,name,phone'])
+                ->whereIn('status', ['requested', 'searching'])
+                ->latest()
+                ->limit(6)
+                ->get(),
+            'delivery_history' => DeliveryRequest::query()
+                ->with(['user:id,name,phone'])
+                ->where('driver_id', $user->id)
+                ->latest()
+                ->limit(6)
+                ->get(),
+            'recent_activity' => $this->mergeActivity([
+                DeliveryRequest::query()->where('driver_id', $user->id)->latest()->limit(5)->get()->map(fn (DeliveryRequest $delivery) => [
+                    'type' => 'delivery',
+                    'title' => ($delivery->pickup_location ?: $delivery->pickup_address).' -> '.($delivery->dropoff_location ?: $delivery->dropoff_address),
+                    'body' => $delivery->status,
+                    'timestamp' => optional($delivery->updated_at)->toIso8601String(),
                 ]),
             ]),
         ]);
@@ -370,6 +487,14 @@ class DashboardController extends Controller
             ->selectRaw('status, count(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
+        $pendingRoleApplications = RoleApplication::query()
+            ->whereIn('status', ['submitted', 'pending_review'])
+            ->when(! $user->hasRole('super_admin'), function ($query) use ($user): void {
+                $query->where(function ($builder) use ($user): void {
+                    $builder->where('town_name', PilotLocation::profileTown($user->default_town))
+                        ->orWhereNull('town_name');
+                });
+            });
 
         return response()->json([
             'role' => 'town_manager',
@@ -381,6 +506,7 @@ class DashboardController extends Controller
                 'urgent_reports' => (clone $reportQuery)->where('priority', 'high')->whereNotIn('status', ['resolved', 'rejected'])->count(),
                 'municipal_alerts_sent' => (clone $alertQuery)->count(),
                 'public_service_entries' => (clone $publicServicesQuery)->count(),
+                'pending_approvals' => (clone $pendingRoleApplications)->count(),
                 'registered_businesses' => Organization::query()
                     ->where('town', PilotLocation::profileTown($user->default_town))
                     ->where('is_public_service', false)
@@ -389,6 +515,7 @@ class DashboardController extends Controller
             'quick_actions' => [
                 ['label' => 'Send Announcement', 'href' => '/dashboard/town-manager', 'icon' => 'megaphone'],
                 ['label' => 'Send Emergency Alert', 'href' => '/dashboard/town-manager', 'icon' => 'siren'],
+                ['label' => 'Pending Approvals', 'href' => '/dashboard/town-manager/role-applications', 'icon' => 'check-square'],
                 ['label' => 'View Reports', 'href' => '/my-reports', 'icon' => 'clipboard-list'],
                 ['label' => 'Add Public Service', 'href' => '/directory', 'icon' => 'building'],
                 ['label' => 'Create Event', 'href' => '/dashboard/events/create', 'icon' => 'calendar-plus'],
@@ -396,8 +523,10 @@ class DashboardController extends Controller
             'pending_tasks' => [
                 ['label' => 'Urgent reports', 'count' => (clone $reportQuery)->where('priority', 'high')->whereNotIn('status', ['resolved', 'rejected'])->count()],
                 ['label' => 'Open reports', 'count' => (clone $reportQuery)->whereNotIn('status', ['resolved', 'rejected'])->count()],
+                ['label' => 'Role approvals waiting', 'count' => (clone $pendingRoleApplications)->count()],
             ],
             'reports_by_status' => $reportsByStatus,
+            'pending_approvals' => (clone $pendingRoleApplications)->latest()->limit(6)->get(['id', 'requested_role', 'status', 'full_name', 'phone', 'created_at']),
             'recent_reports' => (clone $reportQuery)->latest()->limit(6)->get(['id', 'title', 'category', 'location', 'town', 'area', 'status', 'priority', 'created_at']),
             'active_alerts' => (clone $alertQuery)->latest()->limit(5)->get(['id', 'title', 'body', 'type', 'priority', 'location', 'town', 'area', 'created_at']),
             'upcoming_events' => (clone $eventQuery)->where('status', 'published')->where('starts_at', '>=', now())->orderBy('starts_at')->limit(5)->get(['id', 'title', 'category', 'town', 'area', 'starts_at']),
@@ -437,6 +566,7 @@ class DashboardController extends Controller
                 'products' => Product::count(),
                 'accommodations' => Accommodation::count(),
                 'flagged_content' => ModerationFlag::count(),
+                'pending_approvals' => RoleApplication::query()->whereIn('status', ['submitted', 'pending_review'])->count(),
             ],
             'system_overview' => [
                 'total_listings' => Listing::count(),
@@ -447,13 +577,16 @@ class DashboardController extends Controller
             'quick_actions' => [
                 ['label' => 'Manage Users', 'href' => '/admin/users', 'icon' => 'users'],
                 ['label' => 'Manage Directory', 'href' => '/admin/providers', 'icon' => 'building'],
+                ['label' => 'All Approvals', 'href' => '/admin/role-applications', 'icon' => 'check-square'],
                 ['label' => 'Moderate Content', 'href' => '/admin/reports', 'icon' => 'shield'],
                 ['label' => 'View System Health', 'href' => '/admin/overview', 'icon' => 'activity'],
             ],
             'pending_tasks' => [
                 ['label' => 'Open flags', 'count' => ModerationFlag::query()->where('status', 'open')->count()],
                 ['label' => 'Open reports', 'count' => CityReport::query()->whereNotIn('status', ['resolved', 'closed'])->count()],
+                ['label' => 'Pending role approvals', 'count' => RoleApplication::query()->whereIn('status', ['submitted', 'pending_review'])->count()],
             ],
+            'pending_approvals' => RoleApplication::query()->latest()->limit(6)->get(['id', 'requested_role', 'status', 'full_name', 'phone', 'created_at']),
             'moderation_flags' => ModerationFlag::query()->latest()->limit(6)->get(['id', 'reason', 'status', 'notes', 'created_at']),
             'recent_reports' => CityReport::query()->latest()->limit(5)->get(['id', 'title', 'category', 'status', 'priority', 'created_at']),
             'recent_activity' => $this->mergeActivity([

@@ -31,6 +31,16 @@ class MoreScreen extends ConsumerWidget {
           (label: 'Provider Dashboard', description: 'Profile, bookings, and verification shortcuts.', icon: Icons.badge_outlined, route: '/dashboard/service-provider'),
           (label: 'Verification', description: 'Keep trust details and profile status updated.', icon: Icons.verified_user_outlined, route: '/verification'),
         ];
+      case 'driver':
+        return const [
+          (label: 'Driver Dashboard', description: 'Ride requests, active trips, and earnings.', icon: Icons.local_taxi_outlined, route: '/dashboard/driver'),
+          (label: 'Modes & Roles', description: 'Switch modes or review role access.', icon: Icons.switch_account_outlined, route: '/profile/modes'),
+        ];
+      case 'courier':
+        return const [
+          (label: 'Courier Dashboard', description: 'Available deliveries, active drop-offs, and earnings.', icon: Icons.delivery_dining_outlined, route: '/dashboard/courier'),
+          (label: 'Modes & Roles', description: 'Switch modes or review role access.', icon: Icons.switch_account_outlined, route: '/profile/modes'),
+        ];
       case 'organization_admin':
         return const [
           (label: 'Organization Dashboard', description: 'Updates, events, and community alerts.', icon: Icons.groups_rounded, route: '/dashboard/organization'),
@@ -76,6 +86,7 @@ class MoreScreen extends ConsumerWidget {
       (label: 'Notifications', description: 'Unread alerts, reminders, and booking changes', icon: Icons.notifications_none_rounded, route: '/notifications'),
       (label: 'Inbox', description: 'Marketplace chats, support threads, and service messages', icon: Icons.chat_bubble_outline_rounded, route: '/inbox'),
       (label: 'Profile', description: 'Identity, verification, and personal shortcuts', icon: Icons.person_outline_rounded, route: '/profile'),
+      (label: 'Modes & Roles', description: 'Switch approved modes or apply for driver, courier, provider, and business access', icon: Icons.switch_account_outlined, route: '/profile/modes'),
       (label: 'Help', description: 'Support and account help', icon: Icons.support_agent_outlined, route: '/support'),
       (label: 'SOS', description: 'Emergency support', icon: Icons.sos_outlined, route: '/sos'),
     ];

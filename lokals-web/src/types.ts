@@ -4,6 +4,7 @@ export type Role =
   | 'seller'
   | 'business_owner'
   | 'driver'
+  | 'courier'
   | 'service_provider'
   | 'organization_admin'
   | 'organization_representative'
@@ -57,6 +58,49 @@ export interface User {
   current_role?: Role | null
   profile?: Profile | null
   preferences?: UserPreference | null
+}
+
+export interface RoleApplication {
+  id: number
+  user_id: number
+  requested_role: Role | string
+  status: 'draft' | 'submitted' | 'pending_review' | 'approved' | 'rejected' | 'changes_requested' | 'suspended'
+  full_name: string
+  phone: string
+  email?: string | null
+  town_name?: string | null
+  city_name?: string | null
+  address?: string | null
+  national_id_number?: string | null
+  license_number?: string | null
+  vehicle_registration?: string | null
+  vehicle_type?: string | null
+  service_category?: string | null
+  organisation_name?: string | null
+  business_name?: string | null
+  documents?: Array<Record<string, unknown>>
+  notes?: string | null
+  rejection_reason?: string | null
+  approved_at?: string | null
+  submitted_at?: string | null
+  created_at?: string | null
+  updated_at?: string | null
+  user?: Pick<User, 'id' | 'name' | 'phone' | 'email'> | null
+  approver?: Pick<User, 'id' | 'name'> | null
+  approval_logs?: Array<{
+    id: number
+    action: string
+    reason?: string | null
+    created_at?: string | null
+    actor?: Pick<User, 'id' | 'name'> | null
+  }>
+}
+
+export interface ModeSummary {
+  current_mode: Role | string
+  available_modes: Array<Role | string>
+  pending_modes: RoleApplication[]
+  can_apply_for: Array<Role | string>
 }
 
 export interface MePayload {

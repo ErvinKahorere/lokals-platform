@@ -259,6 +259,26 @@ class User extends Authenticatable
         return $this->hasMany(VerificationRequest::class);
     }
 
+    public function modePreference(): HasOne
+    {
+        return $this->hasOne(ModePreference::class);
+    }
+
+    public function roleApplications(): HasMany
+    {
+        return $this->hasMany(RoleApplication::class);
+    }
+
+    public function driverProfile(): HasOne
+    {
+        return $this->hasOne(DriverProfile::class);
+    }
+
+    public function courierProfile(): HasOne
+    {
+        return $this->hasOne(CourierProfile::class);
+    }
+
     public function hasTownManagerRole(): bool
     {
         return $this->hasAnyRole(['town_manager', 'municipality_admin']);

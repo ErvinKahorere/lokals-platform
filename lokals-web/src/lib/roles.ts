@@ -15,6 +15,8 @@ export function getRoleHomePath(user?: User | null): string {
   if (municipalityRoles.includes(activeRole as Role)) return '/dashboard/town-manager'
   if (activeRole === 'organization_admin') return '/dashboard/organization'
   if (adminRoles.includes(activeRole as Role)) return '/admin'
+  if (activeRole === 'driver') return '/dashboard/driver'
+  if (activeRole === 'courier') return '/dashboard/courier'
   if (activeRole === 'service_provider') return '/dashboard/service-provider'
   if (activeRole === 'seller') return '/dashboard/seller'
   if (businessRoles.includes(activeRole as Role)) return '/dashboard/business'

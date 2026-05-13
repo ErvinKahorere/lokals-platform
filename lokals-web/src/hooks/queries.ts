@@ -36,6 +36,8 @@ import type {
   UnifiedSearchResponse,
   Worker,
   UserPreference,
+  RoleApplication,
+  ModeSummary,
   CommunityImpactAccount,
   CommunityImpactDashboardPayload,
   CommunityImpactLeaderboardEntry,
@@ -542,6 +544,18 @@ export const useWorkerDashboard = () =>
   useQuery({
     queryKey: ['dashboard-worker'],
     queryFn: async () => (await api.get('/dashboard/worker')).data as RoleDashboardPayload,
+  })
+
+export const useDriverDashboard = () =>
+  useQuery({
+    queryKey: ['dashboard-driver'],
+    queryFn: async () => (await api.get('/dashboard/driver')).data as RoleDashboardPayload,
+  })
+
+export const useCourierDashboard = () =>
+  useQuery({
+    queryKey: ['dashboard-courier'],
+    queryFn: async () => (await api.get('/dashboard/courier')).data as RoleDashboardPayload,
   })
 
 export const useServiceProviderDashboard = () =>
@@ -1326,6 +1340,133 @@ export const useMarkNotificationRead = () => {
     mutationFn: async (id: string) => (await api.post(`/notifications/${id}/read`)).data,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['notifications'] })
+    },
+  })
+}
+
+export const useMyModes = () =>
+  useQuery({
+    queryKey: ['my-modes'],
+    queryFn: async () => ((await api.get('/my/modes')).data?.data ?? {}) as ModeSummary,
+  })
+
+export const useMyRoleApplications = () =>
+  useQuery({
+    queryKey: ['my-role-applications'],
+    queryFn: async () => toPaginated<RoleApplication>((await api.get('/my/role-applications')).data),
+  })
+
+export const useRoleApplication = (id?: string) =>
+  useQuery({
+    enabled: Boolean(id),
+    queryKey: ['my-role-application', id],
+    queryFn: async () => unwrapOne<RoleApplication>((await api.get(`/my/role-applications/${id}`)).data),
+  })
+
+export const useCreateRoleApplication = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => (await api.post('/role-applications', payload)).data,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['my-role-applications'] }),
+        queryClient.invalidateQueries({ queryKey: ['my-modes'] }),
+      ])
+    },
+  })
+}
+
+export const useUpdateRoleApplication = (id?: number | string) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => {
+      if (!id) throw new Error('Role application id is required')
+      return (await api.patch(`/my/role-applications/${id}`, payload)).data
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['my-role-applications'] }),
+        queryClient.invalidateQueries({ queryKey: ['my-role-application', String(id)] }),
+      ])
+    },
+  })
+}
+
+export const useSubmitRoleApplication = (id?: number | string) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!id) throw new Error('Role application id is required')
+      return (await api.post(`/my/role-applications/${id}/submit`)).data
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['my-role-applications'] }),
+        queryClient.invalidateQueries({ queryKey: ['my-role-application', String(id)] }),
+        queryClient.invalidateQueries({ queryKey: ['my-modes'] }),
+      ])
+    },
+  })
+}
+
+export const useUpdateCurrentMode = () => {
+  const queryClient = useQueryClient()
+  const setUser = useAuthStore((state) => state.setUser)
+
+  return useMutation({
+    mutationFn: async (mode: string) => (await api.patch('/my/current-mode', { mode })).data,
+    onSuccess: async (payload) => {
+      const nextUser = payload.user?.data ?? payload.user
+      if (nextUser) {
+        setUser(nextUser)
+      }
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['me'] }),
+        queryClient.invalidateQueries({ queryKey: ['my-modes'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-index'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-driver'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-courier'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-worker'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-citizen'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-service-provider'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-organization'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-municipality'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-admin'] }),
+      ])
+    },
+  })
+}
+
+export const useAdminRoleApplications = (params?: Record<string, string | number | boolean | undefined>) =>
+  useQuery({
+    queryKey: ['admin-role-applications', params],
+    queryFn: async () => toPaginated<RoleApplication>((await api.get('/admin/role-applications', { params })).data),
+  })
+
+export const useAdminRoleApplication = (id?: string) =>
+  useQuery({
+    enabled: Boolean(id),
+    queryKey: ['admin-role-application', id],
+    queryFn: async () => unwrapOne<RoleApplication>((await api.get(`/admin/role-applications/${id}`)).data),
+  })
+
+export const useAdminRoleApplicationAction = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, action, payload }: { id: number | string; action: 'approve' | 'reject' | 'request-changes'; payload?: Record<string, unknown> }) => {
+      return (await api.patch(`/admin/role-applications/${id}/${action}`, payload ?? {})).data
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-role-applications'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-role-application'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-municipality'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-admin'] }),
+      ])
     },
   })
 }

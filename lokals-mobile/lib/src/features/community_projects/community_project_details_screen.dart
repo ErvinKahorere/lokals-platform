@@ -47,6 +47,7 @@ class _CommunityProjectDetailsScreenState extends ConsumerState<CommunityProject
   }
 
   Future<void> _showPledgeSheet(CommunityProjectModel project, String pledgeType) async {
+    final messenger = ScaffoldMessenger.of(context);
     final descriptionController = TextEditingController();
     final amountController = TextEditingController();
     final quantityController = TextEditingController();
@@ -130,9 +131,9 @@ class _CommunityProjectDetailsScreenState extends ConsumerState<CommunityProject
                                   contactEmail: contactEmailController.text.trim(),
                                 );
                             ref.invalidate(communityProjectDetailsProvider(widget.slug));
-                            if (!mounted) return;
+                            if (!context.mounted) return;
                             Navigator.of(context).pop();
-                            ScaffoldMessenger.of(this.context).showSnackBar(
+                            messenger.showSnackBar(
                               const SnackBar(content: Text('Support pledge sent to the organiser.')),
                             );
                           } finally {
@@ -365,7 +366,7 @@ class _CommunityProjectDetailsScreenState extends ConsumerState<CommunityProject
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => Center(
+        error: (_, _) => Center(
           child: AppCard(
             child: AppButton(
               label: 'Retry loading project',

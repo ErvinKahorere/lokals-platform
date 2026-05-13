@@ -14,18 +14,36 @@ class RideRequest extends Model
         'user_id',
         'driver_id',
         'pickup_location',
+        'pickup_address',
         'dropoff_location',
+        'dropoff_address',
         'ride_type',
         'trip_purpose',
         'notes',
         'status',
         'fare_estimate',
+        'estimated_distance_km',
+        'assigned_at',
+        'arrived_at',
+        'started_at',
+        'completed_at',
+        'cancelled_at',
+        'cancel_reason',
+        'rating',
+        'rating_comment',
+        'vehicle_label',
     ];
 
     protected function casts(): array
     {
         return [
             'fare_estimate' => 'decimal:2',
+            'estimated_distance_km' => 'decimal:2',
+            'assigned_at' => 'datetime',
+            'arrived_at' => 'datetime',
+            'started_at' => 'datetime',
+            'completed_at' => 'datetime',
+            'cancelled_at' => 'datetime',
         ];
     }
 

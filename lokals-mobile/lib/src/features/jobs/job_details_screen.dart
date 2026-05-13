@@ -73,6 +73,47 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
     }
   }
 
+  Future<void> _openConversation({
+    required int participantId,
+    required String subject,
+    required String contextKey,
+  }) async {
+    final auth = ref.read(authControllerProvider);
+    if (auth.token == null) {
+      if (!mounted) return;
+      promptSignIn(
+        context,
+        next: GoRouterState.of(context).uri.toString(),
+      );
+      return;
+    }
+
+    final scaffold = ScaffoldMessenger.of(context);
+
+    try {
+      final payload = await ref.read(discoveryRepositoryProvider).createConversation(
+            participantIds: [participantId],
+            context: contextKey,
+            subject: subject,
+          );
+      if (!mounted) return;
+      final data = Map<String, dynamic>.from((payload['data'] as Map?) ?? payload);
+      final conversationId = data['id']?.toString();
+      if (conversationId == null || conversationId.isEmpty) {
+        scaffold.showSnackBar(
+          const SnackBar(content: Text('We could not open this conversation right now.')),
+        );
+        return;
+      }
+      context.push('/conversations/$conversationId');
+    } catch (_) {
+      if (!mounted) return;
+      scaffold.showSnackBar(
+        const SnackBar(content: Text('We could not open this conversation right now.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final jobs = ref.watch(jobsProvider);
@@ -221,11 +262,13 @@ class _JobDetailsScreenState extends ConsumerState<JobDetailsScreen> {
                           child: AppButton(
                             label: 'Message',
                             variant: AppButtonVariant.secondary,
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Messaging is coming soon. Please call or WhatsApp for now.')),
-                              );
-                            },
+                            onPressed: job.posterUserId == null
+                                ? null
+                                : () => _openConversation(
+                                      participantId: job.posterUserId!,
+                                      subject: job.title,
+                                      contextKey: 'job',
+                                    ),
                           ),
                         ),
                         const SizedBox(width: 10),

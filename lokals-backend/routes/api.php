@@ -31,6 +31,7 @@ use App\Http\Controllers\Api\OrganizationController;
 use App\Http\Controllers\Api\PreferenceController;
 use App\Http\Controllers\Api\PostDraftController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\RoleApplicationController;
 use App\Http\Controllers\Api\RideController;
 use App\Http\Controllers\Api\SafetyController;
 use App\Http\Controllers\Api\SearchController;
@@ -40,6 +41,7 @@ use App\Http\Controllers\Api\SosController;
 use App\Http\Controllers\Api\SupportController;
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\ActivityController;
+use App\Http\Controllers\Api\AdminRoleApplicationController;
 use App\Http\Controllers\Api\AdminCommunityProjectController;
 use App\Http\Controllers\Api\AdminCommunityImpactController;
 use App\Http\Controllers\Api\WorkerController;
@@ -112,7 +114,17 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/dashboard/organization', [DashboardController::class, 'organization']);
         Route::get('/dashboard/municipality', [DashboardController::class, 'municipality']);
         Route::get('/dashboard/town-manager', [DashboardController::class, 'municipality']);
+        Route::get('/dashboard/driver', [DashboardController::class, 'driver']);
+        Route::get('/dashboard/courier', [DashboardController::class, 'courier']);
         Route::get('/dashboard/admin', [DashboardController::class, 'admin']);
+        Route::get('/my/roles', [RoleApplicationController::class, 'myRoles']);
+        Route::get('/my/modes', [RoleApplicationController::class, 'myModes']);
+        Route::patch('/my/current-mode', [RoleApplicationController::class, 'updateCurrentMode']);
+        Route::post('/role-applications', [RoleApplicationController::class, 'store']);
+        Route::get('/my/role-applications', [RoleApplicationController::class, 'index']);
+        Route::get('/my/role-applications/{id}', [RoleApplicationController::class, 'show']);
+        Route::patch('/my/role-applications/{id}', [RoleApplicationController::class, 'update']);
+        Route::post('/my/role-applications/{id}/submit', [RoleApplicationController::class, 'submit']);
 
         Route::get('/me', [MeController::class, 'show']);
         Route::put('/me', [MeController::class, 'update']);
@@ -215,11 +227,21 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/messages/{message}/read', [ConversationController::class, 'markRead']);
 
         Route::get('/deliveries', [DeliveryController::class, 'index']);
+        Route::post('/deliveries/estimate', [DeliveryController::class, 'estimate']);
+        Route::post('/deliveries/request', [DeliveryController::class, 'store']);
+        Route::get('/deliveries/current', [DeliveryController::class, 'current']);
         Route::post('/deliveries', [DeliveryController::class, 'store']);
         Route::get('/deliveries/{delivery}', [DeliveryController::class, 'show']);
+        Route::patch('/deliveries/{delivery}/cancel', [DeliveryController::class, 'cancel']);
+        Route::post('/deliveries/{delivery}/rate', [DeliveryController::class, 'rate']);
         Route::get('/rides', [RideController::class, 'index']);
+        Route::post('/rides/estimate', [RideController::class, 'estimate']);
+        Route::post('/rides/request', [RideController::class, 'store']);
+        Route::get('/rides/current', [RideController::class, 'current']);
         Route::post('/rides', [RideController::class, 'store']);
         Route::get('/rides/{ride}', [RideController::class, 'show']);
+        Route::patch('/rides/{ride}/cancel', [RideController::class, 'cancel']);
+        Route::post('/rides/{ride}/rate', [RideController::class, 'rate']);
         Route::get('/sos', [SosController::class, 'index']);
         Route::post('/sos', [SosController::class, 'store']);
         Route::get('/my/events', [EventController::class, 'myEvents']);
@@ -284,6 +306,36 @@ Route::prefix('v1')->group(function (): void {
             Route::patch('/admin/feed/{feedPost}/approve', [AdminFeedController::class, 'approve']);
             Route::patch('/admin/feed/{feedPost}/reject', [AdminFeedController::class, 'reject']);
             Route::patch('/admin/feed/{feedPost}/feature', [AdminFeedController::class, 'feature']);
+            Route::get('/admin/role-applications', [AdminRoleApplicationController::class, 'index']);
+            Route::get('/admin/role-applications/{id}', [AdminRoleApplicationController::class, 'show']);
+            Route::patch('/admin/role-applications/{id}/approve', [AdminRoleApplicationController::class, 'approve']);
+            Route::patch('/admin/role-applications/{id}/reject', [AdminRoleApplicationController::class, 'reject']);
+            Route::patch('/admin/role-applications/{id}/request-changes', [AdminRoleApplicationController::class, 'requestChanges']);
+            Route::patch('/admin/users/{id}/roles/{role}/suspend', [AdminRoleApplicationController::class, 'suspendUserRole']);
+        });
+
+        Route::middleware('role:driver|super_admin')->group(function (): void {
+            Route::patch('/driver/availability', [RideController::class, 'updateAvailability']);
+            Route::get('/driver/ride-requests', [RideController::class, 'driverRequests']);
+            Route::post('/driver/rides/{ride}/accept', [RideController::class, 'accept']);
+            Route::post('/driver/rides/{ride}/decline', [RideController::class, 'decline']);
+            Route::patch('/driver/rides/{ride}/arrived', [RideController::class, 'arrived']);
+            Route::patch('/driver/rides/{ride}/start', [RideController::class, 'start']);
+            Route::patch('/driver/rides/{ride}/complete', [RideController::class, 'complete']);
+            Route::get('/driver/trips', [RideController::class, 'trips']);
+            Route::get('/driver/earnings', [RideController::class, 'earnings']);
+        });
+
+        Route::middleware('role:courier|super_admin')->group(function (): void {
+            Route::patch('/courier/availability', [DeliveryController::class, 'updateAvailability']);
+            Route::get('/courier/delivery-requests', [DeliveryController::class, 'courierRequests']);
+            Route::post('/courier/deliveries/{delivery}/accept', [DeliveryController::class, 'accept']);
+            Route::post('/courier/deliveries/{delivery}/decline', [DeliveryController::class, 'decline']);
+            Route::patch('/courier/deliveries/{delivery}/pickup-confirmed', [DeliveryController::class, 'pickupConfirmed']);
+            Route::patch('/courier/deliveries/{delivery}/in-transit', [DeliveryController::class, 'inTransit']);
+            Route::patch('/courier/deliveries/{delivery}/delivered', [DeliveryController::class, 'delivered']);
+            Route::get('/courier/deliveries', [DeliveryController::class, 'deliveries']);
+            Route::get('/courier/earnings', [DeliveryController::class, 'earnings']);
         });
 
         Route::middleware('role:organization_admin|business_owner|super_admin')->group(function (): void {

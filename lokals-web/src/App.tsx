@@ -62,8 +62,12 @@ import { OrganizationDashboardPage } from './pages/dashboard/OrganizationDashboa
 import { DashboardPage } from './pages/dashboard/DashboardPage'
 import { CitizenDashboardPage } from './pages/dashboard/CitizenDashboardPage'
 import { WorkerDashboardPage } from './pages/dashboard/WorkerDashboardPage'
+import { DriverDashboardPage } from './pages/dashboard/DriverDashboardPage'
+import { CourierDashboardPage } from './pages/dashboard/CourierDashboardPage'
 import { ServiceProviderDashboardPage } from './pages/dashboard/ServiceProviderDashboardPage'
 import { SellerDashboardPage } from './pages/dashboard/SellerDashboardPage'
+import { RoleApplicationsPage } from './pages/dashboard/RoleApplicationsPage'
+import { RoleApplicationsAdminPage } from './pages/admin/RoleApplicationsAdminPage'
 import { SearchResultsPage } from './pages/SearchResultsPage'
 import { ActivityPage } from './pages/ActivityPage'
 import { SavedItemsPage } from './pages/dashboard/SavedItemsPage'
@@ -126,6 +130,16 @@ function BusinessRoute({ children }: { children: ReactElement }) {
 function WorkerRoute({ children }: { children: ReactElement }) {
   const user = useAuthStore((state) => state.user)
   return hasActiveRole(user, ['worker']) ? children : <Navigate to={getRoleHomePath(user)} replace />
+}
+
+function DriverRoute({ children }: { children: ReactElement }) {
+  const user = useAuthStore((state) => state.user)
+  return hasActiveRole(user, ['driver']) ? children : <Navigate to={getRoleHomePath(user)} replace />
+}
+
+function CourierRoute({ children }: { children: ReactElement }) {
+  const user = useAuthStore((state) => state.user)
+  return hasActiveRole(user, ['courier']) ? children : <Navigate to={getRoleHomePath(user)} replace />
 }
 
 function ServiceProviderRoute({ children }: { children: ReactElement }) {
@@ -217,6 +231,8 @@ export default function App() {
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path="/dashboard/citizen" element={<ProtectedRoute><CitizenDashboardPage /></ProtectedRoute>} />
           <Route path="/dashboard/worker" element={<WorkerRoute><WorkerDashboardPage /></WorkerRoute>} />
+          <Route path="/dashboard/driver" element={<DriverRoute><DriverDashboardPage /></DriverRoute>} />
+          <Route path="/dashboard/courier" element={<CourierRoute><CourierDashboardPage /></CourierRoute>} />
           <Route path="/activity" element={<ProtectedRoute><ActivityPage /></ProtectedRoute>} />
           <Route path="/my-bookings" element={<ProtectedRoute><MyBookingsPage /></ProtectedRoute>} />
           <Route path="/dashboard/bookings" element={<ProtectedRoute><MyBookingsPage /></ProtectedRoute>} />
@@ -226,6 +242,7 @@ export default function App() {
           <Route path="/dashboard/reports/:id" element={<ProtectedRoute><ReportDetailsPage /></ProtectedRoute>} />
           <Route path="/dashboard/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           <Route path="/dashboard/profile/edit" element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
+          <Route path="/dashboard/modes" element={<ProtectedRoute><RoleApplicationsPage /></ProtectedRoute>} />
           <Route path="/dashboard/community-projects" element={<ProtectedRoute><MyCommunityProjectsPage /></ProtectedRoute>} />
           <Route path="/dashboard/community-project-pledges" element={<ProtectedRoute><MyCommunityPledgesPage /></ProtectedRoute>} />
           <Route path="/dashboard/products" element={<ProtectedRoute><Navigate to="/store" replace /></ProtectedRoute>} />
@@ -244,6 +261,7 @@ export default function App() {
           <Route path="/dashboard/town-manager/community-projects" element={<MunicipalityRoute><TownManagerCommunityProjectsPage /></MunicipalityRoute>} />
           <Route path="/dashboard/town-manager/community-projects/:id" element={<MunicipalityRoute><TownManagerCommunityProjectReviewPage /></MunicipalityRoute>} />
           <Route path="/dashboard/town-manager/community-impact/pending" element={<MunicipalityRoute><CommunityImpactPendingPage /></MunicipalityRoute>} />
+          <Route path="/dashboard/town-manager/role-applications" element={<MunicipalityRoute><RoleApplicationsAdminPage /></MunicipalityRoute>} />
           <Route path="/dashboard/town-manager/community-impact/rewards" element={<MunicipalityRoute><CommunityImpactRewardsManagePage /></MunicipalityRoute>} />
           <Route path="/dashboard/town-manager/community-impact/redemptions" element={<MunicipalityRoute><CommunityImpactRedemptionsAdminPage /></MunicipalityRoute>} />
           <Route path="/dashboard/town-manager/community-impact/users/:userId" element={<MunicipalityRoute><CommunityImpactUserProfilePage /></MunicipalityRoute>} />
@@ -271,6 +289,7 @@ export default function App() {
           <Route path="/admin/listings" element={<AdminRoute><AdminListingsPage /></AdminRoute>} />
           <Route path="/admin/reports" element={<AdminRoute><AdminReportsPage /></AdminRoute>} />
           <Route path="/admin/reports/:id" element={<AdminRoute><ReportDetailsPage /></AdminRoute>} />
+          <Route path="/admin/role-applications" element={<AdminRoute><RoleApplicationsAdminPage /></AdminRoute>} />
           <Route path="/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
           <Route path="/admin/overview" element={<AdminRoute><AdminOverviewPage /></AdminRoute>} />
         </Route>

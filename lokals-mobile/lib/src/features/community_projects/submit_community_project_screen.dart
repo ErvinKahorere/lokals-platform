@@ -125,6 +125,14 @@ class _SubmitCommunityProjectScreenState extends ConsumerState<SubmitCommunityPr
     return LokalsShell(
       title: 'Submit project',
       showBack: true,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: AppButton(
+          label: _saveAsDraft ? 'Save draft' : 'Submit for review',
+          isLoading: _isSubmitting,
+          onPressed: _submit,
+        ),
+      ),
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 110),
         children: [
@@ -171,7 +179,7 @@ class _SubmitCommunityProjectScreenState extends ConsumerState<SubmitCommunityPr
                     .toList(),
               ),
               loading: () => const LoadingSkeleton(height: 56),
-              error: (_, __) => const Text('Could not load categories.'),
+              error: (_, _) => const Text('Could not load categories.'),
             ),
           ),
           const SizedBox(height: 14),
@@ -311,7 +319,7 @@ class _SubmitCommunityProjectScreenState extends ConsumerState<SubmitCommunityPr
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: _attachments.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 10),
+                      separatorBuilder: (_, index) => const SizedBox(width: 10),
                       itemBuilder: (context, index) {
                         final file = _attachments[index];
                         return Container(
@@ -367,24 +375,16 @@ class _SubmitCommunityProjectScreenState extends ConsumerState<SubmitCommunityPr
                 ),
                 const SizedBox(height: 12),
                 SwitchListTile(
-                  value: _saveAsDraft,
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Save as draft first'),
                   subtitle: const Text('Keep working on it before sending for verification.'),
                   onChanged: (value) => setState(() => _saveAsDraft = value),
+                  value: _saveAsDraft,
                 ),
               ],
             ),
           ),
         ],
-      ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 16),
-        child: AppButton(
-          label: _saveAsDraft ? 'Save draft' : 'Submit for review',
-          isLoading: _isSubmitting,
-          onPressed: _submit,
-        ),
       ),
     );
   }

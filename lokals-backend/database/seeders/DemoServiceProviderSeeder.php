@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\CourierProfile;
+use App\Models\DriverProfile;
 use App\Models\Organization;
 use Database\Seeders\Support\BuildsDemoRecords;
 use Illuminate\Database\Seeder;
@@ -279,7 +281,7 @@ class DemoServiceProviderSeeder extends Seeder
             ],
             [
                 'email' => 'courier@lokals.app',
-                'roles' => ['service_provider', 'driver'],
+                'roles' => ['service_provider', 'courier'],
                 'user' => [
                     'name' => 'Paulette Tjombonde',
                     'phone' => '+264810002210',
@@ -288,7 +290,7 @@ class DemoServiceProviderSeeder extends Seeder
                     'location' => 'Town Centre, Okahandja',
                     'default_town' => 'Okahandja',
                     'default_area' => 'Town Centre',
-                    'current_role' => 'driver',
+                    'current_role' => 'courier',
                     'lat' => -21.9829,
                     'lng' => 16.9188,
                 ],
@@ -334,6 +336,36 @@ class DemoServiceProviderSeeder extends Seeder
                 $provider['services'],
                 $availability,
             );
+
+            if (in_array('driver', $provider['roles'], true)) {
+                DriverProfile::query()->updateOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'license_number' => 'DRV-'.$user->id,
+                        'vehicle_registration' => 'N '.$user->id.' W',
+                        'vehicle_type' => $provider['provider']['category'] === 'transport' ? 'Taxi' : 'Car',
+                        'vehicle_make' => 'Toyota',
+                        'vehicle_model' => 'Corolla',
+                        'is_online' => true,
+                        'is_verified' => true,
+                        'rating' => 4.7,
+                    ],
+                );
+            }
+
+            if (in_array('courier', $provider['roles'], true)) {
+                CourierProfile::query()->updateOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'license_number' => 'CR-'.$user->id,
+                        'vehicle_registration' => 'N '.$user->id.' C',
+                        'vehicle_type' => 'Bike',
+                        'is_online' => true,
+                        'is_verified' => true,
+                        'rating' => 4.8,
+                    ],
+                );
+            }
         }
     }
 }

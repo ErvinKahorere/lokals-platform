@@ -146,6 +146,18 @@ final conversationsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) a
   return ref.read(discoveryRepositoryProvider).fetchConversations();
 });
 
+final modesProvider = FutureProvider<ModeSummaryModel>((ref) async {
+  return ref.read(discoveryRepositoryProvider).fetchModes();
+});
+
+final roleApplicationsProvider = FutureProvider<List<RoleApplicationModel>>((ref) async {
+  return ref.read(discoveryRepositoryProvider).fetchRoleApplications();
+});
+
+final adminRoleApplicationsProvider = FutureProvider<List<RoleApplicationModel>>((ref) async {
+  return ref.read(discoveryRepositoryProvider).fetchAdminRoleApplications();
+});
+
 final conversationProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, id) async {
   return ref.read(discoveryRepositoryProvider).fetchConversation(id);
 });
@@ -1305,7 +1317,6 @@ class DiscoveryRepository {
     List<XFile> attachments = const [],
   }) async {
     final data = <String, dynamic>{
-      if (organizationId != null) 'organization_id': organizationId,
       'category_id': categoryId,
       'title': title,
       'summary': summary,
@@ -1313,7 +1324,6 @@ class DiscoveryRepository {
       'support_needed': supportNeeded,
       if (targetAmount != null && targetAmount.isNotEmpty) 'target_amount': targetAmount,
       if (targetItems.isNotEmpty) 'target_items': targetItems,
-      if (targetVolunteers != null) 'target_volunteers': targetVolunteers,
       'location_text': locationText,
       'town': town ?? AppConfig.pilotTown,
       if (area != null && area.isNotEmpty) 'area': area,
@@ -1326,6 +1336,13 @@ class DiscoveryRepository {
       'status': saveAsDraft ? 'draft' : 'submitted',
       'submit_for_review': !saveAsDraft,
     };
+
+    if (organizationId != null) {
+      data['organization_id'] = organizationId;
+    }
+    if (targetVolunteers != null) {
+      data['target_volunteers'] = targetVolunteers;
+    }
 
     if (attachments.isNotEmpty) {
       data['attachments[]'] = await Future.wait(
@@ -1346,14 +1363,18 @@ class DiscoveryRepository {
     String? contactPhone,
     String? contactEmail,
   }) async {
-    final response = await ref.read(dioProvider).post('/community-projects/$projectId/pledges', data: {
+    final payload = <String, dynamic>{
       'pledge_type': pledgeType,
       'pledge_description': description,
       if (amount != null && amount.isNotEmpty) 'amount': amount,
-      if (quantity != null) 'quantity': quantity,
       if (contactPhone != null && contactPhone.isNotEmpty) 'contact_phone': contactPhone,
       if (contactEmail != null && contactEmail.isNotEmpty) 'contact_email': contactEmail,
-    });
+    };
+    if (quantity != null) {
+      payload['quantity'] = quantity;
+    }
+
+    final response = await ref.read(dioProvider).post('/community-projects/$projectId/pledges', data: payload);
     return CommunityProjectPledgeModel.fromJson(_unwrapMap(response.data));
   }
 
@@ -1377,8 +1398,10 @@ class DiscoveryRepository {
       'title': title,
       'body': body,
       if (statusAfterUpdate != null && statusAfterUpdate.isNotEmpty) 'status_after_update': statusAfterUpdate,
-      if (progressPercent != null) 'progress_percent': progressPercent,
     };
+    if (progressPercent != null) {
+      data['progress_percent'] = progressPercent;
+    }
 
     if (attachments.isNotEmpty) {
       data['attachments[]'] = await Future.wait(
@@ -1418,12 +1441,16 @@ class DiscoveryRepository {
       _ => '/admin/community-projects/$projectId/approve',
     };
 
-    final response = await ref.read(dioProvider).patch(endpoint, data: {
+    final payload = <String, dynamic>{
       if (reason != null && reason.isNotEmpty && action == 'approve') 'verification_notes': reason,
       if (reason != null && reason.isNotEmpty && action != 'approve') 'reason': reason,
       if (status != null && status.isNotEmpty) 'status': status,
-      if (isFeatured != null) 'is_featured': isFeatured,
-    });
+    };
+    if (isFeatured != null) {
+      payload['is_featured'] = isFeatured;
+    }
+
+    final response = await ref.read(dioProvider).patch(endpoint, data: payload);
 
     return CommunityProjectModel.fromJson(_unwrapMap(response.data));
   }
@@ -1483,6 +1510,25 @@ class DiscoveryRepository {
     return _unwrapMap(response.data);
   }
 
+  Future<Map<String, dynamic>> createConversation({
+    required List<int> participantIds,
+    String context = 'general',
+    String? subject,
+    String? message,
+  }) async {
+    final response = await ref.read(dioProvider).post(
+      '/conversations',
+      data: {
+        'participant_ids': participantIds,
+        'context': context,
+        if (subject != null && subject.isNotEmpty) 'subject': subject,
+        if (message != null && message.isNotEmpty) 'message': message,
+      },
+    );
+
+    return _unwrapMap(response.data);
+  }
+
   Future<Map<String, dynamic>> sendSupportMessage({
     required String message,
     int? conversationId,
@@ -1519,5 +1565,70 @@ class DiscoveryRepository {
     );
 
     return _unwrapMap(response.data);
+  }
+
+  Future<void> markConversationMessageRead(int messageId) async {
+    await ref.read(dioProvider).post('/messages/$messageId/read');
+  }
+
+  Future<ModeSummaryModel> fetchModes() async {
+    final response = await ref.read(dioProvider).get('/my/modes');
+    return ModeSummaryModel.fromJson(_unwrapMap(response.data));
+  }
+
+  Future<List<RoleApplicationModel>> fetchRoleApplications() async {
+    final response = await ref.read(dioProvider).get('/my/role-applications');
+    return _unwrapList(response.data)
+        .map((item) => RoleApplicationModel.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList();
+  }
+
+  Future<RoleApplicationModel> createRoleApplication({
+    required String requestedRole,
+    required String fullName,
+    required String phone,
+    String? email,
+    String? townName,
+    String? address,
+    String? licenseNumber,
+    String? vehicleRegistration,
+    String? vehicleType,
+  }) async {
+    final response = await ref.read(dioProvider).post('/role-applications', data: {
+      'requested_role': requestedRole,
+      'full_name': fullName,
+      'phone': phone,
+      if (email != null && email.isNotEmpty) 'email': email,
+      if (townName != null && townName.isNotEmpty) 'town_name': townName,
+      if (address != null && address.isNotEmpty) 'address': address,
+      if (licenseNumber != null && licenseNumber.isNotEmpty) 'license_number': licenseNumber,
+      if (vehicleRegistration != null && vehicleRegistration.isNotEmpty) 'vehicle_registration': vehicleRegistration,
+      if (vehicleType != null && vehicleType.isNotEmpty) 'vehicle_type': vehicleType,
+    });
+
+    return RoleApplicationModel.fromJson(_unwrapMap(response.data));
+  }
+
+  Future<RoleApplicationModel> submitRoleApplication(int id) async {
+    final response = await ref.read(dioProvider).post('/my/role-applications/$id/submit');
+    return RoleApplicationModel.fromJson(_unwrapMap(response.data));
+  }
+
+  Future<List<RoleApplicationModel>> fetchAdminRoleApplications() async {
+    final response = await ref.read(dioProvider).get('/admin/role-applications');
+    return _unwrapList(response.data)
+        .map((item) => RoleApplicationModel.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList();
+  }
+
+  Future<RoleApplicationModel> reviewRoleApplication({
+    required int id,
+    required String action,
+    String? reason,
+  }) async {
+    final response = await ref.read(dioProvider).patch('/admin/role-applications/$id/$action', data: {
+      if (reason != null && reason.isNotEmpty) 'reason': reason,
+    });
+    return RoleApplicationModel.fromJson(_unwrapMap(response.data));
   }
 }

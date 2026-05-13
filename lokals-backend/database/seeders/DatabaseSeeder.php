@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
         'seller',
         'business_owner',
         'driver',
+        'courier',
         'service_provider',
         'organization_admin',
         'organization_representative',

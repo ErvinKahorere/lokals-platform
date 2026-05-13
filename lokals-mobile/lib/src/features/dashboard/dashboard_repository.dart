@@ -18,6 +18,14 @@ final workerDashboardProvider = FutureProvider<Map<String, dynamic>>((ref) async
   return ref.read(dashboardRepositoryProvider).fetchWorkerDashboard();
 });
 
+final driverDashboardProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  return ref.read(dashboardRepositoryProvider).fetchDriverDashboard();
+});
+
+final courierDashboardProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  return ref.read(dashboardRepositoryProvider).fetchCourierDashboard();
+});
+
 final businessDashboardProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   return ref.read(dashboardRepositoryProvider).fetchBusinessDashboard();
 });
@@ -51,6 +59,8 @@ class DashboardRepository {
   Future<Map<String, dynamic>> fetchDashboardIndex() => _get('/dashboard');
   Future<Map<String, dynamic>> fetchCitizenDashboard() => _get('/dashboard/citizen');
   Future<Map<String, dynamic>> fetchWorkerDashboard() => _get('/dashboard/worker');
+  Future<Map<String, dynamic>> fetchDriverDashboard() => _get('/dashboard/driver');
+  Future<Map<String, dynamic>> fetchCourierDashboard() => _get('/dashboard/courier');
   Future<Map<String, dynamic>> fetchBusinessDashboard() => _get('/dashboard/business');
   Future<Map<String, dynamic>> fetchServiceProviderDashboard() => _get('/dashboard/service-provider');
   Future<Map<String, dynamic>> fetchOrganizationDashboard() => _get('/dashboard/organization');

@@ -32,6 +32,7 @@ class _CommunityProjectUpdatesScreenState extends ConsumerState<CommunityProject
   @override
   Widget build(BuildContext context) {
     final projectAsync = ref.watch(communityProjectDetailsProvider(widget.slug));
+    final messenger = ScaffoldMessenger.of(context);
 
     return LokalsShell(
       title: 'Project updates',
@@ -126,7 +127,7 @@ class _CommunityProjectUpdatesScreenState extends ConsumerState<CommunityProject
                                 _bodyController.clear();
                                 _progressController.clear();
                                 setState(() => _attachments.clear());
-                                ScaffoldMessenger.of(context).showSnackBar(
+                                messenger.showSnackBar(
                                   const SnackBar(content: Text('Project update posted.')),
                                 );
                               } finally {
@@ -181,7 +182,7 @@ class _CommunityProjectUpdatesScreenState extends ConsumerState<CommunityProject
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => Center(
+        error: (_, _) => Center(
           child: AppCard(
             child: AppButton(
               label: 'Retry loading updates',

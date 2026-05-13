@@ -225,10 +225,18 @@ class AuthController extends Notifier<AuthState> {
 
     try {
       final dio = ref.read(dioProvider);
-      final response = await dio.post<Map<String, dynamic>>(
-        '/auth/switch-role',
-        data: {'role': role},
-      );
+      Response<Map<String, dynamic>> response;
+      try {
+        response = await dio.patch<Map<String, dynamic>>(
+          '/my/current-mode',
+          data: {'mode': role},
+        );
+      } on DioException {
+        response = await dio.post<Map<String, dynamic>>(
+          '/auth/switch-role',
+          data: {'role': role},
+        );
+      }
       final payload = response.data!;
       final userJson =
           (payload['user'] as Map<String, dynamic>)['data']
