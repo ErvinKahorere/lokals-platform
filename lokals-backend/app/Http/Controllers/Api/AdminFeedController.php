@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\FeedPostSubmitted;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\FeedPostResource;
 use App\Models\FeedCategory;
@@ -64,6 +65,7 @@ class AdminFeedController extends Controller
         ]);
 
         $this->log($post, 'created', $post->status, $request->user()?->id, 'Feed post created in admin.');
+        broadcast(new FeedPostSubmitted($post->fresh()));
 
         return response()->json(['data' => FeedPostResource::make($post->load(['source', 'category']))], 201);
     }
@@ -78,6 +80,7 @@ class AdminFeedController extends Controller
             'rejection_reason' => null,
         ]);
         $this->log($feedPost, 'approved', 'approved', $request->user()->id, $request->input('notes'));
+        broadcast(new FeedPostSubmitted($feedPost->fresh()));
 
         return response()->json(['data' => FeedPostResource::make($feedPost->fresh()->load(['source', 'category']))]);
     }
@@ -93,6 +96,7 @@ class AdminFeedController extends Controller
             'rejection_reason' => $validated['reason'],
         ]);
         $this->log($feedPost, 'rejected', 'rejected', $request->user()->id, $validated['reason']);
+        broadcast(new FeedPostSubmitted($feedPost->fresh()));
 
         return response()->json(['data' => FeedPostResource::make($feedPost->fresh()->load(['source', 'category']))]);
     }
@@ -104,6 +108,7 @@ class AdminFeedController extends Controller
             'priority' => (int) $request->integer('priority', max(10, (int) $feedPost->priority)),
         ]);
         $this->log($feedPost, 'featured', $feedPost->status, $request->user()->id, $request->input('notes'));
+        broadcast(new FeedPostSubmitted($feedPost->fresh()));
 
         return response()->json(['data' => FeedPostResource::make($feedPost->fresh()->load(['source', 'category']))]);
     }

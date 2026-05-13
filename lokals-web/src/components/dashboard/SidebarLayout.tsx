@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react'
+import { DashboardRealtimeDiagnostics } from './DashboardRealtimeDiagnostics'
 import { DashboardSidebar } from './DashboardSidebar'
 import { DashboardTopbar } from './DashboardTopbar'
 import { type DashboardMode } from '../../lib/dashboardConfig'
@@ -46,6 +47,7 @@ export function SidebarLayout({
         {children}
       </div>
       </div>
+      {import.meta.env.DEV ? <DashboardRealtimeDiagnostics /> : null}
     </DashboardRealtimeProvider>
   )
 }

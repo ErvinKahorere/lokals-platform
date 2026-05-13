@@ -4,6 +4,8 @@ import { DashboardSection } from '../../components/dashboard/DashboardSection'
 import { QuickActionTile } from '../../components/dashboard/QuickActionTile'
 import { RecentActivityList } from '../../components/dashboard/RecentActivityList'
 import { StatusBreakdownCard } from '../../components/dashboard/StatusBreakdownCard'
+import { Button, StatusBadge } from '../../components/Ui'
+import { useCourierDeliveryAction, useUpdateCourierAvailability } from '../../hooks/queries'
 import { useCourierOperationalData } from '../../lib/dashboardDataProvider'
 import type { CourierDashboardData } from '../../lib/dashboardTypes'
 import type { RoleDashboardPayload } from '../../types'
@@ -17,6 +19,8 @@ export function CourierDashboardPage() {
   const activeDelivery = data?.activeDelivery
   const activityRows = dashboard?.recent_activity ?? []
   const availability = data?.availability ?? 'unknown'
+  const availabilityMutation = useUpdateCourierAvailability()
+  const deliveryActionMutation = useCourierDeliveryAction()
 
   return (
     <DashboardShell
@@ -37,7 +41,20 @@ export function CourierDashboardPage() {
         <DashboardSection title="Quick actions" description="The next delivery action should always be one tap away.">
           <div className="grid gap-3 md:grid-cols-2">
             <QuickActionTile to="/delivery" title="Available deliveries" body="Review parcel requests still waiting for a courier." icon={PackageSearch} />
-            <QuickActionTile to="/dashboard/courier" title="Go online" body="Become available for new courier requests." icon={Power} />
+            <button
+              type="button"
+              onClick={() => availabilityMutation.mutate(availability !== 'online')}
+              className="rounded-[22px] border border-lokals-border bg-white p-4 text-left shadow-card transition hover:-translate-y-0.5 hover:border-lokals-purple/30"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple">
+                  <Power className="h-5 w-5" />
+                </div>
+                <StatusBadge value={availability === 'online' ? 'online' : 'offline'} tone={availability === 'online' ? 'success' : 'neutral'} />
+              </div>
+              <p className="mt-3 text-base font-semibold text-lokals-charcoal">{availability === 'online' ? 'Go offline' : 'Go online'}</p>
+              <p className="mt-1 text-sm text-lokals-muted">Control whether you are visible for parcel matching.</p>
+            </button>
             <QuickActionTile to="/delivery" title="Delivery history" body="See recent drop-offs and status changes." icon={History} />
             <QuickActionTile to="/dashboard/courier" title="Earnings" body="Track estimated and completed courier earnings." icon={Wallet} />
           </div>
@@ -61,6 +78,14 @@ export function CourierDashboardPage() {
               <div key={delivery.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
                 <p className="font-semibold text-lokals-charcoal">{delivery.pickup_location ?? delivery.pickup_address} {'->'} {delivery.dropoff_location ?? delivery.dropoff_address}</p>
                 <p className="mt-1 text-sm text-lokals-muted">{delivery.user?.name ?? 'Resident'} | {delivery.parcel_size ?? 'Parcel'} | N$ {delivery.estimated_price ?? '0'}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionMutation.isPending} onClick={() => deliveryActionMutation.mutate({ deliveryId: delivery.id, action: 'accept' })}>
+                    Accept
+                  </Button>
+                  <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" disabled={deliveryActionMutation.isPending} onClick={() => deliveryActionMutation.mutate({ deliveryId: delivery.id, action: 'decline' })}>
+                    Decline
+                  </Button>
+                </div>
               </div>
             ))}
             {!availableDeliveries.length ? <p className="text-sm text-lokals-muted">No courier requests are waiting right now. Stay available to catch the next parcel.</p> : null}
@@ -85,6 +110,11 @@ export function CourierDashboardPage() {
             <div className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
               <p className="font-semibold text-lokals-charcoal">{activeDelivery.pickup_location ?? activeDelivery.pickup_address} {'->'} {activeDelivery.dropoff_location ?? activeDelivery.dropoff_address}</p>
               <p className="mt-1 text-sm text-lokals-muted">{activeDelivery.status ?? 'accepted'} | {activeDelivery.user?.name ?? 'Resident'}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {activeDelivery.status === 'accepted' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionMutation.isPending} onClick={() => deliveryActionMutation.mutate({ deliveryId: activeDelivery.id, action: 'pickup-confirmed' })}>Pickup confirmed</Button> : null}
+                {activeDelivery.status === 'pickup_confirmed' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionMutation.isPending} onClick={() => deliveryActionMutation.mutate({ deliveryId: activeDelivery.id, action: 'in-transit' })}>In transit</Button> : null}
+                {activeDelivery.status === 'in_transit' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionMutation.isPending} onClick={() => deliveryActionMutation.mutate({ deliveryId: activeDelivery.id, action: 'delivered' })}>Delivered</Button> : null}
+              </div>
             </div>
           ) : (
             <p className="text-sm text-lokals-muted">No active delivery yet. Once you accept a parcel request it will appear here.</p>

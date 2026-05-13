@@ -81,7 +81,10 @@ class ModerationController extends Controller
             'actionable_id' => $moderationFlag->id,
             'action' => 'flag_'.$validated['status'],
             'notes' => 'Moderation flag status updated to '.$validated['status'],
-            'metadata' => ['status' => $validated['status']],
+            'metadata' => [
+                'status' => $validated['status'],
+                'town' => $moderationFlag->flaggable->town ?? null,
+            ],
         ]);
         broadcast(new ModerationActionTaken($action));
 

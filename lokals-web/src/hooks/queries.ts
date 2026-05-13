@@ -1386,7 +1386,12 @@ export const useCreateRoleApplication = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (payload: Record<string, unknown>) => (await api.post('/role-applications', payload)).data,
+    mutationFn: async (payload: FormData | Record<string, unknown>) =>
+      (await api.post('/role-applications', payload, payload instanceof FormData ? {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      } : undefined)).data,
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['my-role-applications'] }),
@@ -1400,9 +1405,13 @@ export const useUpdateRoleApplication = (id?: number | string) => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (payload: Record<string, unknown>) => {
+    mutationFn: async (payload: FormData | Record<string, unknown>) => {
       if (!id) throw new Error('Role application id is required')
-      return (await api.patch(`/my/role-applications/${id}`, payload)).data
+      return (await api.post(`/my/role-applications/${id}?_method=PATCH`, payload, payload instanceof FormData ? {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      } : undefined)).data
     },
     onSuccess: async () => {
       await Promise.all([
@@ -1417,9 +1426,10 @@ export const useSubmitRoleApplication = (id?: number | string) => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async () => {
-      if (!id) throw new Error('Role application id is required')
-      return (await api.post(`/my/role-applications/${id}/submit`)).data
+    mutationFn: async (overrideId?: number | string) => {
+      const targetId = overrideId ?? id
+      if (!targetId) throw new Error('Role application id is required')
+      return (await api.post(`/my/role-applications/${targetId}/submit`)).data
     },
     onSuccess: async () => {
       await Promise.all([
@@ -1716,6 +1726,154 @@ export const useCreateReport = () => {
         queryClient.invalidateQueries({ queryKey: ['my-reports'] }),
         queryClient.invalidateQueries({ queryKey: ['activity-feed'] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard-citizen'] }),
+      ])
+    },
+  })
+}
+
+export const useCancelRide = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ rideId, reason }: { rideId: number; reason?: string }) =>
+      (await api.patch(`/rides/${rideId}/cancel`, reason ? { reason } : {})).data,
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['rides'] }),
+        queryClient.invalidateQueries({ queryKey: ['ride', String(variables.rideId)] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-citizen'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-driver'] }),
+        queryClient.invalidateQueries({ queryKey: ['activity-feed'] }),
+      ])
+    },
+  })
+}
+
+export const useRateRide = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ rideId, rating, comment }: { rideId: number; rating: number; comment?: string }) =>
+      (await api.post(`/rides/${rideId}/rate`, { rating, comment })).data,
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['rides'] }),
+        queryClient.invalidateQueries({ queryKey: ['ride', String(variables.rideId)] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-driver'] }),
+      ])
+    },
+  })
+}
+
+export const useUpdateDriverAvailability = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (isOnline: boolean) => (await api.patch('/driver/availability', { is_online: isOnline })).data,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['dashboard-driver'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-adapter', 'driver-dashboard'] }),
+      ])
+    },
+  })
+}
+
+export const useDriverRideAction = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      rideId,
+      action,
+    }: {
+      rideId: number
+      action: 'accept' | 'decline' | 'arrived' | 'start' | 'complete'
+    }) => {
+      const config = action === 'accept' || action === 'decline'
+        ? { method: 'post' as const, url: `/driver/rides/${rideId}/${action}` }
+        : { method: 'patch' as const, url: `/driver/rides/${rideId}/${action}` }
+      return (await api.request({ method: config.method, url: config.url })).data
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['rides'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-driver'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-adapter', 'driver-dashboard'] }),
+      ])
+    },
+  })
+}
+
+export const useCancelDelivery = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ deliveryId, reason }: { deliveryId: number; reason?: string }) =>
+      (await api.patch(`/deliveries/${deliveryId}/cancel`, reason ? { reason } : {})).data,
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['deliveries'] }),
+        queryClient.invalidateQueries({ queryKey: ['delivery', String(variables.deliveryId)] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-citizen'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-courier'] }),
+        queryClient.invalidateQueries({ queryKey: ['activity-feed'] }),
+      ])
+    },
+  })
+}
+
+export const useRateDelivery = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ deliveryId, rating, comment }: { deliveryId: number; rating: number; comment?: string }) =>
+      (await api.post(`/deliveries/${deliveryId}/rate`, { rating, comment })).data,
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['deliveries'] }),
+        queryClient.invalidateQueries({ queryKey: ['delivery', String(variables.deliveryId)] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-courier'] }),
+      ])
+    },
+  })
+}
+
+export const useUpdateCourierAvailability = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (isOnline: boolean) => (await api.patch('/courier/availability', { is_online: isOnline })).data,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['dashboard-courier'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-adapter', 'courier-dashboard'] }),
+      ])
+    },
+  })
+}
+
+export const useCourierDeliveryAction = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      deliveryId,
+      action,
+    }: {
+      deliveryId: number
+      action: 'accept' | 'decline' | 'pickup-confirmed' | 'in-transit' | 'delivered'
+    }) => {
+      const config = action === 'accept' || action === 'decline'
+        ? { method: 'post' as const, url: `/courier/deliveries/${deliveryId}/${action}` }
+        : { method: 'patch' as const, url: `/courier/deliveries/${deliveryId}/${action}` }
+      return (await api.request({ method: config.method, url: config.url })).data
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['deliveries'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-courier'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-adapter', 'courier-dashboard'] }),
       ])
     },
   })

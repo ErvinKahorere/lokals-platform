@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Events\RewardApproved;
+use App\Events\RewardVerificationSubmitted;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CommunityImpactAccountResource;
 use App\Http\Resources\CommunityImpactRedemptionResource;
@@ -60,6 +61,7 @@ class AdminCommunityImpactController extends Controller
             (bool) ($validated['is_public'] ?? false),
             $validated['internal_notes'] ?? null,
         );
+        broadcast(new RewardVerificationSubmitted($transaction->fresh()->load('user'), $user->default_town));
 
         return response()->json([
             'message' => 'Community Impact award created and awaiting approval.',
@@ -72,6 +74,7 @@ class AdminCommunityImpactController extends Controller
         $transaction = CommunityImpactTransaction::query()->whereKey($id)->firstOrFail();
         $validated = $request->validate(['internal_notes' => ['nullable', 'string', 'max:2000']]);
         $approved = $this->service->approveTransaction($transaction, $request->user(), $validated['internal_notes'] ?? null);
+        broadcast(new RewardVerificationSubmitted($approved->fresh()->load('user'), $approved->user?->default_town));
         broadcast(new RewardApproved($approved));
 
         return response()->json([
@@ -85,11 +88,12 @@ class AdminCommunityImpactController extends Controller
         $transaction = CommunityImpactTransaction::query()->whereKey($id)->firstOrFail();
         $validated = $request->validate(['internal_notes' => ['nullable', 'string', 'max:2000']]);
 
+        $rejected = $this->service->rejectTransaction($transaction, $request->user(), $validated['internal_notes'] ?? null);
+        broadcast(new RewardVerificationSubmitted($rejected->fresh()->load('user'), $rejected->user?->default_town));
+
         return response()->json([
             'message' => 'Community Impact transaction rejected.',
-            'data' => CommunityImpactTransactionResource::make(
-                $this->service->rejectTransaction($transaction, $request->user(), $validated['internal_notes'] ?? null)
-            ),
+            'data' => CommunityImpactTransactionResource::make($rejected),
         ]);
     }
 
@@ -98,11 +102,12 @@ class AdminCommunityImpactController extends Controller
         $transaction = CommunityImpactTransaction::query()->whereKey($id)->firstOrFail();
         $validated = $request->validate(['internal_notes' => ['nullable', 'string', 'max:2000']]);
 
+        $reversed = $this->service->reverseTransaction($transaction, $request->user(), $validated['internal_notes'] ?? null);
+        broadcast(new RewardVerificationSubmitted($reversed->fresh()->load('user'), $reversed->user?->default_town));
+
         return response()->json([
             'message' => 'Community Impact transaction reversed.',
-            'data' => CommunityImpactTransactionResource::make(
-                $this->service->reverseTransaction($transaction, $request->user(), $validated['internal_notes'] ?? null)
-            ),
+            'data' => CommunityImpactTransactionResource::make($reversed),
         ]);
     }
 

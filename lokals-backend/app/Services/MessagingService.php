@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\MessageReceived;
 use App\Events\MarketplaceMessageReceived;
 use App\Models\Conversation;
 use App\Models\ConversationParticipant;
@@ -58,6 +59,15 @@ class MessagingService
         if ($conversation->context === 'marketplace') {
             broadcast(new MarketplaceMessageReceived($conversation->fresh(['participants.user', 'lastMessage']), $message->fresh('user')))->toOthers();
         }
+        broadcast(new MessageReceived(
+            context: $conversation->context,
+            conversationId: $conversation->id,
+            messageId: $message->id,
+            recipientUserIds: $conversation->participants()->pluck('user_id')->all(),
+            senderUserId: $sender?->id,
+            body: $message->body,
+            createdAt: $message->created_at,
+        ))->toOthers();
 
         return $message->load(['user', 'attachments', 'readReceipts']);
     }

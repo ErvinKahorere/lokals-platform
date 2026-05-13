@@ -149,6 +149,194 @@ export async function fetchTownManagerApprovals(): Promise<PendingApprovalSummar
 }
 
 export async function fetchDashboardWorkspaceResource(path: string): Promise<DashboardWorkspaceResource> {
+  if (path === '/dashboard/driver/requests') {
+    const dashboard = await fetchRoleDashboard('/dashboard/driver')
+    const requests = Array.isArray(dashboard.available_requests) ? (dashboard.available_requests as RideItem[]) : []
+    return {
+      rows: requests.slice(0, 8).map((ride) => ({
+        status: String(ride.status ?? 'searching').replaceAll('_', ' '),
+        summary: `${ride.pickup_location} -> ${ride.dropoff_location}`,
+        owner: `${ride.user?.name ?? 'Resident'} | ${ride.ride_type ?? 'Standard'} | N$ ${ride.fare_estimate ?? '0'}`,
+        next_step: 'Accept or decline this request from the driver dashboard.',
+      })),
+      filters: [{ label: 'Searching', value: 'searching' }, { label: 'Requested', value: 'requested' }],
+      actions: [],
+      source: 'api',
+    }
+  }
+
+  if (path === '/dashboard/driver/active-trip') {
+    const dashboard = await fetchRoleDashboard('/dashboard/driver')
+    const activeTrip = isRecordLike(dashboard.active_trip) ? (dashboard.active_trip as unknown as RideItem) : null
+    return {
+      rows: activeTrip ? [{
+        status: String(activeTrip.status ?? 'accepted').replaceAll('_', ' '),
+        summary: `${activeTrip.pickup_location} -> ${activeTrip.dropoff_location}`,
+        owner: `${activeTrip.user?.name ?? 'Resident'} | ${activeTrip.user?.phone ?? 'No contact yet'}`,
+        next_step: 'Use the active trip card on the overview to move this ride forward.',
+      }] : [],
+      filters: [],
+      actions: [],
+      source: 'api',
+    }
+  }
+
+  if (path === '/dashboard/driver/history') {
+    const dashboard = await fetchRoleDashboard('/dashboard/driver')
+    const history = Array.isArray(dashboard.trip_history) ? (dashboard.trip_history as RideItem[]) : []
+    return {
+      rows: history.slice(0, 10).map((ride) => ({
+        status: String(ride.status ?? 'completed').replaceAll('_', ' '),
+        summary: `${ride.pickup_location} -> ${ride.dropoff_location}`,
+        owner: `${ride.user?.name ?? 'Resident'} | N$ ${ride.fare_estimate ?? '0'}`,
+        next_step: ride.rating ? `Resident rating: ${ride.rating}/5` : 'Await resident rating or review.',
+      })),
+      filters: [{ label: 'Completed', value: 'completed' }, { label: 'Cancelled', value: 'cancelled' }],
+      actions: [],
+      source: 'api',
+    }
+  }
+
+  if (path === '/dashboard/courier/requests') {
+    const dashboard = await fetchRoleDashboard('/dashboard/courier')
+    const deliveries = Array.isArray(dashboard.available_deliveries) ? (dashboard.available_deliveries as DeliveryItem[]) : []
+    return {
+      rows: deliveries.slice(0, 8).map((delivery) => ({
+        status: String(delivery.status ?? 'requested').replaceAll('_', ' '),
+        summary: `${delivery.pickup_location ?? delivery.pickup_address} -> ${delivery.dropoff_location ?? delivery.dropoff_address}`,
+        owner: `${delivery.user?.name ?? 'Resident'} | ${delivery.parcel_size ?? 'Parcel'} | N$ ${delivery.estimated_price ?? '0'}`,
+        next_step: 'Accept or decline this delivery from the courier overview.',
+      })),
+      filters: [{ label: 'Requested', value: 'requested' }, { label: 'Searching', value: 'searching' }],
+      actions: [],
+      source: 'api',
+    }
+  }
+
+  if (path === '/dashboard/courier/active-delivery') {
+    const dashboard = await fetchRoleDashboard('/dashboard/courier')
+    const activeDelivery = isRecordLike(dashboard.active_delivery) ? (dashboard.active_delivery as unknown as DeliveryItem) : null
+    return {
+      rows: activeDelivery ? [{
+        status: String(activeDelivery.status ?? 'accepted').replaceAll('_', ' '),
+        summary: `${activeDelivery.pickup_location ?? activeDelivery.pickup_address} -> ${activeDelivery.dropoff_location ?? activeDelivery.dropoff_address}`,
+        owner: `${activeDelivery.user?.name ?? 'Resident'} | ${activeDelivery.user?.phone ?? 'No contact yet'}`,
+        next_step: 'Confirm pickup, mark transit, then mark delivered from the overview.',
+      }] : [],
+      filters: [],
+      actions: [],
+      source: 'api',
+    }
+  }
+
+  if (path === '/dashboard/courier/history') {
+    const dashboard = await fetchRoleDashboard('/dashboard/courier')
+    const history = Array.isArray(dashboard.delivery_history) ? (dashboard.delivery_history as DeliveryItem[]) : []
+    return {
+      rows: history.slice(0, 10).map((delivery) => ({
+        status: String(delivery.status ?? 'delivered').replaceAll('_', ' '),
+        summary: `${delivery.pickup_location ?? delivery.pickup_address} -> ${delivery.dropoff_location ?? delivery.dropoff_address}`,
+        owner: `${delivery.user?.name ?? 'Resident'} | N$ ${delivery.estimated_price ?? delivery.price ?? '0'}`,
+        next_step: delivery.rating ? `Resident rating: ${delivery.rating}/5` : 'Await resident rating or follow-up.',
+      })),
+      filters: [{ label: 'Delivered', value: 'delivered' }, { label: 'Cancelled', value: 'cancelled' }],
+      actions: [],
+      source: 'api',
+    }
+  }
+
+  if (path === '/dashboard/town-manager/pending-approvals') {
+    const approvals = await fetchTownManagerApprovals()
+    return {
+      rows: approvals.slice(0, 12).map((item) => ({
+        status: item.status.replaceAll('_', ' '),
+        summary: item.title,
+        owner: item.type,
+        next_step: 'Open the matching approval queue and complete the review.',
+      })),
+      filters: [{ label: 'Pending', value: 'pending' }, { label: 'Approved', value: 'approved' }, { label: 'Rejected', value: 'rejected' }],
+      actions: [],
+      source: 'api',
+    }
+  }
+
+  if (path === '/dashboard/town-manager/emergencies') {
+    const dashboard = await fetchRoleDashboard('/dashboard/town-manager')
+    const alerts = Array.isArray(dashboard.active_alerts) ? (dashboard.active_alerts as AlertItem[]) : []
+    return {
+      rows: alerts.slice(0, 8).map((alert) => ({
+        status: String(alert.priority ?? 'active'),
+        summary: alert.title,
+        owner: alert.location ?? 'Okahandja',
+        next_step: 'Review the alert body and publish the next operational update if needed.',
+      })),
+      filters: [{ label: 'Critical', value: 'critical' }, { label: 'High', value: 'high' }, { label: 'Medium', value: 'medium' }],
+      actions: [],
+      source: 'api',
+    }
+  }
+
+  if (path === '/dashboard/town-manager/business-verification') {
+    const payload = (await api.get('/admin/role-applications', { params: { role: 'business_owner' } }).catch(() => ({ data: { data: [] as RoleApplication[] } }))).data as { data?: RoleApplication[] }
+    return {
+      rows: asArray<RoleApplication>(payload.data).slice(0, 10).map((application) => ({
+        status: application.status.replaceAll('_', ' '),
+        summary: application.business_name || application.full_name,
+        owner: application.phone,
+        next_step: 'Open role approvals to approve, reject, or request changes.',
+      })),
+      filters: [{ label: 'Pending review', value: 'pending' }, { label: 'Approved', value: 'approved' }],
+      actions: [],
+      source: 'api',
+    }
+  }
+
+  if (path === '/dashboard/town-manager/service-providers') {
+    const payload = (await api.get('/admin/role-applications', { params: { role: 'service_provider' } }).catch(() => ({ data: { data: [] as RoleApplication[] } }))).data as { data?: RoleApplication[] }
+    return {
+      rows: asArray<RoleApplication>(payload.data).slice(0, 10).map((application) => ({
+        status: application.status.replaceAll('_', ' '),
+        summary: application.full_name,
+        owner: application.service_category || application.phone,
+        next_step: 'Use the role approval queue to verify documents and trust status.',
+      })),
+      filters: [{ label: 'Pending review', value: 'pending' }, { label: 'Approved', value: 'approved' }],
+      actions: [],
+      source: 'api',
+    }
+  }
+
+  if (path === '/dashboard/town-manager/residents') {
+    const dashboard = await fetchRoleDashboard('/dashboard/town-manager')
+    const reports = Array.isArray(dashboard.recent_reports) ? (dashboard.recent_reports as Report[]) : []
+    return {
+      rows: reports.slice(0, 10).map((report) => ({
+        status: String(report.status ?? 'open').replaceAll('_', ' '),
+        summary: report.title,
+        owner: report.location ?? ([report.area, report.town].filter(Boolean).join(', ') || 'Okahandja'),
+        next_step: 'Open issue management when this report needs assignment or action.',
+      })),
+      filters: [{ label: 'Open', value: 'open' }, { label: 'In progress', value: 'in progress' }, { label: 'Resolved', value: 'resolved' }],
+      actions: [],
+      source: 'api',
+    }
+  }
+
+  if (path === '/dashboard/town-manager/analytics') {
+    const dashboard = await fetchRoleDashboard('/dashboard/town-manager')
+    return {
+      rows: Object.entries(dashboard.stats ?? {}).map(([key, value]) => ({
+        status: 'Live',
+        summary: key.replaceAll('_', ' '),
+        owner: String(value),
+        next_step: 'Use the dashboard overview to compare this metric against current queues.',
+      })),
+      filters: [{ label: 'Live', value: 'live' }],
+      actions: [],
+      source: 'api',
+    }
+  }
+
   const fallback = getDashboardWorkspaceData(path)
   return {
     rows: fallback.rows ?? [],
@@ -161,6 +349,10 @@ export async function fetchDashboardWorkspaceResource(path: string): Promise<Das
     })),
     source: 'mock',
   }
+}
+
+function isRecordLike(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
 }
 
 export async function fetchDashboardAdapterPayload(): Promise<DashboardAdapterPayload> {

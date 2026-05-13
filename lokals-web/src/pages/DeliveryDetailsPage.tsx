@@ -1,15 +1,41 @@
-import { Package, PhoneCall } from 'lucide-react'
+import { Package, PhoneCall, Star } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Button, EmptyState, QueryState, SectionCard, StatusBadge } from '../components/Ui'
+import { Button, EmptyState, Input, QueryState, SectionCard, StatusBadge, TextArea } from '../components/Ui'
 import { StatusStepper } from '../components/transport/StatusStepper'
-import { useDelivery } from '../hooks/queries'
+import { useCancelDelivery, useDelivery, useRateDelivery } from '../hooks/queries'
+import { useAuthStore } from '../store/auth'
 
-const deliverySteps = ['requested', 'accepted', 'picked_up', 'delivered', 'cancelled']
+const deliverySteps = ['requested', 'accepted', 'pickup_confirmed', 'in_transit', 'delivered', 'cancelled']
+
+function formatTimestamp(value?: string | null) {
+  if (!value) return null
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toLocaleString()
+}
 
 export function DeliveryDetailsPage() {
   const { id } = useParams()
+  const user = useAuthStore((state) => state.user)
   const deliveryQuery = useDelivery(id)
   const delivery = deliveryQuery.data
+  const cancelDelivery = useCancelDelivery()
+  const rateDelivery = useRateDelivery()
+  const [cancelReason, setCancelReason] = useState('')
+  const [rating, setRating] = useState('5')
+  const [ratingComment, setRatingComment] = useState('')
+
+  const isResidentOrBusiness = delivery?.user?.id != null && delivery.user.id === user?.id
+  const canCancel = isResidentOrBusiness && delivery?.status != null && ['requested', 'searching', 'accepted', 'pickup_confirmed'].includes(delivery.status)
+  const canRate = isResidentOrBusiness && delivery?.status === 'delivered' && !delivery?.rating
+
+  const timeline = [
+    { label: 'Requested', timestamp: delivery?.created_at },
+    { label: 'Assigned', timestamp: delivery?.assigned_at },
+    { label: 'Pickup confirmed', timestamp: delivery?.picked_up_at },
+    { label: 'In transit', timestamp: delivery?.in_transit_at },
+    { label: 'Delivered', timestamp: delivery?.delivered_at },
+  ].filter((item) => item.timestamp)
 
   return (
     <div className="space-y-5">
@@ -41,6 +67,8 @@ export function DeliveryDetailsPage() {
                   <p className="mt-3 text-sm text-lokals-muted">{delivery.parcel_description ?? delivery.item_description ?? 'Parcel request'}</p>
                 </div>
               </div>
+
+              {delivery.photo_url ? <img src={delivery.photo_url} alt="Parcel" className="mt-4 h-56 w-full rounded-[24px] object-cover" /> : null}
 
               <div className="mt-5 grid gap-3 md:grid-cols-2">
                 <article className="rounded-2xl bg-slate-50 p-4">
@@ -81,6 +109,47 @@ export function DeliveryDetailsPage() {
                   ) : null}
                 </div>
               </div>
+
+              {timeline.length ? (
+                <div className="mt-4 rounded-2xl border border-lokals-border p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Status timeline</p>
+                  <div className="mt-3 space-y-3">
+                    {timeline.map((item) => (
+                      <div key={item.label} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3">
+                        <p className="font-semibold text-lokals-charcoal">{item.label}</p>
+                        <p className="text-sm text-lokals-muted">{formatTimestamp(item.timestamp) ?? 'Recently'}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {canCancel ? (
+                <div className="mt-4 rounded-2xl border border-lokals-border p-4">
+                  <p className="font-semibold text-lokals-charcoal">Cancel this delivery</p>
+                  <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                    <Input value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} placeholder="Optional reason" />
+                    <Button variant="danger" disabled={cancelDelivery.isPending} onClick={() => delivery.id ? cancelDelivery.mutate({ deliveryId: delivery.id, reason: cancelReason || undefined }) : undefined}>
+                      {cancelDelivery.isPending ? 'Cancelling...' : 'Cancel delivery'}
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+
+              {canRate ? (
+                <div className="mt-4 rounded-2xl border border-lokals-border p-4">
+                  <p className="font-semibold text-lokals-charcoal">Rate this courier</p>
+                  <div className="mt-3 grid gap-3 md:grid-cols-[180px_1fr]">
+                    <Input value={rating} onChange={(event) => setRating(event.target.value)} type="number" min="1" max="5" />
+                    <TextArea value={ratingComment} onChange={(event) => setRatingComment(event.target.value)} rows={3} placeholder="Share a short note about the delivery." />
+                  </div>
+                  <div className="mt-3">
+                    <Button disabled={rateDelivery.isPending} onClick={() => delivery.id ? rateDelivery.mutate({ deliveryId: delivery.id, rating: Number(rating), comment: ratingComment || undefined }) : undefined}>
+                      {rateDelivery.isPending ? 'Saving rating...' : <><Star className="mr-2 h-4 w-4" />Submit rating</>}
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
             </SectionCard>
 
             <StatusStepper steps={deliverySteps} current={delivery.status === 'assigned' ? 'accepted' : delivery.status} updatedAt={delivery.updated_at} />

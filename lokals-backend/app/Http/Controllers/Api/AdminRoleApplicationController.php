@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\RoleApplicationSubmitted;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\RoleApplicationResource;
 use App\Models\CourierProfile;
@@ -91,6 +92,10 @@ class AdminRoleApplicationController extends Controller
             'action' => 'approved',
             'reason' => 'Application approved and role activated.',
         ]);
+        broadcast(new RoleApplicationSubmitted(
+            $application->fresh(),
+            $application->town_name ?? $application->city_name ?? $application->user->default_town
+        ));
 
         return response()->json([
             'message' => 'Role application approved.',
@@ -113,6 +118,10 @@ class AdminRoleApplicationController extends Controller
             'action' => 'rejected',
             'reason' => $validated['reason'],
         ]);
+        broadcast(new RoleApplicationSubmitted(
+            $application->fresh(),
+            $application->town_name ?? $application->city_name ?? $application->user?->default_town
+        ));
 
         return response()->json([
             'message' => 'Role application rejected.',
@@ -135,6 +144,10 @@ class AdminRoleApplicationController extends Controller
             'action' => 'changes_requested',
             'reason' => $validated['reason'],
         ]);
+        broadcast(new RoleApplicationSubmitted(
+            $application->fresh(),
+            $application->town_name ?? $application->city_name ?? $application->user?->default_town
+        ));
 
         return response()->json([
             'message' => 'Changes requested for role application.',
@@ -174,6 +187,10 @@ class AdminRoleApplicationController extends Controller
                 'action' => 'suspended',
                 'reason' => $validated['reason'] ?? 'Role suspended.',
             ]);
+            broadcast(new RoleApplicationSubmitted(
+                $application->fresh(),
+                $application->town_name ?? $application->city_name ?? $user->default_town
+            ));
         }
 
         return response()->json([

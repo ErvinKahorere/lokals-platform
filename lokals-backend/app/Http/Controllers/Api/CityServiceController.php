@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\EmergencyAlertPublished;
 use App\Events\IssueStatusUpdated;
 use App\Events\NewTownAnnouncement;
 use App\Http\Controllers\Controller;
@@ -171,7 +172,7 @@ class CityServiceController extends Controller
             ]
         ));
 
-        broadcast(new IssueStatusUpdated($report->fresh()));
+        broadcast(new IssueStatusUpdated($report->fresh(), $report->town));
         $this->analytics->record($request->user(), 'issue_status_updated', [
             'category' => $report->category,
             'town' => $report->town,
@@ -317,13 +318,15 @@ class CityServiceController extends Controller
             'is_active' => true,
         ]);
 
-        User::query()
+        $targetUsers = User::query()
             ->whereKeyNot($request->user()->id)
             ->when($alert->town, fn ($query) => $query->where('default_town', $alert->town))
             ->when($alert->area, fn ($query) => $query->where(function ($builder) use ($alert): void {
                 $builder->where('default_area', $alert->area)->orWhereNull('default_area');
             }))
-            ->get()
+            ->get();
+
+        $targetUsers
             ->each(fn (User $user) => $user->notify(new SystemNotification(
                 $alert->title,
                 $alert->body,
@@ -339,7 +342,7 @@ class CityServiceController extends Controller
             )));
 
         if ($alert->type === 'emergency_alert') {
-            $this->emergencyAlerts->publish([
+            $emergency = $this->emergencyAlerts->publish([
                 'title' => $alert->title,
                 'body' => $alert->body,
                 'emergency_type' => $alert->type,
@@ -347,6 +350,7 @@ class CityServiceController extends Controller
                 'town' => $alert->town,
                 'area' => $alert->area,
             ], $request->user());
+            broadcast(new EmergencyAlertPublished($emergency, $targetUsers->pluck('id')->all()));
         }
 
         broadcast(new NewTownAnnouncement([

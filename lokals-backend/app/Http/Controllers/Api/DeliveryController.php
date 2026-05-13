@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\DeliveryRequestUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\CourierProfile;
 use App\Models\DeliveryRequest;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -126,6 +128,11 @@ class DeliveryController extends Controller
         }
 
         $delivery = $request->user()->deliveryRequests()->create($payload);
+        broadcast(new DeliveryRequestUpdated(
+            $delivery->fresh()->load(['user:id,name,phone,default_town', 'driver:id,name,phone']),
+            $this->courierAudienceIdsForTown($request->user()->default_town),
+            $request->user()->default_town
+        ));
 
         return response()->json([
             'data' => $delivery->load(['user:id,name,phone', 'driver:id,name,phone']),
@@ -145,6 +152,11 @@ class DeliveryController extends Controller
             'cancelled_at' => now(),
             'cancel_reason' => $validated['reason'] ?? null,
         ]);
+        broadcast(new DeliveryRequestUpdated(
+            $delivery->fresh()->load(['user:id,name,phone,default_town', 'driver:id,name,phone']),
+            [],
+            $delivery->user?->default_town
+        ));
 
         return response()->json([
             'message' => 'Delivery cancelled.',
@@ -210,6 +222,11 @@ class DeliveryController extends Controller
             'status' => 'accepted',
             'assigned_at' => now(),
         ]);
+        broadcast(new DeliveryRequestUpdated(
+            $delivery->fresh()->load(['user:id,name,phone,default_town', 'driver:id,name,phone']),
+            [],
+            $delivery->user?->default_town
+        ));
 
         return response()->json([
             'message' => 'Delivery accepted.',
@@ -220,6 +237,11 @@ class DeliveryController extends Controller
     public function decline(Request $request, DeliveryRequest $delivery): JsonResponse
     {
         abort_unless($request->user()->hasRole('courier'), 403);
+        broadcast(new DeliveryRequestUpdated(
+            $delivery->fresh()->load(['user:id,name,phone,default_town', 'driver:id,name,phone']),
+            [],
+            $delivery->user?->default_town
+        ));
 
         return response()->json([
             'message' => 'Delivery declined.',
@@ -231,6 +253,11 @@ class DeliveryController extends Controller
     {
         abort_unless($delivery->driver_id === $request->user()->id, 403);
         $delivery->update(['status' => 'pickup_confirmed', 'picked_up_at' => now()]);
+        broadcast(new DeliveryRequestUpdated(
+            $delivery->fresh()->load(['user:id,name,phone,default_town', 'driver:id,name,phone']),
+            [],
+            $delivery->user?->default_town
+        ));
 
         return response()->json(['data' => $delivery->fresh()->load(['user:id,name,phone', 'driver:id,name,phone'])]);
     }
@@ -239,6 +266,11 @@ class DeliveryController extends Controller
     {
         abort_unless($delivery->driver_id === $request->user()->id, 403);
         $delivery->update(['status' => 'in_transit', 'in_transit_at' => now()]);
+        broadcast(new DeliveryRequestUpdated(
+            $delivery->fresh()->load(['user:id,name,phone,default_town', 'driver:id,name,phone']),
+            [],
+            $delivery->user?->default_town
+        ));
 
         return response()->json(['data' => $delivery->fresh()->load(['user:id,name,phone', 'driver:id,name,phone'])]);
     }
@@ -253,6 +285,11 @@ class DeliveryController extends Controller
             $profile->increment('completed_deliveries');
             $profile->increment('lifetime_earnings', (float) ($delivery->estimated_price ?? $delivery->price ?? 0));
         }
+        broadcast(new DeliveryRequestUpdated(
+            $delivery->fresh()->load(['user:id,name,phone,default_town', 'driver:id,name,phone']),
+            [],
+            $delivery->user?->default_town
+        ));
 
         return response()->json(['data' => $delivery->fresh()->load(['user:id,name,phone', 'driver:id,name,phone'])]);
     }
@@ -282,5 +319,17 @@ class DeliveryController extends Controller
                 'lifetime' => number_format((float) (clone $deliveries)->sum('estimated_price'), 2, '.', ''),
             ],
         ]);
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function courierAudienceIdsForTown(?string $town): array
+    {
+        return User::query()
+            ->whereHas('roles', fn ($query) => $query->where('name', 'courier'))
+            ->when($town, fn ($query) => $query->where('default_town', $town))
+            ->pluck('id')
+            ->all();
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\MessageReceived;
 use App\Events\SupportMessageReceived;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\SupportConversationResource;
@@ -34,6 +35,15 @@ class SupportController extends Controller
         $latestMessage = $conversation->messages()->latest()->first();
         if ($latestMessage !== null) {
             broadcast(new SupportMessageReceived($conversation, $latestMessage));
+            broadcast(new MessageReceived(
+                context: 'support',
+                conversationId: $conversation->id,
+                messageId: $latestMessage->id,
+                recipientUserIds: [$conversation->user_id],
+                senderUserId: $latestMessage->user_id,
+                body: $latestMessage->body,
+                createdAt: $latestMessage->created_at,
+            ));
         }
         $this->analytics->record($request->user(), 'support_chat_message', [
             'category' => 'support',
@@ -76,6 +86,15 @@ class SupportController extends Controller
         $latestMessage = $conversation->messages()->latest()->first();
         if ($latestMessage !== null) {
             broadcast(new SupportMessageReceived($conversation, $latestMessage));
+            broadcast(new MessageReceived(
+                context: 'support',
+                conversationId: $conversation->id,
+                messageId: $latestMessage->id,
+                recipientUserIds: [$conversation->user_id],
+                senderUserId: $latestMessage->user_id,
+                body: $latestMessage->body,
+                createdAt: $latestMessage->created_at,
+            ));
         }
         $this->analytics->record($request->user(), 'support_conversation_reply', [
             'category' => 'support',

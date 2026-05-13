@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\RideRequestUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\DriverProfile;
 use App\Models\RideRequest;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -112,6 +114,11 @@ class RideController extends Controller
             'estimated_distance_km' => $validated['estimated_distance_km'] ?? 4.8,
             'status' => 'searching',
         ]);
+        broadcast(new RideRequestUpdated(
+            $ride->fresh()->load(['user:id,name,phone,default_town', 'driver:id,name,phone']),
+            $this->driverAudienceIdsForTown($request->user()->default_town),
+            $request->user()->default_town
+        ));
 
         return response()->json([
             'data' => $ride->load(['user:id,name,phone', 'driver:id,name,phone']),
@@ -134,6 +141,11 @@ class RideController extends Controller
             'cancelled_at' => now(),
             'cancel_reason' => $validated['reason'] ?? null,
         ]);
+        broadcast(new RideRequestUpdated(
+            $ride->fresh()->load(['user:id,name,phone,default_town', 'driver:id,name,phone']),
+            [],
+            $ride->user?->default_town
+        ));
 
         return response()->json([
             'message' => 'Ride cancelled.',
@@ -203,6 +215,11 @@ class RideController extends Controller
             'assigned_at' => now(),
             'vehicle_label' => $vehicleLabel ?: $ride->vehicle_label,
         ]);
+        broadcast(new RideRequestUpdated(
+            $ride->fresh()->load(['user:id,name,phone,default_town', 'driver:id,name,phone']),
+            [],
+            $ride->user?->default_town
+        ));
 
         return response()->json([
             'message' => 'Ride accepted.',
@@ -213,6 +230,11 @@ class RideController extends Controller
     public function decline(Request $request, RideRequest $ride): JsonResponse
     {
         abort_unless($request->user()->hasRole('driver'), 403);
+        broadcast(new RideRequestUpdated(
+            $ride->fresh()->load(['user:id,name,phone,default_town', 'driver:id,name,phone']),
+            [],
+            $ride->user?->default_town
+        ));
 
         return response()->json([
             'message' => 'Ride declined.',
@@ -224,6 +246,11 @@ class RideController extends Controller
     {
         abort_unless($ride->driver_id === $request->user()->id, 403);
         $ride->update(['status' => 'arrived', 'arrived_at' => now()]);
+        broadcast(new RideRequestUpdated(
+            $ride->fresh()->load(['user:id,name,phone,default_town', 'driver:id,name,phone']),
+            [],
+            $ride->user?->default_town
+        ));
 
         return response()->json(['data' => $ride->fresh()->load(['user:id,name,phone', 'driver:id,name,phone'])]);
     }
@@ -232,6 +259,11 @@ class RideController extends Controller
     {
         abort_unless($ride->driver_id === $request->user()->id, 403);
         $ride->update(['status' => 'in_progress', 'started_at' => now()]);
+        broadcast(new RideRequestUpdated(
+            $ride->fresh()->load(['user:id,name,phone,default_town', 'driver:id,name,phone']),
+            [],
+            $ride->user?->default_town
+        ));
 
         return response()->json(['data' => $ride->fresh()->load(['user:id,name,phone', 'driver:id,name,phone'])]);
     }
@@ -246,6 +278,11 @@ class RideController extends Controller
             $profile->increment('completed_trips');
             $profile->increment('lifetime_earnings', (float) ($ride->fare_estimate ?? 0));
         }
+        broadcast(new RideRequestUpdated(
+            $ride->fresh()->load(['user:id,name,phone,default_town', 'driver:id,name,phone']),
+            [],
+            $ride->user?->default_town
+        ));
 
         return response()->json(['data' => $ride->fresh()->load(['user:id,name,phone', 'driver:id,name,phone'])]);
     }
@@ -275,5 +312,17 @@ class RideController extends Controller
                 'lifetime' => number_format((float) (clone $trips)->sum('fare_estimate'), 2, '.', ''),
             ],
         ]);
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function driverAudienceIdsForTown(?string $town): array
+    {
+        return User::query()
+            ->whereHas('roles', fn ($query) => $query->where('name', 'driver'))
+            ->when($town, fn ($query) => $query->where('default_town', $town))
+            ->pluck('id')
+            ->all();
     }
 }

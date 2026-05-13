@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\RoleApplicationSubmitted;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\RoleApplicationResource;
 use App\Http\Resources\UserResource;
@@ -10,6 +11,8 @@ use App\Models\RoleApplication;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class RoleApplicationController extends Controller
@@ -144,6 +147,10 @@ class RoleApplicationController extends Controller
             'action' => 'submitted',
             'reason' => 'Application submitted for review.',
         ]);
+        broadcast(new RoleApplicationSubmitted(
+            $application->fresh(),
+            $application->town_name ?? $application->city_name ?? $request->user()->default_town
+        ));
 
         return response()->json([
             'message' => 'Role application submitted for review.',
@@ -170,6 +177,8 @@ class RoleApplicationController extends Controller
             'organisation_name' => ['nullable', 'string', 'max:255'],
             'business_name' => ['nullable', 'string', 'max:255'],
             'documents' => ['nullable', 'array'],
+            'documents_uploads' => ['nullable', 'array'],
+            'documents_uploads.*' => ['file', 'max:10240'],
             'notes' => ['nullable', 'string', 'max:3000'],
         ];
 
@@ -178,7 +187,36 @@ class RoleApplicationController extends Controller
             $validated['requested_role'] = $forcedRole;
         }
 
+        $existingDocuments = collect($validated['documents'] ?? [])
+            ->filter(fn ($document) => is_array($document))
+            ->values();
+        $uploadedDocuments = collect($request->file('documents_uploads', []))
+            ->filter(fn ($file) => $file instanceof UploadedFile)
+            ->map(fn (UploadedFile $file) => $this->storeDocumentMeta($file));
+        if ($existingDocuments->isNotEmpty() || $uploadedDocuments->isNotEmpty()) {
+            $validated['documents'] = $existingDocuments
+                ->concat($uploadedDocuments)
+                ->values()
+                ->all();
+        }
+
+        unset($validated['documents_uploads']);
+
         return $validated;
+    }
+
+    private function storeDocumentMeta(UploadedFile $file): array
+    {
+        $path = $file->store('role-applications', 'public');
+
+        return [
+            'name' => $file->getClientOriginalName(),
+            'file_name' => basename($path),
+            'mime_type' => $file->getClientMimeType(),
+            'size' => $file->getSize(),
+            'url' => Storage::disk('public')->url($path),
+            'uploaded_at' => now()->toIso8601String(),
+        ];
     }
 
     private function activeModesFor($user): array

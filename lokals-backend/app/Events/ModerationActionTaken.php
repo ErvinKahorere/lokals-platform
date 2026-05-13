@@ -3,7 +3,8 @@
 namespace App\Events;
 
 use App\Models\ModerationAction;
-use Illuminate\Broadcasting\Channel;
+use App\Support\RealtimeChannels;
+use App\Support\RealtimePayload;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -15,13 +16,15 @@ class ModerationActionTaken implements ShouldBroadcast
     use InteractsWithSockets;
     use SerializesModels;
 
+    public bool $afterCommit = true;
+
     public function __construct(public ModerationAction $action)
     {
     }
 
     public function broadcastOn(): array
     {
-        return [new Channel('moderation.queue')];
+        return RealtimeChannels::operational($this->action->metadata['town'] ?? null);
     }
 
     public function broadcastAs(): string
@@ -31,10 +34,18 @@ class ModerationActionTaken implements ShouldBroadcast
 
     public function broadcastWith(): array
     {
-        return [
-            'id' => $this->action->id,
-            'action' => $this->action->action,
-            'notes' => $this->action->notes,
-        ];
+        return RealtimePayload::make(
+            type: 'moderation.action.taken',
+            id: $this->action->id,
+            resourceType: 'moderation_action',
+            resourceId: $this->action->id,
+            townId: $this->action->metadata['town'] ?? null,
+            userId: $this->action->actor_id,
+            message: $this->action->notes ?: 'Moderation action recorded.',
+            createdAt: $this->action->created_at,
+            extra: [
+                'action' => $this->action->action,
+            ],
+        );
     }
 }

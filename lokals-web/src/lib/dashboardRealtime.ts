@@ -2,7 +2,13 @@ import { createContext, createElement, useContext, useEffect, useMemo, useRef, u
 import { useQueryClient } from '@tanstack/react-query'
 import { api } from './api'
 import type { DashboardMode } from './dashboardConfig'
-import type { DashboardRealtimeEventName, DashboardRealtimeOptions, DashboardRealtimeState, DashboardRealtimeStatus } from './realtimeTypes'
+import type {
+  DashboardRealtimeEventName,
+  DashboardRealtimeLastEvent,
+  DashboardRealtimeOptions,
+  DashboardRealtimeState,
+  DashboardRealtimeStatus,
+} from './realtimeTypes'
 
 declare global {
   interface Window {
@@ -80,6 +86,10 @@ const DEFAULT_REALTIME_STATE: DashboardRealtimeState = {
   status: 'offline',
   updatedAt: null,
   updatedKeys: [],
+  subscribedChannels: [],
+  lastEvent: null,
+  pollingActive: false,
+  lastRefreshAt: null,
 }
 
 const DashboardRealtimeContext = createContext<DashboardRealtimeState>(DEFAULT_REALTIME_STATE)
@@ -131,13 +141,28 @@ export function useDashboardRealtime(mode: DashboardMode, { userId, townId }: Da
   const [status, setStatus] = useState<DashboardRealtimeStatus>('offline')
   const [updatedAt, setUpdatedAt] = useState<number | null>(null)
   const [updatedKeys, setUpdatedKeys] = useState<string[]>([])
+  const [lastEvent, setLastEvent] = useState<DashboardRealtimeLastEvent | null>(null)
+  const [lastRefreshAt, setLastRefreshAt] = useState<number | null>(null)
   const seenEvents = useRef<Set<string>>(new Set())
   const clearUpdatedTimer = useRef<number | null>(null)
+  const activeChannels = useMemo(
+    () => [
+      ...(userId ? [`users.${userId}`] : []),
+      ...(mode === 'town_manager' && townId ? [`towns.${townId}.managers`] : []),
+      ...(mode === 'admin' ? ['platform.admins'] : []),
+    ],
+    [mode, townId, userId],
+  )
+  const hasLiveChannel = activeChannels.length > 0 && Boolean(window.Echo?.private)
 
   useEffect(() => {
     seenEvents.current.clear()
     const resetKeysTimer = window.setTimeout(() => {
       setUpdatedKeys([])
+    }, 0)
+    const resetRealtimeStateTimer = window.setTimeout(() => {
+      setLastEvent(null)
+      setLastRefreshAt(null)
     }, 0)
 
     if (clearUpdatedTimer.current) {
@@ -158,7 +183,6 @@ export function useDashboardRealtime(mode: DashboardMode, { userId, townId }: Da
     const privateChannel = window.Echo?.private?.(`users.${userId}`)
     const managerChannel = mode === 'town_manager' && townId ? window.Echo?.private?.(`towns.${townId}.managers`) : undefined
     const adminChannel = mode === 'admin' ? window.Echo?.private?.('platform.admins') : undefined
-    const hasLiveChannel = Boolean(privateChannel || managerChannel || adminChannel)
 
     const statusTimer = window.setTimeout(() => {
       setStatus(hasLiveChannel ? 'live' : 'polling')
@@ -177,13 +201,28 @@ export function useDashboardRealtime(mode: DashboardMode, { userId, townId }: Da
       }, UPDATE_FLASH_MS)
     }
 
-    const handleEvent = async (event: DashboardRealtimeEventName, payload: unknown) => {
+    const handleEvent = async (event: DashboardRealtimeEventName, alias: string, payload: unknown) => {
       const fingerprint = buildEventFingerprint(event, payload)
       if (seenEvents.current.has(fingerprint)) {
         return
       }
 
       seenEvents.current.add(fingerprint)
+      setLastEvent({
+        name: event,
+        alias,
+        fingerprint,
+        receivedAt: Date.now(),
+      })
+      if (import.meta.env.DEV) {
+        console.debug('[dashboard-realtime]', {
+          mode,
+          event,
+          alias,
+          channels: activeChannels,
+          payload,
+        })
+      }
       const keys = getQueryKeysForMode(mode, event)
       await Promise.all(keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })))
       markUpdated(EVENT_UPDATED_KEYS[event])
@@ -194,9 +233,9 @@ export function useDashboardRealtime(mode: DashboardMode, { userId, townId }: Da
     )
 
     listeners.forEach(({ eventName, alias }) => {
-      privateChannel?.listen?.(alias, (payload: unknown) => void handleEvent(eventName, payload))
-      managerChannel?.listen?.(alias, (payload: unknown) => void handleEvent(eventName, payload))
-      adminChannel?.listen?.(alias, (payload: unknown) => void handleEvent(eventName, payload))
+      privateChannel?.listen?.(alias, (payload: unknown) => void handleEvent(eventName, alias, payload))
+      managerChannel?.listen?.(alias, (payload: unknown) => void handleEvent(eventName, alias, payload))
+      adminChannel?.listen?.(alias, (payload: unknown) => void handleEvent(eventName, alias, payload))
     })
 
     const poll = async () => {
@@ -205,6 +244,7 @@ export function useDashboardRealtime(mode: DashboardMode, { userId, townId }: Da
         await Promise.all(MODE_QUERY_KEYS[mode].map((queryKey) => queryClient.invalidateQueries({ queryKey })))
         await queryClient.invalidateQueries({ queryKey: ['notifications'] })
         await queryClient.invalidateQueries({ queryKey: ['conversations'] })
+        setLastRefreshAt(Date.now())
 
         if (!cancelled && !hasLiveChannel) {
           setStatus('polling')
@@ -233,9 +273,10 @@ export function useDashboardRealtime(mode: DashboardMode, { userId, townId }: Da
         clearUpdatedTimer.current = null
       }
       window.clearTimeout(resetKeysTimer)
+      window.clearTimeout(resetRealtimeStateTimer)
       window.clearTimeout(statusTimer)
     }
-  }, [mode, queryClient, townId, userId])
+  }, [activeChannels, hasLiveChannel, mode, queryClient, townId, userId])
 
   return useMemo(
     () => ({
@@ -243,8 +284,12 @@ export function useDashboardRealtime(mode: DashboardMode, { userId, townId }: Da
       status,
       updatedAt,
       updatedKeys,
+      subscribedChannels: activeChannels,
+      lastEvent,
+      pollingActive: !hasLiveChannel || status === 'polling',
+      lastRefreshAt,
     }),
-    [mode, status, updatedAt, updatedKeys],
+    [activeChannels, hasLiveChannel, lastEvent, lastRefreshAt, mode, status, updatedAt, updatedKeys],
   )
 }
 

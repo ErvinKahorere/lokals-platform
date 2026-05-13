@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\CommunityProjectSubmitted;
 use App\Events\CommunityProjectUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CommunityProjectCategoryResource;
@@ -161,6 +162,7 @@ class CommunityProjectController extends Controller
                 $project->title.' was submitted for Town Manager verification.',
                 $project
             );
+            broadcast(new CommunityProjectSubmitted($project->fresh()));
         }
 
         return response()->json([
@@ -266,6 +268,7 @@ class CommunityProjectController extends Controller
                 $project->title.' was updated and resubmitted for verification.',
                 $project
             );
+            broadcast(new CommunityProjectSubmitted($project->fresh()));
         }
 
         return response()->json([
@@ -373,6 +376,7 @@ class CommunityProjectController extends Controller
         $this->recordVerification($project, $request->user(), 'status_updated', 'Project posted a new public update.');
         $this->notifyFollowersOfUpdate($project, $update, $request->user());
         broadcast(new CommunityProjectUpdated($project->fresh()));
+        broadcast(new CommunityProjectSubmitted($project->fresh()));
         $this->analytics->record($request->user(), 'community_project_update_posted', [
             'category' => 'community_project',
             'town' => $project->town,

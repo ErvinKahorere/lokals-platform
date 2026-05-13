@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\CommunityProjectSubmitted;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CommunityProjectResource;
 use App\Models\CommunityProject;
@@ -76,6 +77,7 @@ class AdminCommunityProjectController extends Controller
             $project->title.' is now visible in Get Involved.',
             'community_project_reviewed'
         );
+        broadcast(new CommunityProjectSubmitted($project->fresh()));
 
         return response()->json([
             'message' => 'Community project approved.',
@@ -107,6 +109,7 @@ class AdminCommunityProjectController extends Controller
             $project->title.' was rejected: '.$validated['reason'],
             'community_project_reviewed'
         );
+        broadcast(new CommunityProjectSubmitted($project->fresh()));
 
         return response()->json([
             'message' => 'Community project rejected.',
@@ -137,6 +140,7 @@ class AdminCommunityProjectController extends Controller
             $project->title.' needs updates before approval: '.$validated['reason'],
             'community_project_reviewed'
         );
+        broadcast(new CommunityProjectSubmitted($project->fresh()));
 
         return response()->json([
             'message' => 'Change request sent to organiser.',
@@ -158,6 +162,7 @@ class AdminCommunityProjectController extends Controller
         ]);
 
         $this->recordVerification($project, $request->user(), 'featured', $project->is_featured ? 'Marked as featured.' : 'Removed from featured.');
+        broadcast(new CommunityProjectSubmitted($project->fresh()));
 
         return response()->json([
             'message' => $project->is_featured ? 'Community project featured.' : 'Community project unfeatured.',
@@ -188,6 +193,7 @@ class AdminCommunityProjectController extends Controller
             $project->title.' is now marked as '.str_replace('_', ' ', $validated['status']).'.',
             'community_project_reviewed'
         );
+        broadcast(new CommunityProjectSubmitted($project->fresh()));
 
         return response()->json([
             'message' => 'Community project status updated.',

@@ -36,6 +36,7 @@ use App\Http\Controllers\Api\RideController;
 use App\Http\Controllers\Api\SafetyController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\SavedItemController;
+use App\Http\Controllers\Api\RealtimeHealthController;
 use App\Http\Controllers\Api\ServiceProviderController;
 use App\Http\Controllers\Api\SosController;
 use App\Http\Controllers\Api\SupportController;
@@ -117,6 +118,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/dashboard/driver', [DashboardController::class, 'driver']);
         Route::get('/dashboard/courier', [DashboardController::class, 'courier']);
         Route::get('/dashboard/admin', [DashboardController::class, 'admin']);
+        Route::get('/realtime/health', RealtimeHealthController::class);
         Route::get('/my/roles', [RoleApplicationController::class, 'myRoles']);
         Route::get('/my/modes', [RoleApplicationController::class, 'myModes']);
         Route::patch('/my/current-mode', [RoleApplicationController::class, 'updateCurrentMode']);

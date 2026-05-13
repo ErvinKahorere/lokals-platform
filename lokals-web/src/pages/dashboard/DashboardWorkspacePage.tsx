@@ -88,7 +88,7 @@ export function DashboardWorkspacePage({
 
           <DashboardSection
             title="Operational queue"
-            description="Use this as the practical workspace for this route while deeper API wiring is completed."
+            description="This workspace stays usable even before every deep module view is fully built, and it switches to live rows when the endpoint is already available."
           >
             <div className="space-y-4">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -141,9 +141,11 @@ export function DashboardWorkspacePage({
           {rightRail ?? (
             <Card variant="dashboard" className="p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-green">Next</p>
-              <h3 className="mt-2 text-lg font-semibold text-lokals-charcoal">Integration TODO</h3>
+              <h3 className="mt-2 text-lg font-semibold text-lokals-charcoal">Operational readiness</h3>
               <p className="mt-2 text-sm leading-6 text-lokals-muted">
-                Connect this workspace to its live frontend endpoint when that module is ready. Until then, this polished placeholder keeps navigation complete and discoverable.
+                {workspaceQuery.data?.source === 'api'
+                  ? 'This route is already drawing from a live endpoint. Use it as a working control surface while deeper detail pages continue to expand.'
+                  : 'This route is still using centralized fallback data, but the navigation, loading states, and table surface are already production-safe for later API wiring.'}
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <Link to="/dashboard/modes" className="rounded-full border border-lokals-border bg-white px-4 py-2 text-sm font-semibold text-lokals-charcoal">

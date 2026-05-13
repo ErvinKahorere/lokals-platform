@@ -30,6 +30,10 @@ export function ReportDetailsPage() {
       : '/admin/reports'
   const [note, setNote] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+  const timeline = report ? [
+    { label: 'Submitted', value: report.created_at },
+    ...(report.status && report.status !== 'open' ? [{ label: formatLabel(report.status), value: report.updated_at ?? report.created_at }] : []),
+  ] : []
 
   const submitStatus = async (status: 'in_progress' | 'resolved' | 'rejected') => {
     if (!report) return
@@ -64,6 +68,7 @@ export function ReportDetailsPage() {
                 <StatusBadge value={formatLabel(report.status)} tone={report.status === 'resolved' ? 'success' : report.status === 'rejected' ? 'danger' : 'warn'} />
               </div>
               <p className="mt-5 text-sm leading-6 text-lokals-charcoal">{report.description}</p>
+              {report.photo_url ? <img src={report.photo_url} alt={report.title} className="mt-5 h-64 w-full rounded-[24px] object-cover" /> : null}
               <div className="mt-5 grid gap-3 md:grid-cols-2">
                 <div className="rounded-[20px] bg-lokals-surface p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Resident</p>
@@ -80,6 +85,19 @@ export function ReportDetailsPage() {
                 <div className="mt-5 rounded-[20px] bg-lokals-surface p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Latest update</p>
                   <p className="mt-2 whitespace-pre-line text-sm text-lokals-charcoal">{report.resolution_notes}</p>
+                </div>
+              ) : null}
+              {timeline.length ? (
+                <div className="mt-5 rounded-[20px] bg-lokals-surface p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Status timeline</p>
+                  <div className="mt-3 space-y-3">
+                    {timeline.map((item) => (
+                      <div key={`${item.label}-${item.value ?? 'now'}`} className="flex items-center justify-between gap-3 rounded-2xl bg-white px-4 py-3">
+                        <p className="font-semibold text-lokals-charcoal">{item.label}</p>
+                        <p className="text-sm text-lokals-muted">{formatTimestamp(item.value)}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : null}
             </SectionCard>

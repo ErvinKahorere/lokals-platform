@@ -78,7 +78,14 @@ export interface RoleApplication {
   service_category?: string | null
   organisation_name?: string | null
   business_name?: string | null
-  documents?: Array<Record<string, unknown>>
+  documents?: Array<{
+    name?: string | null
+    file_name?: string | null
+    mime_type?: string | null
+    size?: number | null
+    url?: string | null
+    uploaded_at?: string | null
+  }>
   notes?: string | null
   rejection_reason?: string | null
   approved_at?: string | null
@@ -282,6 +289,7 @@ export interface Report {
   category: string
   title: string
   description: string
+  photo_url?: string | null
   location?: string | null
   town?: string | null
   area?: string | null
@@ -289,6 +297,7 @@ export interface Report {
   status: string
   resolution_notes?: string | null
   created_at?: string | null
+  updated_at?: string | null
   user?: User
 }
 
@@ -432,6 +441,13 @@ export interface DeliveryItem {
   price?: string | number | null
   photo_url?: string | null
   status?: string
+  cancel_reason?: string | null
+  rating?: number | null
+  rating_comment?: string | null
+  assigned_at?: string | null
+  picked_up_at?: string | null
+  in_transit_at?: string | null
+  delivered_at?: string | null
   created_at?: string | null
   updated_at?: string | null
   user?: Pick<User, 'id' | 'name' | 'phone'> | null
@@ -447,6 +463,14 @@ export interface RideItem {
   notes?: string | null
   fare_estimate?: string | number | null
   status?: string | null
+  cancel_reason?: string | null
+  rating?: number | null
+  rating_comment?: string | null
+  vehicle_label?: string | null
+  assigned_at?: string | null
+  arrived_at?: string | null
+  started_at?: string | null
+  completed_at?: string | null
   created_at?: string | null
   updated_at?: string | null
   user?: Pick<User, 'id' | 'name' | 'phone'> | null

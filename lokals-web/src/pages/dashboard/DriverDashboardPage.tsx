@@ -4,6 +4,8 @@ import { DashboardSection } from '../../components/dashboard/DashboardSection'
 import { QuickActionTile } from '../../components/dashboard/QuickActionTile'
 import { RecentActivityList } from '../../components/dashboard/RecentActivityList'
 import { StatusBreakdownCard } from '../../components/dashboard/StatusBreakdownCard'
+import { Button, StatusBadge } from '../../components/Ui'
+import { useDriverRideAction, useUpdateDriverAvailability } from '../../hooks/queries'
 import { useDriverOperationalData } from '../../lib/dashboardDataProvider'
 import type { DriverDashboardData } from '../../lib/dashboardTypes'
 import type { RoleDashboardPayload } from '../../types'
@@ -17,6 +19,8 @@ export function DriverDashboardPage() {
   const activityRows = dashboard?.recent_activity ?? []
   const activeTrip = data?.activeTrip
   const availability = data?.availability ?? 'unknown'
+  const availabilityMutation = useUpdateDriverAvailability()
+  const rideActionMutation = useDriverRideAction()
 
   return (
     <DashboardShell
@@ -37,7 +41,20 @@ export function DriverDashboardPage() {
         <DashboardSection title="Quick actions" description="Practical controls for your next trip.">
           <div className="grid gap-3 md:grid-cols-2">
             <QuickActionTile to="/ride" title="Available rides" body="Review nearby resident requests." icon={CarFront} />
-            <QuickActionTile to="/dashboard/driver" title="Go online" body="Control whether you are visible for matching." icon={Power} />
+            <button
+              type="button"
+              onClick={() => availabilityMutation.mutate(availability !== 'online')}
+              className="rounded-[22px] border border-lokals-border bg-white p-4 text-left shadow-card transition hover:-translate-y-0.5 hover:border-lokals-purple/30"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple">
+                  <Power className="h-5 w-5" />
+                </div>
+                <StatusBadge value={availability === 'online' ? 'online' : 'offline'} tone={availability === 'online' ? 'success' : 'neutral'} />
+              </div>
+              <p className="mt-3 text-base font-semibold text-lokals-charcoal">{availability === 'online' ? 'Go offline' : 'Go online'}</p>
+              <p className="mt-1 text-sm text-lokals-muted">Control whether you are visible for ride matching.</p>
+            </button>
             <QuickActionTile to="/ride" title="Trip history" body="Review recently completed trips." icon={History} />
             <QuickActionTile to="/dashboard/driver" title="Earnings" body="See your latest ride totals and payouts." icon={Wallet} />
           </div>
@@ -61,6 +78,14 @@ export function DriverDashboardPage() {
               <div key={ride.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
                 <p className="font-semibold text-lokals-charcoal">{ride.pickup_location} {'->'} {ride.dropoff_location}</p>
                 <p className="mt-1 text-sm text-lokals-muted">{ride.user?.name ?? 'Resident'} | {ride.ride_type ?? 'Standard'} | N$ {ride.fare_estimate ?? '0'}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionMutation.isPending} onClick={() => rideActionMutation.mutate({ rideId: ride.id, action: 'accept' })}>
+                    Accept
+                  </Button>
+                  <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" disabled={rideActionMutation.isPending} onClick={() => rideActionMutation.mutate({ rideId: ride.id, action: 'decline' })}>
+                    Decline
+                  </Button>
+                </div>
               </div>
             ))}
             {!availableRequests.length ? <p className="text-sm text-lokals-muted">No ride requests are waiting right now. Stay online to catch the next one.</p> : null}
@@ -85,6 +110,11 @@ export function DriverDashboardPage() {
             <div className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
               <p className="font-semibold text-lokals-charcoal">{activeTrip.pickup_location} {'->'} {activeTrip.dropoff_location}</p>
               <p className="mt-1 text-sm text-lokals-muted">{activeTrip.status ?? 'accepted'} | {activeTrip.user?.name ?? 'Resident'}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {activeTrip.status === 'accepted' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionMutation.isPending} onClick={() => rideActionMutation.mutate({ rideId: activeTrip.id, action: 'arrived' })}>Mark arrived</Button> : null}
+                {activeTrip.status === 'arrived' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionMutation.isPending} onClick={() => rideActionMutation.mutate({ rideId: activeTrip.id, action: 'start' })}>Start trip</Button> : null}
+                {activeTrip.status === 'in_progress' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionMutation.isPending} onClick={() => rideActionMutation.mutate({ rideId: activeTrip.id, action: 'complete' })}>Complete trip</Button> : null}
+              </div>
             </div>
           ) : (
             <p className="text-sm text-lokals-muted">No active trip yet. Once you accept a resident request it will appear here.</p>

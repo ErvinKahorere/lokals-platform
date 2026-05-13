@@ -39,7 +39,7 @@ export function CommunityImpactPendingPage() {
               {items.map((item: CommunityImpactTransaction) => (
                 <div key={item.id} className="rounded-[20px] border border-lokals-border bg-lokals-bg px-4 py-4">
                   <p className="font-semibold text-lokals-charcoal">{item.reason}</p>
-                  <p className="mt-1 text-sm text-lokals-muted">{item.points} points • {item.category.replaceAll('_', ' ')}</p>
+                  <p className="mt-1 text-sm text-lokals-muted">{item.points} points | {item.category.replaceAll('_', ' ')}</p>
                   <div className="mt-3 flex flex-wrap gap-3">
                     <Button disabled={approve.isPending} onClick={() => approve.mutate({ id: item.id })}>Approve</Button>
                     <Button variant="secondary" disabled={reject.isPending} onClick={() => reject.mutate({ id: item.id })}>Reject</Button>
