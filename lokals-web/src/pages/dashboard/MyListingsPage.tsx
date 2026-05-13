@@ -1,5 +1,6 @@
 import { useMyListings } from '../../hooks/queries'
 import { EmptyState, PageHeader, QueryState, SectionCard, StatusBadge } from '../../components/Ui'
+import type { Listing } from '../../types'
 
 export function MyListingsPage() {
   const listingsQuery = useMyListings()
@@ -13,7 +14,7 @@ export function MyListingsPage() {
           <EmptyState title="No listings yet" body="Create your first listing from the marketplace page." />
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
-            {listings.map((listing: any) => (
+            {listings.map((listing: Listing) => (
               <SectionCard key={listing.id} className="bg-white">
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="font-semibold">{listing.title}</h3>

@@ -6,10 +6,12 @@ import { RecentActivityList } from '../../components/dashboard/RecentActivityLis
 import { StatusBreakdownCard } from '../../components/dashboard/StatusBreakdownCard'
 import { useServiceProviderDashboard } from '../../hooks/queries'
 import { getDisplayPrice } from '../../lib/display'
+import { getDashboardActivity, getDashboardArray } from '../../lib/dashboardTypes'
+import type { Booking, RoleDashboardPayload, ServiceItem } from '../../types'
 
 export function ServiceProviderDashboardPage() {
   const dashboardQuery = useServiceProviderDashboard()
-  const dashboard = dashboardQuery.data
+  const dashboard = dashboardQuery.data as RoleDashboardPayload | undefined
 
   return (
     <DashboardShell
@@ -31,24 +33,24 @@ export function ServiceProviderDashboardPage() {
           </div>
         </DashboardSection>
         <DashboardSection title="Pending tasks" description="Where provider ops need attention.">
-          <StatusBreakdownCard items={(dashboard?.pending_tasks ?? []).map((item: any) => ({ label: item.label, value: item.count }))} />
+          <StatusBreakdownCard items={(dashboard?.pending_tasks ?? []).map((item) => ({ label: item.label, value: item.count }))} />
         </DashboardSection>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <DashboardSection title="Recent bookings" description="Current bookings and enquiry-style demand.">
           <div className="space-y-3">
-            {(((dashboard as any)?.recent_bookings as any[]) ?? []).slice(0, 5).map((booking) => (
+            {getDashboardArray(dashboard, 'recent_bookings').slice(0, 5).map((booking: Booking) => (
               <div key={booking.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
                 <p className="font-semibold text-lokals-charcoal">{booking.service?.name ?? 'Booking'}</p>
                 <p className="mt-1 text-sm text-lokals-muted">{booking.user?.name ?? 'Customer'} | {booking.status ?? 'pending'}</p>
               </div>
             ))}
-            {!(((dashboard as any)?.recent_bookings as any[]) ?? []).length ? <p className="text-sm text-lokals-muted">Incoming bookings will appear here once clients start booking your services.</p> : null}
+            {!getDashboardArray(dashboard, 'recent_bookings').length ? <p className="text-sm text-lokals-muted">Incoming bookings will appear here once clients start booking your services.</p> : null}
           </div>
         </DashboardSection>
         <DashboardSection title="Services offered" description="Your visible services and rates.">
           <div className="space-y-3">
-            {((dashboard?.services_offered as any[]) ?? []).slice(0, 5).map((service) => (
+            {(Array.isArray(dashboard?.services_offered) ? dashboard.services_offered : []).slice(0, 5).map((service: ServiceItem) => (
               <div key={service.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="font-semibold text-lokals-charcoal">{service.name}</p>
@@ -57,13 +59,13 @@ export function ServiceProviderDashboardPage() {
                 <p className="mt-1 text-sm text-lokals-muted">{service.duration_minutes} min - {service.price_type ?? 'fixed'}</p>
               </div>
             ))}
-            {!((dashboard?.services_offered as any[]) ?? []).length ? <p className="text-sm text-lokals-muted">Services and rates you publish will show up here.</p> : null}
+            {!((Array.isArray(dashboard?.services_offered) ? dashboard.services_offered : []).length) ? <p className="text-sm text-lokals-muted">Services and rates you publish will show up here.</p> : null}
           </div>
         </DashboardSection>
       </div>
 
       <DashboardSection title="Recent activity" description="Booking and provider updates.">
-        <RecentActivityList items={(dashboard?.recent_activity as any[]) ?? []} />
+        <RecentActivityList items={getDashboardActivity(dashboard)} />
       </DashboardSection>
     </DashboardShell>
   )

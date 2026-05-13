@@ -8,7 +8,8 @@ import { StatusBreakdownCard } from '../../components/dashboard/StatusBreakdownC
 import { Button } from '../../components/Ui'
 import { useBusinessDashboard } from '../../hooks/queries'
 import { getDisplayPrice } from '../../lib/display'
-import type { BusinessDashboard, RoleDashboardPayload } from '../../types'
+import { getDashboardActivity, getDashboardArray } from '../../lib/dashboardTypes'
+import type { AlertItem, Booking, BusinessDashboard, Product, RoleDashboardPayload, ServiceItem } from '../../types'
 
 export function BusinessDashboardPage({
   variant = 'business',
@@ -45,36 +46,36 @@ export function BusinessDashboardPage({
           </div>
         </DashboardSection>
         <DashboardSection title="Pending tasks" description="What to refresh next.">
-          <StatusBreakdownCard items={(dashboard?.pending_tasks ?? []).map((item: any) => ({ label: item.label, value: item.count }))} />
+          <StatusBreakdownCard items={(dashboard?.pending_tasks ?? []).map((item) => ({ label: item.label, value: item.count }))} />
         </DashboardSection>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
         <DashboardSection title="Recent bookings / enquiries" description="Customer demand coming in through your products and services.">
           <div className="space-y-3">
-            {(((dashboard as any)?.recent_bookings as any[]) ?? []).slice(0, 5).map((booking) => (
+            {getDashboardArray(dashboard, 'recent_bookings').slice(0, 5).map((booking: Booking) => (
               <div key={booking.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
                 <p className="font-semibold text-lokals-charcoal">{booking.service?.name ?? 'Booking enquiry'}</p>
                 <p className="mt-1 text-sm text-lokals-muted">{booking.user?.name ?? 'Customer'} | {booking.status ?? 'pending'}</p>
               </div>
             ))}
-            {!((dashboard as any)?.recent_bookings as any[])?.length ? <p className="text-sm text-lokals-muted">New bookings and enquiries will appear here once customers start engaging.</p> : null}
+            {!getDashboardArray(dashboard, 'recent_bookings').length ? <p className="text-sm text-lokals-muted">New bookings and enquiries will appear here once customers start engaging.</p> : null}
           </div>
         </DashboardSection>
         <DashboardSection title="Sale alerts and promotions" description="Recent public-facing updates from your businesses.">
           <div className="space-y-3">
-            {((((dashboard as any)?.sale_alerts as any[]) ?? (dashboard?.alerts as any[]) ?? [])).slice(0, 5).map((alert) => (
+            {(getDashboardArray(dashboard, 'sale_alerts').length > 0 ? getDashboardArray(dashboard, 'sale_alerts') : (dashboard?.alerts ?? [])).slice(0, 5).map((alert: AlertItem) => (
               <div key={alert.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
                 <p className="font-semibold text-lokals-charcoal">{alert.title}</p>
                 <p className="mt-1 text-sm text-lokals-muted">{alert.body}</p>
               </div>
             ))}
-            {!((((dashboard as any)?.sale_alerts as any[]) ?? (dashboard?.alerts as any[]) ?? [])).length ? <p className="text-sm text-lokals-muted">Promotions and sale alerts will appear here after your first published update.</p> : null}
+            {!(getDashboardArray(dashboard, 'sale_alerts').length > 0 ? getDashboardArray(dashboard, 'sale_alerts') : (dashboard?.alerts ?? [])).length ? <p className="text-sm text-lokals-muted">Promotions and sale alerts will appear here after your first published update.</p> : null}
           </div>
         </DashboardSection>
         <DashboardSection title="Recent product activity" description="Your latest products and their current pricing.">
           <div className="space-y-3">
-            {((((dashboard as any)?.recent_products as any[]) ?? (dashboard?.products as any[]) ?? [])).slice(0, 5).map((product) => (
+            {(getDashboardArray(dashboard, 'recent_products').length > 0 ? getDashboardArray(dashboard, 'recent_products') : (dashboard?.products ?? [])).slice(0, 5).map((product: Product) => (
               <div key={product.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="font-semibold text-lokals-charcoal">{product.title}</p>
@@ -83,14 +84,14 @@ export function BusinessDashboardPage({
                 <p className="mt-1 text-sm text-lokals-muted">{product.category ?? 'Local product'} - {product.town ?? 'Okahandja'}</p>
               </div>
             ))}
-            {!((((dashboard as any)?.recent_products as any[]) ?? (dashboard?.products as any[]) ?? [])).length ? <p className="text-sm text-lokals-muted">Products you publish in the store will show up here.</p> : null}
+            {!(getDashboardArray(dashboard, 'recent_products').length > 0 ? getDashboardArray(dashboard, 'recent_products') : (dashboard?.products ?? [])).length ? <p className="text-sm text-lokals-muted">Products you publish in the store will show up here.</p> : null}
           </div>
         </DashboardSection>
       </div>
 
       <DashboardSection title="Services and rates" description="Services attached to your business footprint.">
           <div className="grid gap-3 md:grid-cols-2">
-            {(((dashboard as any)?.recent_services as any[]) ?? []).slice(0, 4).map((service) => (
+            {getDashboardArray(dashboard, 'recent_services').slice(0, 4).map((service: ServiceItem) => (
               <div key={service.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="font-semibold text-lokals-charcoal">{service.name}</p>
@@ -99,12 +100,12 @@ export function BusinessDashboardPage({
                 <p className="mt-1 text-sm text-lokals-muted">{service.price_type ?? 'fixed'} | {service.duration_minutes ?? 0} min</p>
               </div>
             ))}
-            {!((dashboard as any)?.recent_services as any[])?.length ? <p className="text-sm text-lokals-muted">Services and rates will appear here after you add them.</p> : null}
+            {!getDashboardArray(dashboard, 'recent_services').length ? <p className="text-sm text-lokals-muted">Services and rates will appear here after you add them.</p> : null}
           </div>
       </DashboardSection>
 
       <DashboardSection title="Recent activity" description="Products, promotions, and business changes.">
-        <RecentActivityList items={((dashboard as any)?.recent_activity ?? [])} />
+        <RecentActivityList items={getDashboardActivity(dashboard)} />
       </DashboardSection>
     </DashboardShell>
   )

@@ -1,5 +1,6 @@
 import { useProviderBookings, useUpdateBookingStatus } from '../../hooks/queries'
 import { EmptyState, PageHeader, QueryState, SectionCard, StatusBadge } from '../../components/Ui'
+import type { Booking } from '../../types'
 
 const statusFlow = ['pending', 'confirmed', 'completed', 'cancelled']
 
@@ -16,7 +17,7 @@ export function AdminBookingsPage() {
           <EmptyState title="No bookings found" body="Incoming provider bookings will show here." />
         ) : (
           <div className="space-y-3">
-            {bookings.map((booking: any) => (
+            {bookings.map((booking: Booking) => (
               <SectionCard key={booking.id} className="bg-white">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>

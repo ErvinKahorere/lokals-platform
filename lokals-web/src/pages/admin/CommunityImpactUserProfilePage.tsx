@@ -1,14 +1,22 @@
 import { useParams } from 'react-router-dom'
 import { EmptyState, PageHeader, QueryState, SectionCard } from '../../components/Ui'
 import { useCommunityImpactUserProfile } from '../../hooks/queries'
+import type { CommunityImpactRedemption, CommunityImpactReward, CommunityImpactTransaction } from '../../types'
 
-const unwrapList = <T,>(payload: any): T[] => Array.isArray(payload) ? payload : (payload?.data ?? [])
+type WrappedList<T> = { data?: T[] } | T[] | null | undefined
+
+const unwrapList = <T,>(payload: WrappedList<T>): T[] => (Array.isArray(payload) ? payload : (payload?.data ?? []))
+
+const getRewardTitle = (reward?: CommunityImpactReward | { data: CommunityImpactReward } | null) => {
+  if (!reward) return 'Reward'
+  return 'data' in reward ? reward.data.title : reward.title
+}
 
 export function CommunityImpactUserProfilePage() {
   const { userId } = useParams()
   const query = useCommunityImpactUserProfile(userId)
-  const transactions = unwrapList<any>(query.data?.transactions)
-  const redemptions = unwrapList<any>(query.data?.redemptions)
+  const transactions = unwrapList<CommunityImpactTransaction>(query.data?.transactions)
+  const redemptions = unwrapList<CommunityImpactRedemption>(query.data?.redemptions)
 
   return (
     <div className="space-y-6">
@@ -27,7 +35,7 @@ export function CommunityImpactUserProfilePage() {
                   {transactions.map((item) => (
                     <div key={item.id} className="rounded-[20px] border border-lokals-border bg-lokals-bg px-4 py-4">
                       <p className="font-semibold text-lokals-charcoal">{item.reason}</p>
-                      <p className="mt-1 text-sm text-lokals-muted">{item.points} points • {item.verification_status}</p>
+                      <p className="mt-1 text-sm text-lokals-muted">{item.points} points | {item.verification_status}</p>
                     </div>
                   ))}
                 </div>
@@ -37,8 +45,8 @@ export function CommunityImpactUserProfilePage() {
                 <div className="mt-4 space-y-3">
                   {redemptions.map((item) => (
                     <div key={item.id} className="rounded-[20px] border border-lokals-border bg-lokals-bg px-4 py-4">
-                      <p className="font-semibold text-lokals-charcoal">{('data' in (item.reward ?? {}) ? item.reward?.data?.title : item.reward?.title) ?? 'Reward'}</p>
-                      <p className="mt-1 text-sm text-lokals-muted">{item.points_spent} points • {item.status}</p>
+                      <p className="font-semibold text-lokals-charcoal">{getRewardTitle(item.reward)}</p>
+                      <p className="mt-1 text-sm text-lokals-muted">{item.points_spent} points | {item.status}</p>
                     </div>
                   ))}
                 </div>

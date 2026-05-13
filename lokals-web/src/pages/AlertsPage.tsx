@@ -22,8 +22,8 @@ export function AlertsPage() {
   const [tab, setTab] = useState<(typeof tabs)[number]>('all')
   const alertsQuery = useAlertsFeed()
   const followingFeedQuery = useFollowingFeed()
-  const alerts = alertsQuery.data?.data ?? []
-  const following = (followingFeedQuery.data?.data ?? []) as FollowingUpdate[]
+  const alerts = useMemo(() => alertsQuery.data?.data ?? [], [alertsQuery.data?.data])
+  const following = useMemo(() => (followingFeedQuery.data?.data ?? []) as FollowingUpdate[], [followingFeedQuery.data?.data])
 
   const items = useMemo(() => {
     const baseAlerts = alerts.map((item: AlertFeedItem) => ({

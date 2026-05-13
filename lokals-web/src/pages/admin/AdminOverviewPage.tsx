@@ -1,6 +1,7 @@
 import { Activity, AlertTriangle, BadgeCheck } from 'lucide-react'
 import { useAdminOverview, useModerationFlags } from '../../hooks/queries'
 import { PageHeader, QueryState, SectionCard, StatCard, StatusBadge } from '../../components/Ui'
+import type { ModerationFlag } from '../../types'
 
 export function AdminOverviewPage() {
   const overviewQuery = useAdminOverview()
@@ -24,7 +25,7 @@ export function AdminOverviewPage() {
           <StatusBadge value={`${flags.length} open flags`} tone={flags.length > 0 ? 'warn' : 'success'} />
         </div>
         <div className="mt-4 space-y-3">
-          {flags.slice(0, 5).map((flag: any) => (
+          {flags.slice(0, 5).map((flag: ModerationFlag) => (
             <div key={flag.id} className="rounded-2xl bg-[var(--bg)] p-4">
               <div className="flex items-center justify-between gap-3">
                 <p className="font-semibold">{flag.reason}</p>

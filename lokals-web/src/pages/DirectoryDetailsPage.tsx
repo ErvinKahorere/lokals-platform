@@ -7,6 +7,7 @@ import { TrustRow } from '../components/experience/TrustRow'
 import { useCreateFollow, useDeleteFollow, useDirectoryAlerts, useDirectoryDetails, useFollows } from '../hooks/queries'
 import { getDisplayDistance, getServicePriceLabel, resolveMediaUrl } from '../lib/display'
 import { useAuthStore } from '../store/auth'
+import type { AlertItem } from '../types'
 
 export function DirectoryDetailsPage() {
   const { id } = useParams()
@@ -18,7 +19,7 @@ export function DirectoryDetailsPage() {
   const deleteFollow = useDeleteFollow()
   const organization = directoryQuery.data
   const followId = (followsQuery.data?.data ?? []).find((follow) => follow.followable_type.includes('Organization') && follow.followable_id === organization?.id)?.id
-  const alerts = alertsQuery.data?.data ?? []
+  const alerts = (alertsQuery.data?.data ?? []) as unknown as AlertItem[]
 
   return (
     <QueryState isLoading={directoryQuery.isLoading || alertsQuery.isLoading} error={directoryQuery.error ?? alertsQuery.error} empty={!organization}>
@@ -126,7 +127,7 @@ export function DirectoryDetailsPage() {
                 {alerts.length === 0 ? (
                   <EmptyState title="No alerts yet" body="Follow this profile to receive announcements and service updates here." />
                 ) : (
-                  alerts.map((alert: any) => (
+                  alerts.map((alert) => (
                     <div key={alert.id} className="rounded-[20px] border border-lokals-border p-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-gold">Alert</p>
                       <p className="mt-2 font-semibold text-lokals-charcoal">{alert.title}</p>

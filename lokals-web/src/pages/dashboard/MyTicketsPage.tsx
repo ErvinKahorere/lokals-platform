@@ -7,7 +7,7 @@ import { useCancelEventTicket, useMyTickets } from '../../hooks/queries'
 export function MyTicketsPage() {
   const ticketsQuery = useMyTickets()
   const cancelTicket = useCancelEventTicket()
-  const tickets = ticketsQuery.data?.data ?? []
+  const tickets = useMemo(() => ticketsQuery.data?.data ?? [], [ticketsQuery.data?.data])
   const [tab, setTab] = useState<'upcoming' | 'past' | 'cancelled'>('upcoming')
 
   const filtered = useMemo(() => {

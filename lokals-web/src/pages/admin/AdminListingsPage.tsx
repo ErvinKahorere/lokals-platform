@@ -1,5 +1,6 @@
 import { useListings, useSuspendContent } from '../../hooks/queries'
 import { EmptyState, PageHeader, QueryState, SectionCard, StatusBadge } from '../../components/Ui'
+import type { Listing } from '../../types'
 
 export function AdminListingsPage() {
   const listingsQuery = useListings()
@@ -14,7 +15,7 @@ export function AdminListingsPage() {
           <EmptyState title="No listings found" body="Marketplace items will appear here once created." />
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
-            {listings.map((listing: any) => (
+            {listings.map((listing: Listing) => (
               <SectionCard key={listing.id} className="bg-white">
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="font-semibold">{listing.title}</h3>

@@ -1,13 +1,25 @@
 import { useFollowingFeed, useFollows } from '../../hooks/queries'
 import { EmptyState, PageHeader, QueryState, SectionCard, StatusBadge } from '../../components/Ui'
 import { ActivityTimeline, type ActivityTimelineItem } from '../../components/experience/ActivityTimeline'
+import type { FollowItem } from '../../types'
+
+type FollowingFeedItem = {
+  id?: number | string
+  type?: string | null
+  title?: string | null
+  name?: string | null
+  body?: string | null
+  description?: string | null
+  created_at?: string | null
+  priority?: string | null
+}
 
 export function FollowingFeedPage() {
   const feedQuery = useFollowingFeed()
   const followsQuery = useFollows()
   const feedItems = feedQuery.data?.data ?? []
   const follows = followsQuery.data?.data ?? []
-  const timelineItems: ActivityTimelineItem[] = feedItems.map((item: any, index: number) => ({
+  const timelineItems: ActivityTimelineItem[] = feedItems.map((item: FollowingFeedItem, index: number) => ({
     id: `${item.type ?? 'feed'}-${item.id ?? index}`,
     kind: item.type === 'job' ? 'job' : item.type === 'listing' ? 'listing' : item.type === 'report' ? 'report' : 'booking',
     title: item.title ?? item.name ?? 'Follow update',
@@ -26,7 +38,7 @@ export function FollowingFeedPage() {
           <StatusBadge value={`${follows.length} following`} />
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
-          {follows.map((follow: any) => (
+          {follows.map((follow: FollowItem) => (
             <span key={follow.id} className="rounded-full bg-[var(--bg)] px-3 py-2 text-xs font-semibold">
               {follow.followable?.name ?? follow.followable?.title ?? `Item ${follow.followable_id}`}
             </span>

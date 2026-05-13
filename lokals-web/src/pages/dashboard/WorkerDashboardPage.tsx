@@ -5,10 +5,13 @@ import { QuickActionTile } from '../../components/dashboard/QuickActionTile'
 import { RecentActivityList } from '../../components/dashboard/RecentActivityList'
 import { StatusBreakdownCard } from '../../components/dashboard/StatusBreakdownCard'
 import { useWorkerDashboard } from '../../hooks/queries'
+import { getDashboardActivity, getDashboardArray, getDashboardObject } from '../../lib/dashboardTypes'
+import type { Job, RoleDashboardPayload } from '../../types'
 
 export function WorkerDashboardPage() {
   const dashboardQuery = useWorkerDashboard()
-  const dashboard = dashboardQuery.data
+  const dashboard = dashboardQuery.data as RoleDashboardPayload | undefined
+  const workerProfile = getDashboardObject(dashboard, 'worker_profile')
 
   return (
     <DashboardShell
@@ -28,19 +31,19 @@ export function WorkerDashboardPage() {
           </div>
         </DashboardSection>
         <DashboardSection title="Pending tasks" description="Where you can improve readiness right now.">
-          <StatusBreakdownCard items={(dashboard?.pending_tasks ?? []).map((item: any) => ({ label: item.label, value: item.count }))} />
+          <StatusBreakdownCard items={(dashboard?.pending_tasks ?? []).map((item) => ({ label: item.label, value: item.count }))} />
         </DashboardSection>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <DashboardSection title="Jobs near me" description="Open jobs that fit your current role.">
           <div className="space-y-3">
-            {((dashboard?.jobs_near_me as any[]) ?? []).slice(0, 5).map((job) => (
+            {getDashboardArray(dashboard, 'jobs_near_me').slice(0, 5).map((job: Job) => (
               <div key={job.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
                 <p className="font-semibold text-lokals-charcoal">{job.title}</p>
                 <p className="mt-1 text-sm text-lokals-muted">{job.location ?? 'Okahandja'} - {job.compensation ?? 'Budget on request'}</p>
               </div>
             ))}
-            {!((dashboard?.jobs_near_me as any[]) ?? []).length ? <p className="text-sm text-lokals-muted">Nearby jobs will appear here when local demand is available.</p> : null}
+            {!getDashboardArray(dashboard, 'jobs_near_me').length ? <p className="text-sm text-lokals-muted">Nearby jobs will appear here when local demand is available.</p> : null}
           </div>
         </DashboardSection>
         <DashboardSection title="Applications and profile status" description="Track your worker readiness and active applications.">
@@ -48,22 +51,22 @@ export function WorkerDashboardPage() {
             <div className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
               <p className="font-semibold text-lokals-charcoal">Worker profile</p>
               <p className="mt-1 text-sm text-lokals-muted">
-                {((dashboard as any)?.worker_profile?.headline as string | undefined) ?? 'Profile setup still needs attention.'}
+                {workerProfile.headline ?? 'Profile setup still needs attention.'}
               </p>
             </div>
-            {(((dashboard as any)?.applications as any[]) ?? []).slice(0, 4).map((application) => (
+            {getDashboardArray(dashboard, 'applications').slice(0, 4).map((application) => (
               <div key={application.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
                 <p className="font-semibold text-lokals-charcoal">{application.job?.title ?? 'Application'}</p>
                 <p className="mt-1 text-sm text-lokals-muted">{application.status ?? 'pending'} | {application.job?.location ?? 'Okahandja'}</p>
               </div>
             ))}
-            {!(((dashboard as any)?.applications as any[]) ?? []).length ? <p className="text-sm text-lokals-muted">Applications you send through LOKALS will appear here.</p> : null}
+            {!getDashboardArray(dashboard, 'applications').length ? <p className="text-sm text-lokals-muted">Applications you send through LOKALS will appear here.</p> : null}
           </div>
         </DashboardSection>
       </div>
 
       <DashboardSection title="Recent activity" description="Applications and worker profile movement.">
-        <RecentActivityList items={(dashboard?.recent_activity as any[]) ?? []} />
+        <RecentActivityList items={getDashboardActivity(dashboard)} />
       </DashboardSection>
     </DashboardShell>
   )

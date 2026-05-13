@@ -1,5 +1,6 @@
 import { useMyJobs } from '../../hooks/queries'
 import { EmptyState, PageHeader, QueryState, SectionCard, StatusBadge } from '../../components/Ui'
+import type { Job } from '../../types'
 
 export function MyJobsPage() {
   const jobsQuery = useMyJobs()
@@ -13,7 +14,7 @@ export function MyJobsPage() {
           <EmptyState title="No jobs published" body="Posted jobs will show here with applications as they arrive." />
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
-            {jobs.map((job: any) => (
+            {jobs.map((job: Job) => (
               <SectionCard key={job.id} className="bg-white">
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="font-semibold">{job.title}</h3>

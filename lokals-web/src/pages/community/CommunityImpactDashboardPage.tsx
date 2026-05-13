@@ -3,9 +3,12 @@ import { Button, EmptyState, PageHeader, QueryState, SectionCard, StatusPill } f
 import { useCommunityImpactDashboard } from '../../hooks/queries'
 import type { CommunityImpactAccount, CommunityImpactBadge, CommunityImpactTransaction } from '../../types'
 
-const unwrapAccount = (payload: any): CommunityImpactAccount => ('data' in payload ? payload.data : payload)
-const unwrapBadge = (payload: any): CommunityImpactBadge => ('data' in payload ? payload.data : payload)
-const unwrapList = <T,>(payload: any): T[] => Array.isArray(payload) ? payload : (payload?.data ?? [])
+type WrappedResource<T> = { data: T } | T
+type WrappedList<T> = { data?: T[] } | T[] | null | undefined
+
+const unwrapAccount = (payload: WrappedResource<CommunityImpactAccount>): CommunityImpactAccount => ('data' in payload ? payload.data : payload)
+const unwrapBadge = (payload: WrappedResource<CommunityImpactBadge>): CommunityImpactBadge => ('data' in payload ? payload.data : payload)
+const unwrapList = <T,>(payload: WrappedList<T>): T[] => (Array.isArray(payload) ? payload : (payload?.data ?? []))
 
 export function CommunityImpactDashboardPage() {
   const dashboardQuery = useCommunityImpactDashboard()
@@ -59,7 +62,7 @@ export function CommunityImpactDashboardPage() {
                   {recentApproved.length === 0 ? <EmptyState title="No approved points yet" body="Verified contributions will show up here once they are approved." /> : recentApproved.map((item) => (
                     <div key={item.id} className="rounded-[20px] border border-lokals-border bg-lokals-bg px-4 py-4">
                       <p className="font-semibold text-lokals-charcoal">{item.reason}</p>
-                      <p className="mt-1 text-sm text-lokals-muted">{item.points} points • {item.category.replaceAll('_', ' ')}</p>
+                      <p className="mt-1 text-sm text-lokals-muted">{item.points} points | {item.category.replaceAll('_', ' ')}</p>
                     </div>
                   ))}
                 </div>
@@ -72,7 +75,7 @@ export function CommunityImpactDashboardPage() {
                   {pending.length === 0 ? <EmptyState title="Nothing pending right now" body="Fresh verified actions will appear here when they need review." /> : pending.map((item) => (
                     <div key={item.id} className="rounded-[20px] border border-lokals-border bg-lokals-bg px-4 py-4">
                       <p className="font-semibold text-lokals-charcoal">{item.reason}</p>
-                      <p className="mt-1 text-sm text-lokals-muted">{item.points} points • awaiting review</p>
+                      <p className="mt-1 text-sm text-lokals-muted">{item.points} points | awaiting review</p>
                     </div>
                   ))}
                 </div>

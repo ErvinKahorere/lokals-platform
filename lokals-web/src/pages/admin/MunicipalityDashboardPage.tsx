@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarPlus2, ClipboardList, Megaphone, Newspaper, Siren } from 'lucide-react'
+import { CalendarPlus2, ClipboardList, Megaphone, Newspaper, ShieldCheck, Siren, Truck } from 'lucide-react'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { DashboardSection } from '../../components/dashboard/DashboardSection'
 import { RecentActivityList } from '../../components/dashboard/RecentActivityList'
 import { StatusBreakdownCard } from '../../components/dashboard/StatusBreakdownCard'
 import { Button, Input, Select, StatusBadge, TextArea } from '../../components/Ui'
-import { useCreateMunicipalAlert, useTownManagerDashboard } from '../../hooks/queries'
+import { useCreateMunicipalAlert } from '../../hooks/queries'
+import { useTownManagerDashboardData } from '../../lib/dashboardDataProvider'
 import { OKAHANDJA_AREAS } from '../../lib/pilot'
+import type { TownManagerDashboardData } from '../../lib/dashboardTypes'
 import type { AlertItem, EventItem, MunicipalityDashboard, Report, RoleDashboardPayload } from '../../types'
 
 const areaOptions = ['', ...OKAHANDJA_AREAS]
@@ -43,9 +45,10 @@ function getAlertTypeLabel(value: string) {
 }
 
 export function MunicipalityDashboardPage() {
-  const dashboardQuery = useTownManagerDashboard()
+  const dashboardQuery = useTownManagerDashboardData()
   const createAlert = useCreateMunicipalAlert()
-  const dashboard = dashboardQuery.data as (RoleDashboardPayload & MunicipalityDashboard) | undefined
+  const data = dashboardQuery.data as TownManagerDashboardData | undefined
+  const dashboard = data?.dashboard as (RoleDashboardPayload & MunicipalityDashboard) | null | undefined
   const alertFormRef = useRef<HTMLDivElement | null>(null)
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
@@ -75,9 +78,11 @@ export function MunicipalityDashboardPage() {
     alerts_sent: dashboard?.stats?.municipal_alerts_sent ?? 0,
   }), [dashboard?.stats])
 
-  const recentReports = (dashboard?.recent_reports ?? []) as Report[]
-  const activeAlerts = (dashboard?.active_alerts ?? []) as AlertItem[]
+  const recentReports = (data?.reports ?? dashboard?.recent_reports ?? []) as Report[]
+  const activeAlerts = (data?.alerts ?? dashboard?.active_alerts ?? []) as AlertItem[]
   const upcomingEvents = (dashboard?.upcoming_events ?? []) as EventItem[]
+  const pendingApprovals = data?.approvals ?? []
+  const analyticsSummary = data?.analyticsSummary ?? {}
 
   const focusAlertForm = (nextType: string) => {
     setType(nextType)
@@ -100,7 +105,12 @@ export function MunicipalityDashboardPage() {
       )}
       isLoading={dashboardQuery.isLoading}
       error={dashboardQuery.error}
-      stats={stats}
+      stats={{
+        ...stats,
+        pending_approvals: pendingApprovals.length,
+        role_applications: data?.roleApplicationsPending ?? 0,
+        feed_pending: data?.feedPending.length ?? 0,
+      }}
     >
       <DashboardSection title="Primary actions" description="These are the fastest paths to a strong live demo.">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -232,7 +242,7 @@ export function MunicipalityDashboardPage() {
 
         <DashboardSection title="Report snapshot" description="Keep the status mix readable and current.">
           {reportStatusRows.length > 0 ? (
-            <StatusBreakdownCard items={reportStatusRows.map((item: any) => ({ label: formatLabel(item.status), value: item.count }))} />
+            <StatusBreakdownCard items={reportStatusRows.map((item) => ({ label: formatLabel(item.status), value: item.count }))} />
           ) : (
             <p className="text-sm text-lokals-muted">No city reports have been submitted for this municipality yet.</p>
           )}
@@ -240,6 +250,25 @@ export function MunicipalityDashboardPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
+        <DashboardSection title="Pending approvals" description="The highest-value moderation and approval queue across the town." action={<Link to="/dashboard/town-manager/pending-approvals" className="text-sm font-semibold text-lokals-green">View queue</Link>}>
+          {pendingApprovals.length > 0 ? (
+            <div className="space-y-3">
+              {pendingApprovals.slice(0, 4).map((approval) => (
+                <div key={approval.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-lokals-charcoal">{approval.title}</p>
+                      <p className="mt-1 text-sm text-lokals-muted">{approval.type.replaceAll('_', ' ')} | {approval.source}</p>
+                    </div>
+                    <StatusBadge value={approval.status.replaceAll('_', ' ')} tone="warning" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-lokals-muted">No pending approvals are waiting right now.</p>
+          )}
+        </DashboardSection>
         <DashboardSection title="Recent reports" description="New issues from residents that need attention first." action={<Link to="/dashboard/town-manager/reports" className="text-sm font-semibold text-lokals-green">View reports</Link>}>
           {recentReports.length > 0 ? (
             <div className="space-y-3">
@@ -298,8 +327,44 @@ export function MunicipalityDashboardPage() {
         </DashboardSection>
       </div>
 
+      <div className="grid gap-4 xl:grid-cols-3">
+        <DashboardSection title="Operations at a glance" description="Live counts from active moderation and reward workflows.">
+          <StatusBreakdownCard
+            items={[
+              { label: 'Driver and courier applications', value: data?.roleApplicationsPending ?? 0 },
+              { label: 'Community projects pending', value: data?.communityProjectsPending.length ?? 0 },
+              { label: 'Feed moderation queue', value: data?.feedPending.length ?? 0 },
+              { label: 'Reward verifications', value: data?.rewardsPending.length ?? 0 },
+            ]}
+          />
+        </DashboardSection>
+        <DashboardSection title="Priority controls" description="Fast access to the town workflows that need human review.">
+          <div className="space-y-3">
+            {[
+              { label: 'Role applications', value: data?.roleApplicationsPending ?? 0, icon: Truck, to: '/dashboard/town-manager/role-applications' },
+              { label: 'Community projects', value: data?.communityProjectsPending.length ?? 0, icon: ShieldCheck, to: '/dashboard/town-manager/projects' },
+              { label: 'Feed moderation', value: data?.feedPending.length ?? 0, icon: Newspaper, to: '/dashboard/town-manager/feed/pending' },
+              { label: 'Reward approvals', value: data?.rewardsPending.length ?? 0, icon: Megaphone, to: '/dashboard/town-manager/community-impact/pending' },
+            ].map((item) => (
+              <Link key={item.label} to={item.to} className="flex items-center justify-between rounded-[20px] border border-lokals-border bg-white px-4 py-4 transition hover:border-lokals-green/25">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple">
+                    <item.icon className="h-4 w-4" />
+                  </div>
+                  <p className="font-semibold text-lokals-charcoal">{item.label}</p>
+                </div>
+                <span className="text-sm font-semibold text-lokals-charcoal">{item.value}</span>
+              </Link>
+            ))}
+          </div>
+        </DashboardSection>
+        <DashboardSection title="Analytics summary" description="Keep the top-level town performance signals readable.">
+          <StatusBreakdownCard items={Object.entries(analyticsSummary).slice(0, 5).map(([label, value]) => ({ label: label.replaceAll('_', ' '), value }))} />
+        </DashboardSection>
+      </div>
+
       <DashboardSection title="Recent activity" description="Fresh report and alert movement across the town.">
-        <RecentActivityList items={(dashboard?.recent_activity ?? []) as any[]} />
+        <RecentActivityList items={dashboard?.recent_activity ?? []} />
       </DashboardSection>
     </DashboardShell>
   )

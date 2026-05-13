@@ -53,13 +53,16 @@ export function HomePage() {
   const eventsQuery = useEvents({ town, area: area ?? undefined })
   const jobsQuery = useJobs({ town, area: area ?? undefined })
 
-  const providers = providersQuery.data?.data ?? []
-  const products = productsQuery.data?.data?.slice(0, 3) ?? []
-  const events = eventsQuery.data?.data?.slice(0, 3) ?? []
-  const jobs = jobsQuery.data?.data?.slice(0, 3) ?? []
+  const providers = useMemo(() => providersQuery.data?.data ?? [], [providersQuery.data?.data])
+  const products = useMemo(() => productsQuery.data?.data?.slice(0, 3) ?? [], [productsQuery.data?.data])
+  const events = useMemo(() => eventsQuery.data?.data?.slice(0, 3) ?? [], [eventsQuery.data?.data])
+  const jobs = useMemo(() => jobsQuery.data?.data?.slice(0, 3) ?? [], [jobsQuery.data?.data])
   const unreadCount = notificationsQuery.data?.filter((item) => item.read_at == null).length ?? 0
-  const localNews = (currentUser ? newsFeedQuery.data?.data : newsLocalQuery.data?.data)?.slice(0, 3) ?? []
-  const alerts = alertsFeedQuery.data?.data ?? []
+  const localNews = useMemo(
+    () => (currentUser ? newsFeedQuery.data?.data : newsLocalQuery.data?.data)?.slice(0, 3) ?? [],
+    [currentUser, newsFeedQuery.data?.data, newsLocalQuery.data?.data],
+  )
+  const alerts = useMemo(() => alertsFeedQuery.data?.data ?? [], [alertsFeedQuery.data?.data])
   const sortedAlerts = useMemo(() => {
     const severityWeight: Record<string, number> = { critical: 4, high: 3, urgent: 3, medium: 2, normal: 1 }
     return [...alerts].sort((a: AlertFeedItem, b: AlertFeedItem) => {

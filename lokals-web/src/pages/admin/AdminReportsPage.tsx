@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAdminReports, useUpdateReportStatus } from '../../hooks/queries'
 import { PageHeader, QueryState, SectionCard, Select, StatusBadge } from '../../components/Ui'
+import type { Report } from '../../types'
 
 const reportFilters = ['all', 'open', 'in_progress', 'resolved', 'urgent'] as const
 
@@ -21,7 +22,7 @@ export function AdminReportsPage() {
   const [filter, setFilter] = useState<(typeof reportFilters)[number]>('all')
   const reportsQuery = useAdminReports()
   const updateStatus = useUpdateReportStatus()
-  const reports = (reportsQuery.data?.data ?? []).filter((report: any) => {
+  const reports = (reportsQuery.data?.data ?? []).filter((report: Report) => {
     if (filter === 'urgent') {
       return report.priority === 'high' && !['resolved', 'rejected'].includes(report.status)
     }
@@ -56,7 +57,7 @@ export function AdminReportsPage() {
       />
       <QueryState isLoading={reportsQuery.isLoading} error={reportsQuery.error} empty={reports.length === 0}>
         <div className="space-y-3">
-          {reports.map((report: any) => (
+          {reports.map((report: Report) => (
             <SectionCard key={report.id} className="bg-white">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="min-w-0 flex-1">

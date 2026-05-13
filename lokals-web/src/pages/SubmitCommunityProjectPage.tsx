@@ -1,12 +1,19 @@
 import { useState } from 'react'
 import { Button, Card, PageHeader } from '../components/Ui'
 import { useCommunityProjectCategories, useCreateCommunityProject } from '../hooks/queries'
+import type { CommunityProject } from '../types'
 
 export function SubmitCommunityProjectPage() {
   const categoriesQuery = useCommunityProjectCategories()
   const createMutation = useCreateCommunityProject()
   const [saveAsDraft, setSaveAsDraft] = useState(false)
   const [success, setSuccess] = useState<{ reference?: string; status?: string } | null>(null)
+
+  type CreateCommunityProjectResponse = {
+    data?: Pick<CommunityProject, 'status' | 'reference_code'>
+    reference_code?: string
+    status?: string
+  }
 
   return (
     <div className="space-y-6">
@@ -48,10 +55,10 @@ export function SubmitCommunityProjectPage() {
           })
 
           createMutation.mutate(payload, {
-            onSuccess: (response: any) => {
+            onSuccess: (response: CreateCommunityProjectResponse) => {
               setSuccess({
-                reference: response?.data?.reference_code,
-                status: response?.data?.status,
+                reference: response.data?.reference_code ?? response.reference_code,
+                status: response.data?.status ?? response.status,
               })
             },
           })

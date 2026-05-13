@@ -1,5 +1,6 @@
 import { useProviders, useSuspendContent } from '../../hooks/queries'
 import { EmptyState, PageHeader, QueryState, SectionCard, StatusBadge } from '../../components/Ui'
+import type { Provider } from '../../types'
 
 export function AdminProvidersPage() {
   const providersQuery = useProviders()
@@ -14,7 +15,7 @@ export function AdminProvidersPage() {
           <EmptyState title="No providers found" body="Provider records will appear here when users create profiles." />
         ) : (
           <div className="space-y-3">
-            {providers.map((provider: any) => (
+            {providers.map((provider: Provider) => (
               <SectionCard key={provider.id} className="bg-white">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>

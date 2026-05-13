@@ -7,10 +7,20 @@ import { RecentActivityList } from '../../components/dashboard/RecentActivityLis
 import { StatusBreakdownCard } from '../../components/dashboard/StatusBreakdownCard'
 import { Button } from '../../components/Ui'
 import { useSuperAdminDashboard } from '../../hooks/queries'
+import { getDashboardActivity, getDashboardArray, getDashboardObject } from '../../lib/dashboardTypes'
+import type { Report, RoleDashboardPayload } from '../../types'
+
+type ModerationFlagSummary = {
+  id: string | number
+  reason: string
+  status: string
+  notes?: string | null
+}
 
 export function SuperAdminDashboardPage() {
   const dashboardQuery = useSuperAdminDashboard()
-  const dashboard = dashboardQuery.data
+  const dashboard = dashboardQuery.data as RoleDashboardPayload | undefined
+  const systemOverview = getDashboardObject(dashboard, 'system_overview') as Record<string, string | number>
 
   return (
     <DashboardShell
@@ -33,13 +43,13 @@ export function SuperAdminDashboardPage() {
           </div>
         </DashboardSection>
         <DashboardSection title="Pending tasks" description="Top admin pressure points right now.">
-          <StatusBreakdownCard items={(dashboard?.pending_tasks ?? []).map((item: any) => ({ label: item.label, value: item.count }))} />
+          <StatusBreakdownCard items={(dashboard?.pending_tasks ?? []).map((item) => ({ label: item.label, value: item.count }))} />
         </DashboardSection>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <DashboardSection title="Moderation queue" description="Recent flags waiting for review.">
           <div className="space-y-3">
-            {(((dashboard as any)?.moderation_flags as any[]) ?? []).slice(0, 6).map((flag) => (
+            {getDashboardArray(dashboard, 'moderation_flags').slice(0, 6).map((flag: ModerationFlagSummary) => (
               <div key={flag.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="font-semibold text-lokals-charcoal">{flag.reason}</p>
@@ -48,12 +58,12 @@ export function SuperAdminDashboardPage() {
                 <p className="mt-1 text-sm text-lokals-muted">{flag.notes ?? 'Pending moderator review.'}</p>
               </div>
             ))}
-            {!((((dashboard as any)?.moderation_flags as any[]) ?? []).length) ? <p className="text-sm text-lokals-muted">Moderation flags will appear here when the platform needs review attention.</p> : null}
+            {!getDashboardArray(dashboard, 'moderation_flags').length ? <p className="text-sm text-lokals-muted">Moderation flags will appear here when the platform needs review attention.</p> : null}
           </div>
         </DashboardSection>
         <DashboardSection title="System overview" description="High-level platform totals that help you read operational pressure quickly.">
           <div className="space-y-3">
-            {Object.entries(((dashboard as any)?.system_overview ?? {}) as Record<string, string | number>).map(([key, value]) => (
+            {Object.entries(systemOverview).map(([key, value]) => (
               <div key={key} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
                 <p className="font-semibold capitalize text-lokals-charcoal">{key.replaceAll('_', ' ')}</p>
                 <p className="mt-1 text-sm text-lokals-muted">{value}</p>
@@ -66,17 +76,17 @@ export function SuperAdminDashboardPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <DashboardSection title="Recent reports" description="Latest platform-visible civic reports and escalation points.">
           <div className="space-y-3">
-            {(((dashboard as any)?.recent_reports as any[]) ?? []).slice(0, 5).map((report) => (
+            {getDashboardArray(dashboard, 'recent_reports').slice(0, 5).map((report: Report) => (
               <div key={report.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
                 <p className="font-semibold text-lokals-charcoal">{report.title}</p>
                 <p className="mt-1 text-sm text-lokals-muted">{report.status ?? 'open'} | {report.priority ?? 'standard'}</p>
               </div>
             ))}
-            {!((((dashboard as any)?.recent_reports as any[]) ?? []).length) ? <p className="text-sm text-lokals-muted">Recent reports will appear here as platform issues are filed.</p> : null}
+            {!getDashboardArray(dashboard, 'recent_reports').length ? <p className="text-sm text-lokals-muted">Recent reports will appear here as platform issues are filed.</p> : null}
           </div>
         </DashboardSection>
         <DashboardSection title="Recent activity" description="Platform movement across flags, reports, and content.">
-          <RecentActivityList items={((dashboard as any)?.recent_activity ?? [])} />
+          <RecentActivityList items={getDashboardActivity(dashboard)} />
         </DashboardSection>
       </div>
     </DashboardShell>

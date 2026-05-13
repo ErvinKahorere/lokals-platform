@@ -20,7 +20,198 @@ type SettingsFormState = {
   notifications: Record<string, boolean>
 }
 
+type SettingsContentProps = {
+  user: NonNullable<ReturnType<typeof useSettingsUser>>
+  settings: SettingsFormState
+  appearance: AppearanceMode
+  onAppearanceChange: (value: AppearanceMode) => void
+  updatePreferences: ReturnType<typeof useUpdatePreferences>
+  updateProfile: ReturnType<typeof useUpdateProfile>
+  businesses: Awaited<ReturnType<typeof useMyBusinesses>>['data']
+  switchRole: ReturnType<typeof useSwitchRole>
+  onRoleSwitch: (role: string) => Promise<void>
+}
+
 const appearanceStorageKey = 'lokals-appearance'
+
+function useSettingsUser(meQuery: ReturnType<typeof useMe>) {
+  return useMemo(() => {
+    const payload = meQuery.data?.user
+    if (!payload) return undefined
+    return 'data' in payload ? payload.data : payload
+  }, [meQuery.data])
+}
+
+function SettingsContent({
+  user,
+  settings,
+  appearance,
+  onAppearanceChange,
+  updatePreferences,
+  updateProfile,
+  businesses,
+  switchRole,
+  onRoleSwitch,
+}: SettingsContentProps) {
+  const [town] = useState(settings.town)
+  const [area, setArea] = useState(settings.area)
+  const [radius, setRadius] = useState(settings.radius)
+  const [notifications, setNotifications] = useState(settings.notifications)
+
+  const saveLocation = async (event?: FormEvent) => {
+    event?.preventDefault()
+    await Promise.all([
+      updateProfile.mutateAsync({ default_town: town, default_area: area, service_radius: Number(radius) }),
+      updatePreferences.mutateAsync({ default_town: town, default_area: area, service_radius: Number(radius), notification_preferences: notifications }),
+    ])
+  }
+
+  const saveNotifications = async () => {
+    await updatePreferences.mutateAsync({
+      default_town: town,
+      default_area: area,
+      service_radius: Number(radius),
+      notification_preferences: notifications,
+    })
+  }
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      <SectionCard className="bg-white">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple"><UserRoundCog className="h-5 w-5" /></div>
+          <div>
+            <h2 className="text-lg font-semibold text-lokals-charcoal">Account</h2>
+            <p className="text-sm text-lokals-muted">{user.phone ?? 'Phone unavailable'}{user.email ? ` - ${user.email}` : ''}</p>
+          </div>
+        </div>
+        <div className="mt-4 rounded-[20px] border border-lokals-border bg-lokals-bg px-4 py-4">
+          <p className="text-sm font-semibold text-lokals-charcoal">{user.name ?? 'LOKALS user'}</p>
+          <p className="mt-1 text-sm text-lokals-muted">{[user.default_area, user.default_town].filter(Boolean).join(', ') || user.location || `${PILOT_TOWN}, Namibia`}</p>
+          <div className="mt-3">
+            <Link to="/dashboard/profile/edit">
+              <Button variant="secondary">Edit profile</Button>
+            </Link>
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard className="bg-white">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple"><MapPin className="h-5 w-5" /></div>
+          <div>
+            <h2 className="text-lg font-semibold text-lokals-charcoal">Location</h2>
+            <p className="text-sm text-lokals-muted">{PILOT_LOCATION_MESSAGE}</p>
+          </div>
+        </div>
+        <div className="mt-4">
+          <LocationSettings
+            town={town}
+            area={area}
+            radius={radius}
+            onAreaChange={setArea}
+            onRadiusChange={setRadius}
+            onSubmit={() => void saveLocation()}
+            isSaving={updatePreferences.isPending || updateProfile.isPending}
+          />
+        </div>
+      </SectionCard>
+
+      <SectionCard className="bg-white">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple"><Bell className="h-5 w-5" /></div>
+          <div>
+            <h2 className="text-lg font-semibold text-lokals-charcoal">Notifications</h2>
+            <p className="text-sm text-lokals-muted">Choose the updates that matter most to you.</p>
+          </div>
+        </div>
+        <div className="mt-4 space-y-4">
+          <NotificationPreferences values={notifications} onToggle={(key, checked) => setNotifications((current) => ({ ...current, [key]: checked }))} />
+          <div className="flex justify-end">
+            <Button onClick={() => void saveNotifications()} disabled={updatePreferences.isPending}>{updatePreferences.isPending ? 'Saving...' : 'Save notifications'}</Button>
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard className="bg-white">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-gold/25 text-lokals-charcoal"><Palette className="h-5 w-5" /></div>
+          <div>
+            <h2 className="text-lg font-semibold text-lokals-charcoal">Appearance</h2>
+            <p className="text-sm text-lokals-muted">Save how you want LOKALS to behave on this device.</p>
+          </div>
+        </div>
+        <div className="mt-4">
+          <AppearanceSettings value={appearance} onChange={onAppearanceChange} />
+        </div>
+      </SectionCard>
+
+      <SectionCard className="bg-white lg:col-span-2">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple"><UserRoundCog className="h-5 w-5" /></div>
+          <div>
+            <h2 className="text-lg font-semibold text-lokals-charcoal">Roles</h2>
+            <p className="text-sm text-lokals-muted">Current role: {roleLabel(user.current_role ?? user.roles?.[0])}</p>
+          </div>
+        </div>
+        <div className="mt-4">
+          <RoleSwitcher
+            roles={user.roles ?? []}
+            currentRole={user.current_role}
+            isSwitching={switchRole.isPending}
+            onSwitch={(role) => onRoleSwitch(role)}
+          />
+        </div>
+      </SectionCard>
+
+      <SectionCard className="bg-white">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple"><Building2 className="h-5 w-5" /></div>
+          <div>
+            <h2 className="text-lg font-semibold text-lokals-charcoal">Business shortcuts</h2>
+            <p className="text-sm text-lokals-muted">{businesses?.data?.length ?? 0} business profile(s)</p>
+          </div>
+        </div>
+        <div className="mt-4 space-y-3">
+          {(businesses?.data ?? []).slice(0, 3).map((business) => (
+            <div key={business.id} className="rounded-[18px] border border-lokals-border px-4 py-3">
+              <p className="font-semibold text-lokals-charcoal">{business.name}</p>
+              <p className="text-sm text-lokals-muted">{business.category} - {business.area ?? business.town ?? business.location ?? PILOT_TOWN}</p>
+            </div>
+          ))}
+          {!businesses?.data?.length ? <p className="text-sm text-lokals-muted">Business, service, and organization shortcuts will appear here once you create or link those profiles.</p> : null}
+        </div>
+      </SectionCard>
+
+      <SectionCard className="bg-white">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-50 text-lokals-danger"><Shield className="h-5 w-5" /></div>
+          <div>
+            <h2 className="text-lg font-semibold text-lokals-charcoal">Privacy</h2>
+            <p className="text-sm text-lokals-muted">Keep control over what others can see.</p>
+          </div>
+        </div>
+        <div className="mt-4 space-y-3 text-sm text-lokals-muted">
+          <p>Profile visibility: <span className="font-semibold text-lokals-charcoal">{user.profile_visibility ?? 'public'}</span></p>
+          <p>Blocked users and deeper privacy controls can expand later without changing your current account flow.</p>
+        </div>
+      </SectionCard>
+
+      <SectionCard className="bg-white">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple"><CircleHelp className="h-5 w-5" /></div>
+          <div>
+            <h2 className="text-lg font-semibold text-lokals-charcoal">Help &amp; Support</h2>
+            <p className="text-sm text-lokals-muted">Find the fastest path back to your bookings, tickets, reports, and saved items.</p>
+          </div>
+        </div>
+        <div className="mt-4 space-y-3 text-sm text-lokals-muted">
+          <p>Use Profile shortcuts for bookings, tickets, saved items, and reports. Activity keeps your alerts and account updates together in one place.</p>
+        </div>
+      </SectionCard>
+    </div>
+  )
+}
 
 export function SettingsPage() {
   const navigate = useNavigate()
@@ -30,11 +221,7 @@ export function SettingsPage() {
   const updatePreferences = useUpdatePreferences()
   const updateProfile = useUpdateProfile()
   const switchRole = useSwitchRole()
-  const user = useMemo(() => {
-    const payload = meQuery.data?.user
-    if (!payload) return undefined
-    return 'data' in payload ? payload.data : payload
-  }, [meQuery.data])
+  const user = useSettingsUser(meQuery)
   const derivedSettings = useMemo<SettingsFormState | null>(() => {
     if (!user) return null
     return {
@@ -52,9 +239,6 @@ export function SettingsPage() {
       },
     }
   }, [preferencesQuery.data, user])
-  const [town, setTown] = useState(PILOT_TOWN)
-  const [area, setArea] = useState('')
-  const [radius, setRadius] = useState('10')
   const [appearance, setAppearance] = useState<AppearanceMode>(() => {
     if (typeof window === 'undefined') {
       return 'light'
@@ -63,25 +247,6 @@ export function SettingsPage() {
     const stored = window.localStorage.getItem(appearanceStorageKey)
     return stored === 'dark' || stored === 'system' ? stored : 'light'
   })
-  const [notifications, setNotifications] = useState<Record<string, boolean>>({
-    alerts_from_followed_entities: true,
-    booking_updates: true,
-    job_updates: true,
-    event_updates: true,
-    news_updates: true,
-    promotions: true,
-    city_alerts: true,
-  })
-  const [hasEditedSettings, setHasEditedSettings] = useState(false)
-
-  useEffect(() => {
-    if (!derivedSettings || hasEditedSettings) return
-    setTown(derivedSettings.town)
-    setArea(derivedSettings.area)
-    setRadius(derivedSettings.radius)
-    setNotifications(derivedSettings.notifications)
-  }, [derivedSettings, hasEditedSettings])
-
   useEffect(() => {
     if (typeof window === 'undefined') {
       return
@@ -89,25 +254,6 @@ export function SettingsPage() {
 
     window.localStorage.setItem(appearanceStorageKey, appearance)
   }, [appearance])
-
-  const saveLocation = async (event?: FormEvent) => {
-    event?.preventDefault()
-    await Promise.all([
-      updateProfile.mutateAsync({ default_town: town, default_area: area, service_radius: Number(radius) }),
-      updatePreferences.mutateAsync({ default_town: town, default_area: area, service_radius: Number(radius), notification_preferences: notifications }),
-    ])
-    setHasEditedSettings(false)
-  }
-
-  const saveNotifications = async () => {
-    await updatePreferences.mutateAsync({
-      default_town: town,
-      default_area: area,
-      service_radius: Number(radius),
-      notification_preferences: notifications,
-    })
-    setHasEditedSettings(false)
-  }
 
   return (
     <div className="space-y-6">
@@ -118,154 +264,24 @@ export function SettingsPage() {
       >
         {!user ? (
           <EmptyState title="Settings unavailable" body="Sign in again to restore your account settings." />
+        ) : !derivedSettings ? (
+          <EmptyState title="Settings unavailable" body="We couldn't prepare your location and notification defaults yet." />
         ) : (
-          <div className="grid gap-4 lg:grid-cols-2">
-        <SectionCard className="bg-white">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple"><UserRoundCog className="h-5 w-5" /></div>
-            <div>
-              <h2 className="text-lg font-semibold text-lokals-charcoal">Account</h2>
-              <p className="text-sm text-lokals-muted">{user?.phone ?? 'Phone unavailable'}{user?.email ? ` - ${user.email}` : ''}</p>
-            </div>
-          </div>
-          <div className="mt-4 rounded-[20px] border border-lokals-border bg-lokals-bg px-4 py-4">
-            <p className="text-sm font-semibold text-lokals-charcoal">{user?.name ?? 'LOKALS user'}</p>
-            <p className="mt-1 text-sm text-lokals-muted">{[user?.default_area, user?.default_town].filter(Boolean).join(', ') || user?.location || `${PILOT_TOWN}, Namibia`}</p>
-            <div className="mt-3">
-              <Link to="/dashboard/profile/edit">
-                <Button variant="secondary">Edit profile</Button>
-              </Link>
-            </div>
-          </div>
-        </SectionCard>
-
-        <SectionCard className="bg-white">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple"><MapPin className="h-5 w-5" /></div>
-            <div>
-              <h2 className="text-lg font-semibold text-lokals-charcoal">Location</h2>
-              <p className="text-sm text-lokals-muted">{PILOT_LOCATION_MESSAGE}</p>
-            </div>
-          </div>
-          <div className="mt-4">
-            <LocationSettings
-              town={town}
-              area={area}
-              radius={radius}
-              onAreaChange={(nextArea) => {
-                setHasEditedSettings(true)
-                setArea(nextArea)
-              }}
-              onRadiusChange={(nextRadius) => {
-                setHasEditedSettings(true)
-                setRadius(nextRadius)
-              }}
-              onSubmit={() => void saveLocation()}
-              isSaving={updatePreferences.isPending || updateProfile.isPending}
-            />
-          </div>
-        </SectionCard>
-
-        <SectionCard className="bg-white">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple"><Bell className="h-5 w-5" /></div>
-            <div>
-              <h2 className="text-lg font-semibold text-lokals-charcoal">Notifications</h2>
-              <p className="text-sm text-lokals-muted">Choose the updates that matter most to you.</p>
-            </div>
-          </div>
-          <div className="mt-4 space-y-4">
-            <NotificationPreferences values={notifications} onToggle={(key, checked) => {
-              setHasEditedSettings(true)
-              setNotifications((current) => ({ ...current, [key]: checked }))
-            }} />
-            <div className="flex justify-end">
-              <Button onClick={() => void saveNotifications()} disabled={updatePreferences.isPending}>{updatePreferences.isPending ? 'Saving...' : 'Save notifications'}</Button>
-            </div>
-          </div>
-        </SectionCard>
-
-        <SectionCard className="bg-white">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-gold/25 text-lokals-charcoal"><Palette className="h-5 w-5" /></div>
-            <div>
-              <h2 className="text-lg font-semibold text-lokals-charcoal">Appearance</h2>
-              <p className="text-sm text-lokals-muted">Save how you want LOKALS to behave on this device.</p>
-            </div>
-          </div>
-          <div className="mt-4">
-            <AppearanceSettings value={appearance} onChange={setAppearance} />
-          </div>
-        </SectionCard>
-
-        <SectionCard className="bg-white lg:col-span-2">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple"><UserRoundCog className="h-5 w-5" /></div>
-            <div>
-              <h2 className="text-lg font-semibold text-lokals-charcoal">Roles</h2>
-              <p className="text-sm text-lokals-muted">Current role: {roleLabel(user?.current_role ?? user?.roles?.[0])}</p>
-            </div>
-          </div>
-          <div className="mt-4">
-            <RoleSwitcher
-              roles={user?.roles ?? []}
-              currentRole={user?.current_role}
-              isSwitching={switchRole.isPending}
-              onSwitch={async (role) => {
-                const payload = await switchRole.mutateAsync(role)
-                const nextUser = payload.user?.data ?? payload.user
-                navigate(getRoleHomePath(nextUser ?? user))
-              }}
-            />
-          </div>
-        </SectionCard>
-
-        <SectionCard className="bg-white">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple"><Building2 className="h-5 w-5" /></div>
-            <div>
-              <h2 className="text-lg font-semibold text-lokals-charcoal">Business shortcuts</h2>
-              <p className="text-sm text-lokals-muted">{businessesQuery.data?.data?.length ?? 0} business profile(s)</p>
-            </div>
-          </div>
-          <div className="mt-4 space-y-3">
-            {(businessesQuery.data?.data ?? []).slice(0, 3).map((business) => (
-              <div key={business.id} className="rounded-[18px] border border-lokals-border px-4 py-3">
-                <p className="font-semibold text-lokals-charcoal">{business.name}</p>
-                <p className="text-sm text-lokals-muted">{business.category} - {business.area ?? business.town ?? business.location ?? PILOT_TOWN}</p>
-              </div>
-            ))}
-            {!businessesQuery.data?.data?.length ? <p className="text-sm text-lokals-muted">Business, service, and organization shortcuts will appear here once you create or link those profiles.</p> : null}
-          </div>
-        </SectionCard>
-
-        <SectionCard className="bg-white">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-50 text-lokals-danger"><Shield className="h-5 w-5" /></div>
-            <div>
-              <h2 className="text-lg font-semibold text-lokals-charcoal">Privacy</h2>
-              <p className="text-sm text-lokals-muted">Keep control over what others can see.</p>
-            </div>
-          </div>
-          <div className="mt-4 space-y-3 text-sm text-lokals-muted">
-            <p>Profile visibility: <span className="font-semibold text-lokals-charcoal">{user?.profile_visibility ?? 'public'}</span></p>
-            <p>Blocked users and deeper privacy controls can expand later without changing your current account flow.</p>
-          </div>
-        </SectionCard>
-
-        <SectionCard className="bg-white">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple"><CircleHelp className="h-5 w-5" /></div>
-            <div>
-              <h2 className="text-lg font-semibold text-lokals-charcoal">Help &amp; Support</h2>
-              <p className="text-sm text-lokals-muted">Find the fastest path back to your bookings, tickets, reports, and saved items.</p>
-            </div>
-          </div>
-          <div className="mt-4 space-y-3 text-sm text-lokals-muted">
-            <p>Use Profile shortcuts for bookings, tickets, saved items, and reports. Activity keeps your alerts and account updates together in one place.</p>
-          </div>
-        </SectionCard>
-          </div>
+          <SettingsContent
+            user={user}
+            settings={derivedSettings}
+            appearance={appearance}
+            onAppearanceChange={setAppearance}
+            updatePreferences={updatePreferences}
+            updateProfile={updateProfile}
+            businesses={businessesQuery.data}
+            switchRole={switchRole}
+            onRoleSwitch={async (role) => {
+              const payload = await switchRole.mutateAsync(role)
+              const nextUser = payload.user?.data ?? payload.user
+              navigate(getRoleHomePath(nextUser ?? user))
+            }}
+          />
         )}
       </QueryState>
     </div>

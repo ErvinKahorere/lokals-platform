@@ -5,6 +5,7 @@ import { DashboardSection } from '../../components/dashboard/DashboardSection'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { buildPlaceholderRows, dashboardEmptyRows, type DashboardMode, getDashboardConfig, getNavItemMeta } from '../../lib/dashboardConfig'
 import { getDashboardWorkspaceData, type DashboardWorkspaceAction, type DashboardWorkspaceFilter, type DashboardWorkspaceRow } from '../../lib/dashboardWorkspaceData'
+import { useDashboardWorkspaceData } from '../../lib/dashboardDataProvider'
 
 export function DashboardWorkspacePage({
   mode,
@@ -30,11 +31,12 @@ export function DashboardWorkspacePage({
   const navMeta = getNavItemMeta(mode, path)
   const config = getDashboardConfig(mode)
   const seeded = getDashboardWorkspaceData(path)
+  const workspaceQuery = useDashboardWorkspaceData(path)
   const [activeFilter, setActiveFilter] = useState(() => filters[0]?.value ?? seeded.filters?.[0]?.value ?? 'all')
   const [search, setSearch] = useState('')
   const mergedActions = actions.length > 0 ? actions : seeded.actions ?? []
-  const mergedFilters = filters.length > 0 ? filters : seeded.filters ?? []
-  const mergedRows = rows && rows.length > 0 ? rows : seeded.rows
+  const mergedFilters = filters.length > 0 ? filters : workspaceQuery.data?.filters ?? seeded.filters ?? []
+  const mergedRows = rows && rows.length > 0 ? rows : workspaceQuery.data?.rows ?? seeded.rows
 
   const tableRows = useMemo(() => {
     const source = mergedRows && mergedRows.length > 0 ? mergedRows : navMeta ? buildPlaceholderRows([navMeta]) : dashboardEmptyRows
@@ -60,11 +62,13 @@ export function DashboardWorkspacePage({
       description={description}
       stats={{
         active_rows: tableRows.length,
-        workflow_state: filters.length > 0 ? activeFilter : 'ready',
+        workflow_state: mergedFilters.length > 0 ? activeFilter : 'ready',
         route_status: navMeta ? 'linked' : 'draft',
         mode: config.shortLabel,
       }}
       actions={primaryCta}
+      isLoading={workspaceQuery.isLoading}
+      error={workspaceQuery.error}
     >
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-5">
@@ -126,6 +130,10 @@ export function DashboardWorkspacePage({
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm font-medium text-lokals-muted">Mode</span>
                 <span className="text-sm font-semibold text-lokals-charcoal">{config.label}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm font-medium text-lokals-muted">Data source</span>
+                <span className="text-sm font-semibold text-lokals-charcoal">{workspaceQuery.data?.source === 'api' ? 'Live API' : 'Prepared mock fallback'}</span>
               </div>
             </div>
           </Card>

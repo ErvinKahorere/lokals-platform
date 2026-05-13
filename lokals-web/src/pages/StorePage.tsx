@@ -9,6 +9,12 @@ import { getDisplayPrice } from '../lib/display'
 import type { Product } from '../types'
 
 const categories = ['all', 'electronics', 'home', 'vehicles', 'clothing', 'food', 'services', 'more'] as const
+type SaleAlertCard = {
+  id: number | string
+  title?: string | null
+  body?: string | null
+  location?: string | null
+}
 
 export function StorePage() {
   const [search, setSearch] = useState('')
@@ -161,7 +167,7 @@ export function StorePage() {
           </div>
           <QueryState isLoading={saleAlertsQuery.isLoading} error={saleAlertsQuery.error} empty={(saleAlertsQuery.data?.data ?? []).length === 0}>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {(saleAlertsQuery.data?.data ?? []).slice(0, 4).map((alert: any) => (
+              {(saleAlertsQuery.data?.data ?? []).slice(0, 4).map((alert: SaleAlertCard) => (
                 <div key={alert.id} className="rounded-[22px] border border-lokals-border bg-gradient-to-br from-amber-50 via-white to-violet-50 p-4">
                   <StatusBadge value="Promotion" tone="warning" />
                   <p className="mt-3 text-lg font-semibold text-lokals-charcoal">{alert.title}</p>

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useMyReports } from '../../hooks/queries'
 import { EmptyState, PageHeader, QueryState, SectionCard, StatusBadge } from '../../components/Ui'
+import type { Report } from '../../types'
 
 export function MyReportsPage() {
   const reportsQuery = useMyReports()
@@ -14,7 +15,7 @@ export function MyReportsPage() {
           <EmptyState title="No reports yet" body="Reported issues will show here together with status updates." />
         ) : (
           <div className="space-y-4">
-            {reports.map((report: any) => (
+            {reports.map((report: Report) => (
               <Link key={report.id} to={`/dashboard/reports/${report.id}`}>
               <SectionCard className="bg-white transition hover:-translate-y-0.5">
                 <div className="flex items-center justify-between gap-3">
