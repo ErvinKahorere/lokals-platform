@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Badge, Button, EmptyState, PageHeader, QueryState, SectionCard } from '../components/Ui'
 import { useFeed, useFeedCategories, useHideFeedPost, useReportFeedPost, useSaveFeedPost } from '../hooks/queries'
+import type { FeedPost } from '../types'
 
 export function FeedPage() {
   const [category, setCategory] = useState('')
@@ -30,7 +31,7 @@ export function FeedPage() {
           <EmptyState title="No community feed posts yet" body="Approved town and community updates will appear here as they are published." />
         ) : (
           <div className="space-y-4">
-            {(feedQuery.data?.data ?? []).map((post: any) => (
+            {(feedQuery.data?.data ?? []).map((post: FeedPost) => (
               <SectionCard key={post.id} className="bg-white p-5">
                 <div className="flex flex-wrap items-center gap-2">
                   {post.category?.name ? <Badge tone="info">{post.category.name}</Badge> : null}

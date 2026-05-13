@@ -286,7 +286,7 @@ class _DemoAccount {
 }
 
 const _demoAccounts = [
-  _DemoAccount('Citizen', '+264810001050', 'Password123!'),
+  _DemoAccount('Resident', '+264810001050', 'Password123!'),
   _DemoAccount('Business owner', '+264810001101', 'Password123!'),
   _DemoAccount('Organization admin', '+264810001020', 'Password123!'),
   _DemoAccount('Town manager', '+264810001001', 'Password123!'),

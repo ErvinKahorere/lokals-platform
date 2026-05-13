@@ -26,6 +26,7 @@ export function BusinessDashboardPage({
 
   return (
     <DashboardShell
+      mode="business"
       eyebrow={eyebrow}
       title={title}
       description={description}

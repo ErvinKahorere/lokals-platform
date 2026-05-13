@@ -24,7 +24,7 @@ Use `http://127.0.0.1:8000/api/v1` for desktop/web Flutter targets when needed.
 
 ## Demo accounts
 
-- Citizen: `+264810000002` / `password`
+- Resident: `+264810000002` / `password`
 - Provider: `+264810000003` / `password`
 - Admin: `+264810000001` / `password`
 

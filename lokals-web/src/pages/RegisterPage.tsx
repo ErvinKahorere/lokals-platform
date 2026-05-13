@@ -48,9 +48,9 @@ export function RegisterPage() {
         <img src="/brand/lokals-logo.svg" alt="LOKALS" className="h-10 w-auto" />
         <p className="mt-4 text-sm font-semibold uppercase tracking-[0.28em] text-lokals-purple">Everything in your city</p>
         <h2 className="mt-3 text-3xl font-semibold text-lokals-charcoal">Create your LOKALS profile</h2>
-        <p className="mt-3 max-w-2xl text-sm text-lokals-muted">{PILOT_LOCATION_MESSAGE} Your first account opens as a citizen, and you can switch roles later if your work in the city grows.</p>
+        <p className="mt-3 max-w-2xl text-sm text-lokals-muted">{PILOT_LOCATION_MESSAGE} Your first account opens as a resident, and you can switch roles later if your work in the city grows.</p>
         <div className="mt-5 flex flex-wrap gap-3">
-          <StatusBadge value="Citizen first" tone="accent" />
+          <StatusBadge value="Resident first" tone="accent" />
           <StatusBadge value="Area saved" tone="success" />
           <StatusBadge value="Fast setup" tone="neutral" />
         </div>

@@ -35,7 +35,7 @@ Laravel 12 API for the LOKALS Phase 1 MVP.
 
 - Super admin: `+264810001000` / `Password123!`
 - Town manager: `+264810001001` / `Password123!`
-- Citizen: `+264810001050` / `Password123!`
+- Resident: `+264810001050` / `Password123!`
 - Business owner: `+264810001101` / `Password123!`
 - Service provider: `+264810002203` / `Password123!`
 

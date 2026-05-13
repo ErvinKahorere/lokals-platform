@@ -14,6 +14,7 @@ export function SuperAdminDashboardPage() {
 
   return (
     <DashboardShell
+      mode="admin"
       eyebrow="Super Admin"
       title="Platform control center"
       description="Users, directory growth, moderation pressure, and platform health in one high-signal dashboard."

@@ -5,6 +5,9 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../widgets/cards.dart';
 
 String formatRoleLabel(String role) {
+  if (role == 'citizen') {
+    return 'Resident';
+  }
   return role
       .split('_')
       .map(

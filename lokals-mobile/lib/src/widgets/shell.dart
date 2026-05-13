@@ -77,6 +77,9 @@ class LokalsShell extends ConsumerWidget {
   }
 
   String _formatRole(String role) {
+    if (role == 'citizen') {
+      return 'Resident';
+    }
     return role
         .split('_')
         .map((item) => item.isEmpty ? item : '${item[0].toUpperCase()}${item.substring(1)}')

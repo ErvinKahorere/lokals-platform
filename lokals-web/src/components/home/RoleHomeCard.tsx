@@ -2,7 +2,7 @@ import { ArrowRight, BriefcaseBusiness, Building2, Compass, LayoutDashboard, Sto
 import { Link } from 'react-router-dom'
 import { Button } from '../ui/Button'
 
-type RoleCardKind = 'business' | 'worker' | 'citizen' | 'organization' | 'manager' | 'guest'
+type RoleCardKind = 'business' | 'worker' | 'resident' | 'organization' | 'manager' | 'guest'
 
 const roleCopy: Record<RoleCardKind, { title: string; body: string; cta: string; to: string; icon: typeof Compass }> = {
   business: {
@@ -19,9 +19,9 @@ const roleCopy: Record<RoleCardKind, { title: string; body: string; cta: string;
     to: '/jobs',
     icon: BriefcaseBusiness,
   },
-  citizen: {
+  resident: {
     title: 'Explore services nearby',
-    body: 'Book trusted help, discover public offices, and stay on top of local updates.',
+    body: 'Book trusted help, discover public offices, and stay close to trusted local updates.',
     cta: 'Find Service',
     to: '/services',
     icon: Compass,
@@ -30,7 +30,7 @@ const roleCopy: Record<RoleCardKind, { title: string; body: string; cta: string;
     title: 'Organization dashboard ready',
     body: 'Manage updates, alerts, events, and community activity from one place.',
     cta: 'Open Dashboard',
-    to: '/dashboard/organization',
+    to: '/dashboard/organisation',
     icon: Building2,
   },
   manager: {
@@ -54,7 +54,7 @@ export function RoleHomeCard({ kind, activeRole }: { kind: RoleCardKind; activeR
     kind === 'manager'
       ? {
           ...roleCopy.manager,
-          to: activeRole === 'super_admin' || activeRole === 'operator' ? '/admin' : '/dashboard/town-manager',
+          to: activeRole === 'super_admin' || activeRole === 'operator' ? '/dashboard/admin' : '/dashboard/town-manager',
         }
       : roleCopy[kind]
   const Icon = content.icon

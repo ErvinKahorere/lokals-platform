@@ -13,6 +13,7 @@ export function ServiceProviderDashboardPage() {
 
   return (
     <DashboardShell
+      mode="provider"
       eyebrow="Service Provider"
       title="Service provider dashboard"
       description="Bookings, services, availability, and follower demand in one clear workspace."

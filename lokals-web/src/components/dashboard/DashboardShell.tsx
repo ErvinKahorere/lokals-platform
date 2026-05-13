@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import { Activity, Bell, ChartColumn, ClipboardList } from 'lucide-react'
 import { PageHeader, QueryState, StatCard } from '../Ui'
+import { SidebarLayout } from './SidebarLayout'
+import type { DashboardMode } from '../../lib/dashboardConfig'
 
 export function DashboardShell({
   eyebrow,
@@ -11,6 +13,7 @@ export function DashboardShell({
   error,
   stats,
   children,
+  mode,
 }: {
   eyebrow: string
   title: string
@@ -20,8 +23,9 @@ export function DashboardShell({
   error?: unknown
   stats: Record<string, number | string>
   children: ReactNode
+  mode?: DashboardMode
 }) {
-  return (
+  const content = (
     <div className="space-y-6">
       <PageHeader eyebrow={eyebrow} title={title} description={description} actions={actions} />
       <QueryState isLoading={isLoading} error={error}>
@@ -44,4 +48,10 @@ export function DashboardShell({
       </QueryState>
     </div>
   )
+
+  if (mode) {
+    return <SidebarLayout mode={mode}>{content}</SidebarLayout>
+  }
+
+  return content
 }

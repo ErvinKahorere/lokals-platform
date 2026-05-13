@@ -33,7 +33,7 @@ export function LandingPage() {
               {[
                 ['1 app', 'For services, jobs, shopping, delivery, and city updates.'],
                 ['Local first', 'Built around town, area, and real nearby action.'],
-                ['Role aware', 'Useful for citizens, businesses, and city teams.'],
+                ['Role aware', 'Useful for residents, businesses, and city teams.'],
               ].map(([title, body]) => (
                 <div key={title} className="rounded-[24px] border border-lokals-border bg-lokals-surface p-5 shadow-card">
                   <p className="text-2xl font-semibold text-lokals-charcoal">{title}</p>
@@ -129,7 +129,7 @@ export function LandingPage() {
       </section>
 
       <footer className="flex flex-col gap-3 rounded-[24px] border border-lokals-border bg-white px-6 py-5 text-sm text-lokals-muted shadow-card md:flex-row md:items-center md:justify-between">
-        <p>LOKALS helps citizens, businesses, and city teams move faster together.</p>
+        <p>LOKALS helps residents, businesses, and city teams move faster together.</p>
         <div className="flex flex-wrap gap-4">
           <Link to="/settings">Settings</Link>
           <Link to="/directory">Directory</Link>

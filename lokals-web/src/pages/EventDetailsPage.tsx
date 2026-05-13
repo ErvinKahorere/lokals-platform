@@ -1,5 +1,5 @@
 import { CheckCircle2, Clock3, MapPin } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Button, EmptyState, PageHeader, QueryState, SectionCard, StatusBadge } from '../components/Ui'
 import { AddToCalendarButton } from '../components/events/AddToCalendarButton'
@@ -12,6 +12,7 @@ import { ContactActions } from '../components/experience/ContactActions'
 import { ImageWithFallback } from '../components/ui/ImageWithFallback'
 import { useCreateFollow, useDeleteFollow, useEvent, useFollows, useReserveEventTicket } from '../hooks/queries'
 import { resolveMediaUrl } from '../lib/display'
+import { getApiErrorMessage } from '../lib/api'
 import { navigateToLogin } from '../lib/authNavigation'
 import { useAuthStore } from '../store/auth'
 
@@ -33,14 +34,14 @@ export function EventDetailsPage() {
 
   const event = eventQuery.data?.data
   const related = eventQuery.data?.related ?? []
-  const followId = useMemo(() => {
-    if (!event?.organizer) return undefined
-    return (followsQuery.data?.data ?? []).find((follow) =>
-      event.organizer?.type === 'organization'
-        ? follow.followable_type.includes('Organization') && follow.followable_id === event.organizer?.id
-        : follow.followable_type.includes('ServiceProvider') && follow.followable_id === event.organizer?.id,
+  const organizer = event?.organizer ?? undefined
+  const followId = !organizer
+    ? undefined
+    : (followsQuery.data?.data ?? []).find((follow) =>
+      organizer.type === 'organization'
+        ? follow.followable_type.includes('Organization') && follow.followable_id === organizer.id
+        : follow.followable_type.includes('ServiceProvider') && follow.followable_id === organizer.id,
     )?.id
-  }, [event?.organizer, followsQuery.data?.data])
 
   return (
     <QueryState isLoading={eventQuery.isLoading} error={eventQuery.error} empty={!event}>
@@ -193,8 +194,8 @@ export function EventDetailsPage() {
                           const response = await reserveTicket.mutateAsync({ eventId: event.id, payload })
                           setReservedTicketCode(response.data.ticket_code)
                           setSuccessMessage(response.data.status === 'confirmed' ? 'Provider will confirm shortly and your free ticket is already active.' : 'Your paid ticket enquiry is reserved and the organizer can follow up from here.')
-                        } catch (error: any) {
-                          setErrorMessage(error?.response?.data?.errors?.ticket_type_id?.[0] ?? error?.response?.data?.errors?.event?.[0] ?? error?.response?.data?.message ?? 'Unable to reserve a ticket right now.')
+                        } catch (error) {
+                          setErrorMessage(getApiErrorMessage(error, 'Unable to reserve a ticket right now.'))
                         }
                       }}
                     >

@@ -169,7 +169,7 @@ class _TownManagerDashboardScreenState extends ConsumerState<TownManagerDashboar
                 children: [
                   const SectionTitle(
                     title: 'Recent reports',
-                    subtitle: 'The latest citizen issues from across Okahandja.',
+                    subtitle: 'The latest resident issues from across Okahandja.',
                   ),
                   const SizedBox(height: 12),
                   ...(((data['recent_reports'] as List?) ?? const [])

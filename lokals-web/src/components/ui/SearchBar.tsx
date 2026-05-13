@@ -1,5 +1,5 @@
 import { Clock3, Search } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState, type InputHTMLAttributes } from 'react'
 import { Input } from './Input'
 
 type Shortcut = {
@@ -7,7 +7,20 @@ type Shortcut = {
   value: string
 }
 
-type SearchBarProps = React.InputHTMLAttributes<HTMLInputElement> & {
+function readRecentSearches(recentKey?: string) {
+  if (!recentKey || typeof window === 'undefined') {
+    return []
+  }
+
+  try {
+    const stored = window.localStorage.getItem(`lokals-search-${recentKey}`)
+    return stored ? (JSON.parse(stored) as string[]) : []
+  } catch {
+    return []
+  }
+}
+
+type SearchBarProps = InputHTMLAttributes<HTMLInputElement> & {
   recentKey?: string
   suggestions?: string[]
   shortcuts?: Shortcut[]
@@ -16,20 +29,7 @@ type SearchBarProps = React.InputHTMLAttributes<HTMLInputElement> & {
 
 export function SearchBar({ recentKey, suggestions = [], shortcuts = [], onValueSelect, ...props }: SearchBarProps) {
   const [focused, setFocused] = useState(false)
-  const [recent, setRecent] = useState<string[]>([])
-
-  useEffect(() => {
-    if (!recentKey) {
-      return
-    }
-
-    try {
-      const stored = window.localStorage.getItem(`lokals-search-${recentKey}`)
-      setRecent(stored ? JSON.parse(stored) as string[] : [])
-    } catch {
-      setRecent([])
-    }
-  }, [recentKey])
+  const [recent, setRecent] = useState<string[]>(() => readRecentSearches(recentKey))
 
   const visibleSuggestions = useMemo(() => {
     const query = String(props.value ?? '').trim().toLowerCase()

@@ -13,6 +13,7 @@ export function CourierDashboardPage() {
 
   return (
     <DashboardShell
+      mode="courier"
       eyebrow="Courier mode"
       title="Courier dashboard"
       description="Manage parcel requests, active drop-offs, online availability, and delivery earnings."

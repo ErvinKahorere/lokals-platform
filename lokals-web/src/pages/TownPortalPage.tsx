@@ -43,7 +43,7 @@ export function TownPortalPage() {
       </section>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Open reports" value={openReports} hint="Citizen issues in flow" />
+        <StatCard label="Open reports" value={openReports} hint="Resident issues in flow" />
         <StatCard label="Urgent" value={urgentAlerts} hint="High-priority updates" />
         <StatCard label="Public services" value={publicServices} hint="Verified directory entries" />
         <StatCard label="Recent alerts" value={allAlerts.length} hint="Council and service notices" />

@@ -1,4 +1,4 @@
-import { type PropsWithChildren, useCallback, useEffect, useState } from 'react'
+import { type PropsWithChildren, useCallback, useState } from 'react'
 import axios from 'axios'
 import { LoadingScreen } from '../components/ui/LoadingSkeleton'
 import { isDemoMode } from '../config/appMode'
@@ -13,6 +13,7 @@ export function AppBootstrapProvider({ children }: PropsWithChildren) {
   const [startupError, setStartupError] = useState<string | null>(null)
   const setUser = useAuthStore((state) => state.setUser)
   const clearSession = useAuthStore((state) => state.clearSession)
+  const [hasBootstrapped, setHasBootstrapped] = useState(false)
 
   const bootstrap = useCallback(async () => {
     setIsBootstrapping(true)
@@ -30,6 +31,7 @@ export function AppBootstrapProvider({ children }: PropsWithChildren) {
     const { token } = useAuthStore.getState()
     if (!token) {
       setIsBootstrapping(false)
+      setHasBootstrapped(true)
       return
     }
 
@@ -37,21 +39,24 @@ export function AppBootstrapProvider({ children }: PropsWithChildren) {
       const { data } = await api.get<MePayload>('/me')
       setUser(getUserFromPayload(data))
       setIsBootstrapping(false)
+      setHasBootstrapped(true)
     } catch (error) {
       if (axios.isAxiosError(error) && [401, 403].includes(error.response?.status ?? 0)) {
         clearSession()
         setIsBootstrapping(false)
+        setHasBootstrapped(true)
         return
       }
 
       setStartupError('Check your connection and try again.')
       setIsBootstrapping(false)
+      setHasBootstrapped(true)
     }
   }, [clearSession, setUser])
 
-  useEffect(() => {
+  if (!hasBootstrapped && isBootstrapping) {
     void bootstrap()
-  }, [bootstrap])
+  }
 
   if (startupError) {
     return (

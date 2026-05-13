@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Button, PageHeader, SectionCard } from '../components/Ui'
 import { EventCategoryChips } from '../components/events/EventCategoryChips'
 import { useCreateEvent, useMyBusinesses } from '../hooks/queries'
+import { getApiErrorMessage } from '../lib/api'
 
 export function CreateEventPage() {
   const navigate = useNavigate()
@@ -123,8 +124,8 @@ export function CreateEventPage() {
                   capacity: form.capacity ? Number(form.capacity) : undefined,
                 })
                 navigate(`/events/${response.data.id}/manage`)
-              } catch (error: any) {
-                setErrorMessage(error?.response?.data?.errors?.title?.[0] ?? error?.response?.data?.errors?.starts_at?.[0] ?? error?.response?.data?.message ?? 'Unable to create event right now.')
+              } catch (error) {
+                setErrorMessage(getApiErrorMessage(error, 'Unable to create event right now.'))
               }
             }}
           >

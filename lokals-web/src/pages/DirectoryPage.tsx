@@ -10,6 +10,10 @@ import { getDisplayDistance, resolveMediaUrl } from '../lib/display'
 import { useAuthStore } from '../store/auth'
 import type { Organization } from '../types'
 
+type DirectoryAlert = {
+  organization_id?: number | null
+}
+
 export function DirectoryPage() {
   const [searchParams] = useSearchParams()
   const [search, setSearch] = useState(searchParams.get('q') ?? '')
@@ -46,7 +50,7 @@ export function DirectoryPage() {
     })
   }, [category, directoryQuery.data])
   const follows = followsQuery.data?.data ?? []
-  const alerts = announcementsQuery.data?.data ?? []
+  const alerts = (announcementsQuery.data?.data ?? []) as DirectoryAlert[]
 
   const getFollowId = (organizationId: number) =>
     follows.find((follow) => follow.followable_type.includes('Organization') && follow.followable_id === organizationId)?.id
@@ -66,7 +70,7 @@ export function DirectoryPage() {
       <PageHeader
         eyebrow="Directory"
         title="Local organizations and city-linked services"
-        description="Citizens can quickly find institutions, clinics, workshops, and offices without typing long searches."
+        description="Residents can quickly find institutions, clinics, workshops, and offices without typing long searches."
         actions={<SearchBar value={search} onChange={(event) => setSearch(event.target.value)} onValueSelect={setSearch} recentKey="directory" suggestions={['Clinics nearby', 'Local workshops', 'Municipal offices', 'Verified providers']} shortcuts={[{ label: 'Verified', value: 'verified' }, { label: 'Open today', value: 'open today' }, { label: 'Nearby', value: 'nearby' }]} placeholder="Search clinics, police, businesses..." className="w-full md:w-72" />}
       />
       <div className="flex flex-wrap gap-2">
@@ -126,7 +130,7 @@ export function DirectoryPage() {
 
                 <div className="mt-3 flex items-center gap-2 text-sm text-lokals-muted">
                   <BellRing className="h-4 w-4" />
-                  <span>{alerts.filter((item: any) => item.organization_id === organization.id).length || 0} recent alerts</span>
+                  <span>{alerts.filter((item) => item.organization_id === organization.id).length || 0} recent alerts</span>
                 </div>
 
                 <div className="mt-5">

@@ -13,6 +13,12 @@ import { normalizePilotArea, PILOT_LOCATION_MESSAGE, PILOT_TOWN } from '../lib/p
 import { getRoleHomePath } from '../lib/roles'
 
 type AppearanceMode = 'light' | 'system' | 'dark'
+type SettingsFormState = {
+  town: string
+  area: string
+  radius: string
+  notifications: Record<string, boolean>
+}
 
 const appearanceStorageKey = 'lokals-appearance'
 
@@ -29,6 +35,23 @@ export function SettingsPage() {
     if (!payload) return undefined
     return 'data' in payload ? payload.data : payload
   }, [meQuery.data])
+  const derivedSettings = useMemo<SettingsFormState | null>(() => {
+    if (!user) return null
+    return {
+      town: PILOT_TOWN,
+      area: normalizePilotArea(user.default_area ?? preferencesQuery.data?.default_area),
+      radius: String(user.service_radius ?? preferencesQuery.data?.service_radius ?? 10),
+      notifications: {
+        alerts_from_followed_entities: preferencesQuery.data?.notification_preferences?.alerts_from_followed_entities ?? true,
+        booking_updates: preferencesQuery.data?.notification_preferences?.booking_updates ?? true,
+        job_updates: preferencesQuery.data?.notification_preferences?.job_updates ?? true,
+        event_updates: preferencesQuery.data?.notification_preferences?.event_updates ?? true,
+        news_updates: preferencesQuery.data?.notification_preferences?.news_updates ?? true,
+        promotions: preferencesQuery.data?.notification_preferences?.promotions ?? preferencesQuery.data?.notification_preferences?.sale_alerts ?? true,
+        city_alerts: preferencesQuery.data?.notification_preferences?.city_alerts ?? true,
+      },
+    }
+  }, [preferencesQuery.data, user])
   const [town, setTown] = useState(PILOT_TOWN)
   const [area, setArea] = useState('')
   const [radius, setRadius] = useState('10')
@@ -49,22 +72,15 @@ export function SettingsPage() {
     promotions: true,
     city_alerts: true,
   })
+  const [hasEditedSettings, setHasEditedSettings] = useState(false)
 
   useEffect(() => {
-    if (!user) return
-    setTown(PILOT_TOWN)
-    setArea(normalizePilotArea(user.default_area ?? preferencesQuery.data?.default_area))
-    setRadius(String(user.service_radius ?? preferencesQuery.data?.service_radius ?? 10))
-    setNotifications({
-      alerts_from_followed_entities: preferencesQuery.data?.notification_preferences?.alerts_from_followed_entities ?? true,
-      booking_updates: preferencesQuery.data?.notification_preferences?.booking_updates ?? true,
-      job_updates: preferencesQuery.data?.notification_preferences?.job_updates ?? true,
-      event_updates: preferencesQuery.data?.notification_preferences?.event_updates ?? true,
-      news_updates: preferencesQuery.data?.notification_preferences?.news_updates ?? true,
-      promotions: preferencesQuery.data?.notification_preferences?.promotions ?? preferencesQuery.data?.notification_preferences?.sale_alerts ?? true,
-      city_alerts: preferencesQuery.data?.notification_preferences?.city_alerts ?? true,
-    })
-  }, [preferencesQuery.data, user])
+    if (!derivedSettings || hasEditedSettings) return
+    setTown(derivedSettings.town)
+    setArea(derivedSettings.area)
+    setRadius(derivedSettings.radius)
+    setNotifications(derivedSettings.notifications)
+  }, [derivedSettings, hasEditedSettings])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -80,6 +96,7 @@ export function SettingsPage() {
       updateProfile.mutateAsync({ default_town: town, default_area: area, service_radius: Number(radius) }),
       updatePreferences.mutateAsync({ default_town: town, default_area: area, service_radius: Number(radius), notification_preferences: notifications }),
     ])
+    setHasEditedSettings(false)
   }
 
   const saveNotifications = async () => {
@@ -89,6 +106,7 @@ export function SettingsPage() {
       service_radius: Number(radius),
       notification_preferences: notifications,
     })
+    setHasEditedSettings(false)
   }
 
   return (
@@ -134,8 +152,14 @@ export function SettingsPage() {
               town={town}
               area={area}
               radius={radius}
-              onAreaChange={setArea}
-              onRadiusChange={setRadius}
+              onAreaChange={(nextArea) => {
+                setHasEditedSettings(true)
+                setArea(nextArea)
+              }}
+              onRadiusChange={(nextRadius) => {
+                setHasEditedSettings(true)
+                setRadius(nextRadius)
+              }}
               onSubmit={() => void saveLocation()}
               isSaving={updatePreferences.isPending || updateProfile.isPending}
             />
@@ -151,7 +175,10 @@ export function SettingsPage() {
             </div>
           </div>
           <div className="mt-4 space-y-4">
-            <NotificationPreferences values={notifications} onToggle={(key, checked) => setNotifications((current) => ({ ...current, [key]: checked }))} />
+            <NotificationPreferences values={notifications} onToggle={(key, checked) => {
+              setHasEditedSettings(true)
+              setNotifications((current) => ({ ...current, [key]: checked }))
+            }} />
             <div className="flex justify-end">
               <Button onClick={() => void saveNotifications()} disabled={updatePreferences.isPending}>{updatePreferences.isPending ? 'Saving...' : 'Save notifications'}</Button>
             </div>

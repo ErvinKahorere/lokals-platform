@@ -26,7 +26,7 @@ class DriverDashboardScreen extends ConsumerWidget {
           extraSections: [
             buildDashboardCollectionSection(
               title: 'Available ride requests',
-              subtitle: 'Citizen requests still waiting for a driver.',
+              subtitle: 'Resident requests still waiting for a driver.',
               items: ((data['available_requests'] as List?) ?? const []).map((item) => Map<String, dynamic>.from(item as Map)).toList(),
               emptyMessage: 'New ride requests will appear here when residents request transport.',
               icon: Icons.local_taxi_outlined,

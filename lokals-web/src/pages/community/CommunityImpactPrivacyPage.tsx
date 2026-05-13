@@ -10,16 +10,22 @@ export function CommunityImpactPrivacyPage() {
     if (!dashboardQuery.data) return undefined
     return 'data' in dashboardQuery.data.account ? dashboardQuery.data.account.data : dashboardQuery.data.account
   }, [dashboardQuery.data])
+  const derivedSettings = useMemo(() => ({
+    displayName: account?.public_display_name ?? '',
+    privacyMode: account?.privacy_mode ?? 'private',
+    optIn: account?.public_leaderboard_opt_in ?? false,
+  }), [account?.privacy_mode, account?.public_display_name, account?.public_leaderboard_opt_in])
   const [displayName, setDisplayName] = useState('')
   const [privacyMode, setPrivacyMode] = useState('private')
   const [optIn, setOptIn] = useState(false)
+  const [hasEdited, setHasEdited] = useState(false)
 
   useEffect(() => {
-    if (!account) return
-    setDisplayName(account.public_display_name ?? '')
-    setPrivacyMode(account.privacy_mode ?? 'private')
-    setOptIn(account.public_leaderboard_opt_in ?? false)
-  }, [account?.public_display_name, account?.privacy_mode, account?.public_leaderboard_opt_in])
+    if (!account || hasEdited) return
+    setDisplayName(derivedSettings.displayName)
+    setPrivacyMode(derivedSettings.privacyMode)
+    setOptIn(derivedSettings.optIn)
+  }, [account, derivedSettings, hasEdited])
 
   return (
     <div className="space-y-6">
@@ -32,12 +38,18 @@ export function CommunityImpactPrivacyPage() {
                 <p className="font-semibold text-lokals-charcoal">Show me on public Community Impact leaderboard</p>
                 <p className="mt-1 text-sm text-lokals-muted">Only your chosen public identity, rank, points, and level are shown.</p>
               </div>
-              <input type="checkbox" checked={optIn} onChange={(event) => setOptIn(event.target.checked)} className="h-5 w-5" />
+              <input type="checkbox" checked={optIn} onChange={(event) => {
+                setHasEdited(true)
+                setOptIn(event.target.checked)
+              }} className="h-5 w-5" />
             </label>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <label className="grid gap-2 text-sm font-medium text-lokals-charcoal">
                 Display mode
-                <Select value={privacyMode} onChange={(event) => setPrivacyMode(event.target.value)}>
+                <Select value={privacyMode} onChange={(event) => {
+                  setHasEdited(true)
+                  setPrivacyMode(event.target.value)
+                }}>
                   <option value="private">Private</option>
                   <option value="initials">Initials</option>
                   <option value="display_name">Display name</option>
@@ -45,7 +57,10 @@ export function CommunityImpactPrivacyPage() {
               </label>
               <label className="grid gap-2 text-sm font-medium text-lokals-charcoal">
                 Public display name
-                <Input value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="Optional public name" />
+                <Input value={displayName} onChange={(event) => {
+                  setHasEdited(true)
+                  setDisplayName(event.target.value)
+                }} placeholder="Optional public name" />
               </label>
             </div>
             <div className="mt-4">
@@ -53,6 +68,8 @@ export function CommunityImpactPrivacyPage() {
                 public_leaderboard_opt_in: optIn,
                 privacy_mode: privacyMode,
                 public_display_name: displayName || undefined,
+              }, {
+                onSuccess: () => setHasEdited(false),
               })}>
                 {updatePrivacy.isPending ? 'Saving...' : 'Save privacy settings'}
               </Button>

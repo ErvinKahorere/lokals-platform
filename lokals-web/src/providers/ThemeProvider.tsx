@@ -21,12 +21,13 @@ export function ThemeProvider({ children }: PropsWithChildren) {
   const value = useMemo(() => ({
     theme: 'light' as ThemeMode,
     resolvedTheme: 'light' as ResolvedTheme,
-    setTheme: (_nextTheme: ThemeMode) => undefined,
+    setTheme: () => undefined,
   }), [])
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useTheme() {
   const context = useContext(ThemeContext)
 
@@ -36,3 +37,5 @@ export function useTheme() {
 
   return context
 }
+
+export default ThemeProvider

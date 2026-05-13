@@ -20,7 +20,11 @@ export function SaveEventButton({ eventId, isSaved, disabled, compact = false }:
           navigateToLogin(navigate)
           return
         }
-        isSaved ? unsaveEvent.mutate(eventId) : saveEvent.mutate(eventId)
+        if (isSaved) {
+          unsaveEvent.mutate(eventId)
+        } else {
+          saveEvent.mutate(eventId)
+        }
       }}
     >
       <Heart className="h-4 w-4" />

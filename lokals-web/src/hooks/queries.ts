@@ -53,35 +53,54 @@ import type {
   ConversationMessage,
 } from '../types'
 
-const toPaginated = <T,>(payload: any): PaginatedResult<T> => {
+type UnknownRecord = Record<string, unknown>
+type SaleAlert = {
+  id: number | string
+  title?: string | null
+  body?: string | null
+  organization_id?: number | null
+}
+type NotificationApiItem = Partial<NotificationItem> & {
+  data?: Partial<NotificationItem> & {
+    title?: string
+    body?: string
+    message?: string
+    target?: Partial<NotificationItem['target']>
+  }
+  target?: Partial<NotificationItem['target']>
+}
+
+const isRecord = (value: unknown): value is UnknownRecord => typeof value === 'object' && value !== null
+
+const toPaginated = <T,>(payload: unknown): PaginatedResult<T> => {
   if (Array.isArray(payload)) {
-    return { data: payload }
+    return { data: payload as T[] }
   }
 
-  if (payload?.data && Array.isArray(payload.data)) {
+  if (isRecord(payload) && Array.isArray(payload.data)) {
     return {
-      data: payload.data,
-      meta: payload.meta ?? {
-        current_page: payload.current_page,
-        last_page: payload.last_page,
-        per_page: payload.per_page,
-        total: payload.total,
+      data: payload.data as T[],
+      meta: (payload.meta as PaginatedResult<T>['meta']) ?? {
+        current_page: Number(payload.current_page ?? 1),
+        last_page: Number(payload.last_page ?? 1),
+        per_page: Number(payload.per_page ?? (payload.data as unknown[]).length),
+        total: Number(payload.total ?? (payload.data as unknown[]).length),
       },
     }
   }
 
-  if (payload?.data && payload.data.data && Array.isArray(payload.data.data)) {
+  if (isRecord(payload) && isRecord(payload.data) && Array.isArray(payload.data.data)) {
     return {
-      data: payload.data.data,
-      meta: payload.data.meta,
+      data: payload.data.data as T[],
+      meta: payload.data.meta as PaginatedResult<T>['meta'],
     }
   }
 
   return { data: [] }
 }
 
-const unwrapOne = <T,>(payload: any): T => {
-  if (payload?.data && !Array.isArray(payload.data)) {
+const unwrapOne = <T,>(payload: unknown): T => {
+  if (isRecord(payload) && isRecord(payload.data) && !Array.isArray(payload.data)) {
     return payload.data as T
   }
 
@@ -104,7 +123,7 @@ export const useMe = () =>
 export const useFollowingFeed = () =>
   useQuery({
     queryKey: ['following-feed'],
-    queryFn: async () => toPaginated<any>((await api.get('/following-feed')).data),
+    queryFn: async () => toPaginated<UnknownRecord>((await api.get('/following-feed')).data),
   })
 
 export const useProviders = (params?: Record<string, string | number | undefined>) =>
@@ -176,13 +195,13 @@ export const useDirectoryAlerts = (id?: string) =>
   useQuery({
     enabled: Boolean(id),
     queryKey: ['directory-alerts', id],
-    queryFn: async () => toPaginated<any>((await api.get(`/directory/${id}/alerts`)).data),
+    queryFn: async () => toPaginated<UnknownRecord>((await api.get(`/directory/${id}/alerts`)).data),
   })
 
 export const useAnnouncements = (params?: Record<string, string | number | undefined>) =>
   useQuery({
     queryKey: ['announcements', params],
-    queryFn: async () => toPaginated<any>((await api.get('/announcements', { params: applyPilotLocation(params) })).data),
+    queryFn: async () => toPaginated<UnknownRecord>((await api.get('/announcements', { params: applyPilotLocation(params) })).data),
   })
 
 export const useAlertsFeed = (params?: Record<string, string | number | undefined>) =>
@@ -415,7 +434,7 @@ export const useProduct = (id?: string) =>
 export const useSaleAlerts = () =>
   useQuery({
     queryKey: ['sale-alerts'],
-    queryFn: async () => toPaginated<any>((await api.get('/store/sale-alerts', { params: applyPilotLocation() })).data),
+    queryFn: async () => toPaginated<SaleAlert>((await api.get('/store/sale-alerts', { params: applyPilotLocation() })).data),
   })
 
 export const useAccommodations = (params?: Record<string, string | number | undefined>) =>
@@ -437,8 +456,8 @@ export const useNotifications = () =>
     queryKey: ['notifications'],
     queryFn: async () => {
       const payload = (await api.get('/notifications')).data
-      const list = payload?.data ?? []
-      return list.map((item: any) => ({
+      const list = (payload?.data ?? []) as NotificationApiItem[]
+      return list.map((item) => ({
         id: item.id,
         type: item.type,
         title: item.title ?? item.data?.title ?? item.type ?? 'Notification',

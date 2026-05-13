@@ -1,5 +1,5 @@
 import { Mail, Phone, Users } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { CommunityProjectCard } from '../components/community/CommunityProjectCard'
 import { Badge, Button, Card, EmptyState, PageHeader } from '../components/Ui'
@@ -14,18 +14,13 @@ export function CommunityProjectDetailsPage() {
   const pledgeMutation = useCreateCommunityProjectPledge(project?.id)
   const [pledgeType, setPledgeType] = useState<'money' | 'volunteer' | 'service' | 'item' | 'other'>('money')
 
-  const contactHref = useMemo(() => {
-    if (project?.contact_whatsapp) {
-      return `https://wa.me/${project.contact_whatsapp.replace(/\D/g, '')}`
-    }
-    if (project?.contact_phone) {
-      return `tel:${project.contact_phone}`
-    }
-    if (project?.contact_email) {
-      return `mailto:${project.contact_email}`
-    }
-    return null
-  }, [project?.contact_email, project?.contact_phone, project?.contact_whatsapp])
+  const contactHref = project?.contact_whatsapp
+    ? `https://wa.me/${project.contact_whatsapp.replace(/\D/g, '')}`
+    : project?.contact_phone
+      ? `tel:${project.contact_phone}`
+      : project?.contact_email
+        ? `mailto:${project.contact_email}`
+        : null
 
   if (projectQuery.isLoading) {
     return <div className="rounded-[28px] bg-white p-8 shadow-soft">Loading community project...</div>

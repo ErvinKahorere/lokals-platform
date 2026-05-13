@@ -120,7 +120,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            '${AppConfig.pilotLocationMessage} Your first account opens as a citizen, with your area saved from day one.',
+                            '${AppConfig.pilotLocationMessage} Your first account opens as a resident, with your area saved from day one.',
                             style: TextStyle(color: AppColors.mutedText),
                           ),
                         ],

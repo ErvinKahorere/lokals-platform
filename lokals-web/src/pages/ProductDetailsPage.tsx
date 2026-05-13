@@ -9,6 +9,13 @@ import { getDisplayPrice, resolveMediaUrl } from '../lib/display'
 import { navigateToLogin } from '../lib/authNavigation'
 import { useAuthStore } from '../store/auth'
 
+type SaleAlert = {
+  id: number | string
+  title?: string | null
+  body?: string | null
+  organization_id?: number | null
+}
+
 export function ProductDetailsPage() {
   const { id } = useParams()
   const token = useAuthStore((state) => state.token)
@@ -22,7 +29,7 @@ export function ProductDetailsPage() {
   const product = productQuery.data
   const related = (productsQuery.data?.data ?? []).filter((item) => item.id !== product?.id && (item.category === product?.category || item.business?.id === product?.business?.id)).slice(0, 4)
   const sellerProducts = (productsQuery.data?.data ?? []).filter((item) => item.id !== product?.id && (item.business?.id === product?.business?.id || item.user?.id === product?.user?.id)).slice(0, 3)
-  const sellerAlerts = (saleAlertsQuery.data?.data ?? []).filter((item: any) => product?.business?.id && item.organization_id === product.business.id).slice(0, 2)
+  const sellerAlerts = ((saleAlertsQuery.data?.data ?? []) as SaleAlert[]).filter((item) => product?.business?.id && item.organization_id === product.business.id).slice(0, 2)
   const followId = (followsQuery.data?.data ?? []).find((follow) => follow.followable_type.includes('Organization') && follow.followable_id === product?.business?.id)?.id
   const image = resolveMediaUrl(product?.image_url ?? product?.business?.logo_url ?? product?.user?.avatar ?? null)
 
@@ -98,13 +105,17 @@ export function ProductDetailsPage() {
                         variant={followId ? 'primary' : 'secondary'}
                         disabled={createFollow.isPending || deleteFollow.isPending}
                         onClick={() => {
-                          if (!token) {
-                            navigateToLogin(navigate)
-                            return
-                          }
-                          followId ? deleteFollow.mutate(followId) : createFollow.mutate({ type: 'organization', id: product.business!.id })
-                        }}
-                      >
+                        if (!token) {
+                          navigateToLogin(navigate)
+                          return
+                        }
+                        if (followId) {
+                          deleteFollow.mutate(followId)
+                        } else {
+                          createFollow.mutate({ type: 'organization', id: product.business!.id })
+                        }
+                      }}
+                    >
                         {!token ? 'Login to follow' : followId ? 'Following' : 'Follow'}
                       </Button>
                     ) : null}
@@ -145,7 +156,7 @@ export function ProductDetailsPage() {
                 <Link to="/store" className="text-sm font-semibold text-lokals-purple">Open store</Link>
               </div>
               <div className="mt-4 grid gap-3 md:grid-cols-2">
-                {sellerAlerts.map((alert: any) => (
+                {sellerAlerts.map((alert) => (
                   <div key={alert.id} className="rounded-[22px] border border-lokals-border bg-gradient-to-br from-amber-50 via-white to-violet-50 p-4">
                     <StatusBadge value="Promotion" tone="warning" />
                     <p className="mt-3 font-semibold text-lokals-charcoal">{alert.title}</p>

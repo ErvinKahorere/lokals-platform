@@ -3,6 +3,18 @@ import { BellRing, Megaphone, ShieldAlert } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Card, PageHeader, QueryState, SectionCard } from '../components/Ui'
 import { useAlertsFeed, useFollowingFeed } from '../hooks/queries'
+import type { AlertFeedItem } from '../types'
+
+type FollowingUpdate = {
+  id: number | string
+  category?: string
+  title?: string
+  name?: string
+  body?: string
+  location?: string | null
+  timestamp?: string | null
+  created_at?: string | null
+}
 
 const tabs = ['all', 'following', 'urgent', 'municipal', 'promotions'] as const
 
@@ -11,10 +23,10 @@ export function AlertsPage() {
   const alertsQuery = useAlertsFeed()
   const followingFeedQuery = useFollowingFeed()
   const alerts = alertsQuery.data?.data ?? []
-  const following = followingFeedQuery.data?.data ?? []
+  const following = (followingFeedQuery.data?.data ?? []) as FollowingUpdate[]
 
   const items = useMemo(() => {
-    const baseAlerts = alerts.map((item) => ({
+    const baseAlerts = alerts.map((item: AlertFeedItem) => ({
       key: item.id,
       source: item.source_type === 'municipal_alert' ? 'Municipal alert' : item.source_type === 'announcement' ? 'Announcement' : item.source_type === 'job' ? 'Job alert' : 'Local alert',
       title: item.title,

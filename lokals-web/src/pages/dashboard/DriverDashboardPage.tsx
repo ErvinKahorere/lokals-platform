@@ -13,6 +13,7 @@ export function DriverDashboardPage() {
 
   return (
     <DashboardShell
+      mode="driver"
       eyebrow="Driver mode"
       title="Driver dashboard"
       description="Go online, pick up nearby ride requests, track active trips, and keep earnings in view."
@@ -23,7 +24,7 @@ export function DriverDashboardPage() {
       <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         <DashboardSection title="Quick actions" description="Practical controls for your next trip.">
           <div className="grid gap-3 md:grid-cols-2">
-            <QuickActionTile to="/ride" title="Available rides" body="Review nearby citizen requests." icon={CarFront} />
+            <QuickActionTile to="/ride" title="Available rides" body="Review nearby resident requests." icon={CarFront} />
             <QuickActionTile to="/dashboard/driver" title="Go online" body="Control whether you are visible for matching." icon={Power} />
             <QuickActionTile to="/ride" title="Trip history" body="Review recently completed trips." icon={History} />
             <QuickActionTile to="/dashboard/driver" title="Earnings" body="See your latest ride totals and payouts." icon={Wallet} />
@@ -35,7 +36,7 @@ export function DriverDashboardPage() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <DashboardSection title="Available ride requests" description="Fresh citizen requests that still need a driver.">
+        <DashboardSection title="Available ride requests" description="Fresh resident requests that still need a driver.">
           <div className="space-y-3">
             {(((dashboard as any)?.available_requests as any[]) ?? []).slice(0, 6).map((ride) => (
               <div key={ride.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">

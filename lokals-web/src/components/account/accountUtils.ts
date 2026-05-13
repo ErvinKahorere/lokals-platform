@@ -1,6 +1,10 @@
 export const roleLabel = (role?: string | null) => {
   if (!role) {
-    return 'Citizen'
+    return 'Resident'
+  }
+
+  if (role === 'citizen') {
+    return 'Resident'
   }
 
   return role

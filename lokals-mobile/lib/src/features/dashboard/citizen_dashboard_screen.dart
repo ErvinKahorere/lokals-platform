@@ -18,7 +18,7 @@ class CitizenDashboardScreen extends ConsumerWidget {
       title: 'Dashboard',
       child: dashboard.when(
         data: (data) => DashboardScaffold(
-          title: 'Citizen dashboard',
+          title: 'Resident dashboard',
           subtitle: 'Bookings, alerts, reports, tickets, and followed updates in one place.',
           stats: Map<String, dynamic>.from(data['stats'] as Map? ?? const {}),
           quickActions: buildQuickActions(context, (data['quick_actions'] as List?) ?? const []),
@@ -68,13 +68,13 @@ class CitizenDashboardScreen extends ConsumerWidget {
           ],
         ),
         loading: () => const LokalsLoadingScreen(
-          title: 'Loading citizen dashboard',
+          title: 'Loading resident dashboard',
           message: 'Bringing in your bookings, reports, tickets, and local activity...',
         ),
         error: (error, _) => Center(
           child: EmptyStateView(
             title: 'Dashboard unavailable',
-            body: 'We could not load your citizen dashboard right now.',
+            body: 'We could not load your resident dashboard right now.',
             action: AppButton(
               label: 'Retry',
               expanded: false,

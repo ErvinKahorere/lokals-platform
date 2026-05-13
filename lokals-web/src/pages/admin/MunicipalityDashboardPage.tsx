@@ -87,6 +87,7 @@ export function MunicipalityDashboardPage() {
 
   return (
     <DashboardShell
+      mode="town_manager"
       eyebrow="Okahandja"
       title="Okahandja Town Manager Portal"
       description="Real communication with residents, issue tracking, and municipal control in one official workspace."

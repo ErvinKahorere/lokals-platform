@@ -32,9 +32,9 @@ function isPreferenceEnabled(notification: NotificationItem, preferences?: Recor
   return keys.every((key) => preferences[key] !== false)
 }
 
-function toNotificationItem(item: any): NotificationItem {
+function toNotificationItem(item: NotificationPayload): NotificationItem {
   return {
-    id: item.id,
+    id: item.id ?? crypto.randomUUID(),
     type: item.type,
     title: item.title ?? item.data?.title ?? 'Notification',
     body: item.body ?? item.data?.body ?? item.data?.message ?? 'You have an update.',
@@ -62,16 +62,17 @@ export function useRealtimeNotifications() {
   const seen = useRef<Set<string>>(new Set())
   const [queue, setQueue] = useState<NotificationItem[]>([])
   const preferences = user?.preferences?.notification_preferences
+  const channelKey = token ? `users.${user?.id ?? ''}` : null
 
   useEffect(() => {
-    if (!token) {
-      seen.current.clear()
-      setQueue([])
+    seen.current.clear()
+
+    if (!channelKey) {
       return
     }
 
     let cancelled = false
-    const channel = window.Echo?.private?.(`users.${user?.id ?? ''}`)
+    const channel = window.Echo?.private?.(channelKey)
 
     const poll = async () => {
       try {
@@ -109,9 +110,9 @@ export function useRealtimeNotifications() {
       channel?.stopListening?.('.reward.approved')
       channel?.stopListening?.('.marketplace.message.received')
     }
-  }, [preferences, queryClient, token, user?.id])
+  }, [channelKey, preferences, queryClient])
 
-  const active = queue[0] ?? null
+  const active = channelKey ? queue[0] ?? null : null
 
   useEffect(() => {
     if (!active) return
@@ -138,4 +139,13 @@ export function useRealtimeNotifications() {
     openNotification,
     dismissNotification,
   }
+}
+type NotificationPayload = Partial<NotificationItem> & {
+  data?: Partial<NotificationItem> & {
+    title?: string
+    body?: string
+    message?: string
+    target?: Partial<NotificationItem['target']>
+  }
+  target?: Partial<NotificationItem['target']>
 }

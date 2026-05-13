@@ -14,7 +14,8 @@ export function CitizenDashboardPage() {
 
   return (
     <DashboardShell
-      eyebrow="Citizen"
+      mode="resident"
+      eyebrow="Resident"
       title="Your local dashboard"
       description="Bookings, tickets, alerts, reports, and followed updates in one simple place."
       actions={<Link to="/services"><Button variant="secondary">Book service</Button></Link>}

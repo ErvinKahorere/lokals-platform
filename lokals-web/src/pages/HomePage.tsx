@@ -1,4 +1,4 @@
-import { ArrowRight, BriefcaseBusiness, MapPin, ShoppingBag } from 'lucide-react'
+import { BriefcaseBusiness, MapPin, ShoppingBag } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { EventCard } from '../components/events/EventCard'
@@ -11,12 +11,27 @@ import { NewsFeedSection } from '../components/news/NewsFeedSection'
 import { NearbyServiceCard } from '../components/experience/NearbyServiceCard'
 import { NotificationBell } from '../components/experience/NotificationBell'
 import { Button } from '../components/ui/Button'
+import { Card } from '../components/ui/Card'
 import { SearchBar } from '../components/ui/SearchBar'
 import { StatusPill } from '../components/Ui'
 import { useAlertsFeed, useEvents, useFollowingFeed, useJobs, useMe, useNewsFeed, useNewsLocal, useNotifications, usePreferences, useProducts, useProviders, useSearchResults } from '../hooks/queries'
 import { getDisplayPrice } from '../lib/display'
+import { formatRoleLabel } from '../lib/roles'
 import { normalizePilotArea, PILOT_LOCATION_MESSAGE, PILOT_TOWN } from '../lib/pilot'
 import { useAuthStore } from '../store/auth'
+import type { AlertFeedItem, UnifiedSearchResult } from '../types'
+
+type FollowedUpdate = {
+  id: number | string
+  title?: string
+  name?: string
+  body?: string
+  category?: string
+  location?: string
+  timestamp?: string
+  created_at?: string
+  status?: string
+}
 
 export function HomePage() {
   const user = useAuthStore((state) => state.user)
@@ -47,7 +62,7 @@ export function HomePage() {
   const alerts = alertsFeedQuery.data?.data ?? []
   const sortedAlerts = useMemo(() => {
     const severityWeight: Record<string, number> = { critical: 4, high: 3, urgent: 3, medium: 2, normal: 1 }
-    return [...alerts].sort((a: any, b: any) => {
+    return [...alerts].sort((a: AlertFeedItem, b: AlertFeedItem) => {
       const leftWeight = (a.source_type === 'municipal_alert' ? 10 : 0) + (severityWeight[(a.severity ?? 'normal').toLowerCase()] ?? 0)
       const rightWeight = (b.source_type === 'municipal_alert' ? 10 : 0) + (severityWeight[(b.severity ?? 'normal').toLowerCase()] ?? 0)
       if (leftWeight !== rightWeight) {
@@ -63,17 +78,17 @@ export function HomePage() {
     if (activeRole === 'worker') return 'worker' as const
     if (activeRole === 'organization_admin') return 'organization' as const
     if (['town_manager', 'municipality_admin', 'super_admin', 'operator'].includes(activeRole)) return 'manager' as const
-    return 'citizen' as const
+    return 'resident' as const
   }, [activeRole, currentUser])
 
   const localUpdates = useMemo(() => {
-    const urgentAlerts = sortedAlerts.slice(0, 2).map((item: any) => ({
+    const urgentAlerts = sortedAlerts.slice(0, 2).map((item) => ({
       key: `alert-${item.id}`,
       title: item.title,
       source: item.location ?? 'Local alert',
       type: 'alert' as const,
-      time: item.timestamp ?? item.published_at ?? 'Recent',
-      status: item.severity ?? item.priority ?? 'urgent',
+      time: item.timestamp ?? 'Recent',
+      status: item.severity ?? 'urgent',
       to: '/alerts',
       weight: 3,
     }))
@@ -89,7 +104,7 @@ export function HomePage() {
       weight: 2,
     }))
 
-    const followedUpdates = (followingFeedQuery.data?.data ?? []).slice(0, 2).map((item: any) => ({
+    const followedUpdates = ((followingFeedQuery.data?.data ?? []) as FollowedUpdate[]).slice(0, 2).map((item) => ({
       key: `followed-${item.id}`,
       title: item.title ?? item.name ?? item.body ?? 'Update from a followed organization',
       source: item.category ?? item.location ?? 'Followed update',
@@ -136,24 +151,24 @@ export function HomePage() {
 
   return (
     <div className="space-y-7">
-      <section className="overflow-hidden rounded-[28px] border border-white/70 bg-[linear-gradient(180deg,#ffffff,#fbfcff)] px-6 py-6 shadow-soft">
+      <section className="overflow-hidden rounded-[30px] border border-white/70 bg-[linear-gradient(180deg,#ffffff,#f8fbff)] px-6 py-6 shadow-soft md:px-7">
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex-1">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm font-medium text-lokals-muted">{currentUser ? `Good morning, ${currentUser.name}` : 'Explore what is happening nearby'}</p>
-                  <h1 className="mt-2 text-3xl font-semibold text-lokals-charcoal">What do you need in Okahandja today?</h1>
+                  <p className="text-sm font-medium text-lokals-muted">{currentUser ? `Hello, ${currentUser.name}` : 'Explore what is happening nearby'}</p>
+                  <h1 className="mt-2 text-3xl font-semibold text-lokals-charcoal">Everything Okahandja, in one place</h1>
                 </div>
                 <NotificationBell count={unreadCount} to="/notifications" />
               </div>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-lokals-muted">
-                Search trusted services, daily essentials, events, jobs, and local updates around {[area, town].filter(Boolean).join(', ')}.
+                Search trusted services, daily essentials, events, jobs, and local updates around {[area, town].filter(Boolean).join(', ')} for residents who want one practical local platform.
               </p>
               <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-lokals-green">{PILOT_LOCATION_MESSAGE}</p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-lokals-purple-soft px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-lokals-purple">
-                  {currentUser ? activeRole.replaceAll('_', ' ') : 'Guest'}
+                  {currentUser ? formatRoleLabel(activeRole) : 'Guest'}
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-lokals-charcoal">
                   <MapPin className="h-3.5 w-3.5 text-lokals-green" />
@@ -172,7 +187,7 @@ export function HomePage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             onValueSelect={setSearch}
-            placeholder="Search services, jobs, products..."
+            placeholder="Search services, jobs, products, updates..."
             recentKey="home"
             suggestions={['Public services in Okahandja', 'Local businesses in Nau-Aib', 'Events this weekend', 'Okahandja council news', 'Jobs nearby']}
             shortcuts={[
@@ -203,7 +218,7 @@ export function HomePage() {
                       <Link to={searchTarget(section.href)} className="text-xs font-semibold text-lokals-green">Open</Link>
                     </div>
                     <div className="mt-3 space-y-2 text-sm text-lokals-muted">
-                      {section.items.length === 0 ? <p>No matches yet.</p> : section.items.slice(0, 3).map((item: any) => <p key={`${section.label}-${item.id}`}>{item[section.key]}</p>)}
+                      {section.items.length === 0 ? <p>No matches yet.</p> : section.items.slice(0, 3).map((item: UnifiedSearchResult) => <p key={`${section.label}-${item.id}`}>{String(item[section.key as keyof UnifiedSearchResult] ?? '')}</p>)}
                     </div>
                   </div>
                 ))}
@@ -215,7 +230,7 @@ export function HomePage() {
 
       <HomeHeroCard />
 
-      <HomeQuickActions activeRole={activeRole} isGuest={!currentUser} />
+      <HomeQuickActions />
 
       <RoleHomeCard kind={roleCardKind} activeRole={activeRole} />
 
@@ -353,15 +368,29 @@ export function HomePage() {
         error={currentUser ? newsFeedQuery.error : newsLocalQuery.error}
       />
 
-      <div className="rounded-[24px] border border-white/70 bg-[linear-gradient(180deg,#ffffff,#fbfcff)] p-5 shadow-card">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <Card variant="dashboard" className="p-5 md:p-6">
+        <div className="grid gap-5 lg:grid-cols-2">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-green">More nearby</p>
-            <h2 className="mt-1 text-xl font-semibold text-lokals-charcoal">Explore more in your area</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-green">Practical trust</p>
+            <h2 className="mt-1 text-2xl font-semibold text-lokals-charcoal">Why LOKALS feels dependable</h2>
+            <p className="mt-2 text-sm leading-6 text-lokals-muted">
+              The platform keeps approvals visible, promotes trusted local providers, rewards positive participation, and makes safe reporting easier for residents.
+            </p>
           </div>
-          <Link to="/more"><Button variant="secondary">Open more <ArrowRight className="h-4 w-4" /></Button></Link>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              'Verified businesses and providers',
+              'Town Manager approvals on public updates',
+              'Resident rewards for positive impact',
+              'Safer community reporting flows',
+            ].map((item) => (
+              <div key={item} className="rounded-[22px] border border-lokals-border bg-white px-4 py-4 shadow-card">
+                <p className="text-sm font-semibold text-lokals-charcoal">{item}</p>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

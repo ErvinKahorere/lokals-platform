@@ -28,7 +28,7 @@ export function RoleApplicationsPage() {
       <div>
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-lokals-muted">Role modes</p>
         <h1 className="mt-2 text-3xl font-semibold text-lokals-charcoal">Apply for another role</h1>
-        <p className="mt-2 max-w-2xl text-sm text-lokals-muted">Citizen access stays available by default. Additional operational modes unlock only after approval.</p>
+        <p className="mt-2 max-w-2xl text-sm text-lokals-muted">Resident access stays available by default. Additional operational modes unlock only after approval.</p>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">

@@ -4,22 +4,22 @@ import { EmptyDashboardState } from '../../components/dashboard/EmptyDashboardSt
 import { PageHeader, QueryState } from '../../components/Ui'
 
 const endpointToRoute: Record<string, string> = {
-  '/dashboard/citizen': '/dashboard/citizen',
+  '/dashboard/citizen': '/dashboard/resident',
   '/dashboard/worker': '/dashboard/worker',
-  '/dashboard/seller': '/dashboard/seller',
+  '/dashboard/seller': '/dashboard/business',
   '/dashboard/business': '/dashboard/business',
-  '/dashboard/service-provider': '/dashboard/service-provider',
-  '/dashboard/organization': '/dashboard/organization',
+  '/dashboard/service-provider': '/dashboard/provider',
+  '/dashboard/organization': '/dashboard/organisation',
   '/dashboard/municipality': '/dashboard/municipality',
   '/dashboard/town-manager': '/dashboard/town-manager',
-  '/dashboard/admin': '/admin',
+  '/dashboard/admin': '/dashboard/admin',
 }
 
 export function DashboardPage() {
   const dashboardQuery = useDashboardIndex()
 
   if (dashboardQuery.data?.dashboard_endpoint) {
-    return <Navigate to={endpointToRoute[dashboardQuery.data.dashboard_endpoint] ?? '/dashboard/citizen'} replace />
+    return <Navigate to={endpointToRoute[dashboardQuery.data.dashboard_endpoint] ?? '/dashboard/resident'} replace />
   }
 
   return (

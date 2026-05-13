@@ -1,5 +1,5 @@
 import { Heart } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useRemoveSavedItem, useSaveItem, useSavedItems } from '../../hooks/queries'
 import { navigateToLogin } from '../../lib/authNavigation'
@@ -25,15 +25,8 @@ export function SaveButton({
     if (!itemType || !itemId) return false
     return (savedItemsQuery.data?.items ?? []).some((item) => item.kind === itemType && String(item.id) === String(itemId))
   }, [itemId, itemType, savedItemsQuery.data?.items])
-  const [saved, setSaved] = useState(false)
-
-  useEffect(() => {
-    if (token && itemType && itemId) {
-      setSaved(remoteSaved)
-      return
-    }
-    setSaved(false)
-  }, [itemId, itemType, remoteSaved, token])
+  const [optimisticSaved, setOptimisticSaved] = useState<boolean | null>(null)
+  const saved = optimisticSaved ?? (token && itemType && itemId ? remoteSaved : false)
 
   return (
     <button
@@ -46,7 +39,7 @@ export function SaveButton({
         }
 
         const nextSaved = !saved
-        setSaved(nextSaved)
+        setOptimisticSaved(nextSaved)
         onChange?.(nextSaved)
         try {
           if (nextSaved) {
@@ -54,8 +47,9 @@ export function SaveButton({
           } else {
             await removeSavedItem.mutateAsync({ type: itemType, id: itemId })
           }
+          setOptimisticSaved(null)
         } catch {
-          setSaved(!nextSaved)
+          setOptimisticSaved(!nextSaved)
           onChange?.(!nextSaved)
         }
       }}

@@ -17,8 +17,6 @@ const tabItems = [
   { value: 'guesthouse', label: 'Guesthouses', icon: Hotel },
 ] as const
 
-const periodOptions = ['any', 'night', 'month', 'once'] as const
-
 export function AccommodationPage() {
   const currentUser = useAuthStore((state) => state.user)
   const defaultArea = currentUser?.default_area ?? OKAHANDJA_AREAS[0]
@@ -30,7 +28,7 @@ export function AccommodationPage() {
   const [maxPrice, setMaxPrice] = useState('')
   const [bedrooms, setBedrooms] = useState('any')
   const [bathrooms, setBathrooms] = useState('any')
-  const [pricePeriod, setPricePeriod] = useState<(typeof periodOptions)[number]>('any')
+  const [pricePeriod, setPricePeriod] = useState<'any' | 'night' | 'month' | 'once'>('any')
   const [verifiedOnly, setVerifiedOnly] = useState(false)
   const [sortBy, setSortBy] = useState<'newest' | 'price_low_high' | 'price_high_low'>('newest')
   const [step, setStep] = useState(0)
@@ -224,7 +222,7 @@ export function AccommodationPage() {
             <option value="1">1+ bathrooms</option>
             <option value="2">2+ bathrooms</option>
           </Select>
-          <Select value={pricePeriod} onChange={(event) => setPricePeriod(event.target.value as (typeof periodOptions)[number])}>
+          <Select value={pricePeriod} onChange={(event) => setPricePeriod(event.target.value as 'any' | 'night' | 'month' | 'once')}>
             <option value="any">Any price period</option>
             <option value="night">Per night</option>
             <option value="month">Per month</option>

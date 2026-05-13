@@ -62,7 +62,7 @@ class _RoleModesScreenState extends ConsumerState<RoleModesScreen> {
         children: [
           const SectionTitle(
             title: 'Switch mode or apply',
-            subtitle: 'Citizen access stays available. Additional roles unlock role-specific dashboards and workflows after approval.',
+            subtitle: 'Resident access stays available. Additional roles unlock role-specific dashboards and workflows after approval.',
           ),
           const SizedBox(height: 16),
           modes.when(

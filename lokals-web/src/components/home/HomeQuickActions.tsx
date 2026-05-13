@@ -1,166 +1,112 @@
-import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { Award, Bell, BriefcaseBusiness, Building2, CalendarDays, CircleHelp, FileWarning, HeartHandshake, Home, Newspaper, ShieldAlert, ShoppingBag, Store, UserRound, Verified, WalletCards } from 'lucide-react'
-import { ActionTile, Button, Card } from '../Ui'
+import {
+  Bell,
+  BriefcaseBusiness,
+  Building2,
+  CarFront,
+  FileWarning,
+  HeartHandshake,
+  Package,
+  ShieldAlert,
+  ShoppingBag,
+  Sparkles,
+  Users,
+} from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { Button, Card, QuickActionCard } from '../Ui'
 
-type ActionItem = {
+type QuickAction = {
   to: string
   label: string
   icon: LucideIcon
-  color: string
+  accentClass: string
 }
 
-const primaryActions: ActionItem[] = [
-  { to: '/sos', label: 'SOS', icon: ShieldAlert, color: 'bg-red-50 text-red-600' },
-  { to: '/services', label: 'Services', icon: ShieldAlert, color: 'bg-lokals-green-soft text-lokals-green' },
-  { to: '/ride', label: 'Taxi', icon: WalletCards, color: 'bg-amber-50 text-amber-700' },
-  { to: '/delivery', label: 'Delivery', icon: ShoppingBag, color: 'bg-emerald-50 text-emerald-700' },
-  { to: '/store', label: 'Market', icon: Store, color: 'bg-violet-50 text-violet-700' },
-  { to: '/report-issue', label: 'Report', icon: FileWarning, color: 'bg-orange-50 text-orange-700' },
-  { to: '/alerts', label: 'Alerts', icon: Bell, color: 'bg-sky-50 text-sky-700' },
-  { to: '/directory', label: 'Directory', icon: Building2, color: 'bg-slate-100 text-slate-700' },
-  { to: '/get-involved', label: 'Involved', icon: HeartHandshake, color: 'bg-violet-50 text-violet-700' },
-  { to: '/community-impact', label: 'Impact', icon: Award, color: 'bg-emerald-50 text-emerald-700' },
+const primaryActions: QuickAction[] = [
+  { to: '/report-issue', label: 'Report Issue', icon: FileWarning, accentClass: 'bg-orange-50 text-orange-700' },
+  { to: '/services', label: 'Find Services', icon: Sparkles, accentClass: 'bg-lokals-green-soft text-lokals-green' },
+  { to: '/ride', label: 'Request Taxi', icon: CarFront, accentClass: 'bg-amber-50 text-amber-700' },
+  { to: '/delivery', label: 'Delivery', icon: Package, accentClass: 'bg-emerald-50 text-emerald-700' },
+  { to: '/store', label: 'Marketplace', icon: ShoppingBag, accentClass: 'bg-violet-50 text-violet-700' },
+  { to: '/get-involved', label: 'Get Involved', icon: HeartHandshake, accentClass: 'bg-sky-50 text-sky-700' },
 ]
 
-const exploreActions: ActionItem[] = [
-  { to: '/jobs', label: 'Jobs', icon: BriefcaseBusiness, color: 'bg-sky-50 text-sky-700' },
-  { to: '/accommodation', label: 'Rentals', icon: Home, color: 'bg-emerald-50 text-emerald-700' },
-  { to: '/events', label: 'Events', icon: CalendarDays, color: 'bg-amber-50 text-amber-700' },
-  { to: '/news', label: 'News', icon: Newspaper, color: 'bg-slate-100 text-slate-700' },
-  { to: '/feed', label: 'Feed', icon: Newspaper, color: 'bg-slate-100 text-slate-700' },
-  { to: '/dashboard/feed', label: 'Orgs', icon: Building2, color: 'bg-violet-50 text-violet-700' },
-  { to: '/saved-items', label: 'Saved', icon: HeartHandshake, color: 'bg-slate-100 text-slate-700' },
-  { to: '/support', label: 'Help', icon: CircleHelp, color: 'bg-sky-50 text-sky-700' },
+const communityActions: QuickAction[] = [
+  { to: '/alerts', label: 'Town Updates', icon: Bell, accentClass: 'bg-slate-100 text-slate-700' },
+  { to: '/events', label: 'Events', icon: Users, accentClass: 'bg-amber-50 text-amber-700' },
+  { to: '/get-involved', label: 'Projects', icon: HeartHandshake, accentClass: 'bg-lokals-green-soft text-lokals-green' },
+  { to: '/services', label: 'Local Services', icon: Sparkles, accentClass: 'bg-violet-50 text-violet-700' },
 ]
 
-const accountActions: ActionItem[] = [
-  { to: '/activity', label: 'Activity', icon: Bell, color: 'bg-violet-50 text-violet-700' },
-  { to: '/notifications', label: 'Notify', icon: Bell, color: 'bg-sky-50 text-sky-700' },
-  { to: '/dashboard/profile', label: 'Profile', icon: UserRound, color: 'bg-slate-100 text-slate-700' },
-  { to: '/verification', label: 'Verify', icon: Verified, color: 'bg-emerald-50 text-emerald-700' },
+const trustActions: QuickAction[] = [
+  { to: '/directory', label: 'Verified businesses', icon: Building2, accentClass: 'bg-lokals-purple-soft text-lokals-purple' },
+  { to: '/dashboard/town-manager', label: 'Town approvals', icon: ShieldAlert, accentClass: 'bg-emerald-50 text-emerald-700' },
+  { to: '/community-impact', label: 'Resident rewards', icon: BriefcaseBusiness, accentClass: 'bg-amber-50 text-amber-700' },
+  { to: '/support', label: 'Safe reporting', icon: FileWarning, accentClass: 'bg-sky-50 text-sky-700' },
 ]
 
-function roleActions(activeRole: string, isGuest: boolean): ActionItem[] {
-  if (isGuest) {
-    return [{ to: '/login', label: 'Login', icon: UserRound, color: 'bg-violet-50 text-violet-700' }]
-  }
-
-  if (['seller', 'business_owner'].includes(activeRole)) {
-    return [
-      { to: '/dashboard/business', label: 'Business', icon: Store, color: 'bg-violet-50 text-violet-700' },
-      { to: '/store', label: 'Listings', icon: ShoppingBag, color: 'bg-amber-50 text-amber-700' },
-      { to: '/dashboard/bookings', label: 'Requests', icon: WalletCards, color: 'bg-sky-50 text-sky-700' },
-    ]
-  }
-
-  if (activeRole === 'service_provider') {
-    return [
-      { to: '/dashboard/service-provider', label: 'Provider', icon: Verified, color: 'bg-violet-50 text-violet-700' },
-      { to: '/dashboard/bookings', label: 'Requests', icon: WalletCards, color: 'bg-sky-50 text-sky-700' },
-      { to: '/verification', label: 'Verify', icon: Verified, color: 'bg-emerald-50 text-emerald-700' },
-    ]
-  }
-
-  if (activeRole === 'organization_admin') {
-    return [
-      { to: '/dashboard/organization', label: 'Org Hub', icon: Building2, color: 'bg-violet-50 text-violet-700' },
-      { to: '/alerts', label: 'Alerts', icon: Bell, color: 'bg-sky-50 text-sky-700' },
-      { to: '/dashboard/feed', label: 'Updates', icon: HeartHandshake, color: 'bg-amber-50 text-amber-700' },
-    ]
-  }
-
-  if (['town_manager', 'municipality_admin', 'super_admin', 'operator'].includes(activeRole)) {
-    return [
-      { to: activeRole === 'super_admin' || activeRole === 'operator' ? '/admin' : '/dashboard/town-manager', label: 'Portal', icon: Building2, color: 'bg-violet-50 text-violet-700' },
-      { to: '/dashboard/town-manager/community-projects', label: 'Projects', icon: HeartHandshake, color: 'bg-emerald-50 text-emerald-700' },
-      { to: '/dashboard/reports', label: 'Reports', icon: FileWarning, color: 'bg-orange-50 text-orange-700' },
-      { to: '/alerts', label: 'Alerts', icon: Bell, color: 'bg-sky-50 text-sky-700' },
-    ]
-  }
-
-  if (activeRole === 'worker') {
-    return [
-      { to: '/dashboard/worker', label: 'Work Hub', icon: BriefcaseBusiness, color: 'bg-violet-50 text-violet-700' },
-      { to: '/jobs', label: 'Quick Jobs', icon: BriefcaseBusiness, color: 'bg-amber-50 text-amber-700' },
-      { to: '/dashboard/profile', label: 'Profile', icon: UserRound, color: 'bg-slate-100 text-slate-700' },
-    ]
-  }
-
-  return [
-    { to: '/okahandja', label: 'Town Portal', icon: Building2, color: 'bg-violet-50 text-violet-700' },
-    { to: '/activity', label: 'Activity', icon: Bell, color: 'bg-sky-50 text-sky-700' },
-    { to: '/support', label: 'Support', icon: CircleHelp, color: 'bg-emerald-50 text-emerald-700' },
-  ]
-}
-
-function ActionGroup({
-  eyebrow,
-  title,
-  description,
-  items,
-  footer,
-}: {
-  eyebrow: string
-  title: string
-  description: string
-  items: ActionItem[]
-  footer?: ReactNode
-}) {
+export function HomeQuickActions() {
   return (
-    <Card className="p-5">
-      <div className="space-y-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-green">{eyebrow}</p>
-          <h2 className="mt-1 text-xl font-semibold text-lokals-charcoal">{title}</h2>
-          <p className="mt-2 text-sm text-lokals-muted">{description}</p>
+    <div className="space-y-5">
+      <Card variant="dashboard" className="p-5 md:p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-green">Quick actions</p>
+            <h2 className="mt-1 text-2xl font-semibold text-lokals-charcoal">Everyday actions in one clean grid</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-lokals-muted">
+              The same practical shortcuts people use in the app should be easy to reach on web too.
+            </p>
+          </div>
+          <Link to="/more"><Button variant="secondary">More tools</Button></Link>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {items.map((item) => (
-            <ActionTile key={item.label} to={item.to} label={item.label} subtitle="Open" icon={item.icon} className={item.color} />
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {primaryActions.map((action) => (
+            <QuickActionCard key={action.label} to={action.to} label={action.label} icon={action.icon} accentClass={action.accentClass} />
           ))}
         </div>
-        {footer}
+      </Card>
+
+      <div className="grid gap-5 xl:grid-cols-2">
+        <Card variant="dashboard" className="p-5 md:p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-green">Community</p>
+          <h3 className="mt-1 text-xl font-semibold text-lokals-charcoal">Town life and local momentum</h3>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {communityActions.map((action) => (
+              <QuickActionCard key={action.label} to={action.to} label={action.label} icon={action.icon} accentClass={action.accentClass} />
+            ))}
+          </div>
+        </Card>
+
+        <Card variant="dashboard" className="p-5 md:p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-green">Trust</p>
+          <h3 className="mt-1 text-xl font-semibold text-lokals-charcoal">Built for trusted local participation</h3>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {trustActions.map((action) => (
+              <QuickActionCard key={action.label} to={action.to} label={action.label} icon={action.icon} accentClass={action.accentClass} />
+            ))}
+          </div>
+          <div className="mt-5 rounded-[22px] bg-lokals-bg p-4">
+            <p className="text-sm text-lokals-muted">
+              Verified businesses, Town Manager approvals, resident rewards, and safer reporting help LOKALS feel dependable instead of noisy.
+            </p>
+          </div>
+        </Card>
       </div>
-    </Card>
-  )
-}
 
-export function HomeQuickActions({ activeRole, isGuest }: { activeRole: string; isGuest: boolean }) {
-  const roleItems = roleActions(activeRole, isGuest)
-
-  return (
-    <div className="space-y-4">
-      <ActionGroup
-        eyebrow="Primary actions"
-        title="Quick actions"
-        description="The fastest ways to get help, move around town, and reach the features people use most."
-        items={primaryActions}
-        footer={
-          <Link to="/services" className="inline-flex">
-            <Button variant="secondary">View all services</Button>
-          </Link>
-        }
-      />
-      <ActionGroup
-        eyebrow="Explore more"
-        title="More services"
-        description="Local life, opportunities, and community tools should stay one tap away."
-        items={exploreActions}
-      />
-      <ActionGroup
-        eyebrow="My space"
-        title="Account and updates"
-        description="Keep requests, notifications, saved items, and profile tools easy to reach."
-        items={accountActions}
-      />
-      <ActionGroup
-        eyebrow="Role tools"
-        title="Built for your role"
-        description="Role-aware shortcuts keep dashboards, verification, and town tools easier to discover."
-        items={roleItems}
-      />
+      <Card variant="dashboard" className="p-5 md:p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-green">Join LOKALS</p>
+            <h3 className="mt-1 text-xl font-semibold text-lokals-charcoal">Choose the path that fits your role in town</h3>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link to="/register"><Button>Join as Resident</Button></Link>
+            <Link to="/dashboard/business"><Button variant="secondary">Register Business</Button></Link>
+            <Link to="/dashboard/modes"><Button variant="secondary">Apply as Driver/Courier</Button></Link>
+            <Link to="/okahandja"><Button variant="secondary">Town Portal</Button></Link>
+          </div>
+        </div>
+      </Card>
     </div>
   )
 }

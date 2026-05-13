@@ -3,6 +3,11 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { PageHeader, QueryState, SearchBar, SectionCard } from '../components/Ui'
 import { useSearchResults } from '../hooks/queries'
 import { PILOT_TOWN } from '../lib/pilot'
+import type { UnifiedSearchResult } from '../types'
+
+type SearchResultWithProvider = UnifiedSearchResult & {
+  service_provider_id?: number | string | null
+}
 
 const sections = [
   { key: 'services', label: 'Services', href: '/services', titleKey: 'name' },
@@ -15,7 +20,7 @@ const sections = [
   { key: 'accommodations', label: 'Accommodation', href: '/accommodation', titleKey: 'title' },
 ] as const
 
-function getDetailHref(sectionKey: string, item: any, query: string) {
+function getDetailHref(sectionKey: string, item: SearchResultWithProvider, query: string) {
   const id = item?.id
   if (!id) {
     return `/search?q=${encodeURIComponent(query)}`
@@ -97,7 +102,7 @@ export function SearchResultsPage() {
                   <div className="mt-4 space-y-3">
                     {items.length === 0 ? (
                       <p className="text-sm text-lokals-muted">No matches in this section.</p>
-                    ) : items.slice(0, 4).map((item: any) => (
+                    ) : items.slice(0, 4).map((item: UnifiedSearchResult) => (
                       <Link
                         key={`${section.key}-${item.id}`}
                         to={getDetailHref(section.key, item, query)}

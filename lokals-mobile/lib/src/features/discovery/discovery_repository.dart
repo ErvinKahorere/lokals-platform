@@ -336,7 +336,7 @@ class DiscoveryRepository {
       price: '75',
       parcelSize: 'medium',
       status: 'en route',
-      userName: 'Demo Citizen',
+      userName: 'Demo Resident',
       driverName: 'Local Courier',
     ),
   ];
@@ -350,7 +350,7 @@ class DiscoveryRepository {
       rideType: 'Standard',
       tripPurpose: 'Clinic visit',
       status: 'requested',
-      userName: 'Demo Citizen',
+      userName: 'Demo Resident',
       driverName: 'Pilot Driver',
     ),
   ];

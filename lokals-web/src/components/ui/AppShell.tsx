@@ -1,8 +1,8 @@
 import { Award, ChevronDown, LayoutDashboard, LogOut, MapPin, Menu, Search, Settings, Ticket, UserRound, Bookmark, Bell, BookOpen, CircleHelp } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useMe, useNotifications, usePreferences, useUpdatePreferences, useUpdateProfile } from '../../hooks/queries'
-import { getRoleHomePath } from '../../lib/roles'
+import { formatRoleLabel, getRoleHomePath } from '../../lib/roles'
 import { useAuthStore } from '../../store/auth'
 import { NotificationBell } from '../experience/NotificationBell'
 import { BottomSheet } from './BottomSheet'
@@ -45,8 +45,7 @@ const locationOptions = [
   { town: 'Okahandja', area: 'Okahandja Industrial Area' },
 ]
 
-const formatRole = (role?: string | null) =>
-  role ? role.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()) : 'Citizen'
+const formatRole = (role?: string | null) => formatRoleLabel(role)
 
 const socialLinks = [
   {
@@ -133,7 +132,9 @@ export function AppShell() {
   const updatePreferences = useUpdatePreferences()
   const updateProfile = useUpdateProfile()
   const navigate = useNavigate()
+  const location = useLocation()
   const currentUser = meQuery.data?.user ? ('data' in meQuery.data.user ? meQuery.data.user.data : meQuery.data.user) : user
+  const isDashboardRoute = location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/admin')
   const unreadCount = (notificationsQuery.data ?? []).filter((item) => !item.read_at).length
   const activeRole = currentUser?.current_role ?? currentUser?.roles?.[0] ?? null
   const isBusinessUser = Boolean(currentUser?.roles?.some((role) => ['seller', 'business_owner', 'service_provider'].includes(role)))
@@ -217,6 +218,18 @@ export function AppShell() {
     }
 
     navigate(`/search?q=${encodeURIComponent(query)}`)
+  }
+
+  if (isDashboardRoute) {
+    return (
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(63,43,203,0.08),transparent_30%),radial-gradient(circle_at_top_right,rgba(22,163,74,0.08),transparent_28%),#f8fafc]">
+        <div className="mx-auto max-w-[1680px] px-3 py-3 md:px-5 lg:px-6">
+          <main className="min-w-0">
+            <Outlet />
+          </main>
+        </div>
+      </div>
+    )
   }
 
   return (

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Avatar } from '../components/ui/Avatar'
@@ -26,8 +26,10 @@ export function BookingPage() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
   const services = provider?.services?.filter((service) => service.is_active && service.is_bookable) ?? []
-  const selectedService = services.find((service) => String(service.id) === serviceId)
+  const effectiveServiceId = serviceId || (services[0] ? String(services[0].id) : '')
+  const selectedService = services.find((service) => String(service.id) === effectiveServiceId)
   const timeOptions = buildTimeOptions(provider, bookingDate, selectedService?.duration_minutes ?? 60)
+  const effectiveStartTime = startTime && timeOptions.includes(startTime) ? startTime : (timeOptions[0] ?? '')
   const dateOptions = Array.from({ length: 5 }).map((_, index) => {
     const date = new Date()
     date.setDate(date.getDate() + index)
@@ -35,28 +37,11 @@ export function BookingPage() {
   })
   const formatDateChip = (value: string) =>
     new Date(`${value}T00:00:00`).toLocaleDateString('en-NA', { weekday: 'short', day: 'numeric', month: 'short' })
-
-  useEffect(() => {
-    if (services[0]) {
-      setServiceId(String(services[0].id))
-    }
-  }, [provider?.id, services])
-
-  useEffect(() => {
-    if (timeOptions.length === 0) {
-      setStartTime('')
-      return
-    }
-    if (!timeOptions.includes(startTime)) {
-      setStartTime(timeOptions[0])
-    }
-  }, [startTime, timeOptions])
-
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     setError('')
     try {
-      await createBooking.mutateAsync({ service_id: Number(serviceId), booking_date: bookingDate, start_time: startTime, notes })
+      await createBooking.mutateAsync({ service_id: Number(effectiveServiceId), booking_date: bookingDate, start_time: effectiveStartTime, notes })
       setSuccess(true)
     } catch (caught) {
       setError(getApiErrorMessage(caught, 'Unable to create booking right now.'))
@@ -102,7 +87,7 @@ export function BookingPage() {
                   <>
                     <label className="block">
                       <span className="mb-2 block text-sm font-medium">Selected service</span>
-                      <Select value={serviceId} onChange={(event) => setServiceId(event.target.value)}>
+                      <Select value={effectiveServiceId} onChange={(event) => setServiceId(event.target.value)}>
                         {services.map((service) => (
                           <option key={service.id} value={service.id}>{service.name} - {getServicePriceLabel(service)}</option>
                         ))}
@@ -151,7 +136,7 @@ export function BookingPage() {
                             type="button"
                             key={slot}
                             onClick={() => setStartTime(slot)}
-                            className={`min-h-11 rounded-lokals-lg border px-3 text-sm font-semibold ${startTime === slot ? 'border-lokals-purple bg-violet-50 text-lokals-purple' : 'border-lokals-border bg-white text-lokals-charcoal'}`}
+                            className={`min-h-11 rounded-lokals-lg border px-3 text-sm font-semibold ${effectiveStartTime === slot ? 'border-lokals-purple bg-violet-50 text-lokals-purple' : 'border-lokals-border bg-white text-lokals-charcoal'}`}
                           >
                             {slot}
                           </button>
@@ -176,7 +161,7 @@ export function BookingPage() {
                 )}
 
                 {error ? <p className="text-sm font-medium text-lokals-danger">{error}</p> : null}
-                <Button className="w-full" disabled={createBooking.isPending || !serviceId || !startTime}>
+                <Button className="w-full" disabled={createBooking.isPending || !effectiveServiceId || !effectiveStartTime}>
                   {createBooking.isPending ? 'Sending booking...' : 'Confirm Booking'}
                 </Button>
               </form>

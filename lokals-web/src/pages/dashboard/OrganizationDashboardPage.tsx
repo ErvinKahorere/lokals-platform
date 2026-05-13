@@ -14,6 +14,7 @@ export function OrganizationDashboardPage() {
 
   return (
     <DashboardShell
+      mode="organisation"
       eyebrow="Organization"
       title="Organization dashboard"
       description="Followers, public updates, profile trust, and events in one calm workspace."
