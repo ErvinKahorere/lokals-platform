@@ -57,7 +57,7 @@ const MODE_QUERY_KEYS: Record<DashboardMode, string[][]> = {
 const EVENT_QUERY_KEYS: Record<DashboardRealtimeEventName, string[][]> = {
   NotificationCreated: [['notifications']],
   MessageReceived: [['conversations']],
-  IssueStatusUpdated: [['activity-feed'], ['my-reports'], ['admin-reports']],
+  IssueStatusUpdated: [['activity-feed'], ['my-reports'], ['admin-reports'], ['report']],
   RideRequestUpdated: [['rides']],
   DeliveryRequestUpdated: [['deliveries']],
   RoleApplicationSubmitted: [['admin-role-applications'], ['my-role-applications']],

@@ -1,18 +1,14 @@
-import { Package, PhoneCall, Star } from 'lucide-react'
+import { Package, ShieldCheck, Star } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { ContactActions } from '../components/experience/ContactActions'
 import { Button, EmptyState, Input, QueryState, SectionCard, StatusBadge, TextArea } from '../components/Ui'
 import { StatusStepper } from '../components/transport/StatusStepper'
 import { useCancelDelivery, useDelivery, useRateDelivery } from '../hooks/queries'
+import { formatTransportStatus, formatTransportTimestamp, normalizeTransportTimeline, transportStatusTone } from '../lib/transportStatus'
 import { useAuthStore } from '../store/auth'
 
 const deliverySteps = ['requested', 'accepted', 'pickup_confirmed', 'in_transit', 'delivered', 'cancelled']
-
-function formatTimestamp(value?: string | null) {
-  if (!value) return null
-  const parsed = new Date(value)
-  return Number.isNaN(parsed.getTime()) ? null : parsed.toLocaleString()
-}
 
 export function DeliveryDetailsPage() {
   const { id } = useParams()
@@ -29,13 +25,13 @@ export function DeliveryDetailsPage() {
   const canCancel = isResidentOrBusiness && delivery?.status != null && ['requested', 'searching', 'accepted', 'pickup_confirmed'].includes(delivery.status)
   const canRate = isResidentOrBusiness && delivery?.status === 'delivered' && !delivery?.rating
 
-  const timeline = [
-    { label: 'Requested', timestamp: delivery?.created_at },
-    { label: 'Assigned', timestamp: delivery?.assigned_at },
-    { label: 'Pickup confirmed', timestamp: delivery?.picked_up_at },
-    { label: 'In transit', timestamp: delivery?.in_transit_at },
-    { label: 'Delivered', timestamp: delivery?.delivered_at },
-  ].filter((item) => item.timestamp)
+  const timeline = normalizeTransportTimeline(delivery?.timeline, [
+    { key: 'requested', label: 'Requested', timestamp: delivery?.created_at },
+    { key: 'assigned', label: 'Assigned', timestamp: delivery?.assigned_at },
+    { key: 'pickup_confirmed', label: 'Pickup confirmed', timestamp: delivery?.picked_up_at },
+    { key: 'in_transit', label: 'In transit', timestamp: delivery?.in_transit_at },
+    { key: 'delivered', label: 'Delivered', timestamp: delivery?.delivered_at },
+  ])
 
   return (
     <div className="space-y-5">
@@ -62,9 +58,13 @@ export function DeliveryDetailsPage() {
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-3">
                     <h2 className="text-2xl font-semibold text-lokals-charcoal">Parcel details</h2>
-                    <StatusBadge value={(delivery.status ?? 'requested').replaceAll('_', ' ')} tone={delivery.status === 'cancelled' ? 'danger' : delivery.status === 'delivered' ? 'success' : 'accent'} />
+                    <StatusBadge value={formatTransportStatus(delivery.tracking_status ?? delivery.status, delivery.status_label)} tone={transportStatusTone(delivery.status)} />
                   </div>
                   <p className="mt-3 text-sm text-lokals-muted">{delivery.parcel_description ?? delivery.item_description ?? 'Parcel request'}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {delivery.reference_code ? <StatusBadge value={delivery.reference_code} tone="neutral" /> : null}
+                    {delivery.urgency ? <StatusBadge value={delivery.urgency} tone="accent" /> : null}
+                  </div>
                 </div>
               </div>
 
@@ -87,6 +87,10 @@ export function DeliveryDetailsPage() {
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Estimate</p>
                   <p className="mt-2 font-semibold text-lokals-charcoal">{delivery.estimated_price || delivery.price ? `N$ ${delivery.estimated_price ?? delivery.price}` : 'Open estimate'}</p>
                 </article>
+                <article className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Weight</p>
+                  <p className="mt-2 font-semibold text-lokals-charcoal">{delivery.weight_kg ? `${delivery.weight_kg} kg` : 'Not specified'}</p>
+                </article>
               </div>
 
               {delivery.notes ? (
@@ -97,17 +101,32 @@ export function DeliveryDetailsPage() {
               ) : null}
 
               <div className="mt-4 rounded-2xl border border-lokals-border p-4">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold text-lokals-charcoal">{delivery.driver?.name ?? 'Courier operator pending'}</p>
                     <p className="text-sm text-lokals-muted">{delivery.driver?.phone ?? 'A courier contact will appear here once the request is accepted.'}</p>
+                    {delivery.courier_profile?.vehicle_type ? <p className="mt-1 text-sm text-lokals-muted">Vehicle: {delivery.courier_profile.vehicle_type}</p> : null}
+                    {delivery.courier_profile?.vehicle_registration ? <p className="mt-1 text-sm text-lokals-muted">Plate: {delivery.courier_profile.vehicle_registration}</p> : null}
+                    {delivery.courier_profile?.rating != null ? <p className="mt-1 text-sm text-lokals-muted">Courier rating: {delivery.courier_profile.rating}/5</p> : null}
                   </div>
-                  {delivery.driver?.phone ? (
-                    <a href={`tel:${delivery.driver.phone}`}>
-                      <Button variant="secondary"><PhoneCall className="mr-2 h-4 w-4" />Call</Button>
-                    </a>
-                  ) : null}
+                  <ContactActions
+                    className="flex flex-wrap gap-2"
+                    name={delivery.driver?.name ?? 'Courier'}
+                    phone={delivery.driver?.phone}
+                    conversationUserId={delivery.driver?.id ?? null}
+                    conversationContext="delivery"
+                    conversationSubject={delivery.reference_code ?? `Delivery ${delivery.id}`}
+                    whatsappMessage={`Hi, I am checking on delivery ${delivery.reference_code ?? delivery.id}.`}
+                  />
                 </div>
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50 p-4">
+                <div className="flex items-center gap-2 text-lokals-charcoal">
+                  <ShieldCheck className="h-4 w-4 text-emerald-700" />
+                  <p className="font-semibold">Proof of delivery</p>
+                </div>
+                <p className="mt-2 text-sm text-lokals-muted">{delivery.proof_of_delivery?.label ?? 'Proof of delivery will appear here once confirmed.'}</p>
               </div>
 
               {timeline.length ? (
@@ -117,7 +136,7 @@ export function DeliveryDetailsPage() {
                     {timeline.map((item) => (
                       <div key={item.label} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3">
                         <p className="font-semibold text-lokals-charcoal">{item.label}</p>
-                        <p className="text-sm text-lokals-muted">{formatTimestamp(item.timestamp) ?? 'Recently'}</p>
+                        <p className="text-sm text-lokals-muted">{formatTransportTimestamp(item.timestamp) ?? 'Recently'}</p>
                       </div>
                     ))}
                   </div>

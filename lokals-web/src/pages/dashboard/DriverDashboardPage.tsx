@@ -1,4 +1,5 @@
 import { Bell, CarFront, History, MessageSquare, Power, Star, Wallet } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { DashboardSection } from '../../components/dashboard/DashboardSection'
 import { QuickActionTile } from '../../components/dashboard/QuickActionTile'
@@ -7,6 +8,7 @@ import { StatusBreakdownCard } from '../../components/dashboard/StatusBreakdownC
 import { Button, StatusBadge } from '../../components/Ui'
 import { useDriverRideAction, useUpdateDriverAvailability } from '../../hooks/queries'
 import { useDriverOperationalData } from '../../lib/dashboardDataProvider'
+import { formatTransportStatus, transportStatusTone } from '../../lib/transportStatus'
 import type { DriverDashboardData } from '../../lib/dashboardTypes'
 import type { RoleDashboardPayload } from '../../types'
 
@@ -79,6 +81,7 @@ export function DriverDashboardPage() {
                 <p className="font-semibold text-lokals-charcoal">{ride.pickup_location} {'->'} {ride.dropoff_location}</p>
                 <p className="mt-1 text-sm text-lokals-muted">{ride.user?.name ?? 'Resident'} | {ride.ride_type ?? 'Standard'} | N$ {ride.fare_estimate ?? '0'}</p>
                 <div className="mt-3 flex flex-wrap gap-2">
+                  <Link to={`/ride/${ride.id}`}><Button className="min-h-9 px-3 py-2 text-xs" variant="secondary">Details</Button></Link>
                   <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionMutation.isPending} onClick={() => rideActionMutation.mutate({ rideId: ride.id, action: 'accept' })}>
                     Accept
                   </Button>
@@ -96,7 +99,7 @@ export function DriverDashboardPage() {
             {tripHistory.slice(0, 6).map((ride) => (
               <div key={ride.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
                 <p className="font-semibold text-lokals-charcoal">{ride.pickup_location} {'->'} {ride.dropoff_location}</p>
-                <p className="mt-1 text-sm text-lokals-muted">{ride.status ?? 'requested'} | {ride.user?.name ?? 'Resident'}</p>
+                <p className="mt-1 text-sm text-lokals-muted">{formatTransportStatus(ride.tracking_status ?? ride.status, ride.status_label)} | {ride.user?.name ?? 'Resident'}</p>
               </div>
             ))}
             {!tripHistory.length ? <p className="text-sm text-lokals-muted">Completed and cancelled trips will appear here as you start working rides.</p> : null}
@@ -109,8 +112,14 @@ export function DriverDashboardPage() {
           {activeTrip ? (
             <div className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
               <p className="font-semibold text-lokals-charcoal">{activeTrip.pickup_location} {'->'} {activeTrip.dropoff_location}</p>
-              <p className="mt-1 text-sm text-lokals-muted">{activeTrip.status ?? 'accepted'} | {activeTrip.user?.name ?? 'Resident'}</p>
+              <p className="mt-1 text-sm text-lokals-muted">{formatTransportStatus(activeTrip.tracking_status ?? activeTrip.status, activeTrip.status_label)} | {activeTrip.user?.name ?? 'Resident'}</p>
+              <div className="mt-2">
+                <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-lokals-charcoal">
+                  {transportStatusTone(activeTrip.status) === 'success' ? 'Completed' : 'Active now'}
+                </span>
+              </div>
               <div className="mt-3 flex flex-wrap gap-2">
+                <Link to={`/ride/${activeTrip.id}`}><Button className="min-h-9 px-3 py-2 text-xs" variant="secondary">Details</Button></Link>
                 {activeTrip.status === 'accepted' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionMutation.isPending} onClick={() => rideActionMutation.mutate({ rideId: activeTrip.id, action: 'arrived' })}>Mark arrived</Button> : null}
                 {activeTrip.status === 'arrived' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionMutation.isPending} onClick={() => rideActionMutation.mutate({ rideId: activeTrip.id, action: 'start' })}>Start trip</Button> : null}
                 {activeTrip.status === 'in_progress' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionMutation.isPending} onClick={() => rideActionMutation.mutate({ rideId: activeTrip.id, action: 'complete' })}>Complete trip</Button> : null}

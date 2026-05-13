@@ -50,7 +50,7 @@ class RideDetailsScreen extends ConsumerWidget {
                               children: [
                                 Text(_rideTypeLabel(item.rideType), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
                                 const SizedBox(height: 4),
-                                AppBadge(label: (item.status ?? 'requested').replaceAll('_', ' ')),
+                                AppBadge(label: item.statusLabel ?? (item.status ?? 'requested').replaceAll('_', ' ')),
                               ],
                             ),
                           ),
@@ -61,6 +61,8 @@ class RideDetailsScreen extends ConsumerWidget {
                       _InfoRow(label: 'Destination', value: item.dropoffLocation),
                       _InfoRow(label: 'Trip purpose', value: item.tripPurpose ?? 'General trip'),
                       _InfoRow(label: 'Fare estimate', value: item.fareEstimate == null ? 'Open fare' : 'N\$ ${item.fareEstimate}'),
+                      if ((item.referenceCode ?? '').isNotEmpty) _InfoRow(label: 'Reference', value: item.referenceCode!),
+                      if (item.estimatedEtaMinutes != null) _InfoRow(label: 'ETA', value: '${item.estimatedEtaMinutes} min'),
                       if ((item.notes ?? '').isNotEmpty) _InfoRow(label: 'Notes', value: item.notes!),
                       const SizedBox(height: 14),
                       AppCard(
@@ -87,6 +89,18 @@ class RideDetailsScreen extends ConsumerWidget {
                                         : 'A driver contact will appear once a nearby taxi accepts your ride.',
                                     style: const TextStyle(color: AppColors.mutedText),
                                   ),
+                                  if ((item.vehicleLabel ?? '').isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text('Vehicle: ${item.vehicleLabel}', style: const TextStyle(color: AppColors.mutedText)),
+                                  ],
+                                  if ((item.driverVehicleRegistration ?? '').isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text('Plate: ${item.driverVehicleRegistration}', style: const TextStyle(color: AppColors.mutedText)),
+                                  ],
+                                  if (item.driverRating != null) ...[
+                                    const SizedBox(height: 4),
+                                    Text('Driver rating: ${item.driverRating!.toStringAsFixed(1)}/5', style: const TextStyle(color: AppColors.mutedText)),
+                                  ],
                                 ],
                               ),
                             ),

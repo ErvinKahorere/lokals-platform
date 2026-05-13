@@ -36,6 +36,8 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
 
   String _pickupAddress = _locations.first;
   String _dropoffAddress = _locations.last;
+  String _urgency = 'standard';
+  final _weightController = TextEditingController(text: '2');
   final _itemController = TextEditingController();
   final _notesController = TextEditingController();
   String _parcelSize = 'medium';
@@ -45,9 +47,20 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
   DeliveryModel? _successItem;
 
   int get _estimate => _parcelSizes.firstWhere((item) => item.value == _parcelSize).estimate;
+  int get _estimatedTotal {
+    final urgencyBonus = switch (_urgency) {
+      'express' => 25,
+      'priority' => 40,
+      _ => 0,
+    };
+    final weight = double.tryParse(_weightController.text.trim()) ?? 0;
+    final weightBonus = weight > 5 ? 18 : weight > 2 ? 10 : 0;
+    return _estimate + urgencyBonus + weightBonus;
+  }
 
   @override
   void dispose() {
+    _weightController.dispose();
     _itemController.dispose();
     _notesController.dispose();
     super.dispose();
@@ -77,7 +90,7 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                 children: [
                   Text('${_successItem!.pickupAddress} to ${_successItem!.dropoffAddress}', style: const TextStyle(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 6),
-                  Text('Estimate: N\$ ${_successItem!.price ?? _estimate}', style: const TextStyle(color: AppColors.mutedText)),
+                  Text('Estimate: N\$ ${_successItem!.price ?? _estimatedTotal}', style: const TextStyle(color: AppColors.mutedText)),
                 ],
               ),
               primaryLabel: 'View status',
@@ -106,12 +119,19 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: _locations.take(4).map((location) {
-                      return ActionChip(
-                        label: Text(location),
-                        onPressed: () => setState(() => _dropoffAddress = location),
-                      );
-                    }).toList(),
+                    children: [
+                      ActionChip(
+                        avatar: const Icon(Icons.my_location_rounded, size: 18),
+                        label: const Text('Use current location'),
+                        onPressed: () => setState(() => _pickupAddress = 'Current location (near me)'),
+                      ),
+                      ..._locations.take(4).map((location) {
+                        return ActionChip(
+                          label: Text(location),
+                          onPressed: () => setState(() => _dropoffAddress = location),
+                        );
+                      }),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   Align(
@@ -156,6 +176,24 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                     maxLines: 3,
                   ),
                   const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: _urgency,
+                    decoration: const InputDecoration(labelText: 'Urgency'),
+                    items: const [
+                      DropdownMenuItem(value: 'standard', child: Text('Standard')),
+                      DropdownMenuItem(value: 'express', child: Text('Express')),
+                      DropdownMenuItem(value: 'priority', child: Text('Priority')),
+                    ],
+                    onChanged: (value) => setState(() => _urgency = value ?? _urgency),
+                  ),
+                  const SizedBox(height: 12),
+                  LokalsTextField(
+                    controller: _weightController,
+                    label: 'Weight (kg)',
+                    hint: 'Approximate parcel weight',
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  ),
+                  const SizedBox(height: 12),
                   LokalsTextField(
                     controller: _notesController,
                     label: 'Notes',
@@ -190,9 +228,11 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                       children: [
                         const Text('Estimate', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.primaryPurple)),
                         const SizedBox(height: 6),
-                        Text('N\$ $_estimate', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),
+                        Text('N\$ $_estimatedTotal', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),
                         const SizedBox(height: 6),
                         Text('$_pickupAddress to $_dropoffAddress', style: const TextStyle(color: AppColors.mutedText)),
+                        const SizedBox(height: 6),
+                        Text('Urgency: ${_urgency[0].toUpperCase()}${_urgency.substring(1)} | Weight: ${_weightController.text.trim()} kg', style: const TextStyle(color: AppColors.mutedText)),
                       ],
                     ),
                   ),
@@ -212,8 +252,10 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                             pickupAddress: _pickupAddress,
                             dropoffAddress: _dropoffAddress,
                             itemDescription: _itemController.text.trim(),
-                            price: _estimate.toString(),
+                            price: _estimatedTotal.toString(),
                             parcelSize: _parcelSize,
+                            urgency: _urgency,
+                            weightKg: _weightController.text.trim(),
                             status: 'requested',
                           );
                         });
@@ -229,9 +271,11 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                               dropoffAddress: _dropoffAddress,
                               itemDescription: _itemController.text.trim(),
                               parcelSize: _parcelSize,
+                              urgency: _urgency,
+                              weightKg: _weightController.text.trim(),
                               notes: _notesController.text.trim(),
                               photo: _photo,
-                              price: _estimate.toString(),
+                              price: _estimatedTotal.toString(),
                             );
                         ref.invalidate(deliveriesProvider);
                         if (!mounted) return;
@@ -278,7 +322,7 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                                 children: [
                                   Text(item.price == null ? 'Open' : 'N\$ ${item.price}'),
                                   const SizedBox(height: 4),
-                                  AppBadge(label: item.status ?? 'requested'),
+                                  AppBadge(label: item.statusLabel ?? item.status ?? 'requested'),
                                 ],
                               ),
                             ),

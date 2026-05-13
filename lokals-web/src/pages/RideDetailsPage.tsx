@@ -1,18 +1,14 @@
-import { CarFront, PhoneCall, Star } from 'lucide-react'
+import { CarFront, Clock3, Star } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { ContactActions } from '../components/experience/ContactActions'
 import { Button, EmptyState, Input, QueryState, SectionCard, StatusBadge, TextArea } from '../components/Ui'
 import { StatusStepper } from '../components/transport/StatusStepper'
 import { useCancelRide, useRateRide, useRide } from '../hooks/queries'
+import { formatTransportStatus, formatTransportTimestamp, normalizeTransportTimeline, transportStatusTone } from '../lib/transportStatus'
 import { useAuthStore } from '../store/auth'
 
 const rideSteps = ['requested', 'accepted', 'arrived', 'in_progress', 'completed', 'cancelled']
-
-function formatTimestamp(value?: string | null) {
-  if (!value) return null
-  const parsed = new Date(value)
-  return Number.isNaN(parsed.getTime()) ? null : parsed.toLocaleString()
-}
 
 export function RideDetailsPage() {
   const { id } = useParams()
@@ -29,13 +25,13 @@ export function RideDetailsPage() {
   const canCancel = isResident && ride?.status != null && ['requested', 'searching', 'accepted', 'arrived'].includes(ride.status)
   const canRate = isResident && ride?.status === 'completed' && !ride?.rating
 
-  const timeline = [
-    { label: 'Requested', timestamp: ride?.created_at },
-    { label: 'Assigned', timestamp: ride?.assigned_at },
-    { label: 'Driver arrived', timestamp: ride?.arrived_at },
-    { label: 'Trip started', timestamp: ride?.started_at },
-    { label: 'Trip completed', timestamp: ride?.completed_at },
-  ].filter((item) => item.timestamp)
+  const timeline = normalizeTransportTimeline(ride?.timeline, [
+    { key: 'requested', label: 'Requested', timestamp: ride?.created_at },
+    { key: 'assigned', label: 'Assigned', timestamp: ride?.assigned_at },
+    { key: 'arrived', label: 'Driver arrived', timestamp: ride?.arrived_at },
+    { key: 'started', label: 'Trip started', timestamp: ride?.started_at },
+    { key: 'completed', label: 'Trip completed', timestamp: ride?.completed_at },
+  ])
 
   return (
     <div className="space-y-5">
@@ -62,9 +58,13 @@ export function RideDetailsPage() {
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-3">
                     <h2 className="text-2xl font-semibold text-lokals-charcoal">{ride.ride_type === 'local_taxi' ? 'Standard local taxi' : ride.ride_type ?? 'Standard'} ride</h2>
-                    <StatusBadge value={(ride.status ?? 'requested').replaceAll('_', ' ')} tone={ride.status === 'cancelled' ? 'danger' : ride.status === 'completed' ? 'success' : 'accent'} />
+                    <StatusBadge value={formatTransportStatus(ride.tracking_status ?? ride.status, ride.status_label)} tone={transportStatusTone(ride.status)} />
                   </div>
                   <p className="mt-3 text-sm text-lokals-muted">{ride.pickup_location} to {ride.dropoff_location}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {ride.reference_code ? <StatusBadge value={ride.reference_code} tone="neutral" /> : null}
+                    {ride.estimated_eta_minutes != null ? <StatusBadge value={`ETA ${ride.estimated_eta_minutes} min`} tone="accent" /> : null}
+                  </div>
                 </div>
               </div>
 
@@ -95,19 +95,37 @@ export function RideDetailsPage() {
               ) : null}
 
               <div className="mt-4 rounded-2xl border border-lokals-border p-4">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold text-lokals-charcoal">{ride.driver?.name ?? 'Verified taxi operator pending'}</p>
                     <p className="text-sm text-lokals-muted">{ride.driver?.phone ?? 'A driver contact will appear after a nearby taxi accepts your request.'}</p>
                     {ride.vehicle_label ? <p className="mt-1 text-sm text-lokals-muted">Vehicle: {ride.vehicle_label}</p> : null}
+                    {ride.driver_profile?.vehicle_registration ? <p className="mt-1 text-sm text-lokals-muted">Plate: {ride.driver_profile.vehicle_registration}</p> : null}
+                    {ride.driver_profile?.rating != null ? <p className="mt-1 text-sm text-lokals-muted">Driver rating: {ride.driver_profile.rating}/5</p> : null}
                   </div>
-                  {ride.driver?.phone ? (
-                    <a href={`tel:${ride.driver.phone}`}>
-                      <Button variant="secondary"><PhoneCall className="mr-2 h-4 w-4" />Call</Button>
-                    </a>
-                  ) : null}
+                  <ContactActions
+                    className="flex flex-wrap gap-2"
+                    name={ride.driver?.name ?? 'Driver'}
+                    phone={ride.driver?.phone}
+                    conversationUserId={ride.driver?.id ?? null}
+                    conversationContext="ride"
+                    conversationSubject={ride.reference_code ?? `Ride ${ride.id}`}
+                    whatsappMessage={`Hi, I am checking on ride ${ride.reference_code ?? ride.id}.`}
+                  />
                 </div>
               </div>
+
+              {ride.status === 'accepted' && ride.estimated_eta_minutes != null ? (
+                <div className="mt-4 rounded-2xl border border-dashed border-violet-200 bg-violet-50 p-4">
+                  <div className="flex items-center gap-2 text-lokals-charcoal">
+                    <Clock3 className="h-4 w-4 text-lokals-purple" />
+                    <p className="font-semibold">Driver en route</p>
+                  </div>
+                  <p className="mt-2 text-sm text-lokals-muted">
+                    Your driver is on the way. Estimated arrival is about {ride.estimated_eta_minutes} minutes.
+                  </p>
+                </div>
+              ) : null}
 
               {timeline.length ? (
                 <div className="mt-4 rounded-2xl border border-lokals-border p-4">
@@ -116,7 +134,7 @@ export function RideDetailsPage() {
                     {timeline.map((item) => (
                       <div key={item.label} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3">
                         <p className="font-semibold text-lokals-charcoal">{item.label}</p>
-                        <p className="text-sm text-lokals-muted">{formatTimestamp(item.timestamp) ?? 'Recently'}</p>
+                        <p className="text-sm text-lokals-muted">{formatTransportTimestamp(item.timestamp) ?? 'Recently'}</p>
                       </div>
                     ))}
                   </div>

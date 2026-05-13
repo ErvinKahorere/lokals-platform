@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react'
-import { CarFront, Clock3, MapPin } from 'lucide-react'
+import { CarFront, Clock3, LocateFixed, MapPin } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button, EmptyState, Input, PageHeader, QueryState, SectionCard, Select, StatusBadge } from '../components/Ui'
@@ -9,6 +9,7 @@ import { isDemoMode } from '../config/appMode'
 import { useCreateRide, useRides } from '../hooks/queries'
 import { getApiErrorMessage } from '../lib/api'
 import { navigateToLogin } from '../lib/authNavigation'
+import { formatTransportStatus, transportStatusTone } from '../lib/transportStatus'
 import { useAuthStore } from '../store/auth'
 import type { RideItem } from '../types'
 
@@ -87,6 +88,10 @@ export function RidePage() {
     }
   }
 
+  const setCurrentLocation = () => {
+    setPickupLocation('Current location (near me)')
+  }
+
   return (
     <div className="space-y-5">
       <GlassPanel>
@@ -141,6 +146,14 @@ export function RidePage() {
                   </div>
 
                   <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={setCurrentLocation}
+                      className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                    >
+                      <LocateFixed className="h-4 w-4" />
+                      Use current location
+                    </button>
                     {['Home', 'Work', 'Airport'].map((label) => (
                       <button
                         key={label}
@@ -258,7 +271,7 @@ export function RidePage() {
                         </div>
                         <div className="text-right">
                           <p className="font-semibold text-lokals-charcoal">{ride.fare_estimate ? `N$ ${ride.fare_estimate}` : 'Open fare'}</p>
-                          <StatusBadge value={(ride.status ?? 'requested').replaceAll('_', ' ')} tone={ride.status === 'completed' ? 'success' : ride.status === 'cancelled' ? 'danger' : 'accent'} className="mt-1" />
+                          <StatusBadge value={formatTransportStatus(ride.tracking_status ?? ride.status, ride.status_label)} tone={transportStatusTone(ride.status)} className="mt-1" />
                         </div>
                       </div>
                     </Link>

@@ -509,10 +509,10 @@ export const useMyJobs = () =>
     queryFn: async () => toPaginated<Job>((await api.get('/my-jobs')).data),
   })
 
-export const useMyReports = () =>
+export const useMyReports = (params?: Record<string, string | number | undefined>) =>
   useQuery({
-    queryKey: ['my-reports'],
-    queryFn: async () => toPaginated<Report>((await api.get('/my-reports')).data),
+    queryKey: ['my-reports', params],
+    queryFn: async () => toPaginated<Report>((await api.get('/my-reports', { params })).data),
   })
 
 export const useReport = (id?: string) =>
@@ -1883,8 +1883,71 @@ export const useUpdateReportStatus = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ reportId, status, resolution_notes }: { reportId: number; status: string; resolution_notes?: string }) =>
-      (await api.patch(`/reports/${reportId}/status`, { status, resolution_notes })).data,
+    mutationFn: async ({
+      reportId,
+      status,
+      resolution_notes,
+      resident_note,
+      internal_note,
+      department_name,
+      assigned_to,
+    }: {
+      reportId: number
+      status: string
+      resolution_notes?: string
+      resident_note?: string
+      internal_note?: string
+      department_name?: string
+      assigned_to?: number
+    }) =>
+      (await api.patch(`/reports/${reportId}/status`, {
+        status,
+        resolution_notes,
+        resident_note,
+        internal_note,
+        department_name,
+        assigned_to,
+      })).data,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-reports'] }),
+        queryClient.invalidateQueries({ queryKey: ['my-reports'] }),
+        queryClient.invalidateQueries({ queryKey: ['report'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-municipality'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-citizen'] }),
+        queryClient.invalidateQueries({ queryKey: ['activity-feed'] }),
+        queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+      ])
+    },
+  })
+}
+
+export const useAddReportUpdate = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      reportId,
+      note,
+      status,
+      visibility,
+      department_name,
+      assigned_to,
+    }: {
+      reportId: number
+      note: string
+      status?: string
+      visibility?: 'resident' | 'internal'
+      department_name?: string
+      assigned_to?: number
+    }) =>
+      (await api.post(`/reports/${reportId}/updates`, {
+        note,
+        status,
+        visibility,
+        department_name,
+        assigned_to,
+      })).data,
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['admin-reports'] }),

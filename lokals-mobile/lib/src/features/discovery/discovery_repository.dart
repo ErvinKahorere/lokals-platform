@@ -1187,6 +1187,8 @@ class DiscoveryRepository {
     required String dropoffAddress,
     required String itemDescription,
     required String parcelSize,
+    String urgency = 'standard',
+    String? weightKg,
     String? notes,
     XFile? photo,
     String? price,
@@ -1196,6 +1198,8 @@ class DiscoveryRepository {
       'dropoff_location': dropoffAddress,
       'parcel_description': itemDescription,
       'parcel_size': parcelSize,
+      'urgency': urgency,
+      'weight_kg': weightKg,
       'estimated_price': price,
       'notes': notes,
     };
@@ -1225,6 +1229,54 @@ class DiscoveryRepository {
       'fare_estimate': fareEstimate,
     });
     return RideModel.fromJson((response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>);
+  }
+
+  Future<void> updateDriverAvailability(bool isOnline) async {
+    await ref.read(dioProvider).patch('/driver/availability', data: {
+      'is_online': isOnline,
+    });
+  }
+
+  Future<RideModel> driverRideAction({
+    required int rideId,
+    required String action,
+  }) async {
+    final method = switch (action) {
+      'accept' || 'decline' => 'post',
+      _ => 'patch',
+    };
+    final response = await ref.read(dioProvider).request(
+      '/driver/rides/$rideId/$action',
+      data: const <String, dynamic>{},
+      options: Options(method: method),
+    );
+    final payload = response.data as Map<String, dynamic>;
+    final item = (payload['data'] as Map<String, dynamic>?) ?? payload;
+    return RideModel.fromJson(item);
+  }
+
+  Future<void> updateCourierAvailability(bool isOnline) async {
+    await ref.read(dioProvider).patch('/courier/availability', data: {
+      'is_online': isOnline,
+    });
+  }
+
+  Future<DeliveryModel> courierDeliveryAction({
+    required int deliveryId,
+    required String action,
+  }) async {
+    final method = switch (action) {
+      'accept' || 'decline' => 'post',
+      _ => 'patch',
+    };
+    final response = await ref.read(dioProvider).request(
+      '/courier/deliveries/$deliveryId/$action',
+      data: const <String, dynamic>{},
+      options: Options(method: method),
+    );
+    final payload = response.data as Map<String, dynamic>;
+    final item = (payload['data'] as Map<String, dynamic>?) ?? payload;
+    return DeliveryModel.fromJson(item);
   }
 
   Future<SosModel> createSos({

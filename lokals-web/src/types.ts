@@ -286,6 +286,7 @@ export interface Organization {
 
 export interface Report {
   id: number
+  reference_code?: string | null
   category: string
   title: string
   description: string
@@ -293,12 +294,41 @@ export interface Report {
   location?: string | null
   town?: string | null
   area?: string | null
+  lat?: number | null
+  lng?: number | null
   priority?: string
   status: string
+  department_name?: string | null
   resolution_notes?: string | null
+  internal_notes?: string | null
   created_at?: string | null
   updated_at?: string | null
   user?: User
+  assigned_officer?: Pick<User, 'id' | 'name' | 'phone' | 'email'> | null
+  attachments?: ReportAttachment[]
+  updates?: ReportUpdate[]
+}
+
+export interface ReportAttachment {
+  id: number
+  file_url?: string | null
+  mime_type?: string | null
+  file_type: 'image' | 'video' | 'audio' | 'document'
+  original_name?: string | null
+  size?: number | null
+  created_at?: string | null
+}
+
+export interface ReportUpdate {
+  id: number
+  type: string
+  visibility: 'resident' | 'internal'
+  from_status?: string | null
+  to_status?: string | null
+  message: string
+  meta?: Record<string, unknown> | null
+  created_at?: string | null
+  user?: Pick<User, 'id' | 'name'> | null
 }
 
 export interface AlertItem {
@@ -436,6 +466,8 @@ export interface DeliveryItem {
   item_description?: string | null
   parcel_description?: string | null
   parcel_size?: string | null
+  weight_kg?: string | number | null
+  urgency?: string | null
   notes?: string | null
   estimated_price?: string | number | null
   price?: string | number | null
@@ -452,6 +484,25 @@ export interface DeliveryItem {
   updated_at?: string | null
   user?: Pick<User, 'id' | 'name' | 'phone'> | null
   driver?: Pick<User, 'id' | 'name' | 'phone'> | null
+  courier_profile?: {
+    vehicle_type?: string | null
+    vehicle_registration?: string | null
+    rating?: number | null
+    is_online?: boolean
+    is_verified?: boolean
+  } | null
+  reference_code?: string | null
+  status_label?: string | null
+  tracking_status?: string | null
+  proof_of_delivery?: {
+    status?: string | null
+    label?: string | null
+  } | null
+  timeline?: Array<{
+    key: string
+    label: string
+    timestamp?: string | null
+  }>
 }
 
 export interface RideItem {
@@ -475,6 +526,24 @@ export interface RideItem {
   updated_at?: string | null
   user?: Pick<User, 'id' | 'name' | 'phone'> | null
   driver?: Pick<User, 'id' | 'name' | 'phone'> | null
+  driver_profile?: {
+    vehicle_type?: string | null
+    vehicle_make?: string | null
+    vehicle_model?: string | null
+    vehicle_registration?: string | null
+    rating?: number | null
+    is_online?: boolean
+    is_verified?: boolean
+  } | null
+  reference_code?: string | null
+  status_label?: string | null
+  tracking_status?: string | null
+  estimated_eta_minutes?: number | null
+  timeline?: Array<{
+    key: string
+    label: string
+    timestamp?: string | null
+  }>
 }
 
 export interface SosItem {

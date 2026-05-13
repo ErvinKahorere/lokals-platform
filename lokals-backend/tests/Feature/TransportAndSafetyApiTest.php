@@ -60,6 +60,8 @@ class TransportAndSafetyApiTest extends TestCase
                     'notes',
                     'status',
                     'user',
+                    'reference_code',
+                    'status_label',
                 ],
             ]);
     }
@@ -121,6 +123,8 @@ class TransportAndSafetyApiTest extends TestCase
                     'trip_purpose',
                     'status',
                     'user',
+                    'reference_code',
+                    'status_label',
                 ],
             ]);
     }
@@ -192,5 +196,18 @@ class TransportAndSafetyApiTest extends TestCase
         Sanctum::actingAs($admin);
         $this->getJson("/api/v1/deliveries/{$delivery->id}")->assertOk();
         $this->getJson("/api/v1/rides/{$ride->id}")->assertOk();
+    }
+
+    public function test_demo_transport_accounts_are_seeded_for_manual_testing(): void
+    {
+        $resident = User::where('email', 'resident@lokals.test')->first();
+        $driver = User::where('email', 'driver@lokals.test')->first();
+        $courier = User::where('email', 'courier@lokals.test')->first();
+
+        $this->assertNotNull($resident);
+        $this->assertNotNull($driver);
+        $this->assertNotNull($courier);
+        $this->assertTrue($driver?->hasRole('driver'));
+        $this->assertTrue($courier?->hasRole('courier'));
     }
 }

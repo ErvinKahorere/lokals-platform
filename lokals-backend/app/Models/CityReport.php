@@ -6,6 +6,7 @@ use App\Services\CommunityImpactService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CityReport extends Model
 {
@@ -35,6 +36,7 @@ class CityReport extends Model
     protected $fillable = [
         'user_id',
         'category',
+        'reference_code',
         'title',
         'description',
         'location',
@@ -46,7 +48,9 @@ class CityReport extends Model
         'priority',
         'photo_url',
         'assigned_to',
+        'department_name',
         'resolution_notes',
+        'internal_notes',
     ];
 
     protected function casts(): array
@@ -60,5 +64,20 @@ class CityReport extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(CityReportAttachment::class)->latest();
+    }
+
+    public function updates(): HasMany
+    {
+        return $this->hasMany(CityReportUpdate::class)->latest();
+    }
+
+    public function assignee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
     }
 }

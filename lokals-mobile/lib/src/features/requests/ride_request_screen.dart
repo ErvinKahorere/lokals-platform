@@ -142,6 +142,11 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
+                      ActionChip(
+                        avatar: const Icon(Icons.my_location_rounded, size: 18),
+                        label: const Text('Use current location'),
+                        onPressed: () => setState(() => _pickupLocation = 'Current location (near me)'),
+                      ),
                       ActionChip(label: const Text('Home'), onPressed: () => setState(() => _dropoffLocation = 'Home')),
                       ActionChip(label: const Text('Work'), onPressed: () => setState(() => _dropoffLocation = 'Work')),
                       ActionChip(label: const Text('Clinic'), onPressed: () => setState(() => _dropoffLocation = 'Okahandja State Clinic')),
@@ -332,7 +337,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                                 children: [
                                   Text(item.fareEstimate == null ? 'Open' : 'N\$ ${item.fareEstimate}'),
                                   const SizedBox(height: 4),
-                                  AppBadge(label: item.status ?? 'requested'),
+                                  AppBadge(label: item.statusLabel ?? item.status ?? 'requested'),
                                 ],
                               ),
                             ),

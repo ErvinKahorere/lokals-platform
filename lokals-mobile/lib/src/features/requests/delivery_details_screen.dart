@@ -50,7 +50,7 @@ class DeliveryDetailsScreen extends ConsumerWidget {
                               children: [
                                 Text(item.itemDescription, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
                                 const SizedBox(height: 4),
-                                AppBadge(label: ((item.status == 'assigned' ? 'accepted' : item.status) ?? 'requested').replaceAll('_', ' ')),
+                                AppBadge(label: item.statusLabel ?? ((item.status == 'assigned' ? 'accepted' : item.status) ?? 'requested').replaceAll('_', ' ')),
                               ],
                             ),
                           ),
@@ -61,6 +61,9 @@ class DeliveryDetailsScreen extends ConsumerWidget {
                       _InfoRow(label: 'Drop-off', value: item.dropoffAddress),
                       _InfoRow(label: 'Parcel size', value: item.parcelSize ?? 'Medium'),
                       _InfoRow(label: 'Estimate', value: item.price == null ? 'Open estimate' : 'N\$ ${item.price}'),
+                      if ((item.referenceCode ?? '').isNotEmpty) _InfoRow(label: 'Reference', value: item.referenceCode!),
+                      if ((item.urgency ?? '').isNotEmpty) _InfoRow(label: 'Urgency', value: item.urgency!),
+                      if ((item.weightKg ?? '').isNotEmpty) _InfoRow(label: 'Weight', value: '${item.weightKg} kg'),
                       if ((item.notes ?? '').isNotEmpty) _InfoRow(label: 'Notes', value: item.notes!),
                       const SizedBox(height: 14),
                       AppCard(
@@ -87,6 +90,18 @@ class DeliveryDetailsScreen extends ConsumerWidget {
                                         : 'A courier contact will appear here once the request is accepted.',
                                     style: const TextStyle(color: AppColors.mutedText),
                                   ),
+                                  if ((item.driverVehicleType ?? '').isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text('Vehicle: ${item.driverVehicleType}', style: const TextStyle(color: AppColors.mutedText)),
+                                  ],
+                                  if ((item.driverVehicleRegistration ?? '').isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text('Plate: ${item.driverVehicleRegistration}', style: const TextStyle(color: AppColors.mutedText)),
+                                  ],
+                                  if (item.driverRating != null) ...[
+                                    const SizedBox(height: 4),
+                                    Text('Courier rating: ${item.driverRating!.toStringAsFixed(1)}/5', style: const TextStyle(color: AppColors.mutedText)),
+                                  ],
                                 ],
                               ),
                             ),
@@ -97,6 +112,21 @@ class DeliveryDetailsScreen extends ConsumerWidget {
                                 variant: AppButtonVariant.secondary,
                                 onPressed: () => const ContactActionService().call(context, item.driverPhone!),
                               ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      AppCard(
+                        color: AppColors.neutralSoftAlt,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Proof of delivery', style: TextStyle(fontWeight: FontWeight.w700)),
+                            const SizedBox(height: 6),
+                            Text(
+                              item.proofOfDeliveryLabel ?? 'Proof of delivery will appear here once the courier confirms handoff.',
+                              style: const TextStyle(color: AppColors.mutedText),
+                            ),
                           ],
                         ),
                       ),

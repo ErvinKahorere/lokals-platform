@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react'
-import { Camera, Clock3, MapPin, Truck } from 'lucide-react'
+import { Camera, Clock3, LocateFixed, MapPin, Truck } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button, EmptyState, PageHeader, QueryState, SectionCard, Select, StatusBadge, TextArea } from '../components/Ui'
@@ -9,6 +9,7 @@ import { isDemoMode } from '../config/appMode'
 import { useCreateDelivery, useDeliveries } from '../hooks/queries'
 import { getApiErrorMessage } from '../lib/api'
 import { navigateToLogin } from '../lib/authNavigation'
+import { formatTransportStatus, transportStatusTone } from '../lib/transportStatus'
 import { useAuthStore } from '../store/auth'
 import type { DeliveryItem } from '../types'
 
@@ -19,6 +20,7 @@ const parcelSizes = [
 ]
 
 const quickLocations = ['Home', 'Work', 'Okahandja taxi rank', 'Okahandja State Clinic', 'Okahandja Town Council', 'Five Rand']
+const urgencyOptions = ['standard', 'express', 'priority']
 
 const deliverySteps = ['requested', 'accepted', 'picked_up', 'delivered', 'cancelled']
 
@@ -26,6 +28,8 @@ export function DeliveryPage() {
   const [pickupLocation, setPickupLocation] = useState(quickLocations[0])
   const [dropoffLocation, setDropoffLocation] = useState(quickLocations[5])
   const [parcelSize, setParcelSize] = useState('medium')
+  const [urgency, setUrgency] = useState('standard')
+  const [weightKg, setWeightKg] = useState('2')
   const [notes, setNotes] = useState('')
   const [preview, setPreview] = useState('')
   const [error, setError] = useState('')
@@ -36,8 +40,13 @@ export function DeliveryPage() {
   const navigate = useNavigate()
 
   const estimate = useMemo(
-    () => parcelSizes.find((item) => item.value === parcelSize)?.estimate ?? 75,
-    [parcelSize],
+    () => {
+      const base = parcelSizes.find((item) => item.value === parcelSize)?.estimate ?? 75
+      const urgencyBonus = urgency === 'express' ? 25 : urgency === 'priority' ? 40 : 0
+      const weightBonus = Number(weightKg) > 5 ? 18 : Number(weightKg) > 2 ? 10 : 0
+      return base + urgencyBonus + weightBonus
+    },
+    [parcelSize, urgency, weightKg],
   )
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -58,6 +67,8 @@ export function DeliveryPage() {
         dropoff_location: dropoffLocation,
         parcel_description: description,
         parcel_size: parcelSize,
+        urgency,
+        weight_kg: weightKg,
         estimated_price: estimate,
         status: 'requested',
       })
@@ -70,6 +81,8 @@ export function DeliveryPage() {
     payload.append('parcel_description', description)
     payload.append('parcel_size', parcelSize)
     payload.append('estimated_price', String(estimate))
+    payload.append('urgency', urgency)
+    payload.append('weight_kg', weightKg)
     if (notes.trim()) {
       payload.append('notes', notes.trim())
     }
@@ -87,6 +100,10 @@ export function DeliveryPage() {
     } catch (caught) {
       setError(getApiErrorMessage(caught, 'Unable to request delivery right now.'))
     }
+  }
+
+  const setCurrentPickup = () => {
+    setPickupLocation('Current location (near me)')
   }
 
   return (
@@ -161,6 +178,17 @@ export function DeliveryPage() {
                   </label>
                 </div>
 
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={setCurrentPickup}
+                    className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                  >
+                    <LocateFixed className="h-4 w-4" />
+                    Use current location
+                  </button>
+                </div>
+
                 <div className="grid gap-3 sm:grid-cols-3">
                   {parcelSizes.map((size) => (
                     <button
@@ -179,6 +207,25 @@ export function DeliveryPage() {
                 </div>
 
                 <TextArea name="parcel_description" placeholder="What are you sending?" rows={4} required />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="space-y-2">
+                    <span className="text-sm font-medium text-lokals-charcoal">Urgency</span>
+                    <Select value={urgency} onChange={(event) => setUrgency(event.target.value)}>
+                      {urgencyOptions.map((option) => <option key={option} value={option}>{option.replaceAll('_', ' ')}</option>)}
+                    </Select>
+                  </label>
+                  <label className="space-y-2">
+                    <span className="text-sm font-medium text-lokals-charcoal">Weight (kg)</span>
+                    <input
+                      value={weightKg}
+                      onChange={(event) => setWeightKg(event.target.value)}
+                      type="number"
+                      min="0.1"
+                      step="0.1"
+                      className="w-full rounded-2xl border border-lokals-border bg-white px-4 py-3 text-sm text-lokals-charcoal outline-none transition focus:border-lokals-purple"
+                    />
+                  </label>
+                </div>
                 <TextArea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Optional handoff notes or landmarks" rows={3} />
 
                 <label className="flex cursor-pointer flex-col items-center justify-center rounded-[24px] border border-dashed border-lokals-border bg-slate-50 px-5 py-8 text-center">
@@ -215,6 +262,11 @@ export function DeliveryPage() {
                       {deliverySteps.slice(0, 4).map((step) => <StatusBadge key={step} value={step.replaceAll('_', ' ')} tone={step === 'requested' ? 'accent' : 'neutral'} />)}
                     </div>
                   </article>
+                  <article className="rounded-2xl bg-white p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Delivery details</p>
+                    <p className="mt-2 text-sm text-lokals-charcoal">Urgency: <span className="font-semibold capitalize">{urgency}</span></p>
+                    <p className="mt-1 text-sm text-lokals-charcoal">Weight: <span className="font-semibold">{weightKg} kg</span></p>
+                  </article>
                 </div>
 
                 {error ? <p className="mt-4 text-sm font-medium text-lokals-danger">{error}</p> : null}
@@ -250,7 +302,7 @@ export function DeliveryPage() {
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-lokals-charcoal">{delivery.estimated_price || delivery.price ? `N$ ${delivery.estimated_price ?? delivery.price}` : 'Open fare'}</p>
-                      <StatusBadge value={(delivery.status ?? 'requested').replaceAll('_', ' ')} tone={delivery.status === 'delivered' ? 'success' : delivery.status === 'cancelled' ? 'danger' : 'accent'} className="mt-1" />
+                      <StatusBadge value={formatTransportStatus(delivery.tracking_status ?? delivery.status, delivery.status_label)} tone={transportStatusTone(delivery.status)} className="mt-1" />
                     </div>
                   </div>
                 </Link>

@@ -16,6 +16,7 @@ class DemoSeedRegistry
             'manager@lokals.app',
             'orgadmin@lokals.app',
             'resident@lokals.app',
+            'resident@lokals.test',
             'market@lokals.app',
             'pharmacy@lokals.app',
             'hardware@lokals.app',
@@ -30,7 +31,9 @@ class DemoSeedRegistry
             'tutor@lokals.app',
             'photographer@lokals.app',
             'taxi@lokals.app',
+            'driver@lokals.test',
             'courier@lokals.app',
+            'courier@lokals.test',
         ];
     }
 }

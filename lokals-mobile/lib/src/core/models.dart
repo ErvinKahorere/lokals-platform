@@ -591,15 +591,23 @@ class DeliveryModel {
     required this.itemDescription,
     this.price,
     this.parcelSize,
+    this.weightKg,
+    this.urgency,
     this.notes,
     this.photoUrl,
     this.status,
+    this.statusLabel,
+    this.referenceCode,
     this.createdAt,
     this.updatedAt,
     this.userName,
     this.userPhone,
     this.driverName,
     this.driverPhone,
+    this.driverVehicleType,
+    this.driverVehicleRegistration,
+    this.driverRating,
+    this.proofOfDeliveryLabel,
   });
 
   final int id;
@@ -608,19 +616,29 @@ class DeliveryModel {
   final String itemDescription;
   final String? price;
   final String? parcelSize;
+  final String? weightKg;
+  final String? urgency;
   final String? notes;
   final String? photoUrl;
   final String? status;
+  final String? statusLabel;
+  final String? referenceCode;
   final String? createdAt;
   final String? updatedAt;
   final String? userName;
   final String? userPhone;
   final String? driverName;
   final String? driverPhone;
+  final String? driverVehicleType;
+  final String? driverVehicleRegistration;
+  final double? driverRating;
+  final String? proofOfDeliveryLabel;
 
   factory DeliveryModel.fromJson(Map<String, dynamic> json) {
     final user = json['user'] as Map<String, dynamic>?;
     final driver = json['driver'] as Map<String, dynamic>?;
+    final courierProfile = json['courier_profile'] as Map<String, dynamic>?;
+    final proofOfDelivery = json['proof_of_delivery'] as Map<String, dynamic>?;
     return DeliveryModel(
       id: json['id'] as int,
       pickupAddress: (json['pickup_address'] ?? json['pickup_location'] ?? '') as String,
@@ -628,15 +646,23 @@ class DeliveryModel {
       itemDescription: (json['item_description'] ?? json['parcel_description'] ?? '') as String,
       price: json['estimated_price']?.toString() ?? json['price']?.toString(),
       parcelSize: json['parcel_size'] as String?,
+      weightKg: json['weight_kg']?.toString(),
+      urgency: json['urgency']?.toString(),
       notes: json['notes'] as String?,
       photoUrl: json['photo_url'] as String?,
       status: json['status']?.toString(),
+      statusLabel: json['status_label']?.toString(),
+      referenceCode: json['reference_code']?.toString(),
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
       userName: user?['name'] as String?,
       userPhone: user?['phone'] as String?,
       driverName: driver?['name'] as String?,
       driverPhone: driver?['phone'] as String?,
+      driverVehicleType: courierProfile?['vehicle_type']?.toString(),
+      driverVehicleRegistration: courierProfile?['vehicle_registration']?.toString(),
+      driverRating: (courierProfile?['rating'] as num?)?.toDouble(),
+      proofOfDeliveryLabel: proofOfDelivery?['label']?.toString(),
     );
   }
 }
@@ -1023,12 +1049,19 @@ class RideModel {
     this.tripPurpose,
     this.notes,
     this.status,
+    this.statusLabel,
+    this.referenceCode,
+    this.estimatedEtaMinutes,
+    this.vehicleLabel,
     this.createdAt,
     this.updatedAt,
     this.userName,
     this.userPhone,
     this.driverName,
     this.driverPhone,
+    this.driverVehicleType,
+    this.driverVehicleRegistration,
+    this.driverRating,
   });
 
   final int id;
@@ -1039,16 +1072,24 @@ class RideModel {
   final String? tripPurpose;
   final String? notes;
   final String? status;
+  final String? statusLabel;
+  final String? referenceCode;
+  final int? estimatedEtaMinutes;
+  final String? vehicleLabel;
   final String? createdAt;
   final String? updatedAt;
   final String? userName;
   final String? userPhone;
   final String? driverName;
   final String? driverPhone;
+  final String? driverVehicleType;
+  final String? driverVehicleRegistration;
+  final double? driverRating;
 
   factory RideModel.fromJson(Map<String, dynamic> json) {
     final user = json['user'] as Map<String, dynamic>?;
     final driver = json['driver'] as Map<String, dynamic>?;
+    final driverProfile = json['driver_profile'] as Map<String, dynamic>?;
     return RideModel(
       id: json['id'] as int,
       pickupLocation: json['pickup_location'] as String,
@@ -1058,12 +1099,19 @@ class RideModel {
       tripPurpose: json['trip_purpose'] as String?,
       notes: json['notes'] as String?,
       status: json['status']?.toString(),
+      statusLabel: json['status_label']?.toString(),
+      referenceCode: json['reference_code']?.toString(),
+      estimatedEtaMinutes: json['estimated_eta_minutes'] as int?,
+      vehicleLabel: json['vehicle_label']?.toString(),
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
       userName: user?['name'] as String?,
       userPhone: user?['phone'] as String?,
       driverName: driver?['name'] as String?,
       driverPhone: driver?['phone'] as String?,
+      driverVehicleType: driverProfile?['vehicle_type']?.toString(),
+      driverVehicleRegistration: driverProfile?['vehicle_registration']?.toString(),
+      driverRating: (driverProfile?['rating'] as num?)?.toDouble(),
     );
   }
 }

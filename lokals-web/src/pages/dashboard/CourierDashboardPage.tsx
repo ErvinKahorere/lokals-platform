@@ -1,4 +1,5 @@
 import { Bell, History, MessageSquare, PackageSearch, Power, Star, Wallet } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { DashboardSection } from '../../components/dashboard/DashboardSection'
 import { QuickActionTile } from '../../components/dashboard/QuickActionTile'
@@ -7,6 +8,7 @@ import { StatusBreakdownCard } from '../../components/dashboard/StatusBreakdownC
 import { Button, StatusBadge } from '../../components/Ui'
 import { useCourierDeliveryAction, useUpdateCourierAvailability } from '../../hooks/queries'
 import { useCourierOperationalData } from '../../lib/dashboardDataProvider'
+import { formatTransportStatus, transportStatusTone } from '../../lib/transportStatus'
 import type { CourierDashboardData } from '../../lib/dashboardTypes'
 import type { RoleDashboardPayload } from '../../types'
 
@@ -79,6 +81,7 @@ export function CourierDashboardPage() {
                 <p className="font-semibold text-lokals-charcoal">{delivery.pickup_location ?? delivery.pickup_address} {'->'} {delivery.dropoff_location ?? delivery.dropoff_address}</p>
                 <p className="mt-1 text-sm text-lokals-muted">{delivery.user?.name ?? 'Resident'} | {delivery.parcel_size ?? 'Parcel'} | N$ {delivery.estimated_price ?? '0'}</p>
                 <div className="mt-3 flex flex-wrap gap-2">
+                  <Link to={`/delivery/${delivery.id}`}><Button className="min-h-9 px-3 py-2 text-xs" variant="secondary">Details</Button></Link>
                   <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionMutation.isPending} onClick={() => deliveryActionMutation.mutate({ deliveryId: delivery.id, action: 'accept' })}>
                     Accept
                   </Button>
@@ -96,7 +99,7 @@ export function CourierDashboardPage() {
             {deliveryHistory.slice(0, 6).map((delivery) => (
               <div key={delivery.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
                 <p className="font-semibold text-lokals-charcoal">{delivery.pickup_location ?? delivery.pickup_address} {'->'} {delivery.dropoff_location ?? delivery.dropoff_address}</p>
-                <p className="mt-1 text-sm text-lokals-muted">{delivery.status ?? 'requested'} | {delivery.user?.name ?? 'Resident'}</p>
+                <p className="mt-1 text-sm text-lokals-muted">{formatTransportStatus(delivery.tracking_status ?? delivery.status, delivery.status_label)} | {delivery.user?.name ?? 'Resident'}</p>
               </div>
             ))}
             {!deliveryHistory.length ? <p className="text-sm text-lokals-muted">Completed and cancelled deliveries will appear here as you start handling parcels.</p> : null}
@@ -109,8 +112,14 @@ export function CourierDashboardPage() {
           {activeDelivery ? (
             <div className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
               <p className="font-semibold text-lokals-charcoal">{activeDelivery.pickup_location ?? activeDelivery.pickup_address} {'->'} {activeDelivery.dropoff_location ?? activeDelivery.dropoff_address}</p>
-              <p className="mt-1 text-sm text-lokals-muted">{activeDelivery.status ?? 'accepted'} | {activeDelivery.user?.name ?? 'Resident'}</p>
+              <p className="mt-1 text-sm text-lokals-muted">{formatTransportStatus(activeDelivery.tracking_status ?? activeDelivery.status, activeDelivery.status_label)} | {activeDelivery.user?.name ?? 'Resident'}</p>
+              <div className="mt-2">
+                <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-lokals-charcoal">
+                  {transportStatusTone(activeDelivery.status) === 'success' ? 'Completed' : 'Active now'}
+                </span>
+              </div>
               <div className="mt-3 flex flex-wrap gap-2">
+                <Link to={`/delivery/${activeDelivery.id}`}><Button className="min-h-9 px-3 py-2 text-xs" variant="secondary">Details</Button></Link>
                 {activeDelivery.status === 'accepted' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionMutation.isPending} onClick={() => deliveryActionMutation.mutate({ deliveryId: activeDelivery.id, action: 'pickup-confirmed' })}>Pickup confirmed</Button> : null}
                 {activeDelivery.status === 'pickup_confirmed' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionMutation.isPending} onClick={() => deliveryActionMutation.mutate({ deliveryId: activeDelivery.id, action: 'in-transit' })}>In transit</Button> : null}
                 {activeDelivery.status === 'in_transit' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionMutation.isPending} onClick={() => deliveryActionMutation.mutate({ deliveryId: activeDelivery.id, action: 'delivered' })}>Delivered</Button> : null}

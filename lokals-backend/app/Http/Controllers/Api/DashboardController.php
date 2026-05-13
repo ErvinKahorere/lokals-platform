@@ -35,6 +35,8 @@ use Illuminate\Support\Str;
 
 class DashboardController extends Controller
 {
+    protected array $activeReportStatuses = ['submitted', 'received', 'in_review', 'assigned', 'in_progress'];
+
     public function index(Request $request): JsonResponse
     {
         $role = $request->user()->current_role ?: $request->user()->getRoleNames()->first() ?: 'citizen';
@@ -78,7 +80,7 @@ class DashboardController extends Controller
             ],
             'pending_tasks' => [
                 ['label' => 'Upcoming bookings', 'count' => Booking::query()->where('user_id', $user->id)->whereIn('status', ['pending', 'confirmed'])->count()],
-                ['label' => 'Open reports', 'count' => CityReport::query()->where('user_id', $user->id)->whereNotIn('status', ['resolved', 'closed'])->count()],
+                ['label' => 'Open reports', 'count' => CityReport::query()->where('user_id', $user->id)->whereIn('status', $this->activeReportStatuses)->count()],
             ],
             'upcoming_bookings' => Booking::query()
                 ->where('user_id', $user->id)
@@ -500,10 +502,10 @@ class DashboardController extends Controller
             'role' => 'town_manager',
             'stats' => [
                 'total_reports' => (clone $reportQuery)->count(),
-                'open_reports' => (clone $reportQuery)->whereIn('status', ['open', 'submitted'])->count(),
-                'in_progress_reports' => (clone $reportQuery)->whereIn('status', ['in_progress', 'in_review'])->count(),
+                'open_reports' => (clone $reportQuery)->whereIn('status', ['submitted', 'received'])->count(),
+                'in_progress_reports' => (clone $reportQuery)->whereIn('status', ['in_review', 'assigned', 'in_progress'])->count(),
                 'resolved_reports' => (clone $reportQuery)->where('status', 'resolved')->count(),
-                'urgent_reports' => (clone $reportQuery)->where('priority', 'high')->whereNotIn('status', ['resolved', 'rejected'])->count(),
+                'urgent_reports' => (clone $reportQuery)->where('priority', 'high')->whereIn('status', $this->activeReportStatuses)->count(),
                 'municipal_alerts_sent' => (clone $alertQuery)->count(),
                 'public_service_entries' => (clone $publicServicesQuery)->count(),
                 'pending_approvals' => (clone $pendingRoleApplications)->count(),
@@ -521,8 +523,8 @@ class DashboardController extends Controller
                 ['label' => 'Create Event', 'href' => '/dashboard/events/create', 'icon' => 'calendar-plus'],
             ],
             'pending_tasks' => [
-                ['label' => 'Urgent reports', 'count' => (clone $reportQuery)->where('priority', 'high')->whereNotIn('status', ['resolved', 'rejected'])->count()],
-                ['label' => 'Open reports', 'count' => (clone $reportQuery)->whereNotIn('status', ['resolved', 'rejected'])->count()],
+                ['label' => 'Urgent reports', 'count' => (clone $reportQuery)->where('priority', 'high')->whereIn('status', $this->activeReportStatuses)->count()],
+                ['label' => 'Open reports', 'count' => (clone $reportQuery)->whereIn('status', $this->activeReportStatuses)->count()],
                 ['label' => 'Role approvals waiting', 'count' => (clone $pendingRoleApplications)->count()],
             ],
             'reports_by_status' => $reportsByStatus,
@@ -583,7 +585,7 @@ class DashboardController extends Controller
             ],
             'pending_tasks' => [
                 ['label' => 'Open flags', 'count' => ModerationFlag::query()->where('status', 'open')->count()],
-                ['label' => 'Open reports', 'count' => CityReport::query()->whereNotIn('status', ['resolved', 'closed'])->count()],
+                ['label' => 'Open reports', 'count' => CityReport::query()->whereIn('status', $this->activeReportStatuses)->count()],
                 ['label' => 'Pending role approvals', 'count' => RoleApplication::query()->whereIn('status', ['submitted', 'pending_review'])->count()],
             ],
             'pending_approvals' => RoleApplication::query()->latest()->limit(6)->get(['id', 'requested_role', 'status', 'full_name', 'phone', 'created_at']),
