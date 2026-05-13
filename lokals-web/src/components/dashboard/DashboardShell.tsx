@@ -5,7 +5,7 @@ import { SidebarLayout } from './SidebarLayout'
 import type { DashboardMode } from '../../lib/dashboardConfig'
 import { useDashboardRealtimeState } from '../../lib/dashboardRealtime'
 
-export function DashboardShell({
+function DashboardShellContent({
   eyebrow,
   title,
   description,
@@ -14,7 +14,6 @@ export function DashboardShell({
   error,
   stats,
   children,
-  mode,
 }: {
   eyebrow: string
   title: string
@@ -24,10 +23,10 @@ export function DashboardShell({
   error?: unknown
   stats: Record<string, number | string>
   children: ReactNode
-  mode?: DashboardMode
 }) {
   const realtime = useDashboardRealtimeState()
-  const content = (
+
+  return (
     <div className="space-y-6">
       <PageHeader eyebrow={eyebrow} title={title} description={description} actions={actions} />
       <QueryState isLoading={isLoading} error={error}>
@@ -51,10 +50,58 @@ export function DashboardShell({
       </QueryState>
     </div>
   )
+}
 
+export function DashboardShell({
+  eyebrow,
+  title,
+  description,
+  actions,
+  isLoading,
+  error,
+  stats,
+  children,
+  mode,
+}: {
+  eyebrow: string
+  title: string
+  description: string
+  actions?: ReactNode
+  isLoading?: boolean
+  error?: unknown
+  stats: Record<string, number | string>
+  children: ReactNode
+  mode?: DashboardMode
+}) {
   if (mode) {
-    return <SidebarLayout mode={mode}>{content}</SidebarLayout>
+    return (
+      <SidebarLayout mode={mode}>
+        <DashboardShellContent
+          eyebrow={eyebrow}
+          title={title}
+          description={description}
+          actions={actions}
+          isLoading={isLoading}
+          error={error}
+          stats={stats}
+        >
+          {children}
+        </DashboardShellContent>
+      </SidebarLayout>
+    )
   }
 
-  return content
+  return (
+    <DashboardShellContent
+      eyebrow={eyebrow}
+      title={title}
+      description={description}
+      actions={actions}
+      isLoading={isLoading}
+      error={error}
+      stats={stats}
+    >
+      {children}
+    </DashboardShellContent>
+  )
 }

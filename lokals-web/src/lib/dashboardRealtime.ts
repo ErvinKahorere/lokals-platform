@@ -27,6 +27,7 @@ declare global {
 
 const POLL_INTERVAL_MS = 45000
 const UPDATE_FLASH_MS = 5000
+const EVENT_DEDUPE_WINDOW_MS = 6000
 
 const EVENT_ALIASES: Record<DashboardRealtimeEventName, string[]> = {
   NotificationCreated: ['.notification.created'],
@@ -110,6 +111,11 @@ function getQueryKeysForMode(mode: DashboardMode, event: DashboardRealtimeEventN
   return [...MODE_QUERY_KEYS[mode], ...EVENT_QUERY_KEYS[event]]
 }
 
+function pushUniqueKeys(current: string[], incoming: string[]) {
+  const next = Array.from(new Set([...current, ...incoming]))
+  return next.length === current.length && next.every((value, index) => value === current[index]) ? current : next
+}
+
 async function pollOperationalQueries(mode: DashboardMode, userId?: number | string | null) {
   const requests: Array<Promise<unknown>> = [api.get('/notifications').catch(() => null)]
 
@@ -138,81 +144,122 @@ async function pollOperationalQueries(mode: DashboardMode, userId?: number | str
 
 export function useDashboardRealtime(mode: DashboardMode, { userId, townId }: DashboardRealtimeOptions): DashboardRealtimeState {
   const queryClient = useQueryClient()
-  const [status, setStatus] = useState<DashboardRealtimeStatus>('offline')
+  const normalizedUserId = userId == null || userId === '' ? null : String(userId)
+  const normalizedTownId = townId == null || townId === '' ? null : String(townId)
+  const [statusState, setStatusState] = useState<{ key: string; value: DashboardRealtimeStatus }>({
+    key: 'offline',
+    value: 'offline',
+  })
   const [updatedAt, setUpdatedAt] = useState<number | null>(null)
   const [updatedKeys, setUpdatedKeys] = useState<string[]>([])
   const [lastEvent, setLastEvent] = useState<DashboardRealtimeLastEvent | null>(null)
   const [lastRefreshAt, setLastRefreshAt] = useState<number | null>(null)
+  const mountedRef = useRef(false)
   const seenEvents = useRef<Set<string>>(new Set())
+  const seenEventTimestamps = useRef<Map<string, number>>(new Map())
   const clearUpdatedTimer = useRef<number | null>(null)
+  const lastPollAt = useRef<number>(0)
   const activeChannels = useMemo(
     () => [
-      ...(userId ? [`users.${userId}`] : []),
-      ...(mode === 'town_manager' && townId ? [`towns.${townId}.managers`] : []),
+      ...(normalizedUserId ? [`users.${normalizedUserId}`] : []),
+      ...(mode === 'town_manager' && normalizedTownId ? [`towns.${normalizedTownId}.managers`] : []),
       ...(mode === 'admin' ? ['platform.admins'] : []),
     ],
-    [mode, townId, userId],
+    [mode, normalizedTownId, normalizedUserId],
   )
-  const hasLiveChannel = activeChannels.length > 0 && Boolean(window.Echo?.private)
+  const activeChannelKey = useMemo(() => activeChannels.join('|'), [activeChannels])
+  const hasRealtimeTransport = typeof window !== 'undefined' && typeof window.Echo?.private === 'function'
+  const hasLiveChannel = activeChannels.length > 0 && hasRealtimeTransport
+  const statusKey = useMemo(
+    () => `${mode}:${normalizedUserId ?? 'guest'}:${normalizedTownId ?? 'no-town'}:${hasLiveChannel ? 'live' : 'polling'}`,
+    [hasLiveChannel, mode, normalizedTownId, normalizedUserId],
+  )
+  const resolvedStatus = statusState.key === statusKey
+    ? statusState.value
+    : !normalizedUserId
+      ? 'offline'
+      : hasLiveChannel
+        ? 'live'
+        : 'polling'
+
+  useEffect(() => {
+    mountedRef.current = true
+
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
 
   useEffect(() => {
     seenEvents.current.clear()
-    const resetKeysTimer = window.setTimeout(() => {
-      setUpdatedKeys([])
-    }, 0)
-    const resetRealtimeStateTimer = window.setTimeout(() => {
-      setLastEvent(null)
-      setLastRefreshAt(null)
-    }, 0)
+    seenEventTimestamps.current.clear()
+    lastPollAt.current = 0
 
     if (clearUpdatedTimer.current) {
       window.clearTimeout(clearUpdatedTimer.current)
       clearUpdatedTimer.current = null
     }
 
-    if (!userId) {
-      const offlineTimer = window.setTimeout(() => {
-        setStatus('offline')
-      }, 0)
-      return () => {
-        window.clearTimeout(offlineTimer)
-      }
+    if (!normalizedUserId) {
+      return
     }
 
     let cancelled = false
-    const privateChannel = window.Echo?.private?.(`users.${userId}`)
-    const managerChannel = mode === 'town_manager' && townId ? window.Echo?.private?.(`towns.${townId}.managers`) : undefined
-    const adminChannel = mode === 'admin' ? window.Echo?.private?.('platform.admins') : undefined
+    const subscribedChannels = activeChannels
+      .map((channelName) => window.Echo?.private?.(channelName))
+      .filter((channel): channel is NonNullable<typeof channel> => Boolean(channel))
+    const updateStatus = (nextStatus: DashboardRealtimeStatus) => {
+      if (!mountedRef.current || cancelled) {
+        return
+      }
 
-    const statusTimer = window.setTimeout(() => {
-      setStatus(hasLiveChannel ? 'live' : 'polling')
-    }, 0)
+      setStatusState((current) => (
+        current.key === statusKey && current.value === nextStatus
+          ? current
+          : { key: statusKey, value: nextStatus }
+      ))
+    }
 
     const markUpdated = (keys: string[]) => {
-      setUpdatedAt(Date.now())
-      setUpdatedKeys((current) => Array.from(new Set([...current, ...keys])))
+      if (!mountedRef.current || cancelled) {
+        return
+      }
+
+      const now = Date.now()
+      setUpdatedAt((current) => (current === now ? current : now))
+      setUpdatedKeys((current) => pushUniqueKeys(current, keys))
 
       if (clearUpdatedTimer.current) {
         window.clearTimeout(clearUpdatedTimer.current)
       }
 
       clearUpdatedTimer.current = window.setTimeout(() => {
-        setUpdatedKeys([])
+        if (!mountedRef.current || cancelled) {
+          return
+        }
+        setUpdatedKeys((current) => (current.length > 0 ? [] : current))
       }, UPDATE_FLASH_MS)
     }
 
     const handleEvent = async (event: DashboardRealtimeEventName, alias: string, payload: unknown) => {
+      if (!mountedRef.current || cancelled) {
+        return
+      }
+
       const fingerprint = buildEventFingerprint(event, payload)
-      if (seenEvents.current.has(fingerprint)) {
+      const receivedAt = Date.now()
+      const lastSeenAt = seenEventTimestamps.current.get(fingerprint)
+      if (lastSeenAt != null && receivedAt - lastSeenAt < EVENT_DEDUPE_WINDOW_MS) {
         return
       }
 
       seenEvents.current.add(fingerprint)
+      seenEventTimestamps.current.set(fingerprint, receivedAt)
       setLastEvent({
         name: event,
         alias,
         fingerprint,
-        receivedAt: Date.now(),
+        receivedAt,
       })
       if (import.meta.env.DEV) {
         console.debug('[dashboard-realtime]', {
@@ -233,63 +280,78 @@ export function useDashboardRealtime(mode: DashboardMode, { userId, townId }: Da
     )
 
     listeners.forEach(({ eventName, alias }) => {
-      privateChannel?.listen?.(alias, (payload: unknown) => void handleEvent(eventName, alias, payload))
-      managerChannel?.listen?.(alias, (payload: unknown) => void handleEvent(eventName, alias, payload))
-      adminChannel?.listen?.(alias, (payload: unknown) => void handleEvent(eventName, alias, payload))
+      subscribedChannels.forEach((channel) => {
+        channel.listen?.(alias, (payload: unknown) => void handleEvent(eventName, alias, payload))
+      })
     })
 
     const poll = async () => {
+      if (!mountedRef.current || cancelled) {
+        return
+      }
+
+      const now = Date.now()
+      if (now - lastPollAt.current < 1000) {
+        return
+      }
+      lastPollAt.current = now
+
       try {
-        await pollOperationalQueries(mode, userId)
+        await pollOperationalQueries(mode, normalizedUserId)
         await Promise.all(MODE_QUERY_KEYS[mode].map((queryKey) => queryClient.invalidateQueries({ queryKey })))
         await queryClient.invalidateQueries({ queryKey: ['notifications'] })
         await queryClient.invalidateQueries({ queryKey: ['conversations'] })
-        setLastRefreshAt(Date.now())
+        if (!mountedRef.current || cancelled) {
+          return
+        }
+        setLastRefreshAt(now)
 
         if (!cancelled && !hasLiveChannel) {
-          setStatus('polling')
+          updateStatus('polling')
         }
       } catch {
         if (!cancelled) {
-          setStatus(hasLiveChannel ? 'live' : 'offline')
+          updateStatus(hasLiveChannel ? 'live' : 'offline')
         }
       }
     }
 
-    const interval = window.setInterval(() => void poll(), POLL_INTERVAL_MS)
+    const interval = !hasLiveChannel ? window.setInterval(() => void poll(), POLL_INTERVAL_MS) : null
+    if (!hasLiveChannel) {
+      void poll()
+    }
 
     return () => {
       cancelled = true
-      window.clearInterval(interval)
+      if (interval != null) {
+        window.clearInterval(interval)
+      }
 
       listeners.forEach(({ alias }) => {
-        privateChannel?.stopListening?.(alias)
-        managerChannel?.stopListening?.(alias)
-        adminChannel?.stopListening?.(alias)
+        subscribedChannels.forEach((channel) => {
+          channel.stopListening?.(alias)
+        })
       })
 
       if (clearUpdatedTimer.current) {
         window.clearTimeout(clearUpdatedTimer.current)
         clearUpdatedTimer.current = null
       }
-      window.clearTimeout(resetKeysTimer)
-      window.clearTimeout(resetRealtimeStateTimer)
-      window.clearTimeout(statusTimer)
     }
-  }, [activeChannels, hasLiveChannel, mode, queryClient, townId, userId])
+  }, [activeChannelKey, activeChannels, hasLiveChannel, mode, normalizedUserId, queryClient, statusKey])
 
   return useMemo(
     () => ({
       mode,
-      status,
+      status: resolvedStatus,
       updatedAt,
       updatedKeys,
       subscribedChannels: activeChannels,
       lastEvent,
-      pollingActive: !hasLiveChannel || status === 'polling',
+      pollingActive: !hasLiveChannel || resolvedStatus === 'polling',
       lastRefreshAt,
     }),
-    [activeChannels, hasLiveChannel, lastEvent, lastRefreshAt, mode, status, updatedAt, updatedKeys],
+    [activeChannels, hasLiveChannel, lastEvent, lastRefreshAt, mode, resolvedStatus, updatedAt, updatedKeys],
   )
 }
 

@@ -55,15 +55,47 @@ function toNotificationItem(item: NotificationPayload): NotificationItem {
   }
 }
 
+function areNotificationListsEqual(left: NotificationItem[], right: NotificationItem[]) {
+  if (left.length !== right.length) {
+    return false
+  }
+
+  return left.every((item, index) => {
+    const other = right[index]
+    return item.id === other.id && item.read_at === other.read_at && item.created_at === other.created_at
+  })
+}
+
 export function useRealtimeNotifications() {
   const token = useAuthStore((state) => state.token)
   const user = useAuthStore((state) => state.user)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const seen = useRef<Set<string>>(new Set())
+  const mountedRef = useRef(false)
   const [queue, setQueue] = useState<NotificationItem[]>([])
   const preferences = user?.preferences?.notification_preferences
+  const preferenceSignature = useMemo(() => JSON.stringify(preferences ?? {}), [preferences])
+  const preferenceMap = useMemo<Record<string, boolean> | undefined>(() => {
+    if (!preferences) {
+      return undefined
+    }
+
+    try {
+      return JSON.parse(preferenceSignature) as Record<string, boolean>
+    } catch {
+      return preferences
+    }
+  }, [preferenceSignature, preferences])
   const channelKey = token ? `users.${user?.id ?? ''}` : null
+
+  useEffect(() => {
+    mountedRef.current = true
+
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
 
   useEffect(() => {
     seen.current.clear()
@@ -79,17 +111,22 @@ export function useRealtimeNotifications() {
       try {
         const response = await api.get('/notifications/unread', { params: { unread: 1, per_page: 10 } })
         const items = (response.data?.data ?? []).map(toNotificationItem)
-        queryClient.setQueryData(['notifications'], items)
+        queryClient.setQueryData<NotificationItem[]>(['notifications'], (current = []) => (
+          areNotificationListsEqual(current, items) ? current : items
+        ))
 
-        if (cancelled) return
+        if (cancelled || !mountedRef.current) return
 
         const nextItems = items
           .filter((item: NotificationItem) => !seen.current.has(item.id))
-          .filter((item: NotificationItem) => isPreferenceEnabled(item, preferences))
+          .filter((item: NotificationItem) => isPreferenceEnabled(item, preferenceMap))
 
         if (nextItems.length > 0) {
           nextItems.forEach((item: NotificationItem) => seen.current.add(item.id))
-          setQueue((current) => [...current, ...nextItems].slice(-4))
+          setQueue((current) => {
+            const merged = [...current, ...nextItems].slice(-4)
+            return areNotificationListsEqual(current, merged) ? current : merged
+          })
         }
       } catch {
         // Polling should fail quietly and try again on the next interval.
@@ -111,7 +148,7 @@ export function useRealtimeNotifications() {
       channel?.stopListening?.('.reward.approved')
       channel?.stopListening?.('.marketplace.message.received')
     }
-  }, [channelKey, preferences, queryClient])
+  }, [channelKey, preferenceMap, queryClient])
 
   const active = channelKey ? queue[0] ?? null : null
 
