@@ -19,13 +19,31 @@ export function SidebarLayout({
   const notificationsQuery = useNotifications()
   const user = useAuthStore((state) => state.user)
 
-  // Memoize realtime options to prevent unnecessary re-renders
-  const realtimeOptions = useMemo(
-    () => ({ userId: user?.id ?? null, townId: user?.default_town ?? null }),
-    [user?.id, user?.default_town],
-  )
+  // TEMPORARY: Mock user for testing dashboard without backend
+  useEffect(() => {
+    if (!user) {
+      useAuthStore.getState().setSession('mock-token', {
+        id: 1,
+        name: 'Test Driver',
+        email: 'test@example.com',
+        roles: ['driver'],
+        default_town: 'Okahandja',
+        preferences: { notification_preferences: {} }
+      } as any)
+    }
+  }, [user])
 
-  const realtime = useDashboardRealtime(mode, realtimeOptions)
+  // TEMPORARY ISOLATION: Bypass useDashboardRealtime to test if it's the source
+  const realtime = useMemo(() => ({
+    mode,
+    status: 'offline' as const,
+    updatedAt: null,
+    updatedKeys: [],
+    subscribedChannels: [],
+    lastEvent: null,
+    pollingActive: false,
+    lastRefreshAt: null,
+  }), [mode])
 
   const handleToggleCollapse = useCallback(() => {
     setCollapsed((value) => !value)

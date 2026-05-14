@@ -116,7 +116,8 @@ function RootRoute() {
   if (!token && !onboardingComplete) {
     return <Navigate to="/onboarding" replace />
   }
-  return token ? <Navigate to={getRoleHomePath(user)} replace /> : <LandingPage />
+  // TEMPORARY: Force dashboard/driver for testing
+  return token ? <Navigate to="/dashboard/driver" replace /> : <LandingPage />
 }
 
 function AdminRoute({ children }: { children: ReactElement }) {

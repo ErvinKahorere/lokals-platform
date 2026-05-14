@@ -24,7 +24,8 @@ function DashboardShellContent({
   stats: Record<string, number | string>
   children: ReactNode
 }) {
-  const realtime = useDashboardRealtimeState()
+  // TEMPORARY: Remove realtime usage to isolate
+  // const realtime = useDashboardRealtimeState()
 
   return (
     <div className="space-y-6">
@@ -36,8 +37,8 @@ function DashboardShellContent({
               key={key}
               label={key.replaceAll('_', ' ')}
               value={String(value)}
-              hint={realtime.updatedKeys.includes(key) ? 'Updated now' : 'Role snapshot'}
-              className={realtime.updatedKeys.includes(key) ? 'ring-1 ring-lokals-green/30 bg-[linear-gradient(180deg,#ffffff,#f4fff6)]' : undefined}
+              hint={'Role snapshot'} // realtime.updatedKeys.includes(key) ? 'Updated now' : 'Role snapshot'
+              className={undefined} // realtime.updatedKeys.includes(key) ? 'ring-1 ring-lokals-green/30 bg-[linear-gradient(180deg,#ffffff,#f4fff6)]' : undefined
               icon={
                 index === 0 ? <ClipboardList className="h-4 w-4" /> : index === 1 ? <Bell className="h-4 w-4" /> : index === 2 ? <Activity className="h-4 w-4" /> : <ChartColumn className="h-4 w-4" />
               }
