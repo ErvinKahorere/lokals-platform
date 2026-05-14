@@ -1,15 +1,15 @@
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 
-export function DriverDashboardPage() {
+export function CourierDashboardPage() {
   return (
     <DashboardShell
-      mode="driver"
-      eyebrow="Driver mode"
-      title="Driver dashboard"
-      description="Driver operations dashboard."
+      mode="courier"
+      eyebrow="Courier mode"
+      title="Courier dashboard"
+      description="Courier operations dashboard."
       stats={{ status: 'Online' }}
     >
-      <div>Driver dashboard restored safely.</div>
+      <div>Courier dashboard restored safely.</div>
     </DashboardShell>
   )
 }
