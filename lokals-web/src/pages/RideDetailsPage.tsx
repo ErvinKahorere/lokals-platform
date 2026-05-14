@@ -1,5 +1,5 @@
 import { CarFront, Clock3, Star } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ContactActions } from '../components/experience/ContactActions'
 import { Button, EmptyState, Input, QueryState, SectionCard, StatusBadge, TextArea } from '../components/Ui'
@@ -25,13 +25,16 @@ export function RideDetailsPage() {
   const canCancel = isResident && ride?.status != null && ['requested', 'searching', 'accepted', 'arrived'].includes(ride.status)
   const canRate = isResident && ride?.status === 'completed' && !ride?.rating
 
-  const timeline = normalizeTransportTimeline(ride?.timeline, [
-    { key: 'requested', label: 'Requested', timestamp: ride?.created_at },
-    { key: 'assigned', label: 'Assigned', timestamp: ride?.assigned_at },
-    { key: 'arrived', label: 'Driver arrived', timestamp: ride?.arrived_at },
-    { key: 'started', label: 'Trip started', timestamp: ride?.started_at },
-    { key: 'completed', label: 'Trip completed', timestamp: ride?.completed_at },
-  ])
+  const timeline = useMemo(
+    () => normalizeTransportTimeline(ride?.timeline, [
+      { key: 'requested', label: 'Requested', timestamp: ride?.created_at },
+      { key: 'assigned', label: 'Assigned', timestamp: ride?.assigned_at },
+      { key: 'arrived', label: 'Driver arrived', timestamp: ride?.arrived_at },
+      { key: 'started', label: 'Trip started', timestamp: ride?.started_at },
+      { key: 'completed', label: 'Trip completed', timestamp: ride?.completed_at },
+    ]),
+    [ride],
+  )
 
   return (
     <div className="space-y-5">
@@ -146,7 +149,7 @@ export function RideDetailsPage() {
                   <p className="font-semibold text-lokals-charcoal">Cancel this ride</p>
                   <div className="mt-3 flex flex-col gap-3 sm:flex-row">
                     <Input value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} placeholder="Optional reason" />
-                    <Button variant="danger" disabled={cancelRide.isPending} onClick={() => ride.id ? cancelRide.mutate({ rideId: ride.id, reason: cancelReason || undefined }) : undefined}>
+                    <Button variant="danger" disabled={cancelRide.isPending} onClick={() => ride?.id ? cancelRide.mutate({ rideId: ride.id, reason: cancelReason || undefined }) : undefined}>
                       {cancelRide.isPending ? 'Cancelling...' : 'Cancel ride'}
                     </Button>
                   </div>
@@ -161,7 +164,7 @@ export function RideDetailsPage() {
                     <TextArea value={ratingComment} onChange={(event) => setRatingComment(event.target.value)} rows={3} placeholder="Share a short note about the trip." />
                   </div>
                   <div className="mt-3">
-                    <Button disabled={rateRide.isPending} onClick={() => ride.id ? rateRide.mutate({ rideId: ride.id, rating: Number(rating), comment: ratingComment || undefined }) : undefined}>
+                    <Button disabled={rateRide.isPending} onClick={() => ride?.id ? rateRide.mutate({ rideId: ride.id, rating: Number(rating), comment: ratingComment || undefined }) : undefined}>
                       {rateRide.isPending ? 'Saving rating...' : <><Star className="mr-2 h-4 w-4" />Submit rating</>}
                     </Button>
                   </div>

@@ -1,4 +1,5 @@
 import { Bell, History, MessageSquare, PackageSearch, Power, Star, Wallet } from 'lucide-react'
+import { useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { DashboardSection } from '../../components/dashboard/DashboardSection'
@@ -16,13 +17,28 @@ export function CourierDashboardPage() {
   const dashboardQuery = useCourierOperationalData()
   const data = dashboardQuery.data as CourierDashboardData | undefined
   const dashboard = data?.dashboard as RoleDashboardPayload | null | undefined
-  const availableDeliveries = data?.availableDeliveries ?? []
-  const deliveryHistory = data?.deliveryHistory ?? []
+  const availableDeliveries = useMemo(() => data?.availableDeliveries ?? [], [data?.availableDeliveries])
+  const deliveryHistory = useMemo(() => data?.deliveryHistory ?? [], [data?.deliveryHistory])
   const activeDelivery = data?.activeDelivery
-  const activityRows = dashboard?.recent_activity ?? []
+  const activityRows = useMemo(() => dashboard?.recent_activity ?? [], [dashboard?.recent_activity])
   const availability = data?.availability ?? 'unknown'
   const availabilityMutation = useUpdateCourierAvailability()
   const deliveryActionMutation = useCourierDeliveryAction()
+  const stats = useMemo(
+    () => ({
+      ...(dashboard?.stats ?? {}),
+      availability,
+      unread_notifications: data?.unread.notifications ?? 0,
+      unread_messages: data?.unread.messages ?? 0,
+    }),
+    [availability, dashboard?.stats, data?.unread.messages, data?.unread.notifications],
+  )
+  const handleAvailabilityToggle = useCallback(() => {
+    availabilityMutation.mutate(availability !== 'online')
+  }, [availability, availabilityMutation])
+  const handleDeliveryAction = useCallback((deliveryId: number, action: 'accept' | 'decline' | 'pickup-confirmed' | 'in-transit' | 'delivered') => {
+    deliveryActionMutation.mutate({ deliveryId, action })
+  }, [deliveryActionMutation])
 
   return (
     <DashboardShell
@@ -32,12 +48,7 @@ export function CourierDashboardPage() {
       description="Manage parcel requests, active drop-offs, online availability, and delivery earnings."
       isLoading={dashboardQuery.isLoading}
       error={dashboardQuery.error}
-      stats={{
-        ...(dashboard?.stats ?? {}),
-        availability,
-        unread_notifications: data?.unread.notifications ?? 0,
-        unread_messages: data?.unread.messages ?? 0,
-      }}
+      stats={stats}
     >
       <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         <DashboardSection title="Quick actions" description="The next delivery action should always be one tap away.">
@@ -45,7 +56,7 @@ export function CourierDashboardPage() {
             <QuickActionTile to="/delivery" title="Available deliveries" body="Review parcel requests still waiting for a courier." icon={PackageSearch} />
             <button
               type="button"
-              onClick={() => availabilityMutation.mutate(availability !== 'online')}
+              onClick={handleAvailabilityToggle}
               className="rounded-[22px] border border-lokals-border bg-white p-4 text-left shadow-card transition hover:-translate-y-0.5 hover:border-lokals-purple/30"
             >
               <div className="flex items-center justify-between gap-3">
@@ -82,10 +93,10 @@ export function CourierDashboardPage() {
                 <p className="mt-1 text-sm text-lokals-muted">{delivery.user?.name ?? 'Resident'} | {delivery.parcel_size ?? 'Parcel'} | N$ {delivery.estimated_price ?? '0'}</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Link to={`/delivery/${delivery.id}`}><Button className="min-h-9 px-3 py-2 text-xs" variant="secondary">Details</Button></Link>
-                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionMutation.isPending} onClick={() => deliveryActionMutation.mutate({ deliveryId: delivery.id, action: 'accept' })}>
+                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionMutation.isPending} onClick={() => handleDeliveryAction(delivery.id, 'accept')}>
                     Accept
                   </Button>
-                  <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" disabled={deliveryActionMutation.isPending} onClick={() => deliveryActionMutation.mutate({ deliveryId: delivery.id, action: 'decline' })}>
+                  <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" disabled={deliveryActionMutation.isPending} onClick={() => handleDeliveryAction(delivery.id, 'decline')}>
                     Decline
                   </Button>
                 </div>
@@ -120,9 +131,9 @@ export function CourierDashboardPage() {
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link to={`/delivery/${activeDelivery.id}`}><Button className="min-h-9 px-3 py-2 text-xs" variant="secondary">Details</Button></Link>
-                {activeDelivery.status === 'accepted' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionMutation.isPending} onClick={() => deliveryActionMutation.mutate({ deliveryId: activeDelivery.id, action: 'pickup-confirmed' })}>Pickup confirmed</Button> : null}
-                {activeDelivery.status === 'pickup_confirmed' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionMutation.isPending} onClick={() => deliveryActionMutation.mutate({ deliveryId: activeDelivery.id, action: 'in-transit' })}>In transit</Button> : null}
-                {activeDelivery.status === 'in_transit' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionMutation.isPending} onClick={() => deliveryActionMutation.mutate({ deliveryId: activeDelivery.id, action: 'delivered' })}>Delivered</Button> : null}
+                {activeDelivery.status === 'accepted' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionMutation.isPending} onClick={() => handleDeliveryAction(activeDelivery.id, 'pickup-confirmed')}>Pickup confirmed</Button> : null}
+                {activeDelivery.status === 'pickup_confirmed' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionMutation.isPending} onClick={() => handleDeliveryAction(activeDelivery.id, 'in-transit')}>In transit</Button> : null}
+                {activeDelivery.status === 'in_transit' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionMutation.isPending} onClick={() => handleDeliveryAction(activeDelivery.id, 'delivered')}>Delivered</Button> : null}
               </div>
             </div>
           ) : (

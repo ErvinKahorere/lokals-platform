@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
@@ -77,7 +77,7 @@ export function useRealtimeNotifications() {
   const preferences = user?.preferences?.notification_preferences
   const preferenceSignature = useMemo(() => JSON.stringify(preferences ?? {}), [preferences])
   const preferenceMap = useMemo<Record<string, boolean> | undefined>(() => {
-    if (!preferences) {
+    if (!preferenceSignature || preferenceSignature === '{}') {
       return undefined
     }
 
@@ -88,6 +88,16 @@ export function useRealtimeNotifications() {
     }
   }, [preferenceSignature, preferences])
   const channelKey = token ? `users.${user?.id ?? ''}` : null
+  const enqueueNotifications = useCallback((incoming: NotificationItem[]) => {
+    if (incoming.length === 0) {
+      return
+    }
+
+    setQueue((current) => {
+      const merged = [...current, ...incoming].slice(-4)
+      return areNotificationListsEqual(current, merged) ? current : merged
+    })
+  }, [])
 
   useEffect(() => {
     mountedRef.current = true
@@ -123,10 +133,7 @@ export function useRealtimeNotifications() {
 
         if (nextItems.length > 0) {
           nextItems.forEach((item: NotificationItem) => seen.current.add(item.id))
-          setQueue((current) => {
-            const merged = [...current, ...nextItems].slice(-4)
-            return areNotificationListsEqual(current, merged) ? current : merged
-          })
+          enqueueNotifications(nextItems)
         }
       } catch {
         // Polling should fail quietly and try again on the next interval.
@@ -148,7 +155,7 @@ export function useRealtimeNotifications() {
       channel?.stopListening?.('.reward.approved')
       channel?.stopListening?.('.marketplace.message.received')
     }
-  }, [channelKey, preferenceMap, queryClient])
+  }, [channelKey, enqueueNotifications, preferenceMap, queryClient])
 
   const active = channelKey ? queue[0] ?? null : null
 
@@ -160,12 +167,10 @@ export function useRealtimeNotifications() {
     return () => window.clearTimeout(timeout)
   }, [active])
 
-  const openNotification = useMemo(() => {
-    return (notification: NotificationItem) => {
-      const href = getNotificationTarget(notification)
-      setQueue((current) => current.filter((item) => item.id !== notification.id))
-      navigate(href)
-    }
+  const openNotification = useCallback((notification: NotificationItem) => {
+    const href = getNotificationTarget(notification)
+    setQueue((current) => current.filter((item) => item.id !== notification.id))
+    navigate(href)
   }, [navigate])
 
   const dismissNotification = (id: string) => {

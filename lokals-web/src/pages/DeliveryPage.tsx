@@ -1,6 +1,6 @@
 import type { FormEvent } from 'react'
 import { Camera, Clock3, LocateFixed, MapPin, Truck } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button, EmptyState, PageHeader, QueryState, SectionCard, Select, StatusBadge, TextArea } from '../components/Ui'
 import { RequestSuccessState } from '../components/transport/RequestSuccessState'
@@ -48,8 +48,9 @@ export function DeliveryPage() {
     },
     [parcelSize, urgency, weightKg],
   )
+  const recentDeliveries = useMemo(() => (deliveriesQuery.data?.data ?? []).slice(0, 5), [deliveriesQuery.data?.data])
 
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
+  const submit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError('')
     const form = new FormData(event.currentTarget)
@@ -100,11 +101,11 @@ export function DeliveryPage() {
     } catch (caught) {
       setError(getApiErrorMessage(caught, 'Unable to request delivery right now.'))
     }
-  }
+  }, [createDelivery, dropoffLocation, estimate, notes, parcelSize, pickupLocation, urgency, weightKg])
 
-  const setCurrentPickup = () => {
+  const setCurrentPickup = useCallback(() => {
     setPickupLocation('Current location (near me)')
-  }
+  }, [])
 
   return (
     <div className="space-y-5">
@@ -289,11 +290,11 @@ export function DeliveryPage() {
         <SectionCard className="bg-white">
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-lg font-semibold text-lokals-charcoal">Recent delivery requests</h3>
-            <StatusBadge value={`${(deliveriesQuery.data?.data ?? []).length} total`} tone="accent" />
+            <StatusBadge value={`${deliveriesQuery.data?.data?.length ?? 0} total`} tone="accent" />
           </div>
           <QueryState isLoading={deliveriesQuery.isLoading} error={deliveriesQuery.error} empty={(deliveriesQuery.data?.data ?? []).length === 0}>
             <div className="mt-4 space-y-3">
-              {(deliveriesQuery.data?.data ?? []).slice(0, 5).map((delivery) => (
+              {recentDeliveries.map((delivery) => (
                 <Link key={delivery.id} to={`/delivery/${delivery.id}`} className="block rounded-2xl border border-lokals-border p-4 transition hover:border-violet-200 hover:shadow-card">
                   <div className="flex items-center justify-between gap-3">
                     <div>

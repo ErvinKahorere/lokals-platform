@@ -1,6 +1,6 @@
 import type { FormEvent } from 'react'
 import { CarFront, Clock3, LocateFixed, MapPin } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button, EmptyState, Input, PageHeader, QueryState, SectionCard, Select, StatusBadge } from '../components/Ui'
 import { RequestSuccessState } from '../components/transport/RequestSuccessState'
@@ -54,8 +54,9 @@ export function RidePage() {
     const purposeBonus = tripPurpose === 'Airport trip' ? 85 : tripPurpose === 'Late shift ride' ? 20 : 0
     return selectedRide.baseFare + routeBonus + purposeBonus
   }, [dropoffLocation, pickupLocation, selectedRide.baseFare, tripPurpose])
+  const recentRides = useMemo(() => (ridesQuery.data?.data ?? []).slice(0, 5), [ridesQuery.data?.data])
 
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
+  const submit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError('')
 
@@ -86,11 +87,11 @@ export function RidePage() {
     } catch (caught) {
       setError(getApiErrorMessage(caught, 'Unable to request a ride right now.'))
     }
-  }
+  }, [createRide, dropoffLocation, estimatedFare, notes, pickupLocation, rideType, tripPurpose])
 
-  const setCurrentLocation = () => {
+  const setCurrentLocation = useCallback(() => {
     setPickupLocation('Current location (near me)')
-  }
+  }, [])
 
   return (
     <div className="space-y-5">
@@ -258,11 +259,11 @@ export function RidePage() {
             <SectionCard className="bg-white">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold text-lokals-charcoal">Recent ride requests</h3>
-                <StatusBadge value={`${(ridesQuery.data?.data ?? []).length} total`} tone="accent" />
+                <StatusBadge value={`${ridesQuery.data?.data?.length ?? 0} total`} tone="accent" />
               </div>
               <QueryState isLoading={ridesQuery.isLoading} error={ridesQuery.error} empty={(ridesQuery.data?.data ?? []).length === 0}>
                 <div className="mt-4 space-y-3">
-                  {(ridesQuery.data?.data ?? []).slice(0, 5).map((ride) => (
+                  {recentRides.map((ride) => (
                     <Link key={ride.id} to={`/ride/${ride.id}`} className="block rounded-2xl border border-lokals-border p-4 transition hover:border-violet-200 hover:shadow-card">
                       <div className="flex items-center justify-between gap-3">
                         <div>

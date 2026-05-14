@@ -205,7 +205,8 @@ export function useDashboardRealtime(mode: DashboardMode, { userId, townId }: Da
     }
 
     let cancelled = false
-    const subscribedChannels = activeChannels
+    const channelNames = activeChannelKey ? activeChannelKey.split('|').filter(Boolean) : []
+    const subscribedChannels = channelNames
       .map((channelName) => window.Echo?.private?.(channelName))
       .filter((channel): channel is NonNullable<typeof channel> => Boolean(channel))
     const updateStatus = (nextStatus: DashboardRealtimeStatus) => {
@@ -266,7 +267,7 @@ export function useDashboardRealtime(mode: DashboardMode, { userId, townId }: Da
           mode,
           event,
           alias,
-          channels: activeChannels,
+          channels: channelNames,
           payload,
         })
       }
@@ -338,7 +339,7 @@ export function useDashboardRealtime(mode: DashboardMode, { userId, townId }: Da
         clearUpdatedTimer.current = null
       }
     }
-  }, [activeChannelKey, activeChannels, hasLiveChannel, mode, normalizedUserId, queryClient, statusKey])
+  }, [activeChannelKey, hasLiveChannel, mode, normalizedUserId, queryClient, statusKey])
 
   return useMemo(
     () => ({

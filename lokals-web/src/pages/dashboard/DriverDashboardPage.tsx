@@ -1,4 +1,5 @@
 import { Bell, CarFront, History, MessageSquare, Power, Star, Wallet } from 'lucide-react'
+import { useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { DashboardSection } from '../../components/dashboard/DashboardSection'
@@ -16,13 +17,28 @@ export function DriverDashboardPage() {
   const dashboardQuery = useDriverOperationalData()
   const data = dashboardQuery.data as DriverDashboardData | undefined
   const dashboard = data?.dashboard as RoleDashboardPayload | null | undefined
-  const availableRequests = data?.availableRequests ?? []
-  const tripHistory = data?.tripHistory ?? []
-  const activityRows = dashboard?.recent_activity ?? []
+  const availableRequests = useMemo(() => data?.availableRequests ?? [], [data?.availableRequests])
+  const tripHistory = useMemo(() => data?.tripHistory ?? [], [data?.tripHistory])
+  const activityRows = useMemo(() => dashboard?.recent_activity ?? [], [dashboard?.recent_activity])
   const activeTrip = data?.activeTrip
   const availability = data?.availability ?? 'unknown'
   const availabilityMutation = useUpdateDriverAvailability()
   const rideActionMutation = useDriverRideAction()
+  const stats = useMemo(
+    () => ({
+      ...(dashboard?.stats ?? {}),
+      availability,
+      unread_notifications: data?.unread.notifications ?? 0,
+      unread_messages: data?.unread.messages ?? 0,
+    }),
+    [availability, dashboard?.stats, data?.unread.messages, data?.unread.notifications],
+  )
+  const handleAvailabilityToggle = useCallback(() => {
+    availabilityMutation.mutate(availability !== 'online')
+  }, [availability, availabilityMutation])
+  const handleRideAction = useCallback((rideId: number, action: 'accept' | 'decline' | 'arrived' | 'start' | 'complete') => {
+    rideActionMutation.mutate({ rideId, action })
+  }, [rideActionMutation])
 
   return (
     <DashboardShell
@@ -32,12 +48,7 @@ export function DriverDashboardPage() {
       description="Go online, pick up nearby ride requests, track active trips, and keep earnings in view."
       isLoading={dashboardQuery.isLoading}
       error={dashboardQuery.error}
-      stats={{
-        ...(dashboard?.stats ?? {}),
-        availability,
-        unread_notifications: data?.unread.notifications ?? 0,
-        unread_messages: data?.unread.messages ?? 0,
-      }}
+      stats={stats}
     >
       <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         <DashboardSection title="Quick actions" description="Practical controls for your next trip.">
@@ -45,7 +56,7 @@ export function DriverDashboardPage() {
             <QuickActionTile to="/ride" title="Available rides" body="Review nearby resident requests." icon={CarFront} />
             <button
               type="button"
-              onClick={() => availabilityMutation.mutate(availability !== 'online')}
+              onClick={handleAvailabilityToggle}
               className="rounded-[22px] border border-lokals-border bg-white p-4 text-left shadow-card transition hover:-translate-y-0.5 hover:border-lokals-purple/30"
             >
               <div className="flex items-center justify-between gap-3">
@@ -82,10 +93,10 @@ export function DriverDashboardPage() {
                 <p className="mt-1 text-sm text-lokals-muted">{ride.user?.name ?? 'Resident'} | {ride.ride_type ?? 'Standard'} | N$ {ride.fare_estimate ?? '0'}</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Link to={`/ride/${ride.id}`}><Button className="min-h-9 px-3 py-2 text-xs" variant="secondary">Details</Button></Link>
-                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionMutation.isPending} onClick={() => rideActionMutation.mutate({ rideId: ride.id, action: 'accept' })}>
+                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionMutation.isPending} onClick={() => handleRideAction(ride.id, 'accept')}>
                     Accept
                   </Button>
-                  <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" disabled={rideActionMutation.isPending} onClick={() => rideActionMutation.mutate({ rideId: ride.id, action: 'decline' })}>
+                  <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" disabled={rideActionMutation.isPending} onClick={() => handleRideAction(ride.id, 'decline')}>
                     Decline
                   </Button>
                 </div>
@@ -120,9 +131,9 @@ export function DriverDashboardPage() {
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link to={`/ride/${activeTrip.id}`}><Button className="min-h-9 px-3 py-2 text-xs" variant="secondary">Details</Button></Link>
-                {activeTrip.status === 'accepted' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionMutation.isPending} onClick={() => rideActionMutation.mutate({ rideId: activeTrip.id, action: 'arrived' })}>Mark arrived</Button> : null}
-                {activeTrip.status === 'arrived' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionMutation.isPending} onClick={() => rideActionMutation.mutate({ rideId: activeTrip.id, action: 'start' })}>Start trip</Button> : null}
-                {activeTrip.status === 'in_progress' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionMutation.isPending} onClick={() => rideActionMutation.mutate({ rideId: activeTrip.id, action: 'complete' })}>Complete trip</Button> : null}
+                {activeTrip.status === 'accepted' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionMutation.isPending} onClick={() => handleRideAction(activeTrip.id, 'arrived')}>Mark arrived</Button> : null}
+                {activeTrip.status === 'arrived' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionMutation.isPending} onClick={() => handleRideAction(activeTrip.id, 'start')}>Start trip</Button> : null}
+                {activeTrip.status === 'in_progress' ? <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionMutation.isPending} onClick={() => handleRideAction(activeTrip.id, 'complete')}>Complete trip</Button> : null}
               </div>
             </div>
           ) : (

@@ -1,5 +1,5 @@
 import { Package, ShieldCheck, Star } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ContactActions } from '../components/experience/ContactActions'
 import { Button, EmptyState, Input, QueryState, SectionCard, StatusBadge, TextArea } from '../components/Ui'
@@ -25,13 +25,16 @@ export function DeliveryDetailsPage() {
   const canCancel = isResidentOrBusiness && delivery?.status != null && ['requested', 'searching', 'accepted', 'pickup_confirmed'].includes(delivery.status)
   const canRate = isResidentOrBusiness && delivery?.status === 'delivered' && !delivery?.rating
 
-  const timeline = normalizeTransportTimeline(delivery?.timeline, [
-    { key: 'requested', label: 'Requested', timestamp: delivery?.created_at },
-    { key: 'assigned', label: 'Assigned', timestamp: delivery?.assigned_at },
-    { key: 'pickup_confirmed', label: 'Pickup confirmed', timestamp: delivery?.picked_up_at },
-    { key: 'in_transit', label: 'In transit', timestamp: delivery?.in_transit_at },
-    { key: 'delivered', label: 'Delivered', timestamp: delivery?.delivered_at },
-  ])
+  const timeline = useMemo(
+    () => normalizeTransportTimeline(delivery?.timeline, [
+      { key: 'requested', label: 'Requested', timestamp: delivery?.created_at },
+      { key: 'assigned', label: 'Assigned', timestamp: delivery?.assigned_at },
+      { key: 'pickup_confirmed', label: 'Pickup confirmed', timestamp: delivery?.picked_up_at },
+      { key: 'in_transit', label: 'In transit', timestamp: delivery?.in_transit_at },
+      { key: 'delivered', label: 'Delivered', timestamp: delivery?.delivered_at },
+    ]),
+    [delivery],
+  )
 
   return (
     <div className="space-y-5">
@@ -148,7 +151,7 @@ export function DeliveryDetailsPage() {
                   <p className="font-semibold text-lokals-charcoal">Cancel this delivery</p>
                   <div className="mt-3 flex flex-col gap-3 sm:flex-row">
                     <Input value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} placeholder="Optional reason" />
-                    <Button variant="danger" disabled={cancelDelivery.isPending} onClick={() => delivery.id ? cancelDelivery.mutate({ deliveryId: delivery.id, reason: cancelReason || undefined }) : undefined}>
+                    <Button variant="danger" disabled={cancelDelivery.isPending} onClick={() => delivery?.id ? cancelDelivery.mutate({ deliveryId: delivery.id, reason: cancelReason || undefined }) : undefined}>
                       {cancelDelivery.isPending ? 'Cancelling...' : 'Cancel delivery'}
                     </Button>
                   </div>
@@ -163,7 +166,7 @@ export function DeliveryDetailsPage() {
                     <TextArea value={ratingComment} onChange={(event) => setRatingComment(event.target.value)} rows={3} placeholder="Share a short note about the delivery." />
                   </div>
                   <div className="mt-3">
-                    <Button disabled={rateDelivery.isPending} onClick={() => delivery.id ? rateDelivery.mutate({ deliveryId: delivery.id, rating: Number(rating), comment: ratingComment || undefined }) : undefined}>
+                    <Button disabled={rateDelivery.isPending} onClick={() => delivery?.id ? rateDelivery.mutate({ deliveryId: delivery.id, rating: Number(rating), comment: ratingComment || undefined }) : undefined}>
                       {rateDelivery.isPending ? 'Saving rating...' : <><Star className="mr-2 h-4 w-4" />Submit rating</>}
                     </Button>
                   </div>
