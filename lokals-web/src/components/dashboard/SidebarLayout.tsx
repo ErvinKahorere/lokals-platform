@@ -3,9 +3,8 @@ import { DashboardRealtimeDiagnostics } from './DashboardRealtimeDiagnostics'
 import { DashboardSidebar } from './DashboardSidebar'
 import { DashboardTopbar } from './DashboardTopbar'
 import { type DashboardMode } from '../../lib/dashboardConfig'
-import { DashboardRealtimeProvider, useDashboardRealtime } from '../../lib/dashboardRealtime'
+import { DashboardRealtimeProvider } from '../../lib/dashboardRealtime'
 import { useNotifications } from '../../hooks/queries'
-import { useAuthStore } from '../../store/auth'
 
 export function SidebarLayout({
   mode,
@@ -16,34 +15,25 @@ export function SidebarLayout({
 }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
+
   const notificationsQuery = useNotifications()
-  const user = useAuthStore((state) => state.user)
 
-  // TEMPORARY: Mock user for testing dashboard without backend
-  useEffect(() => {
-    if (!user) {
-      useAuthStore.getState().setSession('mock-token', {
-        id: 1,
-        name: 'Test Driver',
-        email: 'test@example.com',
-        roles: ['driver'],
-        default_town: 'Okahandja',
-        preferences: { notification_preferences: {} }
-      } as any)
-    }
-  }, [user])
-
-  // TEMPORARY ISOLATION: Bypass useDashboardRealtime to test if it's the source
-  const realtime = useMemo(() => ({
-    mode,
-    status: 'offline' as const,
-    updatedAt: null,
-    updatedKeys: [],
-    subscribedChannels: [],
-    lastEvent: null,
-    pollingActive: false,
-    lastRefreshAt: null,
-  }), [mode])
+  // TEMPORARY ISOLATION:
+  // Bypass realtime completely to confirm whether
+  // dashboardRealtime.ts is the source of React #301
+  const realtime = useMemo(
+    () => ({
+      mode,
+      status: 'offline' as const,
+      updatedAt: null,
+      updatedKeys: [],
+      subscribedChannels: [],
+      lastEvent: null,
+      pollingActive: false,
+      lastRefreshAt: null,
+    }),
+    [mode],
+  )
 
   const handleToggleCollapse = useCallback(() => {
     setCollapsed((value) => !value)
@@ -58,7 +48,10 @@ export function SidebarLayout({
   }, [])
 
   const unreadCount = useMemo(
-    () => notificationsQuery.data?.filter((item) => item.read_at == null).length ?? 0,
+    () =>
+      notificationsQuery.data?.filter(
+        (item) => item.read_at == null,
+      ).length ?? 0,
     [notificationsQuery.data],
   )
 
@@ -66,26 +59,46 @@ export function SidebarLayout({
     <DashboardRealtimeProvider value={realtime}>
       <div className="grid gap-5 lg:grid-cols-[auto_minmax(0,1fr)]">
         <div className="hidden lg:block">
-          <div className={`sticky top-5 h-[calc(100vh-2.5rem)] transition-all ${collapsed ? 'w-[108px]' : 'w-[332px]'}`}>
-            <DashboardSidebar mode={mode} collapsed={collapsed} onToggleCollapse={handleToggleCollapse} />
+          <div
+            className={`sticky top-5 h-[calc(100vh-2.5rem)] transition-all ${
+              collapsed ? 'w-[108px]' : 'w-[332px]'
+            }`}
+          >
+            <DashboardSidebar
+              mode={mode}
+              collapsed={collapsed}
+              onToggleCollapse={handleToggleCollapse}
+            />
           </div>
         </div>
 
         {mobileOpen ? (
           <div className="fixed inset-0 z-50 bg-slate-950/35 backdrop-blur-sm lg:hidden">
             <div className="h-full w-[88vw] max-w-[340px] p-4">
-              <DashboardSidebar mode={mode} collapsed={false} onToggleCollapse={handleToggleCollapse} onCloseMobile={handleCloseMobile} />
+              <DashboardSidebar
+                mode={mode}
+                collapsed={false}
+                onToggleCollapse={handleToggleCollapse}
+                onCloseMobile={handleCloseMobile}
+              />
             </div>
           </div>
         ) : null}
 
         <div className="min-w-0 space-y-5">
-          <DashboardTopbar mode={mode} onOpenSidebar={handleOpenSidebar} unreadCount={unreadCount} realtimeStatus={realtime.status} updatedAt={realtime.updatedAt} />
+          <DashboardTopbar
+            mode={mode}
+            onOpenSidebar={handleOpenSidebar}
+            unreadCount={unreadCount}
+            realtimeStatus={realtime.status}
+            updatedAt={realtime.updatedAt}
+          />
+
           {children}
         </div>
       </div>
+
       {import.meta.env.DEV ? <DashboardRealtimeDiagnostics /> : null}
     </DashboardRealtimeProvider>
   )
 }
-
