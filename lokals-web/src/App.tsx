@@ -111,13 +111,15 @@ function ProtectedRoute({ children }: { children: ReactElement }) {
 
 function RootRoute() {
   const token = useAuthStore((state) => state.token)
-  const user = useAuthStore((state) => state.user)
-  const onboardingComplete = typeof window !== 'undefined' && window.localStorage.getItem('lokals-onboarding-complete') === 'true'
+  const onboardingComplete =
+    typeof window !== 'undefined' &&
+    window.localStorage.getItem('lokals-onboarding-complete') === 'true'
+
   if (!token && !onboardingComplete) {
     return <Navigate to="/onboarding" replace />
   }
-  // TEMPORARY: Force dashboard/driver for testing
-  return token ? <Navigate to="/dashboard/driver" replace /> : <LandingPage />
+
+  return token ? <Navigate to="/home" replace /> : <LandingPage />
 }
 
 function AdminRoute({ children }: { children: ReactElement }) {
