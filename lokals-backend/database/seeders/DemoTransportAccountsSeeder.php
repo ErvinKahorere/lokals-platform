@@ -25,7 +25,7 @@ class DemoTransportAccountsSeeder extends Seeder
             'resident@lokals.test',
             [
                 'name' => 'Demo Resident',
-                'phone' => '+264810009901',
+                'phone' => '+264811110001',
                 'password' => Hash::make('password'),
                 'location' => 'Nau-Aib, Okahandja',
                 'default_town' => 'Okahandja',
@@ -45,7 +45,7 @@ class DemoTransportAccountsSeeder extends Seeder
             'driver@lokals.test',
             [
                 'name' => 'Demo Driver',
-                'phone' => '+264810009902',
+                'phone' => '+264811110002',
                 'password' => Hash::make('password'),
                 'location' => 'Town Centre, Okahandja',
                 'default_town' => 'Okahandja',
@@ -83,7 +83,7 @@ class DemoTransportAccountsSeeder extends Seeder
             'courier@lokals.test',
             [
                 'name' => 'Demo Courier',
-                'phone' => '+264810009903',
+                'phone' => '+264811110003',
                 'password' => Hash::make('password'),
                 'location' => 'Town Centre, Okahandja',
                 'default_town' => 'Okahandja',
