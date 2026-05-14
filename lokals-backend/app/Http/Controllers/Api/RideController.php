@@ -40,7 +40,8 @@ class RideController extends Controller
         abort_unless(
             $ride->user_id === $request->user()->id
             || $ride->driver_id === $request->user()->id
-            || $request->user()->hasAnyRole(['operator', 'super_admin', 'town_manager', 'municipality_admin']),
+            || $request->user()->hasAnyRole(['operator', 'super_admin', 'town_manager', 'municipality_admin'])
+            || ($request->user()->hasRole('driver') && in_array($ride->status, ['requested', 'searching'], true)),
             403,
         );
 
