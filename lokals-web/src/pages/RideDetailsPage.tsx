@@ -21,6 +21,11 @@ export function RideDetailsPage() {
   const [rating, setRating] = useState('5')
   const [ratingComment, setRatingComment] = useState('')
 
+  const rideErrorStatus = (rideQuery.error as { response?: { status?: number } })?.response?.status
+  const isRideUnauthorized = rideErrorStatus === 401
+  const isRideForbidden = rideErrorStatus === 403
+  const isRideAccessError = isRideUnauthorized || isRideForbidden
+
   const isResident = ride?.user?.id != null && ride.user.id === user?.id
   const canCancel = isResident && ride?.status != null && ['requested', 'searching', 'accepted', 'arrived'].includes(ride.status)
   const canRate = isResident && ride?.status === 'completed' && !ride?.rating
@@ -48,13 +53,22 @@ export function RideDetailsPage() {
         </div>
       </SectionCard>
 
-      <QueryState isLoading={rideQuery.isLoading} error={rideQuery.error} empty={!ride}>
-        {!ride ? (
-          <EmptyState title="Ride not found" body="We could not find this ride request." action={<Link to="/ride"><Button>Back</Button></Link>} />
-        ) : (
-          <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-            <SectionCard className="bg-white">
-              <div className="flex items-start gap-4">
+      {isRideAccessError ? (
+        <SectionCard className="bg-white">
+          <EmptyState
+            title={isRideUnauthorized ? 'Please login to view this ride.' : 'You don’t have access to this ride.'}
+            body={isRideUnauthorized ? 'Sign in to continue and access your ride details.' : 'This ride is private or reserved for another account.'}
+            action={isRideUnauthorized ? <Link to="/login"><Button>Login</Button></Link> : <Link to="/ride"><Button>Back to rides</Button></Link>}
+          />
+        </SectionCard>
+      ) : (
+        <QueryState isLoading={rideQuery.isLoading} error={rideQuery.error} empty={!ride}>
+          {!ride ? (
+            <EmptyState title="Ride not found" body="We could not find this ride request." action={<Link to="/ride"><Button>Back</Button></Link>} />
+          ) : (
+            <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+              <SectionCard className="bg-white">
+                <div className="flex items-start gap-4">
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-50 text-sky-700">
                   <CarFront className="h-6 w-6" />
                 </div>
@@ -149,7 +163,7 @@ export function RideDetailsPage() {
                   <p className="font-semibold text-lokals-charcoal">Cancel this ride</p>
                   <div className="mt-3 flex flex-col gap-3 sm:flex-row">
                     <Input value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} placeholder="Optional reason" />
-                    <Button variant="danger" disabled={cancelRide.isPending} onClick={() => ride?.id ? cancelRide.mutate({ rideId: ride.id, reason: cancelReason || undefined }) : undefined}>
+                    <Button variant="danger" disabled={cancelRide.isPending} onClick={() => (ride?.id ? cancelRide.mutate({ rideId: ride.id, reason: cancelReason || undefined }) : undefined)}>
                       {cancelRide.isPending ? 'Cancelling...' : 'Cancel ride'}
                     </Button>
                   </div>
@@ -164,8 +178,8 @@ export function RideDetailsPage() {
                     <TextArea value={ratingComment} onChange={(event) => setRatingComment(event.target.value)} rows={3} placeholder="Share a short note about the trip." />
                   </div>
                   <div className="mt-3">
-                    <Button disabled={rateRide.isPending} onClick={() => ride?.id ? rateRide.mutate({ rideId: ride.id, rating: Number(rating), comment: ratingComment || undefined }) : undefined}>
-                      {rateRide.isPending ? 'Saving rating...' : <><Star className="mr-2 h-4 w-4" />Submit rating</>}
+                    <Button disabled={rateRide.isPending} onClick={() => (ride?.id ? rateRide.mutate({ rideId: ride.id, rating: Number(rating), comment: ratingComment || undefined }) : undefined)}>
+                      {rateRide.isPending ? 'Saving rating...' : <span className="inline-flex items-center gap-2"><Star className="h-4 w-4" />Submit rating</span>}
                     </Button>
                   </div>
                 </div>
@@ -174,8 +188,9 @@ export function RideDetailsPage() {
 
             <StatusStepper steps={rideSteps} current={ride.status} updatedAt={ride.updated_at} />
           </div>
-        )}
-      </QueryState>
+            )}
+          </QueryState>
+      )}
     </div>
   )
 }

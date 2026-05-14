@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { AxiosError } from 'axios'
 import { api } from '../lib/api'
 import { applyPilotLocation } from '../lib/pilot'
+import { hasAnyAssignedRole } from '../lib/roles'
 import { useAuthStore } from '../store/auth'
 import type {
   AlertFeedItem,
@@ -399,7 +401,7 @@ export const useDelivery = (id?: string) =>
 
 export const useRides = (enabled = true) =>
   useQuery({
-    enabled,
+    enabled: Boolean(enabled && useAuthStore((state) => state.token)),
     queryKey: ['rides'],
     queryFn: async () => toPaginated<RideItem>((await api.get('/rides')).data),
   })
@@ -409,6 +411,14 @@ export const useRide = (id?: string) =>
     enabled: Boolean(id),
     queryKey: ['ride', id],
     queryFn: async () => unwrapOne<RideItem>((await api.get(`/rides/${id}`)).data),
+    retry: (failureCount, error) => {
+      const status = (error as AxiosError)?.response?.status
+      if (status === 401 || status === 403) {
+        return false
+      }
+
+      return failureCount < 2
+    },
   })
 
 export const useSosFeed = (enabled = true) =>
@@ -479,11 +489,17 @@ export const useNotifications = () =>
     },
   })
 
-export const useMyBusinesses = () =>
-  useQuery({
+export const useMyBusinesses = () => {
+  const token = useAuthStore((state) => state.token)
+  const user = useAuthStore((state) => state.user)
+  const enabled = Boolean(token && hasAnyAssignedRole(user, ['seller', 'business_owner', 'service_provider', 'organization_admin', 'municipality_admin', 'town_manager', 'super_admin']))
+
+  return useQuery({
+    enabled,
     queryKey: ['my-businesses'],
     queryFn: async () => toPaginated<Organization>((await api.get('/my-businesses')).data),
   })
+}
 
 export const useMyBookings = () =>
   useQuery({
