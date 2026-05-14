@@ -6,10 +6,10 @@ export function DriverDashboardPage() {
       mode="driver"
       eyebrow="Driver mode"
       title="Driver dashboard"
-      description="Driver dashboard isolation test."
-      stats={{ status: 'OK' }}
+      description="Driver operations dashboard."
+      stats={{ status: 'Online' }}
     >
-      <div>Driver OK</div>
+      <div>Driver dashboard restored safely.</div>
     </DashboardShell>
   )
 }
