@@ -191,15 +191,6 @@ export function useDashboardRealtime(mode: DashboardMode, { userId, townId }: Da
   }, [])
 
   useEffect(() => {
-    seenEvents.current.clear()
-    seenEventTimestamps.current.clear()
-    lastPollAt.current = 0
-
-    if (clearUpdatedTimer.current) {
-      window.clearTimeout(clearUpdatedTimer.current)
-      clearUpdatedTimer.current = null
-    }
-
     if (!normalizedUserId) {
       return
     }
@@ -209,6 +200,7 @@ export function useDashboardRealtime(mode: DashboardMode, { userId, townId }: Da
     const subscribedChannels = channelNames
       .map((channelName) => window.Echo?.private?.(channelName))
       .filter((channel): channel is NonNullable<typeof channel> => Boolean(channel))
+
     const updateStatus = (nextStatus: DashboardRealtimeStatus) => {
       if (!mountedRef.current || cancelled) {
         return
@@ -317,8 +309,9 @@ export function useDashboardRealtime(mode: DashboardMode, { userId, townId }: Da
       }
     }
 
-    const interval = !hasLiveChannel ? window.setInterval(() => void poll(), POLL_INTERVAL_MS) : null
+    let interval: number | null = null
     if (!hasLiveChannel) {
+      interval = window.setInterval(() => void poll(), POLL_INTERVAL_MS)
       void poll()
     }
 
@@ -326,6 +319,7 @@ export function useDashboardRealtime(mode: DashboardMode, { userId, townId }: Da
       cancelled = true
       if (interval != null) {
         window.clearInterval(interval)
+        interval = null
       }
 
       listeners.forEach(({ alias }) => {
