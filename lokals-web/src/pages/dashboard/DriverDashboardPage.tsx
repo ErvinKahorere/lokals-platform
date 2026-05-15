@@ -1,5 +1,5 @@
-import { Bell, CarFront, History, MessageSquare, Power, Star, Wallet } from 'lucide-react'
-import { useMemo } from 'react'
+import { Bell, CarFront, History, MessageSquare, Power, Star, Wallet, AlertCircle } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button, StatusBadge } from '../../components/Ui'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
@@ -11,6 +11,7 @@ import { useDriverOperationalData } from '../../lib/dashboardDataProvider'
 import { getDashboardActivity, type DriverDashboardData } from '../../lib/dashboardTypes'
 import { formatTransportStatus, transportStatusTone } from '../../lib/transportStatus'
 import { useDriverRideAction, useUpdateDriverAvailability } from '../../hooks/queries'
+import { getApiErrorMessage } from '../../lib/api'
 
 export function DriverDashboardPage() {
   const dashboardQuery = useDriverOperationalData()
@@ -23,6 +24,9 @@ export function DriverDashboardPage() {
 
   const updateAvailabilityMutation = useUpdateDriverAvailability()
   const rideActionMutation = useDriverRideAction()
+  
+  // Per-ride pending state and error tracking
+  const [rideActionState, setRideActionState] = useState<Record<number, { action: string; pending: boolean; error?: string }>>({})
 
   const activeTrip = data?.activeTrip
   const availableRequests = data?.availableRequests ?? []
@@ -32,14 +36,32 @@ export function DriverDashboardPage() {
   const unreadNotifications = data?.unread.notifications ?? 0
   const unreadMessages = data?.unread.messages ?? 0
   const recentActivity = getDashboardActivity(data?.dashboard ?? undefined)
-  const isRideActionPending = rideActionMutation.isPending
 
   const handleAvailabilityToggle = () => {
     updateAvailabilityMutation.mutate(availability !== 'online')
   }
 
   const handleRideAction = (rideId: number, action: 'accept' | 'decline' | 'arrived' | 'start' | 'complete') => {
-    rideActionMutation.mutate({ rideId, action })
+    setRideActionState((prev) => ({
+      ...prev,
+      [rideId]: { action, pending: true, error: undefined },
+    }))
+
+    rideActionMutation.mutate({ rideId, action }, {
+      onSuccess: () => {
+        setRideActionState((prev) => ({
+          ...prev,
+          [rideId]: { action, pending: false, error: undefined },
+        }))
+      },
+      onError: (error) => {
+        const errorMessage = getApiErrorMessage(error, 'Unable to update ride status. Please try again.')
+        setRideActionState((prev) => ({
+          ...prev,
+          [rideId]: { action, pending: false, error: errorMessage },
+        }))
+      },
+    })
   }
 
   return (
@@ -92,30 +114,42 @@ export function DriverDashboardPage() {
       <div className="grid gap-4 xl:grid-cols-2">
         <DashboardSection title="Available ride requests" description="Fresh resident requests that still need a driver.">
           <div className="space-y-3">
-            {availableRequests.slice(0, 6).map((ride) => (
-              <div key={ride.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="font-semibold text-lokals-charcoal">{ride.pickup_location} {'->'} {ride.dropoff_location}</p>
-                  <StatusBadge value={formatTransportStatus(ride.tracking_status ?? ride.status, ride.status_label)} tone={transportStatusTone(ride.status)} />
-                </div>
-                <p className="mt-1 text-sm text-lokals-muted">
-                  {ride.user?.name ?? 'Resident'} | {ride.ride_type ?? 'Standard'} | N$ {ride.fare_estimate ?? '0'}
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Link to={`/ride/${ride.id}`}>
-                    <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary">
-                      Details
+            {availableRequests.slice(0, 6).map((ride) => {
+              const rideState = rideActionState[ride.id]
+              const isPending = rideState?.pending ?? false
+              const error = rideState?.error
+
+              return (
+                <div key={ride.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-semibold text-lokals-charcoal">{ride.pickup_location} {'->'} {ride.dropoff_location}</p>
+                    <StatusBadge value={formatTransportStatus(ride.tracking_status ?? ride.status, ride.status_label)} tone={transportStatusTone(ride.status)} />
+                  </div>
+                  <p className="mt-1 text-sm text-lokals-muted">
+                    {ride.user?.name ?? 'Resident'} | {ride.ride_type ?? 'Standard'} | N$ {ride.fare_estimate ?? '0'}
+                  </p>
+                  {error ? (
+                    <div className="mt-2 flex items-start gap-2 rounded-lg bg-red-50 p-2 text-sm text-red-700">
+                      <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                      <p>{error}</p>
+                    </div>
+                  ) : null}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Link to={`/ride/${ride.id}`}>
+                      <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" disabled={isPending}>
+                        Details
+                      </Button>
+                    </Link>
+                    <Button className="min-h-9 px-3 py-2 text-xs" disabled={isPending} onClick={() => handleRideAction(ride.id, 'accept')}>
+                      {isPending && rideState.action === 'accept' ? 'Updating…' : 'Accept'}
                     </Button>
-                  </Link>
-                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={isRideActionPending} onClick={() => handleRideAction(ride.id, 'accept')}>
-                    {isRideActionPending ? 'Updating…' : 'Accept'}
-                  </Button>
-                  <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" disabled={isRideActionPending} onClick={() => handleRideAction(ride.id, 'decline')}>
-                    {isRideActionPending ? 'Updating…' : 'Decline'}
-                  </Button>
+                    <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" disabled={isPending} onClick={() => handleRideAction(ride.id, 'decline')}>
+                      {isPending && rideState.action === 'decline' ? 'Updating…' : 'Decline'}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
             {!availableRequests.length ? (
               <div className="rounded-[20px] border border-lokals-border bg-white p-6 text-center">
                 <p className="font-semibold text-lokals-charcoal">No ride requests right now</p>
@@ -161,6 +195,12 @@ export function DriverDashboardPage() {
                   {transportStatusTone(activeTrip.status)}
                 </span>
               </div>
+              {rideActionState[activeTrip.id]?.error ? (
+                <div className="mt-3 flex items-start gap-2 rounded-lg bg-red-50 p-2 text-sm text-red-700">
+                  <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                  <p>{rideActionState[activeTrip.id]?.error}</p>
+                </div>
+              ) : null}
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link to={`/ride/${activeTrip.id}`}>
                   <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary">
@@ -168,18 +208,18 @@ export function DriverDashboardPage() {
                   </Button>
                 </Link>
                 {activeTrip.status === 'accepted' ? (
-                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={isRideActionPending} onClick={() => handleRideAction(activeTrip.id, 'arrived')}>
-                    {isRideActionPending ? 'Updating…' : 'Mark arrived'}
+                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionState[activeTrip.id]?.pending} onClick={() => handleRideAction(activeTrip.id, 'arrived')}>
+                    {rideActionState[activeTrip.id]?.pending && rideActionState[activeTrip.id]?.action === 'arrived' ? 'Updating…' : 'Mark arrived'}
                   </Button>
                 ) : null}
                 {activeTrip.status === 'arrived' ? (
-                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={isRideActionPending} onClick={() => handleRideAction(activeTrip.id, 'start')}>
-                    {isRideActionPending ? 'Updating…' : 'Start trip'}
+                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionState[activeTrip.id]?.pending} onClick={() => handleRideAction(activeTrip.id, 'start')}>
+                    {rideActionState[activeTrip.id]?.pending && rideActionState[activeTrip.id]?.action === 'start' ? 'Updating…' : 'Start trip'}
                   </Button>
                 ) : null}
                 {activeTrip.status === 'in_progress' ? (
-                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={isRideActionPending} onClick={() => handleRideAction(activeTrip.id, 'complete')}>
-                    {isRideActionPending ? 'Updating…' : 'Complete trip'}
+                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionState[activeTrip.id]?.pending} onClick={() => handleRideAction(activeTrip.id, 'complete')}>
+                    {rideActionState[activeTrip.id]?.pending && rideActionState[activeTrip.id]?.action === 'complete' ? 'Updating…' : 'Complete trip'}
                   </Button>
                 ) : null}
               </div>

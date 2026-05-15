@@ -1826,6 +1826,16 @@ export const useDriverRideAction = () => {
         queryClient.invalidateQueries({ queryKey: ['dashboard-adapter', 'driver-dashboard'] }),
       ])
     },
+    onError: (error: AxiosError<{ message?: string; errors?: Record<string, string[]> }>) => {
+      const status = error.response?.status
+      if (status === 403) {
+        throw new Error('You do not have permission to accept this ride, or your driver profile is not approved.')
+      }
+      if (status === 422) {
+        throw new Error('This ride is no longer available. It may have been accepted by another driver.')
+      }
+      throw error
+    },
   })
 }
 
