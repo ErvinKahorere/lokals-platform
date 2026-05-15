@@ -31,8 +31,8 @@ export function RideDetailsPage() {
 
   const isResident = ride?.user?.id != null && ride.user.id === user?.id
   const isDriver = Boolean(user?.roles?.includes('driver'))
-  const canAcceptRide = Boolean(isDriver && ride && ['requested', 'searching'].includes(ride.status) && !ride.driver_id)
-  const isAssignedDriver = Boolean(isDriver && ride?.driver_id === user?.id)
+  const canAcceptRide = Boolean(isDriver && ride && ride.status != null && ['requested', 'searching'].includes(ride.status) && !ride.driver?.id)
+  const isAssignedDriver = Boolean(isDriver && ride?.driver?.id === user?.id)
   const canCancel = isResident && ride?.status != null && ['requested', 'searching', 'accepted', 'arrived'].includes(ride.status)
   const canRate = isResident && ride?.status === 'completed' && !ride?.rating
 

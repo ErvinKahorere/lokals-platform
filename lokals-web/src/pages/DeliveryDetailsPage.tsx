@@ -32,8 +32,8 @@ export function DeliveryDetailsPage() {
 
   const isResidentOrBusiness = delivery?.user?.id != null && delivery.user.id === user?.id
   const isCourier = Boolean(user?.roles?.includes('courier'))
-  const canAcceptDelivery = Boolean(isCourier && delivery && ['requested', 'searching'].includes(delivery.status) && !delivery.driver_id)
-  const isAssignedCourier = Boolean(isCourier && delivery?.driver_id === user?.id)
+  const canAcceptDelivery = Boolean(isCourier && delivery && delivery.status != null && ['requested', 'searching'].includes(delivery.status) && !delivery.driver?.id)
+  const isAssignedCourier = Boolean(isCourier && delivery?.driver?.id === user?.id)
   const canCancel = isResidentOrBusiness && delivery?.status != null && ['requested', 'searching', 'accepted', 'pickup_confirmed'].includes(delivery.status)
   const canRate = isResidentOrBusiness && delivery?.status === 'delivered' && !delivery?.rating
 
