@@ -397,6 +397,14 @@ export const useDelivery = (id?: string) =>
     enabled: Boolean(id),
     queryKey: ['delivery', id],
     queryFn: async () => unwrapOne<DeliveryItem>((await api.get(`/deliveries/${id}`)).data),
+    retry: (failureCount, error) => {
+      const status = (error as AxiosError)?.response?.status
+      if (status === 401 || status === 403) {
+        return false
+      }
+
+      return failureCount < 2
+    },
   })
 
 export const useRides = (enabled = true) =>

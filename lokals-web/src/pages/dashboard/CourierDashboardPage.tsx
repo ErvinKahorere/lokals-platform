@@ -32,6 +32,7 @@ export function CourierDashboardPage() {
   const unreadNotifications = data?.unread.notifications ?? 0
   const unreadMessages = data?.unread.messages ?? 0
   const recentActivity = getDashboardActivity(data?.dashboard ?? undefined)
+  const isDeliveryActionPending = deliveryActionMutation.isPending
 
   const handleAvailabilityToggle = () => {
     updateAvailabilityMutation.mutate(availability !== 'online')
@@ -93,7 +94,10 @@ export function CourierDashboardPage() {
           <div className="space-y-3">
             {availableDeliveries.slice(0, 6).map((delivery) => (
               <div key={delivery.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
-                <p className="font-semibold text-lokals-charcoal">{delivery.pickup_location ?? delivery.pickup_address} {'->'} {delivery.dropoff_location ?? delivery.dropoff_address}</p>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-semibold text-lokals-charcoal">{delivery.pickup_location ?? delivery.pickup_address} {'->'} {delivery.dropoff_location ?? delivery.dropoff_address}</p>
+                  <StatusBadge value={formatTransportStatus(delivery.tracking_status ?? delivery.status, delivery.status_label)} tone={transportStatusTone(delivery.status)} />
+                </div>
                 <p className="mt-1 text-sm text-lokals-muted">
                   {delivery.user?.name ?? 'Sender'} | {delivery.parcel_size ?? 'Parcel'} | N$ {delivery.estimated_price ?? '0'}
                 </p>
@@ -103,17 +107,20 @@ export function CourierDashboardPage() {
                       Details
                     </Button>
                   </Link>
-                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionMutation.isPending} onClick={() => handleDeliveryAction(delivery.id, 'accept')}>
-                    Accept
+                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={isDeliveryActionPending} onClick={() => handleDeliveryAction(delivery.id, 'accept')}>
+                    {isDeliveryActionPending ? 'Updating…' : 'Accept'}
                   </Button>
-                  <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" disabled={deliveryActionMutation.isPending} onClick={() => handleDeliveryAction(delivery.id, 'decline')}>
-                    Decline
+                  <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" disabled={isDeliveryActionPending} onClick={() => handleDeliveryAction(delivery.id, 'decline')}>
+                    {isDeliveryActionPending ? 'Updating…' : 'Decline'}
                   </Button>
                 </div>
               </div>
             ))}
             {!availableDeliveries.length ? (
-              <p className="text-sm text-lokals-muted">No courier requests are waiting right now. Stay available to catch the next parcel.</p>
+              <div className="rounded-[20px] border border-lokals-border bg-white p-6 text-center">
+                <p className="font-semibold text-lokals-charcoal">No deliveries available</p>
+                <p className="mt-2 text-sm text-lokals-muted">Stay available and the next parcel request will appear here.</p>
+              </div>
             ) : null}
           </div>
         </DashboardSection>
@@ -122,9 +129,12 @@ export function CourierDashboardPage() {
           <div className="space-y-3">
             {deliveryHistory.slice(0, 6).map((delivery) => (
               <div key={delivery.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
-                <p className="font-semibold text-lokals-charcoal">{delivery.pickup_location ?? delivery.pickup_address} {'->'} {delivery.dropoff_location ?? delivery.dropoff_address}</p>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-semibold text-lokals-charcoal">{delivery.pickup_location ?? delivery.pickup_address} {'->'} {delivery.dropoff_location ?? delivery.dropoff_address}</p>
+                  <StatusBadge value={formatTransportStatus(delivery.tracking_status ?? delivery.status, delivery.status_label)} tone={transportStatusTone(delivery.status)} />
+                </div>
                 <p className="mt-1 text-sm text-lokals-muted">
-                  {formatTransportStatus(delivery.tracking_status ?? delivery.status, delivery.status_label)} | {delivery.user?.name ?? 'Sender'}
+                  {delivery.user?.name ?? 'Sender'}
                 </p>
               </div>
             ))}
@@ -139,9 +149,12 @@ export function CourierDashboardPage() {
         <DashboardSection title="Active delivery" description="The parcel currently assigned to you, if any.">
           {activeDelivery ? (
             <div className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
-              <p className="font-semibold text-lokals-charcoal">{activeDelivery.pickup_location ?? activeDelivery.pickup_address} {'->'} {activeDelivery.dropoff_location ?? activeDelivery.dropoff_address}</p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-semibold text-lokals-charcoal">{activeDelivery.pickup_location ?? activeDelivery.pickup_address} {'->'} {activeDelivery.dropoff_location ?? activeDelivery.dropoff_address}</p>
+                <StatusBadge value={formatTransportStatus(activeDelivery.tracking_status ?? activeDelivery.status, activeDelivery.status_label)} tone={transportStatusTone(activeDelivery.status)} />
+              </div>
               <p className="mt-1 text-sm text-lokals-muted">
-                {formatTransportStatus(activeDelivery.tracking_status ?? activeDelivery.status, activeDelivery.status_label)} | {activeDelivery.user?.name ?? 'Sender'}
+                {activeDelivery.user?.name ?? 'Sender'}
               </p>
               <div className="mt-2">
                 <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-lokals-charcoal">
@@ -155,34 +168,43 @@ export function CourierDashboardPage() {
                   </Button>
                 </Link>
                 {activeDelivery.status === 'accepted' ? (
-                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionMutation.isPending} onClick={() => handleDeliveryAction(activeDelivery.id, 'pickup-confirmed')}>
-                    Pickup confirmed
+                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={isDeliveryActionPending} onClick={() => handleDeliveryAction(activeDelivery.id, 'pickup-confirmed')}>
+                    {isDeliveryActionPending ? 'Updating…' : 'Pickup confirmed'}
                   </Button>
                 ) : null}
                 {activeDelivery.status === 'pickup_confirmed' ? (
-                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionMutation.isPending} onClick={() => handleDeliveryAction(activeDelivery.id, 'in-transit')}>
-                    In transit
+                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={isDeliveryActionPending} onClick={() => handleDeliveryAction(activeDelivery.id, 'in-transit')}>
+                    {isDeliveryActionPending ? 'Updating…' : 'In transit'}
                   </Button>
                 ) : null}
                 {activeDelivery.status === 'in_transit' ? (
-                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionMutation.isPending} onClick={() => handleDeliveryAction(activeDelivery.id, 'delivered')}>
-                    Delivered
+                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={isDeliveryActionPending} onClick={() => handleDeliveryAction(activeDelivery.id, 'delivered')}>
+                    {isDeliveryActionPending ? 'Updating…' : 'Delivered'}
                   </Button>
                 ) : null}
               </div>
             </div>
           ) : (
-            <p className="text-sm text-lokals-muted">No active delivery yet. Once you accept a parcel request it will appear here.</p>
+            <div className="rounded-[20px] border border-lokals-border bg-white p-6 text-center">
+              <p className="font-semibold text-lokals-charcoal">No active delivery yet</p>
+              <p className="mt-2 text-sm text-lokals-muted">Accept a delivery request to start tracking your active parcel.</p>
+            </div>
           )}
         </DashboardSection>
 
         <DashboardSection title="Earnings summary" description="Latest delivery totals from your dashboard feed.">
-          <StatusBreakdownCard
-            items={Object.entries(earningsSummary).slice(0, 4).map(([label, value]) => ({
-              label: label.replaceAll('_', ' '),
-              value,
-            }))}
-          />
+          {Object.keys(earningsSummary).length ? (
+            <StatusBreakdownCard
+              items={Object.entries(earningsSummary).slice(0, 4).map(([label, value]) => ({
+                label: label.replaceAll('_', ' '),
+                value,
+              }))}
+            />
+          ) : (
+            <div className="rounded-[20px] border border-lokals-border bg-white p-6 text-center text-sm text-lokals-muted">
+              No earnings yet. Complete your first delivery to see dashboard totals.
+            </div>
+          )}
         </DashboardSection>
 
         <DashboardSection title="Ratings and comms" description="Trust and inbox signals in one compact panel.">
@@ -208,7 +230,13 @@ export function CourierDashboardPage() {
       </div>
 
       <DashboardSection title="Recent activity" description="Latest courier updates, assignments, and completions.">
-        <RecentActivityList items={recentActivity} />
+        {recentActivity.length ? (
+          <RecentActivityList items={recentActivity} />
+        ) : (
+          <div className="rounded-[20px] border border-lokals-border bg-white p-6 text-center text-sm text-lokals-muted">
+            No recent activity yet. Your courier dashboard will update as deliveries are assigned and completed.
+          </div>
+        )}
       </DashboardSection>
     </DashboardShell>
   )

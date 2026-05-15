@@ -1,6 +1,7 @@
 import { Package, ShieldCheck, Star } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import type { AxiosError } from 'axios'
 import { ContactActions } from '../components/experience/ContactActions'
 import { Button, EmptyState, Input, QueryState, SectionCard, StatusBadge, TextArea } from '../components/Ui'
 import { StatusStepper } from '../components/transport/StatusStepper'
@@ -20,6 +21,11 @@ export function DeliveryDetailsPage() {
   const [cancelReason, setCancelReason] = useState('')
   const [rating, setRating] = useState('5')
   const [ratingComment, setRatingComment] = useState('')
+
+  const deliveryErrorStatus = (deliveryQuery.error as AxiosError)?.response?.status
+  const isDeliveryUnauthorized = deliveryErrorStatus === 401
+  const isDeliveryForbidden = deliveryErrorStatus === 403
+  const isDeliveryAccessError = isDeliveryUnauthorized || isDeliveryForbidden
 
   const isResidentOrBusiness = delivery?.user?.id != null && delivery.user.id === user?.id
   const canCancel = isResidentOrBusiness && delivery?.status != null && ['requested', 'searching', 'accepted', 'pickup_confirmed'].includes(delivery.status)
@@ -48,7 +54,25 @@ export function DeliveryDetailsPage() {
         </div>
       </SectionCard>
 
-      <QueryState isLoading={deliveryQuery.isLoading} error={deliveryQuery.error} empty={!delivery}>
+      {isDeliveryAccessError ? (
+        <SectionCard className="bg-white">
+          <EmptyState
+            title={isDeliveryUnauthorized ? 'Please login to view this delivery.' : 'You don’t have access to this delivery.'}
+            body={isDeliveryUnauthorized ? 'Sign in to continue and access your delivery details.' : 'This delivery is private or reserved for another account.'}
+            action={
+              isDeliveryUnauthorized ? (
+                <div className="grid gap-3 sm:grid-cols-[auto_auto]">
+                  <Link to="/login"><Button>Login</Button></Link>
+                  <Link to="/delivery"><Button variant="secondary">Back to delivery</Button></Link>
+                </div>
+              ) : (
+                <Link to="/delivery"><Button>Back to delivery</Button></Link>
+              )
+            }
+          />
+        </SectionCard>
+      ) : (
+        <QueryState isLoading={deliveryQuery.isLoading} error={deliveryQuery.error} empty={!delivery}>
         {!delivery ? (
           <EmptyState title="Delivery not found" body="We could not find this delivery request." action={<Link to="/delivery"><Button>Back</Button></Link>} />
         ) : (
@@ -151,7 +175,10 @@ export function DeliveryDetailsPage() {
                   <p className="font-semibold text-lokals-charcoal">Cancel this delivery</p>
                   <div className="mt-3 flex flex-col gap-3 sm:flex-row">
                     <Input value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} placeholder="Optional reason" />
-                    <Button variant="danger" disabled={cancelDelivery.isPending} onClick={() => delivery?.id ? cancelDelivery.mutate({ deliveryId: delivery.id, reason: cancelReason || undefined }) : undefined}>
+                    <Button variant="danger" disabled={cancelDelivery.isPending} onClick={() => {
+                      if (!delivery?.id) return
+                      cancelDelivery.mutate({ deliveryId: delivery.id, reason: cancelReason || undefined })
+                    }}>
                       {cancelDelivery.isPending ? 'Cancelling...' : 'Cancel delivery'}
                     </Button>
                   </div>
@@ -166,7 +193,10 @@ export function DeliveryDetailsPage() {
                     <TextArea value={ratingComment} onChange={(event) => setRatingComment(event.target.value)} rows={3} placeholder="Share a short note about the delivery." />
                   </div>
                   <div className="mt-3">
-                    <Button disabled={rateDelivery.isPending} onClick={() => delivery?.id ? rateDelivery.mutate({ deliveryId: delivery.id, rating: Number(rating), comment: ratingComment || undefined }) : undefined}>
+                    <Button disabled={rateDelivery.isPending} onClick={() => {
+                      if (!delivery?.id) return
+                      rateDelivery.mutate({ deliveryId: delivery.id, rating: Number(rating), comment: ratingComment || undefined })
+                    }}>
                       {rateDelivery.isPending ? 'Saving rating...' : <><Star className="mr-2 h-4 w-4" />Submit rating</>}
                     </Button>
                   </div>
@@ -178,6 +208,7 @@ export function DeliveryDetailsPage() {
           </div>
         )}
       </QueryState>
+      )}
     </div>
   )
 }
