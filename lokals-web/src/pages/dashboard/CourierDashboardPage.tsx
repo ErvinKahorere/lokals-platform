@@ -1,5 +1,5 @@
-import { Bell, History, MessageSquare, PackageSearch, Power, Star, Wallet } from 'lucide-react'
-import { useMemo } from 'react'
+import { Bell, History, MessageSquare, PackageSearch, Power, Star, Wallet, AlertCircle } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button, StatusBadge } from '../../components/Ui'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
@@ -11,6 +11,7 @@ import { useCourierOperationalData } from '../../lib/dashboardDataProvider'
 import { getDashboardActivity, type CourierDashboardData } from '../../lib/dashboardTypes'
 import { formatTransportStatus, transportStatusTone } from '../../lib/transportStatus'
 import { useCourierDeliveryAction, useUpdateCourierAvailability } from '../../hooks/queries'
+import { getApiErrorMessage } from '../../lib/api'
 
 export function CourierDashboardPage() {
   const dashboardQuery = useCourierOperationalData()
@@ -23,6 +24,9 @@ export function CourierDashboardPage() {
 
   const updateAvailabilityMutation = useUpdateCourierAvailability()
   const deliveryActionMutation = useCourierDeliveryAction()
+
+  // Per-delivery pending state and error tracking
+  const [deliveryActionState, setDeliveryActionState] = useState<Record<number, { action: string; pending: boolean; error?: string }>>({})
 
   const activeDelivery = data?.activeDelivery
   const availableDeliveries = data?.availableDeliveries ?? []
@@ -39,7 +43,26 @@ export function CourierDashboardPage() {
   }
 
   const handleDeliveryAction = (deliveryId: number, action: 'accept' | 'decline' | 'pickup-confirmed' | 'in-transit' | 'delivered') => {
-    deliveryActionMutation.mutate({ deliveryId, action })
+    setDeliveryActionState((prev) => ({
+      ...prev,
+      [deliveryId]: { action, pending: true, error: undefined },
+    }))
+
+    deliveryActionMutation.mutate({ deliveryId, action }, {
+      onSuccess: () => {
+        setDeliveryActionState((prev) => ({
+          ...prev,
+          [deliveryId]: { action, pending: false, error: undefined },
+        }))
+      },
+      onError: (error) => {
+        const errorMessage = getApiErrorMessage(error, 'Unable to update delivery status. Please try again.')
+        setDeliveryActionState((prev) => ({
+          ...prev,
+          [deliveryId]: { action, pending: false, error: errorMessage },
+        }))
+      },
+    })
   }
 
   return (
@@ -92,30 +115,42 @@ export function CourierDashboardPage() {
       <div className="grid gap-4 xl:grid-cols-2">
         <DashboardSection title="Available deliveries" description="Nearby parcel requests ready for courier acceptance.">
           <div className="space-y-3">
-            {availableDeliveries.slice(0, 6).map((delivery) => (
-              <div key={delivery.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="font-semibold text-lokals-charcoal">{delivery.pickup_location ?? delivery.pickup_address} {'->'} {delivery.dropoff_location ?? delivery.dropoff_address}</p>
-                  <StatusBadge value={formatTransportStatus(delivery.tracking_status ?? delivery.status, delivery.status_label)} tone={transportStatusTone(delivery.status)} />
-                </div>
-                <p className="mt-1 text-sm text-lokals-muted">
-                  {delivery.user?.name ?? 'Sender'} | {delivery.parcel_size ?? 'Parcel'} | N$ {delivery.estimated_price ?? '0'}
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Link to={`/delivery/${delivery.id}`}>
-                    <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary">
-                      Details
+            {availableDeliveries.slice(0, 6).map((delivery) => {
+              const deliveryState = deliveryActionState[delivery.id]
+              const isPending = deliveryState?.pending ?? false
+              const error = deliveryState?.error
+
+              return (
+                <div key={delivery.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-semibold text-lokals-charcoal">{delivery.pickup_location ?? delivery.pickup_address} {'->'} {delivery.dropoff_location ?? delivery.dropoff_address}</p>
+                    <StatusBadge value={formatTransportStatus(delivery.tracking_status ?? delivery.status, delivery.status_label)} tone={transportStatusTone(delivery.status)} />
+                  </div>
+                  <p className="mt-1 text-sm text-lokals-muted">
+                    {delivery.user?.name ?? 'Sender'} | {delivery.parcel_size ?? 'Parcel'} | N$ {delivery.estimated_price ?? '0'}
+                  </p>
+                  {error ? (
+                    <div className="mt-2 flex items-start gap-2 rounded-lg bg-red-50 p-2 text-sm text-red-700">
+                      <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                      <p>{error}</p>
+                    </div>
+                  ) : null}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Link to={`/delivery/${delivery.id}`}>
+                      <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" disabled={isPending}>
+                        Details
+                      </Button>
+                    </Link>
+                    <Button className="min-h-9 px-3 py-2 text-xs" disabled={isPending} onClick={() => handleDeliveryAction(delivery.id, 'accept')}>
+                      {isPending && deliveryState?.action === 'accept' ? 'Updating…' : 'Accept'}
                     </Button>
-                  </Link>
-                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={isDeliveryActionPending} onClick={() => handleDeliveryAction(delivery.id, 'accept')}>
-                    {isDeliveryActionPending ? 'Updating…' : 'Accept'}
-                  </Button>
-                  <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" disabled={isDeliveryActionPending} onClick={() => handleDeliveryAction(delivery.id, 'decline')}>
-                    {isDeliveryActionPending ? 'Updating…' : 'Decline'}
-                  </Button>
+                    <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" disabled={isPending} onClick={() => handleDeliveryAction(delivery.id, 'decline')}>
+                      {isPending && deliveryState?.action === 'decline' ? 'Updating…' : 'Decline'}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
             {!availableDeliveries.length ? (
               <div className="rounded-[20px] border border-lokals-border bg-white p-6 text-center">
                 <p className="font-semibold text-lokals-charcoal">No deliveries available</p>
@@ -161,6 +196,12 @@ export function CourierDashboardPage() {
                   {transportStatusTone(activeDelivery.status)}
                 </span>
               </div>
+              {deliveryActionState[activeDelivery.id]?.error ? (
+                <div className="mt-3 flex items-start gap-2 rounded-lg bg-red-50 p-2 text-sm text-red-700">
+                  <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                  <p>{deliveryActionState[activeDelivery.id]?.error}</p>
+                </div>
+              ) : null}
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link to={`/delivery/${activeDelivery.id}`}>
                   <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary">
@@ -168,18 +209,18 @@ export function CourierDashboardPage() {
                   </Button>
                 </Link>
                 {activeDelivery.status === 'accepted' ? (
-                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={isDeliveryActionPending} onClick={() => handleDeliveryAction(activeDelivery.id, 'pickup-confirmed')}>
-                    {isDeliveryActionPending ? 'Updating…' : 'Pickup confirmed'}
+                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionState[activeDelivery.id]?.pending} onClick={() => handleDeliveryAction(activeDelivery.id, 'pickup-confirmed')}>
+                    {deliveryActionState[activeDelivery.id]?.pending && deliveryActionState[activeDelivery.id]?.action === 'pickup-confirmed' ? 'Updating…' : 'Pickup confirmed'}
                   </Button>
                 ) : null}
                 {activeDelivery.status === 'pickup_confirmed' ? (
-                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={isDeliveryActionPending} onClick={() => handleDeliveryAction(activeDelivery.id, 'in-transit')}>
-                    {isDeliveryActionPending ? 'Updating…' : 'In transit'}
+                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionState[activeDelivery.id]?.pending} onClick={() => handleDeliveryAction(activeDelivery.id, 'in-transit')}>
+                    {deliveryActionState[activeDelivery.id]?.pending && deliveryActionState[activeDelivery.id]?.action === 'in-transit' ? 'Updating…' : 'In transit'}
                   </Button>
                 ) : null}
                 {activeDelivery.status === 'in_transit' ? (
-                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={isDeliveryActionPending} onClick={() => handleDeliveryAction(activeDelivery.id, 'delivered')}>
-                    {isDeliveryActionPending ? 'Updating…' : 'Delivered'}
+                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionState[activeDelivery.id]?.pending} onClick={() => handleDeliveryAction(activeDelivery.id, 'delivered')}>
+                    {deliveryActionState[activeDelivery.id]?.pending && deliveryActionState[activeDelivery.id]?.action === 'delivered' ? 'Updating…' : 'Delivered'}
                   </Button>
                 ) : null}
               </div>
