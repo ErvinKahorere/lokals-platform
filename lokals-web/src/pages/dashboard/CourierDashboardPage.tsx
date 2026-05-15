@@ -36,8 +36,6 @@ export function CourierDashboardPage() {
   const unreadNotifications = data?.unread.notifications ?? 0
   const unreadMessages = data?.unread.messages ?? 0
   const recentActivity = getDashboardActivity(data?.dashboard ?? undefined)
-  const isDeliveryActionPending = deliveryActionMutation.isPending
-
   const handleAvailabilityToggle = () => {
     updateAvailabilityMutation.mutate(availability !== 'online')
   }
