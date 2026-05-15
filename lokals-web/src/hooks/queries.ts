@@ -407,12 +407,15 @@ export const useDelivery = (id?: string) =>
     },
   })
 
-export const useRides = (enabled = true) =>
-  useQuery({
-    enabled: Boolean(enabled && useAuthStore((state) => state.token)),
+export const useRides = (enabled = true) => {
+  const authToken = useAuthStore((state) => state.token)
+
+  return useQuery({
+    enabled: Boolean(enabled && authToken),
     queryKey: ['rides'],
     queryFn: async () => toPaginated<RideItem>((await api.get('/rides')).data),
   })
+}
 
 export const useRide = (id?: string) =>
   useQuery({
