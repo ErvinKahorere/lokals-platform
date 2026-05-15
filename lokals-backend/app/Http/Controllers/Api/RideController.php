@@ -11,6 +11,7 @@ use App\Notifications\SystemNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Notification;
 
 class RideController extends Controller
 {
@@ -134,9 +135,31 @@ class RideController extends Controller
             ],
         ));
 
+        $driverAudienceIds = $this->driverAudienceIdsForTown($request->user()->default_town);
+        if (!empty($driverAudienceIds)) {
+            Notification::send(
+                User::query()->whereIn('id', $driverAudienceIds)->get(),
+                new SystemNotification(
+                    'New ride request nearby',
+                    'A resident ride request is waiting for a driver in your town.',
+                    [
+                        'type' => 'ride_request',
+                        'target' => [
+                            'type' => 'ride',
+                            'id' => $ride->id,
+                            'href' => '/ride/'.$ride->id,
+                            'title' => 'Ride '.$this->referenceCode($ride->id, 'RIDE'),
+                        ],
+                        'town' => $request->user()->default_town,
+                        'status' => $ride->status,
+                    ],
+                ),
+            );
+        }
+
         broadcast(new RideRequestUpdated(
             $ride->fresh()->load($this->rideRelations()),
-            $this->driverAudienceIdsForTown($request->user()->default_town),
+            $driverAudienceIds,
             $request->user()->default_town
         ));
 
@@ -403,6 +426,7 @@ class RideController extends Controller
     {
         return User::query()
             ->whereHas('roles', fn ($query) => $query->where('name', 'driver'))
+            ->whereHas('driverProfile', fn ($query) => $query->where('is_online', true)->where('is_verified', true))
             ->when($town, fn ($query) => $query->where('default_town', $town))
             ->pluck('id')
             ->all();
