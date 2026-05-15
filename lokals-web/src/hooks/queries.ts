@@ -1822,9 +1822,10 @@ export const useDriverRideAction = () => {
         : { method: 'patch' as const, url: `/driver/rides/${rideId}/${action}` }
       return (await api.request({ method: config.method, url: config.url })).data
     },
-    onSuccess: async () => {
+    onSuccess: async (_, variables) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['rides'] }),
+        queryClient.invalidateQueries({ queryKey: ['ride', String(variables.rideId)] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard-driver'] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard-adapter', 'driver-dashboard'] }),
       ])
@@ -1906,9 +1907,10 @@ export const useCourierDeliveryAction = () => {
         : { method: 'patch' as const, url: `/courier/deliveries/${deliveryId}/${action}` }
       return (await api.request({ method: config.method, url: config.url })).data
     },
-    onSuccess: async () => {
+    onSuccess: async (_, variables) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['deliveries'] }),
+        queryClient.invalidateQueries({ queryKey: ['delivery', String(variables.deliveryId)] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard-courier'] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard-adapter', 'courier-dashboard'] }),
       ])

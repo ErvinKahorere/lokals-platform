@@ -1,11 +1,12 @@
-import { CarFront, Clock3, Star } from 'lucide-react'
+import { AlertCircle, CarFront, Clock3, Star } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ContactActions } from '../components/experience/ContactActions'
 import { Button, EmptyState, Input, QueryState, SectionCard, StatusBadge, TextArea } from '../components/Ui'
 import { StatusStepper } from '../components/transport/StatusStepper'
-import { useCancelRide, useRateRide, useRide } from '../hooks/queries'
+import { useCancelRide, useDriverRideAction, useRateRide, useRide } from '../hooks/queries'
 import { formatTransportStatus, formatTransportTimestamp, normalizeTransportTimeline, transportStatusTone } from '../lib/transportStatus'
+import { getApiErrorMessage } from '../lib/api'
 import { useAuthStore } from '../store/auth'
 
 const rideSteps = ['requested', 'accepted', 'arrived', 'in_progress', 'completed', 'cancelled']
@@ -17,6 +18,8 @@ export function RideDetailsPage() {
   const ride = rideQuery.data
   const cancelRide = useCancelRide()
   const rateRide = useRateRide()
+  const rideActionMutation = useDriverRideAction()
+  const [rideActionState, setRideActionState] = useState<Record<number, { action: string; pending: boolean; error?: string }>>({})
   const [cancelReason, setCancelReason] = useState('')
   const [rating, setRating] = useState('5')
   const [ratingComment, setRatingComment] = useState('')
@@ -27,6 +30,9 @@ export function RideDetailsPage() {
   const isRideAccessError = isRideUnauthorized || isRideForbidden
 
   const isResident = ride?.user?.id != null && ride.user.id === user?.id
+  const isDriver = Boolean(user?.roles?.includes('driver'))
+  const canAcceptRide = Boolean(isDriver && ride && ['requested', 'searching'].includes(ride.status) && !ride.driver_id)
+  const isAssignedDriver = Boolean(isDriver && ride?.driver_id === user?.id)
   const canCancel = isResident && ride?.status != null && ['requested', 'searching', 'accepted', 'arrived'].includes(ride.status)
   const canRate = isResident && ride?.status === 'completed' && !ride?.rating
 
@@ -40,6 +46,31 @@ export function RideDetailsPage() {
     ]),
     [ride],
   )
+
+  const handleRideAction = (action: 'accept' | 'decline' | 'arrived' | 'start' | 'complete') => {
+    if (!ride?.id) return
+
+    setRideActionState((prev) => ({
+      ...prev,
+      [ride.id]: { action, pending: true, error: undefined },
+    }))
+
+    rideActionMutation.mutate({ rideId: ride.id, action }, {
+      onSuccess: () => {
+        setRideActionState((prev) => ({
+          ...prev,
+          [ride.id]: { action, pending: false, error: undefined },
+        }))
+      },
+      onError: (error) => {
+        const errorMessage = getApiErrorMessage(error, 'Unable to update ride status. Please try again.')
+        setRideActionState((prev) => ({
+          ...prev,
+          [ride.id]: { action, pending: false, error: errorMessage },
+        }))
+      },
+    })
+  }
 
   return (
     <div className="space-y-5">
@@ -131,6 +162,75 @@ export function RideDetailsPage() {
                   />
                 </div>
               </div>
+
+              {(canAcceptRide || isAssignedDriver) ? (
+                <div className="mt-4 rounded-2xl border border-lokals-border p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-lokals-charcoal">{canAcceptRide ? 'Driver response' : 'Driver workflow'}</p>
+                      <p className="mt-2 text-sm text-lokals-muted">
+                        {canAcceptRide
+                          ? 'Accept this ride request or decline it if you are unavailable.'
+                          : 'Update the ride status as you progress through pickup and drop-off.'}
+                      </p>
+                    </div>
+                  </div>
+                  {rideActionState[ride.id]?.error ? (
+                    <div className="mt-4 flex items-start gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                      <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                      <p>{rideActionState[ride.id]?.error}</p>
+                    </div>
+                  ) : null}
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {canAcceptRide ? (
+                      <>
+                        <Button
+                          className="min-h-9 px-3 py-2 text-xs"
+                          disabled={rideActionState[ride.id]?.pending}
+                          onClick={() => handleRideAction('accept')}
+                        >
+                          {rideActionState[ride.id]?.pending && rideActionState[ride.id]?.action === 'accept' ? 'Accepting…' : 'Accept ride'}
+                        </Button>
+                        <Button
+                          className="min-h-9 px-3 py-2 text-xs"
+                          variant="secondary"
+                          disabled={rideActionState[ride.id]?.pending}
+                          onClick={() => handleRideAction('decline')}
+                        >
+                          {rideActionState[ride.id]?.pending && rideActionState[ride.id]?.action === 'decline' ? 'Declining…' : 'Decline'}
+                        </Button>
+                      </>
+                    ) : null}
+                    {isAssignedDriver && ride.status === 'accepted' ? (
+                      <Button
+                        className="min-h-9 px-3 py-2 text-xs"
+                        disabled={rideActionState[ride.id]?.pending}
+                        onClick={() => handleRideAction('arrived')}
+                      >
+                        {rideActionState[ride.id]?.pending && rideActionState[ride.id]?.action === 'arrived' ? 'Updating…' : 'Mark arrived'}
+                      </Button>
+                    ) : null}
+                    {isAssignedDriver && ride.status === 'arrived' ? (
+                      <Button
+                        className="min-h-9 px-3 py-2 text-xs"
+                        disabled={rideActionState[ride.id]?.pending}
+                        onClick={() => handleRideAction('start')}
+                      >
+                        {rideActionState[ride.id]?.pending && rideActionState[ride.id]?.action === 'start' ? 'Updating…' : 'Start trip'}
+                      </Button>
+                    ) : null}
+                    {isAssignedDriver && ride.status === 'in_progress' ? (
+                      <Button
+                        className="min-h-9 px-3 py-2 text-xs"
+                        disabled={rideActionState[ride.id]?.pending}
+                        onClick={() => handleRideAction('complete')}
+                      >
+                        {rideActionState[ride.id]?.pending && rideActionState[ride.id]?.action === 'complete' ? 'Updating…' : 'Complete trip'}
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
 
               {ride.status === 'accepted' && ride.estimated_eta_minutes != null ? (
                 <div className="mt-4 rounded-2xl border border-dashed border-violet-200 bg-violet-50 p-4">

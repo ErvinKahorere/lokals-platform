@@ -30,6 +30,8 @@ export function DriverDashboardPage() {
 
   const activeTrip = data?.activeTrip
   const availableRequests = data?.availableRequests ?? []
+  const priorityRide = availableRequests[0]
+  const remainingRequests = availableRequests.slice(1)
   const tripHistory = data?.tripHistory ?? []
   const earningsSummary = data?.earningsSummary ?? {}
   const ratingsSummary = data?.ratingsSummary ?? { average: '0', total: '0' }
@@ -114,7 +116,35 @@ export function DriverDashboardPage() {
       <div className="grid gap-4 xl:grid-cols-2">
         <DashboardSection title="Available ride requests" description="Fresh resident requests that still need a driver.">
           <div className="space-y-3">
-            {availableRequests.slice(0, 6).map((ride) => {
+            {availability !== 'online' && availableRequests.length > 0 ? (
+              <div className="rounded-[20px] border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                You are offline and will not receive new ride alerts until you go online.
+              </div>
+            ) : null}
+            {priorityRide ? (
+              <div className="rounded-[22px] border border-lokals-purple/20 bg-violet-50 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-lokals-purple">Priority request</p>
+                    <p className="mt-1 text-base font-semibold text-lokals-charcoal">{priorityRide.pickup_location} → {priorityRide.dropoff_location}</p>
+                    <p className="mt-2 text-sm text-lokals-muted">{priorityRide.user?.name ?? 'Resident'} • {priorityRide.ride_type ?? 'Standard'} • N$ {priorityRide.fare_estimate ?? '0'}</p>
+                  </div>
+                  <StatusBadge value={formatTransportStatus(priorityRide.tracking_status ?? priorityRide.status, priorityRide.status_label)} tone={transportStatusTone(priorityRide.status)} />
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Link to={`/ride/${priorityRide.id}`}>
+                    <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary">Details</Button>
+                  </Link>
+                  <Button className="min-h-9 px-3 py-2 text-xs" onClick={() => handleRideAction(priorityRide.id, 'accept')} disabled={rideActionState[priorityRide.id]?.pending}>
+                    {rideActionState[priorityRide.id]?.pending && rideActionState[priorityRide.id]?.action === 'accept' ? 'Accepting…' : 'Accept'}
+                  </Button>
+                  <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" onClick={() => handleRideAction(priorityRide.id, 'decline')} disabled={rideActionState[priorityRide.id]?.pending}>
+                    {rideActionState[priorityRide.id]?.pending && rideActionState[priorityRide.id]?.action === 'decline' ? 'Declining…' : 'Decline'}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+            {remainingRequests.slice(0, 5).map((ride) => {
               const rideState = rideActionState[ride.id]
               const isPending = rideState?.pending ?? false
               const error = rideState?.error

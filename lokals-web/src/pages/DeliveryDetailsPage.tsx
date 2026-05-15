@@ -1,12 +1,13 @@
-import { Package, ShieldCheck, Star } from 'lucide-react'
+import { AlertCircle, Package, ShieldCheck, Star } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import type { AxiosError } from 'axios'
 import { ContactActions } from '../components/experience/ContactActions'
 import { Button, EmptyState, Input, QueryState, SectionCard, StatusBadge, TextArea } from '../components/Ui'
 import { StatusStepper } from '../components/transport/StatusStepper'
-import { useCancelDelivery, useDelivery, useRateDelivery } from '../hooks/queries'
+import { useCancelDelivery, useCourierDeliveryAction, useDelivery, useRateDelivery } from '../hooks/queries'
 import { formatTransportStatus, formatTransportTimestamp, normalizeTransportTimeline, transportStatusTone } from '../lib/transportStatus'
+import { getApiErrorMessage } from '../lib/api'
 import { useAuthStore } from '../store/auth'
 
 const deliverySteps = ['requested', 'accepted', 'pickup_confirmed', 'in_transit', 'delivered', 'cancelled']
@@ -18,6 +19,8 @@ export function DeliveryDetailsPage() {
   const delivery = deliveryQuery.data
   const cancelDelivery = useCancelDelivery()
   const rateDelivery = useRateDelivery()
+  const deliveryActionMutation = useCourierDeliveryAction()
+  const [deliveryActionState, setDeliveryActionState] = useState<Record<number, { action: string; pending: boolean; error?: string }>>({})
   const [cancelReason, setCancelReason] = useState('')
   const [rating, setRating] = useState('5')
   const [ratingComment, setRatingComment] = useState('')
@@ -28,6 +31,9 @@ export function DeliveryDetailsPage() {
   const isDeliveryAccessError = isDeliveryUnauthorized || isDeliveryForbidden
 
   const isResidentOrBusiness = delivery?.user?.id != null && delivery.user.id === user?.id
+  const isCourier = Boolean(user?.roles?.includes('courier'))
+  const canAcceptDelivery = Boolean(isCourier && delivery && ['requested', 'searching'].includes(delivery.status) && !delivery.driver_id)
+  const isAssignedCourier = Boolean(isCourier && delivery?.driver_id === user?.id)
   const canCancel = isResidentOrBusiness && delivery?.status != null && ['requested', 'searching', 'accepted', 'pickup_confirmed'].includes(delivery.status)
   const canRate = isResidentOrBusiness && delivery?.status === 'delivered' && !delivery?.rating
 
@@ -41,6 +47,31 @@ export function DeliveryDetailsPage() {
     ]),
     [delivery],
   )
+
+  const handleDeliveryAction = (action: 'accept' | 'decline' | 'pickup-confirmed' | 'in-transit' | 'delivered') => {
+    if (!delivery?.id) return
+
+    setDeliveryActionState((prev) => ({
+      ...prev,
+      [delivery.id]: { action, pending: true, error: undefined },
+    }))
+
+    deliveryActionMutation.mutate({ deliveryId: delivery.id, action }, {
+      onSuccess: () => {
+        setDeliveryActionState((prev) => ({
+          ...prev,
+          [delivery.id]: { action, pending: false, error: undefined },
+        }))
+      },
+      onError: (error) => {
+        const errorMessage = getApiErrorMessage(error, 'Unable to update delivery status. Please try again.')
+        setDeliveryActionState((prev) => ({
+          ...prev,
+          [delivery.id]: { action, pending: false, error: errorMessage },
+        }))
+      },
+    })
+  }
 
   return (
     <div className="space-y-5">
@@ -147,6 +178,75 @@ export function DeliveryDetailsPage() {
                   />
                 </div>
               </div>
+
+              {(canAcceptDelivery || isAssignedCourier) ? (
+                <div className="mt-4 rounded-2xl border border-lokals-border p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-lokals-charcoal">{canAcceptDelivery ? 'Courier response' : 'Courier workflow'}</p>
+                      <p className="mt-2 text-sm text-lokals-muted">
+                        {canAcceptDelivery
+                          ? 'Accept or decline this delivery request if you can collect and deliver the parcel.'
+                          : 'Update the parcel status as pickup and delivery progress.'}
+                      </p>
+                    </div>
+                  </div>
+                  {deliveryActionState[delivery.id]?.error ? (
+                    <div className="mt-4 flex items-start gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                      <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                      <p>{deliveryActionState[delivery.id]?.error}</p>
+                    </div>
+                  ) : null}
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {canAcceptDelivery ? (
+                      <>
+                        <Button
+                          className="min-h-9 px-3 py-2 text-xs"
+                          disabled={deliveryActionState[delivery.id]?.pending}
+                          onClick={() => handleDeliveryAction('accept')}
+                        >
+                          {deliveryActionState[delivery.id]?.pending && deliveryActionState[delivery.id]?.action === 'accept' ? 'Accepting…' : 'Accept delivery'}
+                        </Button>
+                        <Button
+                          className="min-h-9 px-3 py-2 text-xs"
+                          variant="secondary"
+                          disabled={deliveryActionState[delivery.id]?.pending}
+                          onClick={() => handleDeliveryAction('decline')}
+                        >
+                          {deliveryActionState[delivery.id]?.pending && deliveryActionState[delivery.id]?.action === 'decline' ? 'Declining…' : 'Decline'}
+                        </Button>
+                      </>
+                    ) : null}
+                    {isAssignedCourier && delivery.status === 'accepted' ? (
+                      <Button
+                        className="min-h-9 px-3 py-2 text-xs"
+                        disabled={deliveryActionState[delivery.id]?.pending}
+                        onClick={() => handleDeliveryAction('pickup-confirmed')}
+                      >
+                        {deliveryActionState[delivery.id]?.pending && deliveryActionState[delivery.id]?.action === 'pickup-confirmed' ? 'Updating…' : 'Confirm pickup'}
+                      </Button>
+                    ) : null}
+                    {isAssignedCourier && delivery.status === 'pickup_confirmed' ? (
+                      <Button
+                        className="min-h-9 px-3 py-2 text-xs"
+                        disabled={deliveryActionState[delivery.id]?.pending}
+                        onClick={() => handleDeliveryAction('in-transit')}
+                      >
+                        {deliveryActionState[delivery.id]?.pending && deliveryActionState[delivery.id]?.action === 'in-transit' ? 'Updating…' : 'Mark in transit'}
+                      </Button>
+                    ) : null}
+                    {isAssignedCourier && delivery.status === 'in_transit' ? (
+                      <Button
+                        className="min-h-9 px-3 py-2 text-xs"
+                        disabled={deliveryActionState[delivery.id]?.pending}
+                        onClick={() => handleDeliveryAction('delivered')}
+                      >
+                        {deliveryActionState[delivery.id]?.pending && deliveryActionState[delivery.id]?.action === 'delivered' ? 'Updating…' : 'Mark delivered'}
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
 
               <div className="mt-4 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50 p-4">
                 <div className="flex items-center gap-2 text-lokals-charcoal">

@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Notifications\SystemNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
 class DeliveryController extends Controller
@@ -144,9 +145,32 @@ class DeliveryController extends Controller
                 ],
             ],
         ));
+
+        $courierAudienceIds = $this->courierAudienceIdsForTown($request->user()->default_town);
+        if (!empty($courierAudienceIds)) {
+            Notification::send(
+                User::query()->whereIn('id', $courierAudienceIds)->get(),
+                new SystemNotification(
+                    'New delivery request nearby',
+                    'A courier request is waiting for pickup in your town.',
+                    [
+                        'type' => 'delivery_request',
+                        'target' => [
+                            'type' => 'delivery',
+                            'id' => $delivery->id,
+                            'href' => '/delivery/'.$delivery->id,
+                            'title' => 'Delivery '.$this->referenceCode($delivery->id, 'DEL'),
+                        ],
+                        'town' => $request->user()->default_town,
+                        'status' => $delivery->status,
+                    ],
+                ),
+            );
+        }
+
         broadcast(new DeliveryRequestUpdated(
             $delivery->fresh()->load($this->deliveryRelations()),
-            $this->courierAudienceIdsForTown($request->user()->default_town),
+            $courierAudienceIds,
             $request->user()->default_town
         ));
 
@@ -406,6 +430,7 @@ class DeliveryController extends Controller
     {
         return User::query()
             ->whereHas('roles', fn ($query) => $query->where('name', 'courier'))
+            ->whereHas('courierProfile', fn ($query) => $query->where('is_online', true)->where('is_verified', true))
             ->when($town, fn ($query) => $query->where('default_town', $town))
             ->pluck('id')
             ->all();

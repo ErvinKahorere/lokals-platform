@@ -30,6 +30,8 @@ export function CourierDashboardPage() {
 
   const activeDelivery = data?.activeDelivery
   const availableDeliveries = data?.availableDeliveries ?? []
+  const priorityDelivery = availableDeliveries[0]
+  const remainingDeliveries = availableDeliveries.slice(1)
   const deliveryHistory = data?.deliveryHistory ?? []
   const earningsSummary = data?.earningsSummary ?? {}
   const ratingsSummary = data?.ratingsSummary ?? { average: '0', total: '0' }
@@ -113,7 +115,35 @@ export function CourierDashboardPage() {
       <div className="grid gap-4 xl:grid-cols-2">
         <DashboardSection title="Available deliveries" description="Nearby parcel requests ready for courier acceptance.">
           <div className="space-y-3">
-            {availableDeliveries.slice(0, 6).map((delivery) => {
+            {availability !== 'online' && availableDeliveries.length > 0 ? (
+              <div className="rounded-[20px] border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                You are offline and will not receive new delivery alerts until you go online.
+              </div>
+            ) : null}
+            {priorityDelivery ? (
+              <div className="rounded-[22px] border border-lokals-purple/20 bg-violet-50 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-lokals-purple">Priority request</p>
+                    <p className="mt-1 text-base font-semibold text-lokals-charcoal">{priorityDelivery.pickup_location ?? priorityDelivery.pickup_address} → {priorityDelivery.dropoff_location ?? priorityDelivery.dropoff_address}</p>
+                    <p className="mt-2 text-sm text-lokals-muted">{priorityDelivery.user?.name ?? 'Sender'} • {priorityDelivery.parcel_size ?? 'Parcel'} • N$ {priorityDelivery.estimated_price ?? '0'}</p>
+                  </div>
+                  <StatusBadge value={formatTransportStatus(priorityDelivery.tracking_status ?? priorityDelivery.status, priorityDelivery.status_label)} tone={transportStatusTone(priorityDelivery.status)} />
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Link to={`/delivery/${priorityDelivery.id}`}>
+                    <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary">Details</Button>
+                  </Link>
+                  <Button className="min-h-9 px-3 py-2 text-xs" onClick={() => handleDeliveryAction(priorityDelivery.id, 'accept')} disabled={deliveryActionState[priorityDelivery.id]?.pending}>
+                    {deliveryActionState[priorityDelivery.id]?.pending && deliveryActionState[priorityDelivery.id]?.action === 'accept' ? 'Accepting…' : 'Accept'}
+                  </Button>
+                  <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" onClick={() => handleDeliveryAction(priorityDelivery.id, 'decline')} disabled={deliveryActionState[priorityDelivery.id]?.pending}>
+                    {deliveryActionState[priorityDelivery.id]?.pending && deliveryActionState[priorityDelivery.id]?.action === 'decline' ? 'Declining…' : 'Decline'}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+            {remainingDeliveries.slice(0, 5).map((delivery) => {
               const deliveryState = deliveryActionState[delivery.id]
               const isPending = deliveryState?.pending ?? false
               const error = deliveryState?.error
