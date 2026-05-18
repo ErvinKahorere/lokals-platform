@@ -31,6 +31,7 @@ use App\Http\Controllers\Api\OrganizationController;
 use App\Http\Controllers\Api\PreferenceController;
 use App\Http\Controllers\Api\PostDraftController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\QueueHealthController;
 use App\Http\Controllers\Api\RoleApplicationController;
 use App\Http\Controllers\Api\RideController;
 use App\Http\Controllers\Api\SafetyController;
@@ -119,6 +120,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/dashboard/courier', [DashboardController::class, 'courier']);
         Route::get('/dashboard/admin', [DashboardController::class, 'admin']);
         Route::get('/realtime/health', RealtimeHealthController::class);
+        Route::get('/queue/health', QueueHealthController::class);
         Route::get('/my/roles', [RoleApplicationController::class, 'myRoles']);
         Route::get('/my/modes', [RoleApplicationController::class, 'myModes']);
         Route::patch('/my/current-mode', [RoleApplicationController::class, 'updateCurrentMode']);

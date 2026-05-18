@@ -10,11 +10,15 @@ No UI, role, dashboard, or business-flow changes are required for this setup.
 
 ## Backend On Render
 
-1. Create a new Render Web Service from the repository root.
-2. Render will detect [render.yaml](</E:/src/xamp/htdocs/Lokals v1/render.yaml>) and the repo-root [Dockerfile](</E:/src/xamp/htdocs/Lokals v1/Dockerfile>).
-3. Keep the service pointed at the repository root so the Docker build can copy `lokals-backend` and `scripts`.
-4. Add the environment variables listed below.
-5. After the first deploy, run migrations as part of the deploy flow with [deploy-render.sh](</E:/src/xamp/htdocs/Lokals v1/lokals-backend/scripts/deploy-render.sh>) or your Render start/deploy command setup.
+1. Create Render services from the repository root using [render.yaml](</E:/src/xamp/htdocs/Lokals v1/render.yaml>) and the repo-root [Dockerfile](</E:/src/xamp/htdocs/Lokals v1/Dockerfile>).
+2. Keep every service pointed at the repository root so the Docker build can copy `lokals-backend` and `scripts`.
+3. Provision these services:
+   - Laravel web service: `lokals-api`
+   - Queue worker: `lokals-queue`
+   - Scheduler cron: `lokals-scheduler`
+   - Optional websocket service: `lokals-reverb`
+4. Add the environment variables listed below to every backend service that boots Laravel.
+5. After the first deploy, confirm migrations, queue worker boot, scheduler ticks, and websocket/broadcast connectivity.
 6. Confirm health checks at `/api/health`.
 
 ### Required Backend Env
@@ -58,6 +62,20 @@ REVERB_APP_SECRET=
 REVERB_HOST=
 REVERB_PORT=443
 REVERB_SCHEME=https
+PUSHER_APP_ID=
+PUSHER_APP_KEY=
+PUSHER_APP_SECRET=
+PUSHER_HOST=
+PUSHER_PORT=443
+PUSHER_SCHEME=https
+PUSHER_APP_CLUSTER=
+QUEUE_WORKER_SLEEP=3
+QUEUE_WORKER_TRIES=3
+QUEUE_WORKER_BACKOFF=5
+QUEUE_WORKER_TIMEOUT=120
+QUEUE_WORKER_MAX_JOBS=500
+QUEUE_WORKER_MAX_TIME=3600
+SEED_DEMO_DATA=false
 ```
 
 ### Render PostgreSQL Env Variables
@@ -101,6 +119,47 @@ VITE_REVERB_APP_KEY=
 
 Set `VITE_USE_SANCTUM_COOKIE_AUTH=true` only if the web app is using Sanctum cookie-based SPA auth. Leave it `false` for bearer-token-only flows.
 
+If the frontend connects directly to Reverb or a Pusher-compatible broadcaster, also set:
+
+```env
+VITE_PUSHER_APP_KEY=
+VITE_PUSHER_HOST=
+VITE_PUSHER_PORT=443
+VITE_PUSHER_SCHEME=https
+VITE_PUSHER_APP_CLUSTER=
+```
+
+## Render Service Commands
+
+- Web service:
+  - image default command: [scripts/start-render.sh](</E:/src/xamp/htdocs/Lokals v1/scripts/start-render.sh>)
+- Queue worker:
+  - command: [scripts/start-worker.sh](</E:/src/xamp/htdocs/Lokals v1/scripts/start-worker.sh>)
+- Scheduler cron:
+  - command: [scripts/run-scheduler.sh](</E:/src/xamp/htdocs/Lokals v1/scripts/run-scheduler.sh>)
+  - schedule: `*/5 * * * *`
+- Optional Reverb websocket service:
+  - command: [scripts/start-reverb.sh](</E:/src/xamp/htdocs/Lokals v1/scripts/start-reverb.sh>)
+  - use only when self-hosting Reverb on Render
+
+## Diagnostics And Smoke Tests
+
+- Public health: `GET /api/health`
+- Authenticated ops health:
+  - `GET /api/v1/realtime/health`
+  - `GET /api/v1/queue/health`
+- Non-production smoke commands:
+  - `php artisan lokals:realtime-smoke all`
+  - `php artisan lokals:notification-smoke`
+
+Use smoke commands only in non-production environments. They are disabled in production.
+
+## Production Seeding Notes
+
+- Leave `SEED_DEMO_DATA=false` in production.
+- Enable demo seed data only for staging or controlled demos.
+- The transport/demo seeders are idempotent, but production deployments should not rely on them.
+
 ## Notes
 
 - Do not commit real secrets.
@@ -108,4 +167,5 @@ Set `VITE_USE_SANCTUM_COOKIE_AUTH=true` only if the web app is using Sanctum coo
 - If `APP_KEY` is empty during deploy, [deploy-render.sh](</E:/src/xamp/htdocs/Lokals v1/lokals-backend/scripts/deploy-render.sh>) generates one safely.
 - The backend health endpoint is available at `/api/health`.
 - CORS is configured to allow `FRONTEND_URL`, `http://localhost:5173`, and `http://127.0.0.1:5173` with credentials enabled.
-- Render production should include a queue worker and websocket/broadcast service alongside the main API if live dashboard updates are required.
+- Core system notifications now write to the database synchronously, so ride, delivery, issue, and approval notifications still appear even if a queue worker is delayed.
+- Queue workers are still required for queued jobs, queued notifications, and `ShouldBroadcast` event delivery when using async broadcasting.

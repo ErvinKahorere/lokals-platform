@@ -3,14 +3,10 @@
 namespace App\Notifications;
 
 use App\Support\NotificationPayload;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class SystemNotification extends Notification implements ShouldQueue
+class SystemNotification extends Notification
 {
-    use Queueable;
-
     public function __construct(
         private readonly string $title,
         private readonly string $body,

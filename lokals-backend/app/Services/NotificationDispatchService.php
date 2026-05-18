@@ -30,7 +30,16 @@ class NotificationDispatchService
     public function notify(User $user, Notification $notification): void
     {
         $user->notify($notification);
-        $this->dispatchPushIfConfigured($user, $notification);
+
+        try {
+            $this->dispatchPushIfConfigured($user, $notification);
+        } catch (\Throwable $exception) {
+            Log::warning('Push notification dispatch was skipped after a transport failure.', [
+                'user_id' => $user->id,
+                'notification' => get_class($notification),
+                'error' => $exception->getMessage(),
+            ]);
+        }
     }
 
     private function dispatchPushIfConfigured(User $user, Notification $notification): void

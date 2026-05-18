@@ -34,7 +34,12 @@ class RealtimeSmokeCommand extends Command
         }
 
         $event = (string) $this->argument('event');
-        $resident = User::query()->where('email', 'resident@lokals.app')->first();
+        $resident = User::query()
+            ->whereIn('email', [
+                'resident@lokals.app',
+                'resident@lokals.test',
+            ])
+            ->first();
 
         if (! $resident instanceof User) {
             $this->error('Demo resident user not found.');

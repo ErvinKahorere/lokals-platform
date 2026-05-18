@@ -2,6 +2,30 @@ services:
   - type: web
     name: lokals-api
     env: docker
-    plan: free
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health
+    autoDeploy: true
+
+  - type: worker
+    name: lokals-queue
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: /app/scripts/start-worker.sh
+    autoDeploy: true
+
+  - type: cron
+    name: lokals-scheduler
+    env: docker
+    dockerfilePath: ./Dockerfile
+    schedule: "*/5 * * * *"
+    dockerCommand: /app/scripts/run-scheduler.sh
+
+# Optional websocket service when self-hosting Laravel Reverb on Render.
+# If you prefer a managed Pusher-compatible broadcaster, omit this service
+# and configure the PUSHER_* variables instead.
+  - type: pserv
+    name: lokals-reverb
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: /app/scripts/start-reverb.sh
+    autoDeploy: true
