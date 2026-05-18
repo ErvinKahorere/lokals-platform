@@ -2,6 +2,7 @@ import { Award, ChevronDown, LayoutDashboard, LogOut, MapPin, Menu, Search, Sett
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useMe, useNotifications, usePreferences, useUpdatePreferences, useUpdateProfile } from '../../hooks/queries'
+import { PILOT_TOWN } from '../../lib/pilot'
 import { formatRoleLabel, getRoleHomePath } from '../../lib/roles'
 import { useAuthStore } from '../../store/auth'
 import { NotificationBell } from '../experience/NotificationBell'
@@ -246,6 +247,9 @@ export function AppShell() {
             </button>
             <NavLink to="/home" className="flex min-w-0 items-center gap-3">
               <img src="/brand/lokals-logo.png" alt="LOKALS" className="h-10 w-auto" />
+              <span className="hidden text-sm font-semibold uppercase tracking-[0.18em] text-lokals-charcoal sm:inline">
+                {PILOT_TOWN}
+              </span>
             </NavLink>
           </div>
 

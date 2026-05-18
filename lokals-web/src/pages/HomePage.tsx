@@ -9,12 +9,11 @@ import { LocalUpdateCard } from '../components/home/LocalUpdateCard'
 import { RoleHomeCard } from '../components/home/RoleHomeCard'
 import { NewsFeedSection } from '../components/news/NewsFeedSection'
 import { NearbyServiceCard } from '../components/experience/NearbyServiceCard'
-import { NotificationBell } from '../components/experience/NotificationBell'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { SearchBar } from '../components/ui/SearchBar'
 import { StatusPill } from '../components/Ui'
-import { useAlertsFeed, useEvents, useFollowingFeed, useJobs, useMe, useNewsFeed, useNewsLocal, useNotifications, usePreferences, useProducts, useProviders, useSearchResults } from '../hooks/queries'
+import { useAlertsFeed, useEvents, useFollowingFeed, useJobs, useMe, useNewsFeed, useNewsLocal, usePreferences, useProducts, useProviders, useSearchResults } from '../hooks/queries'
 import { getDisplayPrice } from '../lib/display'
 import { formatRoleLabel } from '../lib/roles'
 import { normalizePilotArea, PILOT_LOCATION_MESSAGE, PILOT_TOWN } from '../lib/pilot'
@@ -47,7 +46,6 @@ export function HomePage() {
   const newsLocalQuery = useNewsLocal({ town, area: area ?? undefined })
   const newsFeedQuery = useNewsFeed(Boolean(currentUser))
   const searchResultsQuery = useSearchResults(search)
-  const notificationsQuery = useNotifications()
   const providersQuery = useProviders({ town, area: area ?? undefined })
   const productsQuery = useProducts({ sort: 'popular', town, area: area ?? undefined })
   const eventsQuery = useEvents({ town, area: area ?? undefined })
@@ -57,7 +55,6 @@ export function HomePage() {
   const products = useMemo(() => productsQuery.data?.data?.slice(0, 3) ?? [], [productsQuery.data?.data])
   const events = useMemo(() => eventsQuery.data?.data?.slice(0, 3) ?? [], [eventsQuery.data?.data])
   const jobs = useMemo(() => jobsQuery.data?.data?.slice(0, 3) ?? [], [jobsQuery.data?.data])
-  const unreadCount = notificationsQuery.data?.filter((item) => item.read_at == null).length ?? 0
   const localNews = useMemo(
     () => (currentUser ? newsFeedQuery.data?.data : newsLocalQuery.data?.data)?.slice(0, 3) ?? [],
     [currentUser, newsFeedQuery.data?.data, newsLocalQuery.data?.data],
@@ -163,7 +160,6 @@ export function HomePage() {
                   <p className="text-sm font-medium text-lokals-muted">{currentUser ? `Hello, ${currentUser.name}` : 'Explore what is happening nearby'}</p>
                   <h1 className="mt-2 text-3xl font-semibold text-lokals-charcoal">Everything Okahandja, in one place</h1>
                 </div>
-                <NotificationBell count={unreadCount} to="/notifications" />
               </div>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-lokals-muted">
                 Search trusted services, daily essentials, events, jobs, and local updates around {[area, town].filter(Boolean).join(', ')} for residents who want one practical local platform.
