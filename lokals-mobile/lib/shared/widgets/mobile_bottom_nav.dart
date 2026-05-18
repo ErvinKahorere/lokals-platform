@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radius.dart';
 
+const double kMobileBottomNavHeight = 68;
+const double kMobileBottomNavBottomSpacing = 8;
+const double kMobileBottomNavExtraClearance = 16;
+
 class MobileBottomNav extends StatelessWidget {
   const MobileBottomNav({super.key, required this.currentIndex});
 
@@ -12,7 +16,12 @@ class MobileBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+      padding: const EdgeInsets.fromLTRB(
+        14,
+        0,
+        14,
+        kMobileBottomNavBottomSpacing,
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surfaceWhite,
@@ -36,7 +45,9 @@ class MobileBottomNav extends StatelessWidget {
               iconTheme: WidgetStateProperty.resolveWith((states) {
                 final selected = states.contains(WidgetState.selected);
                 return IconThemeData(
-                  color: selected ? AppColors.primaryPurple : AppColors.mutedText,
+                  color: selected
+                      ? AppColors.primaryPurple
+                      : AppColors.mutedText,
                 );
               }),
               labelTextStyle: WidgetStateProperty.resolveWith((states) {
@@ -44,19 +55,41 @@ class MobileBottomNav extends StatelessWidget {
                 return TextStyle(
                   fontSize: 11,
                   fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
-                  color: selected ? AppColors.primaryPurple : AppColors.mutedText,
+                  color: selected
+                      ? AppColors.primaryPurple
+                      : AppColors.mutedText,
                 );
               }),
             ),
             child: NavigationBar(
-              height: 68,
+              height: kMobileBottomNavHeight,
               selectedIndex: currentIndex,
               destinations: const [
-                NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Home'),
-                NavigationDestination(icon: Icon(Icons.home_repair_service_outlined), selectedIcon: Icon(Icons.home_repair_service_rounded), label: 'Services'),
-                NavigationDestination(icon: Icon(Icons.storefront_outlined), selectedIcon: Icon(Icons.storefront_rounded), label: 'Market'),
-                NavigationDestination(icon: Icon(Icons.notifications_none_rounded), selectedIcon: Icon(Icons.notifications_active_rounded), label: 'Activity'),
-                NavigationDestination(icon: Icon(Icons.person_outline_rounded), selectedIcon: Icon(Icons.person_rounded), label: 'Profile'),
+                NavigationDestination(
+                  icon: Icon(Icons.home_outlined),
+                  selectedIcon: Icon(Icons.home_rounded),
+                  label: 'Home',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.home_repair_service_outlined),
+                  selectedIcon: Icon(Icons.home_repair_service_rounded),
+                  label: 'Services',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.storefront_outlined),
+                  selectedIcon: Icon(Icons.storefront_rounded),
+                  label: 'Market',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.notifications_none_rounded),
+                  selectedIcon: Icon(Icons.notifications_active_rounded),
+                  label: 'Activity',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.person_outline_rounded),
+                  selectedIcon: Icon(Icons.person_rounded),
+                  label: 'Profile',
+                ),
               ],
               onDestinationSelected: (index) {
                 switch (index) {

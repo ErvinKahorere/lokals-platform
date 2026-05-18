@@ -167,7 +167,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
 
     return LokalsShell(
       title: 'Ride',
-      showBack: true,
+      showAppBar: false,
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 240),
         child: _successItem != null
@@ -677,10 +677,22 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                   ),
             loading: () => const AppCard(child: LoadingSkeleton(height: 120)),
             error: (error, _) => EmptyState(
-              title: 'Unable to load rides',
-              body: 'Please try again in a moment.',
-              actionLabel: 'Retry',
-              onAction: () => ref.invalidate(ridesProvider),
+              title: error is MobileAccessException
+                  ? 'Ride history unavailable'
+                  : 'Unable to load rides',
+              body: error is MobileAccessException
+                  ? error.message
+                  : 'Please try again in a moment.',
+              actionLabel: error is MobileAccessException && error.requiresLogin
+                  ? 'Login'
+                  : 'Retry',
+              onAction: () {
+                if (error is MobileAccessException && error.requiresLogin) {
+                  context.go('/login');
+                  return;
+                }
+                ref.invalidate(ridesProvider);
+              },
             ),
           ),
         if (_activeTab == 'active')

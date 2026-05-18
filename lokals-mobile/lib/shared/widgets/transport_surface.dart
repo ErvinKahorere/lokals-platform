@@ -549,6 +549,8 @@ class TransportOptionCard extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
                   color: AppColors.deepCharcoal,
@@ -557,6 +559,8 @@ class TransportOptionCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 11,
                   color: AppColors.mutedText,
@@ -567,6 +571,8 @@ class TransportOptionCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 price,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: accentColor,
                   fontWeight: FontWeight.w800,

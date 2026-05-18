@@ -257,6 +257,16 @@ final adminCommunityProjectDetailsProvider =
           .fetchAdminCommunityProject(id);
     });
 
+class MobileAccessException implements Exception {
+  const MobileAccessException(this.message, {this.requiresLogin = false});
+
+  final String message;
+  final bool requiresLogin;
+
+  @override
+  String toString() => message;
+}
+
 class DiscoveryRepository {
   DiscoveryRepository(this.ref);
 
@@ -596,6 +606,22 @@ class DiscoveryRepository {
     return items;
   }
 
+  MobileAccessException _accessException(DioException error, String subject) {
+    final statusCode = error.response?.statusCode;
+    if (statusCode == 401) {
+      return MobileAccessException(
+        'Please log in again to load your $subject.',
+        requiresLogin: true,
+      );
+    }
+    if (statusCode == 403) {
+      return MobileAccessException(
+        'Your account cannot access $subject right now.',
+      );
+    }
+    return MobileAccessException('Unable to load $subject right now.');
+  }
+
   Future<List<ListingModel>> fetchListings() async {
     final response = await ref
         .read(dioProvider)
@@ -646,11 +672,22 @@ class DiscoveryRepository {
   }
 
   Future<List<DeliveryModel>> fetchDeliveries() async {
-    final response = await ref.read(dioProvider).get('/deliveries');
-    final items = (response.data as List<dynamic>)
-        .map((item) => DeliveryModel.fromJson(item as Map<String, dynamic>))
-        .toList();
-    return _withDemoFallback(items, _demoDeliveries);
+    try {
+      final response = await ref.read(dioProvider).get('/deliveries');
+      final items = _unwrapList(response.data)
+          .map((item) => DeliveryModel.fromJson(item as Map<String, dynamic>))
+          .toList();
+      return _withDemoFallback(items, _demoDeliveries);
+    } on DioException catch (error) {
+      final statusCode = error.response?.statusCode;
+      if (statusCode == 401 || statusCode == 403) {
+        throw _accessException(error, 'recent deliveries');
+      }
+      if (AppConfig.isDemoMode) {
+        return _demoDeliveries;
+      }
+      rethrow;
+    }
   }
 
   Future<DeliveryModel> fetchDelivery(String id) async {
@@ -663,11 +700,22 @@ class DiscoveryRepository {
   }
 
   Future<List<RideModel>> fetchRides() async {
-    final response = await ref.read(dioProvider).get('/rides');
-    final items = (response.data as List<dynamic>)
-        .map((item) => RideModel.fromJson(item as Map<String, dynamic>))
-        .toList();
-    return _withDemoFallback(items, _demoRides);
+    try {
+      final response = await ref.read(dioProvider).get('/rides');
+      final items = _unwrapList(response.data)
+          .map((item) => RideModel.fromJson(item as Map<String, dynamic>))
+          .toList();
+      return _withDemoFallback(items, _demoRides);
+    } on DioException catch (error) {
+      final statusCode = error.response?.statusCode;
+      if (statusCode == 401 || statusCode == 403) {
+        throw _accessException(error, 'recent rides');
+      }
+      if (AppConfig.isDemoMode) {
+        return _demoRides;
+      }
+      rethrow;
+    }
   }
 
   Future<RideModel> fetchRide(String id) async {

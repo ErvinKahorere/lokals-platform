@@ -123,7 +123,7 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
 
     return LokalsShell(
       title: 'Delivery',
-      showBack: true,
+      showAppBar: false,
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 240),
         child: _successItem != null
@@ -667,10 +667,22 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                   ),
             loading: () => const AppCard(child: LoadingSkeleton(height: 120)),
             error: (error, _) => EmptyState(
-              title: 'Unable to load deliveries',
-              body: 'Please try again in a moment.',
-              actionLabel: 'Retry',
-              onAction: () => ref.invalidate(deliveriesProvider),
+              title: error is MobileAccessException
+                  ? 'Delivery history unavailable'
+                  : 'Unable to load deliveries',
+              body: error is MobileAccessException
+                  ? error.message
+                  : 'Please try again in a moment.',
+              actionLabel: error is MobileAccessException && error.requiresLogin
+                  ? 'Login'
+                  : 'Retry',
+              onAction: () {
+                if (error is MobileAccessException && error.requiresLogin) {
+                  context.go('/login');
+                  return;
+                }
+                ref.invalidate(deliveriesProvider);
+              },
             ),
           ),
         if (_activeTab == 'active')

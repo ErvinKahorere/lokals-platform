@@ -26,6 +26,7 @@ class LokalsShell extends ConsumerWidget {
     this.actions,
     this.floatingActionButton,
     this.bodyBottomInset,
+    this.showAppBar = true,
   });
 
   final String title;
@@ -34,10 +35,15 @@ class LokalsShell extends ConsumerWidget {
   final List<Widget>? actions;
   final Widget? floatingActionButton;
   final double? bodyBottomInset;
+  final bool showAppBar;
 
   int _currentIndex(BuildContext context) {
     final path = GoRouterState.of(context).matchedLocation;
-    if (path == '/' || path.startsWith('/home') || path.startsWith('/search') || path.startsWith('/more') || path.startsWith('/okahandja')) {
+    if (path == '/' ||
+        path.startsWith('/home') ||
+        path.startsWith('/search') ||
+        path.startsWith('/more') ||
+        path.startsWith('/okahandja')) {
       return 0;
     }
     if (path.startsWith('/services') ||
@@ -82,7 +88,11 @@ class LokalsShell extends ConsumerWidget {
     }
     return role
         .split('_')
-        .map((item) => item.isEmpty ? item : '${item[0].toUpperCase()}${item.substring(1)}')
+        .map(
+          (item) => item.isEmpty
+              ? item
+              : '${item[0].toUpperCase()}${item.substring(1)}',
+        )
         .join(' ');
   }
 
@@ -94,7 +104,9 @@ class LokalsShell extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: inverted ? Colors.white.withValues(alpha: 0.16) : AppColors.purpleSoftAlt,
+        color: inverted
+            ? Colors.white.withValues(alpha: 0.16)
+            : AppColors.purpleSoftAlt,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
@@ -111,7 +123,14 @@ class LokalsShell extends ConsumerWidget {
   Future<void> _openProfileMenu(BuildContext context, WidgetRef ref) async {
     final auth = ref.read(authControllerProvider);
     final user = auth.user;
-    final unread = ref.read(notificationsProvider).asData?.value.where((item) => item.readAt == null).length ?? 0;
+    final unread =
+        ref
+            .read(notificationsProvider)
+            .asData
+            ?.value
+            .where((item) => item.readAt == null)
+            .length ??
+        0;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -148,7 +167,9 @@ class LokalsShell extends ConsumerWidget {
                       backgroundColor: AppColors.purpleSoft,
                       child: Text(
                         user?.name.characters.first.toUpperCase() ?? 'L',
-                        style: AppTextStyles.h4.copyWith(color: AppColors.primaryPurple),
+                        style: AppTextStyles.h4.copyWith(
+                          color: AppColors.primaryPurple,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -169,7 +190,9 @@ class LokalsShell extends ConsumerWidget {
                           _buildRoleChip(
                             _formatRole(
                               user?.currentRole ??
-                                  ((user?.roles.isNotEmpty ?? false) ? user!.roles.first : 'citizen'),
+                                  ((user?.roles.isNotEmpty ?? false)
+                                      ? user!.roles.first
+                                      : 'citizen'),
                             ),
                           ),
                         ],
@@ -177,7 +200,10 @@ class LokalsShell extends ConsumerWidget {
                     ),
                     if (unread > 0)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFEF2F2),
                           borderRadius: BorderRadius.circular(999),
@@ -211,7 +237,7 @@ class LokalsShell extends ConsumerWidget {
                         .map(
                           (role) => ActionChip(
                             label: Text(_formatRole(role)),
-                          backgroundColor: role == user.currentRole
+                            backgroundColor: role == user.currentRole
                                 ? AppColors.primaryPurple
                                 : AppColors.softBackground,
                             labelStyle: TextStyle(
@@ -223,10 +249,18 @@ class LokalsShell extends ConsumerWidget {
                             onPressed: auth.isLoading
                                 ? null
                                 : () async {
-                                    final nextUser = await ref.read(authControllerProvider.notifier).switchRole(role);
+                                    final nextUser = await ref
+                                        .read(authControllerProvider.notifier)
+                                        .switchRole(role);
                                     if (!context.mounted) return;
                                     Navigator.of(context).pop();
-                                    context.go(nextUser == null ? '/dashboard' : roleHomePath(nextUser.currentRole ?? role));
+                                    context.go(
+                                      nextUser == null
+                                          ? '/dashboard'
+                                          : roleHomePath(
+                                              nextUser.currentRole ?? role,
+                                            ),
+                                    );
                                   },
                           ),
                         )
@@ -236,16 +270,38 @@ class LokalsShell extends ConsumerWidget {
                 ],
                 ...[
                   ('/profile', 'Profile', Icons.person_outline_rounded),
-                  ('/notifications', 'Notifications', Icons.notifications_none_rounded),
-                  ('/saved-items', 'Saved Items', Icons.bookmark_outline_rounded),
-                  ('/following-organizations', 'Followed Organizations', Icons.groups_2_outlined),
-                  ('/activity', 'Activity', Icons.notifications_active_outlined),
+                  (
+                    '/notifications',
+                    'Notifications',
+                    Icons.notifications_none_rounded,
+                  ),
+                  (
+                    '/saved-items',
+                    'Saved Items',
+                    Icons.bookmark_outline_rounded,
+                  ),
+                  (
+                    '/following-organizations',
+                    'Followed Organizations',
+                    Icons.groups_2_outlined,
+                  ),
+                  (
+                    '/activity',
+                    'Activity',
+                    Icons.notifications_active_outlined,
+                  ),
                   ('/my-bookings', 'My Bookings', Icons.book_online_outlined),
-                  ('/my-tickets', 'My Tickets', Icons.confirmation_number_outlined),
+                  (
+                    '/my-tickets',
+                    'My Tickets',
+                    Icons.confirmation_number_outlined,
+                  ),
                   (
                     roleHomePath(
                       user?.currentRole ??
-                          ((user?.roles.isNotEmpty ?? false) ? user!.roles.first : null),
+                          ((user?.roles.isNotEmpty ?? false)
+                              ? user!.roles.first
+                              : null),
                     ),
                     'Dashboard',
                     Icons.dashboard_customize_outlined,
@@ -265,7 +321,10 @@ class LokalsShell extends ConsumerWidget {
                 ),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.logout_rounded, color: AppColors.danger),
+                  leading: const Icon(
+                    Icons.logout_rounded,
+                    color: AppColors.danger,
+                  ),
                   title: const Text('Logout'),
                   onTap: () async {
                     Navigator.of(context).pop();
@@ -288,8 +347,12 @@ class LokalsShell extends ConsumerWidget {
     required UserModel? user,
     required UserPreferenceModel? preferences,
   }) async {
-    final currentTown = preferences?.defaultTown ?? user?.defaultTown ?? AppConfig.pilotTown;
-    final currentArea = preferences?.defaultArea ?? user?.defaultArea ?? AppConfig.okahandjaAreas.first;
+    final currentTown =
+        preferences?.defaultTown ?? user?.defaultTown ?? AppConfig.pilotTown;
+    final currentArea =
+        preferences?.defaultArea ??
+        user?.defaultArea ??
+        AppConfig.okahandjaAreas.first;
     final repository = ref.read(discoveryRepositoryProvider);
 
     await showModalBottomSheet<void>(
@@ -319,7 +382,10 @@ class LokalsShell extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 18),
-                Text('Choose your area', style: AppTextStyles.h3.copyWith(fontSize: 20)),
+                Text(
+                  'Choose your area',
+                  style: AppTextStyles.h3.copyWith(fontSize: 20),
+                ),
                 const SizedBox(height: 6),
                 Text(
                   '${AppConfig.pilotLocationMessage} Keep Home focused on the services, updates, and opportunities closest to you.',
@@ -327,7 +393,8 @@ class LokalsShell extends ConsumerWidget {
                 ),
                 const SizedBox(height: 18),
                 ..._locationOptions.map((option) {
-                  final isSelected = option.town == currentTown && option.area == currentArea;
+                  final isSelected =
+                      option.town == currentTown && option.area == currentArea;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: InkWell(
@@ -337,7 +404,8 @@ class LokalsShell extends ConsumerWidget {
                           defaultTown: option.town,
                           defaultArea: option.area,
                           serviceRadius: user?.serviceRadius ?? 10,
-                          notificationPreferences: preferences?.notificationPreferences.map(
+                          notificationPreferences:
+                              preferences?.notificationPreferences.map(
                                 (key, value) => MapEntry(key, value == true),
                               ) ??
                               const {},
@@ -350,24 +418,32 @@ class LokalsShell extends ConsumerWidget {
                         duration: const Duration(milliseconds: 180),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppColors.purpleSoftAlt : AppColors.surfaceWhite,
+                          color: isSelected
+                              ? AppColors.purpleSoftAlt
+                              : AppColors.surfaceWhite,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: isSelected ? AppColors.primaryPurple : AppColors.border,
+                            color: isSelected
+                                ? AppColors.primaryPurple
+                                : AppColors.border,
                           ),
                         ),
-                          child: Row(
-                            children: [
+                        child: Row(
+                          children: [
                             Container(
                               width: 42,
                               height: 42,
                               decoration: BoxDecoration(
-                                color: isSelected ? AppColors.primaryPurple : AppColors.softBackground,
+                                color: isSelected
+                                    ? AppColors.primaryPurple
+                                    : AppColors.softBackground,
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               child: Icon(
                                 Icons.place_outlined,
-                                color: isSelected ? Colors.white : AppColors.primaryPurple,
+                                color: isSelected
+                                    ? Colors.white
+                                    : AppColors.primaryPurple,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -375,17 +451,25 @@ class LokalsShell extends ConsumerWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('${option.area}, ${option.town}', style: AppTextStyles.h4),
+                                  Text(
+                                    '${option.area}, ${option.town}',
+                                    style: AppTextStyles.h4,
+                                  ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    isSelected ? 'Currently showing Home for this area' : 'Switch Home to this local area',
+                                    isSelected
+                                        ? 'Currently showing Home for this area'
+                                        : 'Switch Home to this local area',
                                     style: AppTextStyles.caption,
                                   ),
                                 ],
                               ),
                             ),
                             if (isSelected)
-                              const Icon(Icons.check_circle_rounded, color: AppColors.primaryPurple),
+                              const Icon(
+                                Icons.check_circle_rounded,
+                                color: AppColors.primaryPurple,
+                              ),
                           ],
                         ),
                       ),
@@ -405,18 +489,32 @@ class LokalsShell extends ConsumerWidget {
     final auth = ref.watch(authControllerProvider);
     final user = auth.user;
     final preferences = ref.watch(preferencesProvider).asData?.value;
-    final notifications = ref.watch(notificationsProvider).asData?.value ?? const [];
-    final unreadCount = notifications.where((item) => item.readAt == null).length;
+    final notifications =
+        ref.watch(notificationsProvider).asData?.value ?? const [];
+    final unreadCount = notifications
+        .where((item) => item.readAt == null)
+        .length;
     final isHome = title == 'LOKALS';
     final isDashboard = _isDashboardRoute(context);
     final isGuest = user == null;
-    final currentTown = preferences?.defaultTown ?? user?.defaultTown ?? AppConfig.pilotTown;
+    final currentTown =
+        preferences?.defaultTown ?? user?.defaultTown ?? AppConfig.pilotTown;
     final currentArea = preferences?.defaultArea ?? user?.defaultArea;
-    final locationLabel = [currentArea, currentTown].whereType<String>().where((item) => item.isNotEmpty).join(', ');
-    final activeRole = user?.currentRole ?? ((user?.roles.isNotEmpty ?? false) ? user!.roles.first : 'citizen');
+    final locationLabel = [
+      currentArea,
+      currentTown,
+    ].whereType<String>().where((item) => item.isNotEmpty).join(', ');
+    final activeRole =
+        user?.currentRole ??
+        ((user?.roles.isNotEmpty ?? false) ? user!.roles.first : 'citizen');
     final greetingName = user?.name.split(' ').first ?? 'there';
     final headerHeight = isHome ? 86.0 : 74.0;
-    final bottomNavInset = bodyBottomInset ?? (MediaQuery.of(context).padding.bottom + 76);
+    final bottomNavInset =
+        bodyBottomInset ??
+        (MediaQuery.of(context).padding.bottom +
+            kMobileBottomNavHeight +
+            kMobileBottomNavBottomSpacing +
+            kMobileBottomNavExtraClearance);
     final canPop = Navigator.of(context).canPop();
     final titleWidget = isHome
         ? (isGuest
@@ -441,7 +539,9 @@ class LokalsShell extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      currentArea == null || currentArea.isEmpty ? currentTown : '$currentArea, $currentTown',
+                      currentArea == null || currentArea.isEmpty
+                          ? currentTown
+                          : '$currentArea, $currentTown',
                       style: AppTextStyles.h3,
                     ),
                     const SizedBox(height: 6),
@@ -460,10 +560,7 @@ class LokalsShell extends ConsumerWidget {
                 children: [
                   if (isDashboard) _buildRoleChip(_formatRole(activeRole)),
                   if (locationLabel.isNotEmpty)
-                    Text(
-                      locationLabel,
-                      style: AppTextStyles.caption,
-                    ),
+                    Text(locationLabel, style: AppTextStyles.caption),
                 ],
               ),
             ],
@@ -471,88 +568,96 @@ class LokalsShell extends ConsumerWidget {
 
     return Scaffold(
       extendBody: true,
-      appBar: AppBar(
-        toolbarHeight: headerHeight,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        titleSpacing: showBack ? 0 : 20,
-        title: isHome && !isGuest
-            ? InkWell(
-                borderRadius: BorderRadius.circular(999),
-                onTap: () => _openLocationSelector(
-                  context,
-                  ref,
-                  user: user,
-                  preferences: preferences,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: titleWidget,
-                ),
-              )
-            : titleWidget,
-        actions: [
-          if (user != null) ...[
-            NotificationBell(count: unreadCount, route: '/activity'),
-            Padding(
-              padding: const EdgeInsets.only(left: 4),
-              child: IconButton(
-                tooltip: 'Profile menu',
-                onPressed: () => _openProfileMenu(context, ref),
-                icon: CircleAvatar(
-                  radius: 15,
-                  backgroundColor: AppColors.purpleSoft,
-                  child: Text(
-                    user.name.characters.first.toUpperCase(),
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.primaryPurple,
-                      fontWeight: FontWeight.w800,
+      appBar: showAppBar
+          ? AppBar(
+              toolbarHeight: headerHeight,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              titleSpacing: showBack ? 0 : 20,
+              title: isHome && !isGuest
+                  ? InkWell(
+                      borderRadius: BorderRadius.circular(999),
+                      onTap: () => _openLocationSelector(
+                        context,
+                        ref,
+                        user: user,
+                        preferences: preferences,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: titleWidget,
+                      ),
+                    )
+                  : titleWidget,
+              actions: [
+                if (user != null) ...[
+                  NotificationBell(count: unreadCount, route: '/activity'),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: IconButton(
+                      tooltip: 'Profile menu',
+                      onPressed: () => _openProfileMenu(context, ref),
+                      icon: CircleAvatar(
+                        radius: 15,
+                        backgroundColor: AppColors.purpleSoft,
+                        child: Text(
+                          user.name.characters.first.toUpperCase(),
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.primaryPurple,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ),
-          ] else
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: TextButton(
-                onPressed: () => context.go('/login'),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.primaryPurple,
-                  textStyle: const TextStyle(fontWeight: FontWeight.w800),
-                ),
-                child: const Text('Login'),
-              ),
-            ),
-          ...?actions,
-        ],
-        leading: showBack
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new),
-                onPressed: () {
-                  if (canPop) {
-                    context.pop();
-                  } else {
-                    context.go(isGuest ? '/home' : roleHomePath(activeRole));
-                  }
-                },
-              )
-            : null,
-      ),
+                ] else
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: TextButton(
+                      onPressed: () => context.go('/login'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.primaryPurple,
+                        textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                      child: const Text('Login'),
+                    ),
+                  ),
+                ...?actions,
+              ],
+              leading: showBack
+                  ? IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new),
+                      onPressed: () {
+                        if (canPop) {
+                          context.pop();
+                        } else {
+                          context.go(
+                            isGuest ? '/home' : roleHomePath(activeRole),
+                          );
+                        }
+                      },
+                    )
+                  : null,
+            )
+          : null,
       body: SafeArea(
+        top: !showAppBar,
         child: Padding(
           padding: EdgeInsets.only(bottom: bottomNavInset),
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: Theme.of(context).scaffoldBackgroundColor,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.hero)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppRadius.hero),
+              ),
             ),
             child: child,
           ),
         ),
       ),
       floatingActionButton: floatingActionButton,
-      bottomNavigationBar: MobileBottomNav(currentIndex: _currentIndex(context)),
+      bottomNavigationBar: MobileBottomNav(
+        currentIndex: _currentIndex(context),
+      ),
     );
   }
 }
-
