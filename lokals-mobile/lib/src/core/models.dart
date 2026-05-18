@@ -96,6 +96,16 @@ class UserPreferenceModel {
   }
 }
 
+class LocationPointModel {
+  const LocationPointModel({
+    required this.latitude,
+    required this.longitude,
+  });
+
+  final double latitude;
+  final double longitude;
+}
+
 class ReportModel {
   ReportModel({
     required this.id,
@@ -108,6 +118,8 @@ class ReportModel {
     this.area,
     this.priority,
     this.resolutionNotes,
+    this.latitude,
+    this.longitude,
   });
 
   final int id;
@@ -120,6 +132,8 @@ class ReportModel {
   final String? area;
   final String? priority;
   final String? resolutionNotes;
+  final double? latitude;
+  final double? longitude;
 
   factory ReportModel.fromJson(Map<String, dynamic> json) {
     return ReportModel(
@@ -133,6 +147,8 @@ class ReportModel {
       area: json['area'] as String?,
       priority: json['priority'] as String?,
       resolutionNotes: json['resolution_notes'] as String?,
+      latitude: (json['lat'] as num?)?.toDouble(),
+      longitude: (json['lng'] as num?)?.toDouble(),
     );
   }
 }
@@ -595,10 +611,17 @@ class DeliveryModel {
     this.urgency,
     this.notes,
     this.photoUrl,
+    this.pickupLatitude,
+    this.pickupLongitude,
+    this.dropoffLatitude,
+    this.dropoffLongitude,
     this.status,
     this.trackingStatus,
     this.statusLabel,
     this.referenceCode,
+    this.estimatedDistanceKm,
+    this.estimatedDurationMinutes,
+    this.mapUrl,
     this.createdAt,
     this.updatedAt,
     this.userName,
@@ -621,10 +644,17 @@ class DeliveryModel {
   final String? urgency;
   final String? notes;
   final String? photoUrl;
+  final double? pickupLatitude;
+  final double? pickupLongitude;
+  final double? dropoffLatitude;
+  final double? dropoffLongitude;
   final String? status;
   final String? trackingStatus;
   final String? statusLabel;
   final String? referenceCode;
+  final double? estimatedDistanceKm;
+  final int? estimatedDurationMinutes;
+  final String? mapUrl;
   final String? createdAt;
   final String? updatedAt;
   final String? userName;
@@ -652,10 +682,17 @@ class DeliveryModel {
       urgency: json['urgency']?.toString(),
       notes: json['notes'] as String?,
       photoUrl: json['photo_url'] as String?,
+      pickupLatitude: (json['pickup_latitude'] as num?)?.toDouble(),
+      pickupLongitude: (json['pickup_longitude'] as num?)?.toDouble(),
+      dropoffLatitude: (json['dropoff_latitude'] as num?)?.toDouble(),
+      dropoffLongitude: (json['dropoff_longitude'] as num?)?.toDouble(),
       status: json['status']?.toString(),
       trackingStatus: json['tracking_status']?.toString(),
       statusLabel: json['status_label']?.toString(),
       referenceCode: json['reference_code']?.toString(),
+      estimatedDistanceKm: (json['estimated_distance_km'] as num?)?.toDouble(),
+      estimatedDurationMinutes: (json['estimated_duration_minutes'] as num?)?.toInt(),
+      mapUrl: json['map_url']?.toString(),
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
       userName: user?['name'] as String?,
@@ -1051,11 +1088,20 @@ class RideModel {
     this.rideType,
     this.tripPurpose,
     this.notes,
+    this.pickupAddress,
+    this.dropoffAddress,
+    this.pickupLatitude,
+    this.pickupLongitude,
+    this.dropoffLatitude,
+    this.dropoffLongitude,
     this.status,
     this.trackingStatus,
     this.statusLabel,
     this.referenceCode,
+    this.estimatedDistanceKm,
     this.estimatedEtaMinutes,
+    this.estimatedDurationMinutes,
+    this.mapUrl,
     this.vehicleLabel,
     this.createdAt,
     this.updatedAt,
@@ -1075,11 +1121,20 @@ class RideModel {
   final String? rideType;
   final String? tripPurpose;
   final String? notes;
+  final String? pickupAddress;
+  final String? dropoffAddress;
+  final double? pickupLatitude;
+  final double? pickupLongitude;
+  final double? dropoffLatitude;
+  final double? dropoffLongitude;
   final String? status;
   final String? trackingStatus;
   final String? statusLabel;
   final String? referenceCode;
+  final double? estimatedDistanceKm;
   final int? estimatedEtaMinutes;
+  final int? estimatedDurationMinutes;
+  final String? mapUrl;
   final String? vehicleLabel;
   final String? createdAt;
   final String? updatedAt;
@@ -1103,11 +1158,20 @@ class RideModel {
       rideType: json['ride_type'] as String?,
       tripPurpose: json['trip_purpose'] as String?,
       notes: json['notes'] as String?,
+      pickupAddress: json['pickup_address'] as String?,
+      dropoffAddress: json['dropoff_address'] as String?,
+      pickupLatitude: (json['pickup_latitude'] as num?)?.toDouble(),
+      pickupLongitude: (json['pickup_longitude'] as num?)?.toDouble(),
+      dropoffLatitude: (json['dropoff_latitude'] as num?)?.toDouble(),
+      dropoffLongitude: (json['dropoff_longitude'] as num?)?.toDouble(),
       status: json['status']?.toString(),
       trackingStatus: json['tracking_status']?.toString(),
       statusLabel: json['status_label']?.toString(),
       referenceCode: json['reference_code']?.toString(),
+      estimatedDistanceKm: (json['estimated_distance_km'] as num?)?.toDouble(),
       estimatedEtaMinutes: json['estimated_eta_minutes'] as int?,
+      estimatedDurationMinutes: (json['estimated_duration_minutes'] as num?)?.toInt(),
+      mapUrl: json['map_url']?.toString(),
       vehicleLabel: json['vehicle_label']?.toString(),
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,

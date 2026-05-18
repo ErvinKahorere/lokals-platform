@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
 import { AudioLines, FileText, ImageIcon, MapPinned, Video } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { LocationPreviewMap } from '../../components/maps/LocationPreviewMap'
 import { Button, EmptyState, Input, PageHeader, QueryState, SectionCard, Select, StatusBadge, TextArea } from '../../components/Ui'
 import { useAddReportUpdate, useReport, useUpdateReportStatus } from '../../hooks/queries'
 import { useAuthStore } from '../../store/auth'
+import type { LocationPoint } from '../../lib/location'
 import type { ReportAttachment, ReportUpdate } from '../../types'
 
 const managerStatuses = [
@@ -91,6 +93,9 @@ export function ReportDetailsPage() {
   const latestResidentUpdate = residentUpdates[0]
   const activeStatus = selectedStatus ?? report?.status ?? 'received'
   const activeDepartmentName = departmentName ?? report?.department_name ?? ''
+  const reportPoint: LocationPoint | null = report?.lat != null && report?.lng != null
+    ? { lat: report.lat, lng: report.lng }
+    : null
 
   const submitStatus = async () => {
     if (!report) return
@@ -223,19 +228,10 @@ export function ReportDetailsPage() {
                   <MapPinned className="h-4 w-4 text-lokals-green" />
                   Map preview
                 </div>
-                <p className="mt-2 text-sm text-lokals-muted">
-                  {report.location ?? [report.area, report.town].filter(Boolean).join(', ')}
-                </p>
-                {(report.lat != null && report.lng != null) ? (
-                  <a
-                    href={`https://www.google.com/maps?q=${report.lat},${report.lng}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-3 inline-flex text-sm font-semibold text-lokals-green"
-                  >
-                    Open map directions
-                  </a>
-                ) : null}
+                <p className="mt-2 text-sm text-lokals-muted">{report.location ?? [report.area, report.town].filter(Boolean).join(', ')}</p>
+                <div className="mt-3">
+                  <LocationPreviewMap primary={reportPoint} primaryLabel={report.title} />
+                </div>
               </div>
             </SectionCard>
 

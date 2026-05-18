@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/discovery/discovery_repository.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../core/models.dart';
 import '../../services/contact_action_service.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
+import '../../../shared/widgets/location_preview_map.dart';
 import 'status_stepper.dart';
 
 class RideDetailsScreen extends ConsumerWidget {
@@ -63,7 +65,17 @@ class RideDetailsScreen extends ConsumerWidget {
                       _InfoRow(label: 'Fare estimate', value: item.fareEstimate == null ? 'Open fare' : 'N\$ ${item.fareEstimate}'),
                       if ((item.referenceCode ?? '').isNotEmpty) _InfoRow(label: 'Reference', value: item.referenceCode!),
                       if (item.estimatedEtaMinutes != null) _InfoRow(label: 'ETA', value: '${item.estimatedEtaMinutes} min'),
+                      if (item.estimatedDistanceKm != null) _InfoRow(label: 'Estimated distance', value: '${item.estimatedDistanceKm!.toStringAsFixed(1)} km'),
                       if ((item.notes ?? '').isNotEmpty) _InfoRow(label: 'Notes', value: item.notes!),
+                      const SizedBox(height: 14),
+                      LocationPreviewMap(
+                        primary: item.pickupLatitude != null && item.pickupLongitude != null
+                            ? LocationPointModel(latitude: item.pickupLatitude!, longitude: item.pickupLongitude!)
+                            : null,
+                        secondary: item.dropoffLatitude != null && item.dropoffLongitude != null
+                            ? LocationPointModel(latitude: item.dropoffLatitude!, longitude: item.dropoffLongitude!)
+                            : null,
+                      ),
                       const SizedBox(height: 14),
                       AppCard(
                         color: AppColors.neutralSoftAlt,

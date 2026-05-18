@@ -7,6 +7,7 @@ import '../../widgets/shell.dart';
 import '../auth/auth_controller.dart';
 import '../discovery/discovery_repository.dart';
 import 'my_reports_screen.dart';
+import '../../../shared/widgets/location_preview_map.dart';
 
 final reportDetailsProvider = FutureProvider.family<ReportModel, int>((ref, reportId) async {
   return ref.read(discoveryRepositoryProvider).fetchReport(reportId);
@@ -72,6 +73,15 @@ class _ReportDetailsScreenState extends ConsumerState<ReportDetailsScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(item.description, style: Theme.of(context).textTheme.bodyLarge),
+                    if (item.latitude != null && item.longitude != null) ...[
+                      const SizedBox(height: 16),
+                      LocationPreviewMap(
+                        primary: LocationPointModel(
+                          latitude: item.latitude!,
+                          longitude: item.longitude!,
+                        ),
+                      ),
+                    ],
                     if ((item.resolutionNotes ?? '').isNotEmpty) ...[
                       const SizedBox(height: 16),
                       const Text('Latest update', style: TextStyle(fontWeight: FontWeight.w700)),

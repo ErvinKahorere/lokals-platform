@@ -8,6 +8,7 @@ use App\Models\DriverProfile;
 use App\Models\RideRequest;
 use App\Models\User;
 use App\Notifications\SystemNotification;
+use App\Services\LocationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -15,6 +16,11 @@ use Illuminate\Support\Facades\Notification;
 
 class RideController extends Controller
 {
+    public function __construct(
+        private readonly LocationService $locationService,
+    ) {
+    }
+
     public function index(Request $request): JsonResponse
     {
         $query = $request->user()->rideRequests()->with($this->rideRelations())->latest();
@@ -56,8 +62,12 @@ class RideController extends Controller
         $validated = $request->validate([
             'pickup_location' => ['nullable', 'string', 'required_without:pickup_address'],
             'pickup_address' => ['nullable', 'string', 'required_without:pickup_location'],
+            'pickup_latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'pickup_longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'dropoff_location' => ['nullable', 'string', 'required_without:dropoff_address'],
             'dropoff_address' => ['nullable', 'string', 'required_without:dropoff_location'],
+            'dropoff_latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'dropoff_longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'ride_type' => ['nullable', 'string', 'max:50'],
         ]);
 
@@ -69,10 +79,17 @@ class RideController extends Controller
             default => 52,
         };
 
+        $distanceKm = $this->locationService->distanceKm(
+            isset($validated['pickup_latitude']) ? (float) $validated['pickup_latitude'] : null,
+            isset($validated['pickup_longitude']) ? (float) $validated['pickup_longitude'] : null,
+            isset($validated['dropoff_latitude']) ? (float) $validated['dropoff_latitude'] : null,
+            isset($validated['dropoff_longitude']) ? (float) $validated['dropoff_longitude'] : null,
+        ) ?? 4.8;
+
         return response()->json([
             'data' => [
-                'estimated_distance_km' => 4.8,
-                'estimated_duration_minutes' => 11,
+                'estimated_distance_km' => $distanceKm,
+                'estimated_duration_minutes' => max(6, (int) round($distanceKm * 2.3)),
                 'estimated_fare' => $baseFare,
                 'ride_type' => $validated['ride_type'] ?? 'Standard',
             ],
@@ -99,8 +116,12 @@ class RideController extends Controller
         $validated = $request->validate([
             'pickup_location' => ['nullable', 'string', 'required_without:pickup_address'],
             'pickup_address' => ['nullable', 'string', 'required_without:pickup_location'],
+            'pickup_latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'pickup_longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'dropoff_location' => ['nullable', 'string', 'required_without:dropoff_address'],
             'dropoff_address' => ['nullable', 'string', 'required_without:dropoff_location'],
+            'dropoff_latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'dropoff_longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'ride_type' => ['nullable', 'string', 'max:50'],
             'trip_purpose' => ['nullable', 'string', 'max:80'],
             'notes' => ['nullable', 'string'],
@@ -108,16 +129,29 @@ class RideController extends Controller
             'estimated_distance_km' => ['nullable', 'numeric'],
         ]);
 
+        $estimatedDistanceKm = isset($validated['estimated_distance_km'])
+            ? (float) $validated['estimated_distance_km']
+            : $this->locationService->distanceKm(
+                isset($validated['pickup_latitude']) ? (float) $validated['pickup_latitude'] : null,
+                isset($validated['pickup_longitude']) ? (float) $validated['pickup_longitude'] : null,
+                isset($validated['dropoff_latitude']) ? (float) $validated['dropoff_latitude'] : null,
+                isset($validated['dropoff_longitude']) ? (float) $validated['dropoff_longitude'] : null,
+            );
+
         $ride = $request->user()->rideRequests()->create([
             'pickup_location' => $validated['pickup_location'] ?? $validated['pickup_address'] ?? null,
             'pickup_address' => $validated['pickup_address'] ?? $validated['pickup_location'] ?? null,
+            'pickup_latitude' => $validated['pickup_latitude'] ?? null,
+            'pickup_longitude' => $validated['pickup_longitude'] ?? null,
             'dropoff_location' => $validated['dropoff_location'] ?? $validated['dropoff_address'] ?? null,
             'dropoff_address' => $validated['dropoff_address'] ?? $validated['dropoff_location'] ?? null,
+            'dropoff_latitude' => $validated['dropoff_latitude'] ?? null,
+            'dropoff_longitude' => $validated['dropoff_longitude'] ?? null,
             'ride_type' => $validated['ride_type'] ?? 'Standard',
             'trip_purpose' => $validated['trip_purpose'] ?? null,
             'notes' => $validated['notes'] ?? null,
             'fare_estimate' => $validated['fare_estimate'] ?? 52,
-            'estimated_distance_km' => $validated['estimated_distance_km'] ?? 4.8,
+            'estimated_distance_km' => $estimatedDistanceKm ?? 4.8,
             'status' => 'searching',
         ]);
         $ride->refresh();
@@ -466,6 +500,11 @@ class RideController extends Controller
         $payload['status_label'] = $this->statusLabel((string) ($ride->status ?? 'requested'));
         $payload['tracking_status'] = $ride->status === 'accepted' ? 'driver_assigned' : $ride->status;
         $payload['estimated_eta_minutes'] = $this->estimatedEtaForRide($ride);
+        $payload['map_url'] = $this->locationService->mapsUrl(
+            $ride->pickup_latitude !== null ? (float) $ride->pickup_latitude : null,
+            $ride->pickup_longitude !== null ? (float) $ride->pickup_longitude : null,
+            $ride->pickup_location ?: $ride->pickup_address,
+        );
         $payload['driver_profile'] = $driverProfile;
         $payload['timeline'] = array_values(array_filter([
             ['key' => 'requested', 'label' => 'Ride requested', 'timestamp' => optional($ride->created_at)->toIso8601String()],

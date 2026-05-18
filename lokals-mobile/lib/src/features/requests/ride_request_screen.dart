@@ -1,3 +1,5 @@
+import 'dart:math' as dart_math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +11,8 @@ import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../discovery/discovery_repository.dart';
 import 'request_success_state.dart';
+import '../../../shared/widgets/location_picker_map.dart';
+import '../../../shared/widgets/location_preview_map.dart';
 
 class RideRequestScreen extends ConsumerStatefulWidget {
   const RideRequestScreen({super.key});
@@ -46,9 +50,13 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
 
   String _pickupLocation = _stops.first;
   String _dropoffLocation = 'Okahandja Town Council';
+  LocationPointModel? _pickupPoint;
+  LocationPointModel? _dropoffPoint;
   String _tripPurpose = _tripPurposes.first;
   String _rideType = _rideChoices.first.title;
   final _notesController = TextEditingController();
+  final _pickupController = TextEditingController(text: _stops.first);
+  final _dropoffController = TextEditingController(text: 'Okahandja Town Council');
   bool _isBusy = false;
   String? _error;
   RideModel? _successItem;
@@ -61,12 +69,39 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
       'Late shift ride' => 20,
       _ => 0,
     };
-    return ride.baseFare + routeBonus + purposeBonus;
+    final distanceBonus = _distanceKm == null ? 0 : (_distanceKm! * 4).round();
+    return ride.baseFare + routeBonus + purposeBonus + distanceBonus;
+  }
+
+  double? get _distanceKm {
+    if (_pickupPoint == null || _dropoffPoint == null) {
+      return null;
+    }
+
+    final fromLat = _pickupPoint!.latitude;
+    final fromLng = _pickupPoint!.longitude;
+    final toLat = _dropoffPoint!.latitude;
+    final toLng = _dropoffPoint!.longitude;
+    const earthRadius = 6371;
+    final latDelta = _toRadians(toLat - fromLat);
+    final lngDelta = _toRadians(toLng - fromLng);
+    final a = (dart_math.sin(latDelta / 2) * dart_math.sin(latDelta / 2))
+        + (dart_math.cos(_toRadians(fromLat)) * dart_math.cos(_toRadians(toLat)) * dart_math.sin(lngDelta / 2) * dart_math.sin(lngDelta / 2));
+    final c = 2 * dart_math.atan2(dart_math.sqrt(a), dart_math.sqrt(1 - a));
+    return double.parse((earthRadius * c).toStringAsFixed(1));
+  }
+
+  int get _estimatedMinutes {
+    final distance = _distanceKm;
+    if (distance == null) return 11;
+    return (distance * 2.3).round().clamp(6, 180);
   }
 
   @override
   void dispose() {
     _notesController.dispose();
+    _pickupController.dispose();
+    _dropoffController.dispose();
     super.dispose();
   }
 
@@ -125,17 +160,22 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
               child: Column(
                 children: [
                   DropdownButtonFormField<String>(
-                    initialValue: _pickupLocation,
-                    decoration: const InputDecoration(labelText: 'Pickup location'),
-                    items: _stops.map((stop) => DropdownMenuItem(value: stop, child: Text(stop))).toList(),
-                    onChanged: (value) => setState(() => _pickupLocation = value ?? _pickupLocation),
+                    initialValue: _tripPurpose,
+                    decoration: const InputDecoration(labelText: 'Trip purpose'),
+                    items: _tripPurposes.map((purpose) => DropdownMenuItem(value: purpose, child: Text(purpose))).toList(),
+                    onChanged: (value) => setState(() => _tripPurpose = value ?? _tripPurpose),
                   ),
                   const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: _dropoffLocation,
-                    decoration: const InputDecoration(labelText: 'Destination'),
-                    items: _stops.where((stop) => stop != 'Current location').map((stop) => DropdownMenuItem(value: stop, child: Text(stop))).toList(),
-                    onChanged: (value) => setState(() => _dropoffLocation = value ?? _dropoffLocation),
+                  LokalsTextField(
+                    controller: _pickupController,
+                    label: 'Pickup location',
+                    hint: 'Enter pickup address or landmark',
+                  ),
+                  const SizedBox(height: 12),
+                  LokalsTextField(
+                    controller: _dropoffController,
+                    label: 'Destination',
+                    hint: 'Enter destination address or landmark',
                   ),
                   const SizedBox(height: 12),
                   Wrap(
@@ -145,12 +185,26 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                       ActionChip(
                         avatar: const Icon(Icons.my_location_rounded, size: 18),
                         label: const Text('Use current location'),
-                        onPressed: () => setState(() => _pickupLocation = 'Current location (near me)'),
+                        onPressed: () => setState(() => _pickupController.text = 'Current location (near me)'),
                       ),
-                      ActionChip(label: const Text('Home'), onPressed: () => setState(() => _dropoffLocation = 'Home')),
-                      ActionChip(label: const Text('Work'), onPressed: () => setState(() => _dropoffLocation = 'Work')),
-                      ActionChip(label: const Text('Clinic'), onPressed: () => setState(() => _dropoffLocation = 'Okahandja State Clinic')),
+                      ActionChip(label: const Text('Home'), onPressed: () => setState(() => _dropoffController.text = 'Home')),
+                      ActionChip(label: const Text('Work'), onPressed: () => setState(() => _dropoffController.text = 'Work')),
+                      ActionChip(label: const Text('Clinic'), onPressed: () => setState(() => _dropoffController.text = 'Okahandja State Clinic')),
                     ],
+                  ),
+                  const SizedBox(height: 12),
+                  LocationPickerMap(
+                    label: 'Pickup map pin',
+                    value: _pickupPoint,
+                    onChanged: (value) => setState(() => _pickupPoint = value),
+                    helpText: 'Tap to place the pickup pin. Manual address entry still works if you skip the map.',
+                  ),
+                  const SizedBox(height: 12),
+                  LocationPickerMap(
+                    label: 'Destination map pin',
+                    value: _dropoffPoint,
+                    onChanged: (value) => setState(() => _dropoffPoint = value),
+                    helpText: 'Tap to place the destination pin. This improves the estimated distance and time.',
                   ),
                   const SizedBox(height: 12),
                   AppCard(
@@ -189,13 +243,6 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                           ),
                         ),
                       )),
-                  DropdownButtonFormField<String>(
-                    initialValue: _tripPurpose,
-                    decoration: const InputDecoration(labelText: 'Trip purpose'),
-                    items: _tripPurposes.map((purpose) => DropdownMenuItem(value: purpose, child: Text(purpose))).toList(),
-                    onChanged: (value) => setState(() => _tripPurpose = value ?? _tripPurpose),
-                  ),
-                  const SizedBox(height: 12),
                   LokalsTextField(
                     controller: _notesController,
                     label: 'Extra notes',
@@ -207,53 +254,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                     Text(_error!, style: const TextStyle(color: AppColors.danger)),
                   ],
                   const SizedBox(height: 12),
-                  Container(
-                    height: 170,
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceWhite,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.neutralSoftAlt,
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 28,
-                          top: 36,
-                          child: Container(
-                            width: 16,
-                            height: 16,
-                            decoration: const BoxDecoration(color: AppColors.primaryGreen, shape: BoxShape.circle),
-                          ),
-                        ),
-                        Positioned(
-                          right: 30,
-                          bottom: 38,
-                          child: Container(
-                            width: 16,
-                            height: 16,
-                            decoration: const BoxDecoration(color: AppColors.danger, shape: BoxShape.circle),
-                          ),
-                        ),
-                        Positioned.fill(child: CustomPaint(painter: _RoutePainter())),
-                        const Center(
-                          child: CircleAvatar(
-                            radius: 18,
-                            backgroundColor: Colors.white,
-                            child: Icon(Icons.local_taxi_rounded, color: AppColors.primaryPurple),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  LocationPreviewMap(primary: _pickupPoint, secondary: _dropoffPoint),
                   const SizedBox(height: 12),
                   Container(
                     width: double.infinity,
@@ -270,7 +271,14 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                         const SizedBox(height: 8),
                         Text('N\$ $_estimatedFare', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),
                         const SizedBox(height: 8),
-                        Text('$_pickupLocation to $_dropoffLocation', style: const TextStyle(color: AppColors.mutedText)),
+                        Text('${_pickupController.text} to ${_dropoffController.text}', style: const TextStyle(color: AppColors.mutedText)),
+                        const SizedBox(height: 6),
+                        Text(
+                          _distanceKm == null
+                              ? 'Add map pins for a better estimated distance and time.'
+                              : 'Estimated distance ${_distanceKm!.toStringAsFixed(1)} km • about $_estimatedMinutes min',
+                          style: const TextStyle(color: AppColors.mutedText),
+                        ),
                       ],
                     ),
                   ),
@@ -284,13 +292,18 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                         _error = null;
                       });
                       try {
+                        _pickupLocation = _pickupController.text.trim();
+                        _dropoffLocation = _dropoffController.text.trim();
                         final created = await ref.read(discoveryRepositoryProvider).createRide(
-                              pickupLocation: _pickupLocation,
-                              dropoffLocation: _dropoffLocation,
+                              pickupLocation: _pickupController.text.trim(),
+                              dropoffLocation: _dropoffController.text.trim(),
                               rideType: _rideType,
                               tripPurpose: _tripPurpose,
                               notes: _notesController.text.trim(),
                               fareEstimate: _estimatedFare.toString(),
+                              estimatedDistanceKm: _distanceKm?.toStringAsFixed(1),
+                              pickupCoordinates: _pickupPoint,
+                              dropoffCoordinates: _dropoffPoint,
                             );
                         ref.invalidate(ridesProvider);
                         if (!mounted) return;
@@ -405,22 +418,4 @@ class _RideChoice {
   final int baseFare;
 }
 
-class _RoutePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = Path()
-      ..moveTo(34, 44)
-      ..quadraticBezierTo(size.width * 0.34, size.height * 0.68, size.width * 0.6, size.height * 0.54)
-      ..quadraticBezierTo(size.width * 0.72, size.height * 0.48, size.width - 34, size.height - 42);
-
-    final paint = Paint()
-      ..color = AppColors.primaryPurple
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
+double _toRadians(double value) => value * 3.1415926535897932 / 180.0;

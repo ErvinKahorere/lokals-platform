@@ -40,12 +40,17 @@ class TransportAndSafetyApiTest extends TestCase
         $created = $this->postJson('/api/v1/deliveries', [
             'pickup_location' => 'Nau-Aib Community Hall',
             'dropoff_location' => 'Okahandja Town Council',
+            'pickup_latitude' => -21.9832,
+            'pickup_longitude' => 16.9132,
+            'dropoff_latitude' => -21.9846,
+            'dropoff_longitude' => 16.9145,
             'parcel_description' => 'Bakery order for same-day delivery',
             'parcel_size' => 'medium',
             'estimated_price' => 65,
             'notes' => 'Collect near the main gate.',
         ])->assertCreated()
-            ->assertJsonPath('data.status', 'requested');
+            ->assertJsonPath('data.status', 'requested')
+            ->assertJsonPath('data.pickup_latitude', '-21.9832000');
 
         $deliveryId = $created->json('data.id');
 
@@ -59,6 +64,8 @@ class TransportAndSafetyApiTest extends TestCase
                     'parcel_description',
                     'notes',
                     'status',
+                    'pickup_latitude',
+                    'dropoff_longitude',
                     'user',
                     'reference_code',
                     'status_label',
@@ -103,12 +110,17 @@ class TransportAndSafetyApiTest extends TestCase
         $created = $this->postJson('/api/v1/rides', [
             'pickup_location' => 'Taxi Rank, Okahandja',
             'dropoff_location' => 'Okahandja State Clinic',
+            'pickup_latitude' => -21.9832,
+            'pickup_longitude' => 16.9132,
+            'dropoff_latitude' => -21.9885,
+            'dropoff_longitude' => 16.9177,
             'ride_type' => 'Comfort',
             'trip_purpose' => 'Clinic visit',
             'fare_estimate' => 58,
             'notes' => 'Pickup next to the pharmacy sign.',
         ])->assertCreated()
-            ->assertJsonPath('data.ride_type', 'Comfort');
+            ->assertJsonPath('data.ride_type', 'Comfort')
+            ->assertJsonPath('data.pickup_latitude', '-21.9832000');
 
         $rideId = $created->json('data.id');
 
@@ -122,6 +134,8 @@ class TransportAndSafetyApiTest extends TestCase
                     'ride_type',
                     'trip_purpose',
                     'status',
+                    'pickup_latitude',
+                    'dropoff_longitude',
                     'user',
                     'reference_code',
                     'status_label',

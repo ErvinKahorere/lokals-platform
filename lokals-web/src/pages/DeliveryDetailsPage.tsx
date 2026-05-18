@@ -3,11 +3,13 @@ import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import type { AxiosError } from 'axios'
 import { ContactActions } from '../components/experience/ContactActions'
+import { LocationPreviewMap } from '../components/maps/LocationPreviewMap'
 import { Button, EmptyState, Input, QueryState, SectionCard, StatusBadge, TextArea } from '../components/Ui'
 import { StatusStepper } from '../components/transport/StatusStepper'
 import { useCancelDelivery, useCourierDeliveryAction, useDelivery, useRateDelivery } from '../hooks/queries'
 import { formatTransportStatus, formatTransportTimestamp, normalizeTransportTimeline, transportStatusTone } from '../lib/transportStatus'
 import { getApiErrorMessage } from '../lib/api'
+import type { LocationPoint } from '../lib/location'
 import { useAuthStore } from '../store/auth'
 
 const deliverySteps = ['requested', 'accepted', 'pickup_confirmed', 'in_transit', 'delivered', 'cancelled']
@@ -47,6 +49,12 @@ export function DeliveryDetailsPage() {
     ]),
     [delivery],
   )
+  const pickupPoint: LocationPoint | null = delivery?.pickup_latitude != null && delivery?.pickup_longitude != null
+    ? { lat: delivery.pickup_latitude, lng: delivery.pickup_longitude }
+    : null
+  const dropoffPoint: LocationPoint | null = delivery?.dropoff_latitude != null && delivery?.dropoff_longitude != null
+    ? { lat: delivery.dropoff_latitude, lng: delivery.dropoff_longitude }
+    : null
 
   const handleDeliveryAction = (action: 'accept' | 'decline' | 'pickup-confirmed' | 'in-transit' | 'delivered') => {
     if (!delivery?.id) return
@@ -149,6 +157,19 @@ export function DeliveryDetailsPage() {
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Weight</p>
                   <p className="mt-2 font-semibold text-lokals-charcoal">{delivery.weight_kg ? `${delivery.weight_kg} kg` : 'Not specified'}</p>
                 </article>
+                <article className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Estimated distance</p>
+                  <p className="mt-2 font-semibold text-lokals-charcoal">{delivery.estimated_distance_km ? `${delivery.estimated_distance_km} km` : 'Address-based estimate'}</p>
+                </article>
+              </div>
+
+              <div className="mt-5">
+                <LocationPreviewMap
+                  primary={pickupPoint}
+                  secondary={dropoffPoint}
+                  primaryLabel={delivery.pickup_address ?? delivery.pickup_location ?? 'Pickup'}
+                  secondaryLabel={delivery.dropoff_address ?? delivery.dropoff_location ?? 'Drop-off'}
+                />
               </div>
 
               {delivery.notes ? (

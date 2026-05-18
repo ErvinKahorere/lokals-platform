@@ -2,11 +2,13 @@ import { AlertCircle, CarFront, Clock3, Star } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ContactActions } from '../components/experience/ContactActions'
+import { LocationPreviewMap } from '../components/maps/LocationPreviewMap'
 import { Button, EmptyState, Input, QueryState, SectionCard, StatusBadge, TextArea } from '../components/Ui'
 import { StatusStepper } from '../components/transport/StatusStepper'
 import { useCancelRide, useDriverRideAction, useRateRide, useRide } from '../hooks/queries'
 import { formatTransportStatus, formatTransportTimestamp, normalizeTransportTimeline, transportStatusTone } from '../lib/transportStatus'
 import { getApiErrorMessage } from '../lib/api'
+import type { LocationPoint } from '../lib/location'
 import { useAuthStore } from '../store/auth'
 
 const rideSteps = ['requested', 'accepted', 'arrived', 'in_progress', 'completed', 'cancelled']
@@ -46,6 +48,12 @@ export function RideDetailsPage() {
     ]),
     [ride],
   )
+  const pickupPoint: LocationPoint | null = ride?.pickup_latitude != null && ride?.pickup_longitude != null
+    ? { lat: ride.pickup_latitude, lng: ride.pickup_longitude }
+    : null
+  const dropoffPoint: LocationPoint | null = ride?.dropoff_latitude != null && ride?.dropoff_longitude != null
+    ? { lat: ride.dropoff_latitude, lng: ride.dropoff_longitude }
+    : null
 
   const handleRideAction = (action: 'accept' | 'decline' | 'arrived' | 'start' | 'complete') => {
     if (!ride?.id) return
@@ -133,6 +141,19 @@ export function RideDetailsPage() {
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Fare estimate</p>
                   <p className="mt-2 font-semibold text-lokals-charcoal">{ride.fare_estimate ? `N$ ${ride.fare_estimate}` : 'Open fare'}</p>
                 </article>
+                <article className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Estimated distance</p>
+                  <p className="mt-2 font-semibold text-lokals-charcoal">{ride.estimated_distance_km ? `${ride.estimated_distance_km} km` : 'Address-based estimate'}</p>
+                </article>
+              </div>
+
+              <div className="mt-5">
+                <LocationPreviewMap
+                  primary={pickupPoint}
+                  secondary={dropoffPoint}
+                  primaryLabel={ride.pickup_location}
+                  secondaryLabel={ride.dropoff_location}
+                />
               </div>
 
               {ride.notes ? (

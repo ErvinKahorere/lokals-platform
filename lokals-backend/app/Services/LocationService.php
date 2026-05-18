@@ -26,8 +26,8 @@ class LocationService
             return null;
         }
 
-        $query = $label ? urlencode($label) : $lat.','.$lng;
+        $marker = $label ? '('.urlencode($label).')' : '';
 
-        return "https://www.google.com/maps/search/?api=1&query={$query}";
+        return "https://www.openstreetmap.org/?mlat={$lat}&mlon={$lng}#map=16/{$lat}/{$lng}{$marker}";
     }
 }

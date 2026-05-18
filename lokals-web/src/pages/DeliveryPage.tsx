@@ -3,12 +3,15 @@ import { Camera, Clock3, LocateFixed, MapPin, Truck } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button, EmptyState, PageHeader, QueryState, SectionCard, Select, StatusBadge, TextArea } from '../components/Ui'
+import { LocationPickerMap } from '../components/maps/LocationPickerMap'
+import { LocationPreviewMap } from '../components/maps/LocationPreviewMap'
 import { RequestSuccessState } from '../components/transport/RequestSuccessState'
 import { GlassPanel } from '../components/glass/GlassPanel'
 import { isDemoMode } from '../config/appMode'
 import { useCreateDelivery, useDeliveries } from '../hooks/queries'
 import { getApiErrorMessage } from '../lib/api'
 import { navigateToLogin } from '../lib/authNavigation'
+import { estimatedDeliveryMinutes, formatCoordinates, haversineDistanceKm, type LocationPoint } from '../lib/location'
 import { formatTransportStatus, transportStatusTone } from '../lib/transportStatus'
 import { useAuthStore } from '../store/auth'
 import type { DeliveryItem } from '../types'
@@ -27,6 +30,8 @@ const deliverySteps = ['requested', 'accepted', 'picked_up', 'delivered', 'cance
 export function DeliveryPage() {
   const [pickupLocation, setPickupLocation] = useState(quickLocations[0])
   const [dropoffLocation, setDropoffLocation] = useState(quickLocations[5])
+  const [pickupPoint, setPickupPoint] = useState<LocationPoint | null>(null)
+  const [dropoffPoint, setDropoffPoint] = useState<LocationPoint | null>(null)
   const [parcelSize, setParcelSize] = useState('medium')
   const [urgency, setUrgency] = useState('standard')
   const [weightKg, setWeightKg] = useState('2')
@@ -39,14 +44,20 @@ export function DeliveryPage() {
   const deliveriesQuery = useDeliveries(Boolean(token))
   const navigate = useNavigate()
 
+  const distanceKm = useMemo(() => haversineDistanceKm(pickupPoint, dropoffPoint), [dropoffPoint, pickupPoint])
+  const estimatedDurationMinutes = useMemo(
+    () => estimatedDeliveryMinutes(distanceKm) ?? 18,
+    [distanceKm],
+  )
   const estimate = useMemo(
     () => {
       const base = parcelSizes.find((item) => item.value === parcelSize)?.estimate ?? 75
       const urgencyBonus = urgency === 'express' ? 25 : urgency === 'priority' ? 40 : 0
       const weightBonus = Number(weightKg) > 5 ? 18 : Number(weightKg) > 2 ? 10 : 0
-      return base + urgencyBonus + weightBonus
+      const distanceBonus = distanceKm ? Math.round(distanceKm * 4) : 0
+      return base + urgencyBonus + weightBonus + distanceBonus
     },
-    [parcelSize, urgency, weightKg],
+    [distanceKm, parcelSize, urgency, weightKg],
   )
   const recentDeliveries = useMemo(() => (deliveriesQuery.data?.data ?? []).slice(0, 5), [deliveriesQuery.data?.data])
 
@@ -78,12 +89,22 @@ export function DeliveryPage() {
 
     const payload = new FormData()
     payload.append('pickup_location', pickupLocation)
+    payload.append('pickup_address', pickupLocation)
     payload.append('dropoff_location', dropoffLocation)
+    payload.append('dropoff_address', dropoffLocation)
     payload.append('parcel_description', description)
     payload.append('parcel_size', parcelSize)
     payload.append('estimated_price', String(estimate))
     payload.append('urgency', urgency)
     payload.append('weight_kg', weightKg)
+    if (pickupPoint) {
+      payload.append('pickup_latitude', String(pickupPoint.lat))
+      payload.append('pickup_longitude', String(pickupPoint.lng))
+    }
+    if (dropoffPoint) {
+      payload.append('dropoff_latitude', String(dropoffPoint.lat))
+      payload.append('dropoff_longitude', String(dropoffPoint.lng))
+    }
     if (notes.trim()) {
       payload.append('notes', notes.trim())
     }
@@ -101,10 +122,27 @@ export function DeliveryPage() {
     } catch (caught) {
       setError(getApiErrorMessage(caught, 'Unable to request delivery right now.'))
     }
-  }, [createDelivery, dropoffLocation, estimate, notes, parcelSize, pickupLocation, urgency, weightKg])
+  }, [createDelivery, dropoffLocation, dropoffPoint, estimate, notes, parcelSize, pickupLocation, pickupPoint, urgency, weightKg])
 
   const setCurrentPickup = useCallback(() => {
-    setPickupLocation('Current location (near me)')
+    if (!navigator.geolocation) {
+      setError('Current location is not available in this browser. Enter the address manually or tap the map pin.')
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setPickupLocation('Current location (near me)')
+        setPickupPoint({
+          lat: Number(position.coords.latitude.toFixed(6)),
+          lng: Number(position.coords.longitude.toFixed(6)),
+        })
+      },
+      () => {
+        setError('We could not read your location. Enter the address manually or place the pin on the map.')
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    )
   }, [])
 
   return (
@@ -167,15 +205,21 @@ export function DeliveryPage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className="space-y-2">
                     <span className="text-sm font-medium text-lokals-charcoal">Pickup location</span>
-                    <Select value={pickupLocation} onChange={(event) => setPickupLocation(event.target.value)}>
-                      {quickLocations.map((option) => <option key={`pickup-${option}`} value={option}>{option}</option>)}
-                    </Select>
+                    <input
+                      value={pickupLocation}
+                      onChange={(event) => setPickupLocation(event.target.value)}
+                      className="w-full rounded-2xl border border-lokals-border bg-white px-4 py-3 text-sm text-lokals-charcoal outline-none transition focus:border-lokals-purple"
+                      placeholder="Enter pickup address or landmark"
+                    />
                   </label>
                   <label className="space-y-2">
                     <span className="text-sm font-medium text-lokals-charcoal">Drop-off location</span>
-                    <Select value={dropoffLocation} onChange={(event) => setDropoffLocation(event.target.value)}>
-                      {quickLocations.map((option) => <option key={`dropoff-${option}`} value={option}>{option}</option>)}
-                    </Select>
+                    <input
+                      value={dropoffLocation}
+                      onChange={(event) => setDropoffLocation(event.target.value)}
+                      className="w-full rounded-2xl border border-lokals-border bg-white px-4 py-3 text-sm text-lokals-charcoal outline-none transition focus:border-lokals-purple"
+                      placeholder="Enter drop-off address or landmark"
+                    />
                   </label>
                 </div>
 
@@ -188,6 +232,31 @@ export function DeliveryPage() {
                     <LocateFixed className="h-4 w-4" />
                     Use current location
                   </button>
+                  {quickLocations.slice(0, 4).map((location) => (
+                    <button
+                      key={location}
+                      type="button"
+                      onClick={() => setDropoffLocation(location)}
+                      className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-lokals-charcoal transition hover:bg-slate-200"
+                    >
+                      {location}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <LocationPickerMap
+                    label="Pickup map pin"
+                    value={pickupPoint}
+                    onChange={setPickupPoint}
+                    helpText="Tap to place the collection pin. Manual address entry still works even if location permission is denied."
+                  />
+                  <LocationPickerMap
+                    label="Drop-off map pin"
+                    value={dropoffPoint}
+                    onChange={setDropoffPoint}
+                    helpText="Tap to place the handoff pin. This improves the estimated distance and travel time."
+                  />
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-3">
@@ -253,9 +322,17 @@ export function DeliveryPage() {
                 <p className="mt-3 text-sm text-lokals-muted">The final amount can adjust once a driver accepts the route and parcel details.</p>
 
                 <div className="mt-4 space-y-3">
+                  <LocationPreviewMap
+                    primary={pickupPoint}
+                    secondary={dropoffPoint}
+                    primaryLabel={pickupLocation}
+                    secondaryLabel={dropoffLocation}
+                  />
                   <article className="rounded-2xl bg-white p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Route</p>
                     <p className="mt-2 font-semibold text-lokals-charcoal">{pickupLocation} to {dropoffLocation}</p>
+                    <p className="mt-2 text-sm text-lokals-muted">Pickup pin: {formatCoordinates(pickupPoint)}</p>
+                    <p className="mt-1 text-sm text-lokals-muted">Drop-off pin: {formatCoordinates(dropoffPoint)}</p>
                   </article>
                   <article className="rounded-2xl bg-white p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Status path</p>
@@ -267,6 +344,9 @@ export function DeliveryPage() {
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Delivery details</p>
                     <p className="mt-2 text-sm text-lokals-charcoal">Urgency: <span className="font-semibold capitalize">{urgency}</span></p>
                     <p className="mt-1 text-sm text-lokals-charcoal">Weight: <span className="font-semibold">{weightKg} kg</span></p>
+                    <p className="mt-1 text-sm text-lokals-charcoal">
+                      {distanceKm != null ? `Estimated distance ${distanceKm.toFixed(1)} km • about ${estimatedDurationMinutes} min` : 'Add map pins for a better estimated distance and time.'}
+                    </p>
                   </article>
                 </div>
 

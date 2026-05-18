@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/discovery/discovery_repository.dart';
+import '../../core/models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../services/contact_action_service.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
+import '../../../shared/widgets/location_preview_map.dart';
 import 'status_stepper.dart';
 
 class DeliveryDetailsScreen extends ConsumerWidget {
@@ -64,7 +66,17 @@ class DeliveryDetailsScreen extends ConsumerWidget {
                       if ((item.referenceCode ?? '').isNotEmpty) _InfoRow(label: 'Reference', value: item.referenceCode!),
                       if ((item.urgency ?? '').isNotEmpty) _InfoRow(label: 'Urgency', value: item.urgency!),
                       if ((item.weightKg ?? '').isNotEmpty) _InfoRow(label: 'Weight', value: '${item.weightKg} kg'),
+                      if (item.estimatedDistanceKm != null) _InfoRow(label: 'Estimated distance', value: '${item.estimatedDistanceKm!.toStringAsFixed(1)} km'),
                       if ((item.notes ?? '').isNotEmpty) _InfoRow(label: 'Notes', value: item.notes!),
+                      const SizedBox(height: 14),
+                      LocationPreviewMap(
+                        primary: item.pickupLatitude != null && item.pickupLongitude != null
+                            ? LocationPointModel(latitude: item.pickupLatitude!, longitude: item.pickupLongitude!)
+                            : null,
+                        secondary: item.dropoffLatitude != null && item.dropoffLongitude != null
+                            ? LocationPointModel(latitude: item.dropoffLatitude!, longitude: item.dropoffLongitude!)
+                            : null,
+                      ),
                       const SizedBox(height: 14),
                       AppCard(
                         color: AppColors.neutralSoftAlt,

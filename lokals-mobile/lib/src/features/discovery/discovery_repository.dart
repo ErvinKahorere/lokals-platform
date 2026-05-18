@@ -1300,6 +1300,7 @@ class DiscoveryRepository {
     String? area,
     String priority = 'medium',
     XFile? photo,
+    LocationPointModel? coordinates,
   }) async {
     final data = <String, dynamic>{
       'title': title,
@@ -1310,6 +1311,11 @@ class DiscoveryRepository {
       'area': area,
       'priority': priority,
     };
+
+    if (coordinates != null) {
+      data['lat'] = coordinates.latitude;
+      data['lng'] = coordinates.longitude;
+    }
 
     if (photo != null) {
       data['photo'] = await MultipartFile.fromFile(
@@ -1415,10 +1421,14 @@ class DiscoveryRepository {
     String? notes,
     XFile? photo,
     String? price,
+    LocationPointModel? pickupCoordinates,
+    LocationPointModel? dropoffCoordinates,
   }) async {
     final data = <String, dynamic>{
       'pickup_location': pickupAddress,
+      'pickup_address': pickupAddress,
       'dropoff_location': dropoffAddress,
+      'dropoff_address': dropoffAddress,
       'parcel_description': itemDescription,
       'parcel_size': parcelSize,
       'urgency': urgency,
@@ -1426,6 +1436,16 @@ class DiscoveryRepository {
       'estimated_price': price,
       'notes': notes,
     };
+
+    if (pickupCoordinates != null) {
+      data['pickup_latitude'] = pickupCoordinates.latitude;
+      data['pickup_longitude'] = pickupCoordinates.longitude;
+    }
+
+    if (dropoffCoordinates != null) {
+      data['dropoff_latitude'] = dropoffCoordinates.latitude;
+      data['dropoff_longitude'] = dropoffCoordinates.longitude;
+    }
 
     if (photo != null) {
       data['photo'] = await MultipartFile.fromFile(
@@ -1449,6 +1469,9 @@ class DiscoveryRepository {
     String? tripPurpose,
     String? notes,
     String? fareEstimate,
+    String? estimatedDistanceKm,
+    LocationPointModel? pickupCoordinates,
+    LocationPointModel? dropoffCoordinates,
   }) async {
     final response = await ref
         .read(dioProvider)
@@ -1456,11 +1479,18 @@ class DiscoveryRepository {
           '/rides',
           data: {
             'pickup_location': pickupLocation,
+            'pickup_address': pickupLocation,
             'dropoff_location': dropoffLocation,
+            'dropoff_address': dropoffLocation,
+            'pickup_latitude': pickupCoordinates?.latitude,
+            'pickup_longitude': pickupCoordinates?.longitude,
+            'dropoff_latitude': dropoffCoordinates?.latitude,
+            'dropoff_longitude': dropoffCoordinates?.longitude,
             'ride_type': rideType,
             'trip_purpose': tripPurpose,
             'notes': notes,
             'fare_estimate': fareEstimate,
+            'estimated_distance_km': estimatedDistanceKm,
           },
         );
     return RideModel.fromJson(

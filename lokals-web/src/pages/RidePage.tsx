@@ -3,12 +3,15 @@ import { CarFront, Clock3, LocateFixed, MapPin } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button, EmptyState, Input, PageHeader, QueryState, SectionCard, Select, StatusBadge } from '../components/Ui'
+import { LocationPickerMap } from '../components/maps/LocationPickerMap'
+import { LocationPreviewMap } from '../components/maps/LocationPreviewMap'
 import { RequestSuccessState } from '../components/transport/RequestSuccessState'
 import { GlassPanel } from '../components/glass/GlassPanel'
 import { isDemoMode } from '../config/appMode'
 import { useCreateRide, useRides } from '../hooks/queries'
 import { getApiErrorMessage } from '../lib/api'
 import { navigateToLogin } from '../lib/authNavigation'
+import { estimatedRideMinutes, formatCoordinates, haversineDistanceKm, type LocationPoint } from '../lib/location'
 import { formatTransportStatus, transportStatusTone } from '../lib/transportStatus'
 import { useAuthStore } from '../store/auth'
 import type { RideItem } from '../types'
@@ -34,6 +37,8 @@ const tripPurposes = ['Daily commute', 'Clinic visit', 'School pickup', 'Airport
 export function RidePage() {
   const [pickupLocation, setPickupLocation] = useState(savedStops[0])
   const [dropoffLocation, setDropoffLocation] = useState('Okahandja Town Council')
+  const [pickupPoint, setPickupPoint] = useState<LocationPoint | null>(null)
+  const [dropoffPoint, setDropoffPoint] = useState<LocationPoint | null>(null)
   const [rideType, setRideType] = useState(rideOptions[0].name)
   const [tripPurpose, setTripPurpose] = useState(tripPurposes[0])
   const [notes, setNotes] = useState('')
@@ -48,12 +53,18 @@ export function RidePage() {
     () => rideOptions.find((option) => option.name === rideType) ?? rideOptions[0],
     [rideType],
   )
+  const distanceKm = useMemo(() => haversineDistanceKm(pickupPoint, dropoffPoint), [dropoffPoint, pickupPoint])
+  const estimatedDurationMinutes = useMemo(
+    () => estimatedRideMinutes(distanceKm) ?? 11,
+    [distanceKm],
+  )
 
   const estimatedFare = useMemo(() => {
     const routeBonus = pickupLocation === dropoffLocation ? 0 : 12
     const purposeBonus = tripPurpose === 'Airport trip' ? 85 : tripPurpose === 'Late shift ride' ? 20 : 0
-    return selectedRide.baseFare + routeBonus + purposeBonus
-  }, [dropoffLocation, pickupLocation, selectedRide.baseFare, tripPurpose])
+    const distanceBonus = distanceKm ? Math.round(distanceKm * 4) : 0
+    return selectedRide.baseFare + routeBonus + purposeBonus + distanceBonus
+  }, [distanceKm, dropoffLocation, pickupLocation, selectedRide.baseFare, tripPurpose])
   const recentRides = useMemo(() => (ridesQuery.data?.data ?? []).slice(0, 5), [ridesQuery.data?.data])
 
   const submit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
@@ -76,21 +87,45 @@ export function RidePage() {
     try {
       const created = await createRide.mutateAsync({
         pickup_location: pickupLocation,
+        pickup_address: pickupLocation,
+        pickup_latitude: pickupPoint?.lat,
+        pickup_longitude: pickupPoint?.lng,
         dropoff_location: dropoffLocation,
+        dropoff_address: dropoffLocation,
+        dropoff_latitude: dropoffPoint?.lat,
+        dropoff_longitude: dropoffPoint?.lng,
         ride_type: rideType,
         trip_purpose: tripPurpose,
         notes: notes.trim() || undefined,
         fare_estimate: estimatedFare,
+        estimated_distance_km: distanceKm ?? undefined,
       })
       setSuccessItem(created)
       setNotes('')
     } catch (caught) {
       setError(getApiErrorMessage(caught, 'Unable to request a ride right now.'))
     }
-  }, [createRide, dropoffLocation, estimatedFare, notes, pickupLocation, rideType, tripPurpose])
+  }, [createRide, distanceKm, dropoffLocation, dropoffPoint, estimatedFare, notes, pickupLocation, pickupPoint, rideType, tripPurpose])
 
   const setCurrentLocation = useCallback(() => {
-    setPickupLocation('Current location (near me)')
+    if (!navigator.geolocation) {
+      setError('Current location is not available in this browser. Enter the address manually or tap the map pin.')
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setPickupLocation('Current location (near me)')
+        setPickupPoint({
+          lat: Number(position.coords.latitude.toFixed(6)),
+          lng: Number(position.coords.longitude.toFixed(6)),
+        })
+      },
+      () => {
+        setError('We could not read your location. Enter the address manually or place the pin on the map.')
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    )
   }, [])
 
   return (
@@ -134,15 +169,11 @@ export function RidePage() {
                   <div className="grid gap-4 md:grid-cols-2">
                     <label className="space-y-2">
                       <span className="text-sm font-medium text-lokals-charcoal">Pickup</span>
-                      <Select value={pickupLocation} onChange={(event) => setPickupLocation(event.target.value)}>
-                        {savedStops.map((stop) => <option key={`pickup-${stop}`} value={stop}>{stop}</option>)}
-                      </Select>
+                      <Input value={pickupLocation} onChange={(event) => setPickupLocation(event.target.value)} placeholder="Enter pickup address or landmark" />
                     </label>
                     <label className="space-y-2">
                       <span className="text-sm font-medium text-lokals-charcoal">Drop-off</span>
-                      <Select value={dropoffLocation} onChange={(event) => setDropoffLocation(event.target.value)}>
-                        {savedStops.filter((stop) => stop !== 'Current location').map((stop) => <option key={`dropoff-${stop}`} value={stop}>{stop}</option>)}
-                      </Select>
+                      <Input value={dropoffLocation} onChange={(event) => setDropoffLocation(event.target.value)} placeholder="Enter destination address or landmark" />
                     </label>
                   </div>
 
@@ -165,6 +196,21 @@ export function RidePage() {
                         {label}
                       </button>
                     ))}
+                  </div>
+
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <LocationPickerMap
+                      label="Pickup map pin"
+                      value={pickupPoint}
+                      onChange={setPickupPoint}
+                      helpText="Tap the map to set the pickup pin. Manual address entry above still works if you skip this."
+                    />
+                    <LocationPickerMap
+                      label="Drop-off map pin"
+                      value={dropoffPoint}
+                      onChange={setDropoffPoint}
+                      helpText="Tap the map to set the destination pin. This helps improve the estimated distance."
+                    />
                   </div>
 
                   <div className="grid gap-3 md:grid-cols-3">
@@ -207,23 +253,34 @@ export function RidePage() {
                 <div className="rounded-[24px] bg-[linear-gradient(180deg,#eef2ff,#f8fafc)] p-5">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-lokals-purple">Route preview</p>
                   <div className="mt-4 rounded-[20px] bg-white p-4 shadow-card">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
-                        <MapPin className="h-5 w-5" />
+                    <LocationPreviewMap
+                      primary={pickupPoint}
+                      secondary={dropoffPoint}
+                      primaryLabel={pickupLocation}
+                      secondaryLabel={dropoffLocation}
+                    />
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-2xl bg-slate-50 p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+                            <MapPin className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-lokals-charcoal">{pickupLocation}</p>
+                            <p className="text-sm text-lokals-muted">{formatCoordinates(pickupPoint)}</p>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold text-lokals-charcoal">{pickupLocation}</p>
-                        <p className="text-sm text-lokals-muted">Pickup</p>
-                      </div>
-                    </div>
-                    <div className="mx-5 my-3 h-10 border-l-2 border-dashed border-lokals-purple/40" />
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
-                        <MapPin className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-lokals-charcoal">{dropoffLocation}</p>
-                        <p className="text-sm text-lokals-muted">Destination</p>
+                      <div className="rounded-2xl bg-slate-50 p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+                            <MapPin className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-lokals-charcoal">{dropoffLocation}</p>
+                            <p className="text-sm text-lokals-muted">{formatCoordinates(dropoffPoint)}</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -251,7 +308,11 @@ export function RidePage() {
                 <div className="mt-4 rounded-[24px] border border-dashed border-lokals-border bg-slate-50 p-5">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-lokals-purple">Estimated fare</p>
                   <p className="mt-2 text-3xl font-semibold text-lokals-charcoal">N$ {estimatedFare}</p>
-                  <p className="mt-3 text-sm text-lokals-muted">This range reflects the selected ride type and likely route complexity.</p>
+                  <p className="mt-3 text-sm text-lokals-muted">
+                    {distanceKm != null
+                      ? `Estimated distance ${distanceKm.toFixed(1)} km and about ${estimatedDurationMinutes} minutes.`
+                      : 'This range reflects the selected ride type. Add map pins for a better estimated distance and time.'}
+                  </p>
                 </div>
               </SectionCard>
             </div>

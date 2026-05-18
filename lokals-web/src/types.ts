@@ -461,8 +461,12 @@ export interface DeliveryItem {
   id: number
   pickup_address?: string | null
   pickup_location?: string | null
+  pickup_latitude?: number | null
+  pickup_longitude?: number | null
   dropoff_address?: string | null
   dropoff_location?: string | null
+  dropoff_latitude?: number | null
+  dropoff_longitude?: number | null
   item_description?: string | null
   parcel_description?: string | null
   parcel_size?: string | null
@@ -494,6 +498,9 @@ export interface DeliveryItem {
   reference_code?: string | null
   status_label?: string | null
   tracking_status?: string | null
+  estimated_distance_km?: number | null
+  estimated_duration_minutes?: number | null
+  map_url?: string | null
   proof_of_delivery?: {
     status?: string | null
     label?: string | null
@@ -508,7 +515,13 @@ export interface DeliveryItem {
 export interface RideItem {
   id: number
   pickup_location: string
+  pickup_address?: string | null
+  pickup_latitude?: number | null
+  pickup_longitude?: number | null
   dropoff_location: string
+  dropoff_address?: string | null
+  dropoff_latitude?: number | null
+  dropoff_longitude?: number | null
   ride_type?: string | null
   trip_purpose?: string | null
   notes?: string | null
@@ -538,7 +551,10 @@ export interface RideItem {
   reference_code?: string | null
   status_label?: string | null
   tracking_status?: string | null
+  estimated_distance_km?: number | null
   estimated_eta_minutes?: number | null
+  estimated_duration_minutes?: number | null
+  map_url?: string | null
   timeline?: Array<{
     key: string
     label: string

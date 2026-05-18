@@ -5,9 +5,11 @@ import 'package:image_picker/image_picker.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../../config/app_config.dart';
+import '../../core/models.dart';
 import '../auth/auth_controller.dart';
 import '../discovery/discovery_repository.dart';
 import 'my_reports_screen.dart';
+import '../../../shared/widgets/location_picker_map.dart';
 
 class ReportIssueScreen extends ConsumerStatefulWidget {
   const ReportIssueScreen({super.key});
@@ -21,6 +23,7 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController();
   XFile? _photo;
+  LocationPointModel? _coordinates;
   bool _isBusy = false;
   bool _isAnalyzing = false;
   String? _message;
@@ -84,6 +87,13 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
                 LokalsTextField(
                   controller: _locationController,
                   label: 'Location',
+                ),
+                const SizedBox(height: 12),
+                LocationPickerMap(
+                  label: 'Issue map pin',
+                  value: _coordinates,
+                  onChanged: (value) => setState(() => _coordinates = value),
+                  helpText: 'Tap to place the issue pin. Manual address entry still works if you skip the map.',
                 ),
                 const SizedBox(height: 12),
                 AppButton(
@@ -156,6 +166,7 @@ class _ReportIssueScreenState extends ConsumerState<ReportIssueScreen> {
                           area: user?.defaultArea,
                           priority: _priority,
                           photo: _photo,
+                          coordinates: _coordinates,
                         );
                     ref.invalidate(myReportsProvider);
                     if (!mounted) return;

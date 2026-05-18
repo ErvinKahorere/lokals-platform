@@ -8,6 +8,7 @@ use App\Models\CourierProfile;
 use App\Models\DeliveryRequest;
 use App\Models\User;
 use App\Notifications\SystemNotification;
+use App\Services\LocationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
@@ -15,6 +16,11 @@ use Illuminate\Support\Facades\Storage;
 
 class DeliveryController extends Controller
 {
+    public function __construct(
+        private readonly LocationService $locationService,
+    ) {
+    }
+
     public function index(Request $request): JsonResponse
     {
         $query = $request->user()->deliveryRequests()->with($this->deliveryRelations())->latest();
@@ -53,6 +59,14 @@ class DeliveryController extends Controller
     public function estimate(Request $request): JsonResponse
     {
         $validated = $request->validate([
+            'pickup_address' => ['nullable', 'string', 'required_without:pickup_location'],
+            'pickup_location' => ['nullable', 'string', 'required_without:pickup_address'],
+            'pickup_latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'pickup_longitude' => ['nullable', 'numeric', 'between:-180,180'],
+            'dropoff_address' => ['nullable', 'string', 'required_without:dropoff_location'],
+            'dropoff_location' => ['nullable', 'string', 'required_without:dropoff_address'],
+            'dropoff_latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'dropoff_longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'parcel_size' => ['nullable', 'string', 'max:60'],
             'urgency' => ['nullable', 'string', 'max:40'],
             'weight_kg' => ['nullable', 'numeric'],
@@ -68,11 +82,18 @@ class DeliveryController extends Controller
             $base += 25;
         }
 
+        $distanceKm = $this->locationService->distanceKm(
+            isset($validated['pickup_latitude']) ? (float) $validated['pickup_latitude'] : null,
+            isset($validated['pickup_longitude']) ? (float) $validated['pickup_longitude'] : null,
+            isset($validated['dropoff_latitude']) ? (float) $validated['dropoff_latitude'] : null,
+            isset($validated['dropoff_longitude']) ? (float) $validated['dropoff_longitude'] : null,
+        ) ?? 5.3;
+
         return response()->json([
             'data' => [
                 'estimated_price' => $base,
-                'estimated_distance_km' => 5.3,
-                'estimated_duration_minutes' => 18,
+                'estimated_distance_km' => $distanceKm,
+                'estimated_duration_minutes' => max(8, (int) round($distanceKm * 3.1)),
             ],
         ]);
     }
@@ -97,8 +118,12 @@ class DeliveryController extends Controller
         $validated = $request->validate([
             'pickup_address' => ['nullable', 'string', 'required_without:pickup_location'],
             'pickup_location' => ['nullable', 'string', 'required_without:pickup_address'],
+            'pickup_latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'pickup_longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'dropoff_address' => ['nullable', 'string', 'required_without:dropoff_location'],
             'dropoff_location' => ['nullable', 'string', 'required_without:dropoff_address'],
+            'dropoff_latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'dropoff_longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'item_description' => ['nullable', 'string', 'required_without:parcel_description'],
             'parcel_description' => ['nullable', 'string', 'required_without:item_description'],
             'parcel_size' => ['nullable', 'string', 'max:60'],
@@ -110,11 +135,22 @@ class DeliveryController extends Controller
             'photo' => ['nullable', 'image', 'max:6144'],
         ]);
 
+        $estimatedDistanceKm = $this->locationService->distanceKm(
+            isset($validated['pickup_latitude']) ? (float) $validated['pickup_latitude'] : null,
+            isset($validated['pickup_longitude']) ? (float) $validated['pickup_longitude'] : null,
+            isset($validated['dropoff_latitude']) ? (float) $validated['dropoff_latitude'] : null,
+            isset($validated['dropoff_longitude']) ? (float) $validated['dropoff_longitude'] : null,
+        );
+
         $payload = [
             'pickup_address' => $validated['pickup_address'] ?? $validated['pickup_location'] ?? null,
             'pickup_location' => $validated['pickup_location'] ?? $validated['pickup_address'] ?? null,
+            'pickup_latitude' => $validated['pickup_latitude'] ?? null,
+            'pickup_longitude' => $validated['pickup_longitude'] ?? null,
             'dropoff_address' => $validated['dropoff_address'] ?? $validated['dropoff_location'] ?? null,
             'dropoff_location' => $validated['dropoff_location'] ?? $validated['dropoff_address'] ?? null,
+            'dropoff_latitude' => $validated['dropoff_latitude'] ?? null,
+            'dropoff_longitude' => $validated['dropoff_longitude'] ?? null,
             'item_description' => $validated['item_description'] ?? $validated['parcel_description'] ?? null,
             'parcel_description' => $validated['parcel_description'] ?? $validated['item_description'] ?? null,
             'notes' => $validated['notes'] ?? null,
@@ -469,6 +505,20 @@ class DeliveryController extends Controller
         $payload['reference_code'] = $this->referenceCode($delivery->id, 'DEL');
         $payload['status_label'] = $this->statusLabel((string) ($delivery->status ?? 'requested'));
         $payload['tracking_status'] = $delivery->status === 'accepted' ? 'courier_assigned' : $delivery->status;
+        $payload['estimated_distance_km'] = $this->locationService->distanceKm(
+            $delivery->pickup_latitude !== null ? (float) $delivery->pickup_latitude : null,
+            $delivery->pickup_longitude !== null ? (float) $delivery->pickup_longitude : null,
+            $delivery->dropoff_latitude !== null ? (float) $delivery->dropoff_latitude : null,
+            $delivery->dropoff_longitude !== null ? (float) $delivery->dropoff_longitude : null,
+        );
+        $payload['estimated_duration_minutes'] = $payload['estimated_distance_km'] !== null
+            ? max(8, (int) round(((float) $payload['estimated_distance_km']) * 3.1))
+            : 18;
+        $payload['map_url'] = $this->locationService->mapsUrl(
+            $delivery->pickup_latitude !== null ? (float) $delivery->pickup_latitude : null,
+            $delivery->pickup_longitude !== null ? (float) $delivery->pickup_longitude : null,
+            $delivery->pickup_location ?: $delivery->pickup_address,
+        );
         $payload['proof_of_delivery'] = $delivery->status === 'delivered'
             ? ['status' => 'ready', 'label' => 'Delivered and confirmed']
             : ['status' => 'pending', 'label' => 'Proof of delivery will appear here once confirmed'];

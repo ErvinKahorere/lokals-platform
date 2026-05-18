@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Camera, LoaderCircle, MapPinned, Mic, Video } from 'lucide-react'
 import { Button, Input, PageHeader, SectionCard, Select, TextArea } from '../components/Ui'
+import { LocationPickerMap } from '../components/maps/LocationPickerMap'
 import { useAiAssist, useCreateReport } from '../hooks/queries'
 import { getApiErrorMessage } from '../lib/api'
+import { formatCoordinates, type LocationPoint } from '../lib/location'
 import { OKAHANDJA_AREAS, PILOT_TOWN } from '../lib/pilot'
 
 type AttachmentPreview = {
@@ -44,6 +46,8 @@ export function ReportIssuePage() {
   const [message, setMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [area, setArea] = useState('Nau-Aib')
+  const [location, setLocation] = useState('Nau-Aib, Okahandja')
+  const [coordinates, setCoordinates] = useState<LocationPoint | null>(null)
   const [attachments, setAttachments] = useState<AttachmentPreview[]>([])
   const [isLocating, setIsLocating] = useState(false)
   const createReport = useCreateReport()
@@ -85,23 +89,15 @@ export function ReportIssuePage() {
       return
     }
 
-    const locationInput = document.querySelector<HTMLInputElement>('input[name="location"]')
-    const latInput = document.querySelector<HTMLInputElement>('input[name="lat"]')
-    const lngInput = document.querySelector<HTMLInputElement>('input[name="lng"]')
-
     setIsLocating(true)
     setErrorMessage('')
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        if (locationInput) {
-          locationInput.value = `${area}, ${PILOT_TOWN}`
-        }
-        if (latInput) {
-          latInput.value = String(position.coords.latitude)
-        }
-        if (lngInput) {
-          lngInput.value = String(position.coords.longitude)
-        }
+        setLocation(`${area}, ${PILOT_TOWN}`)
+        setCoordinates({
+          lat: Number(position.coords.latitude.toFixed(6)),
+          lng: Number(position.coords.longitude.toFixed(6)),
+        })
         setMessage('Current location added. You can still adjust the address before submitting.')
         setIsLocating(false)
       },
@@ -125,15 +121,14 @@ export function ReportIssuePage() {
       payload.append('category', String(formData.get('category') ?? ''))
       payload.append('title', String(formData.get('title') ?? ''))
       payload.append('description', String(formData.get('description') ?? ''))
-      payload.append('location', String(formData.get('location') ?? ''))
+      payload.append('location', location)
       payload.append('town', PILOT_TOWN)
       payload.append('area', area)
       payload.append('priority', String(formData.get('priority') ?? 'medium'))
-
-      const lat = String(formData.get('lat') ?? '').trim()
-      const lng = String(formData.get('lng') ?? '').trim()
-      if (lat) payload.append('lat', lat)
-      if (lng) payload.append('lng', lng)
+      if (coordinates) {
+        payload.append('lat', String(coordinates.lat))
+        payload.append('lng', String(coordinates.lng))
+      }
 
       attachments.forEach((attachment) => payload.append('attachments[]', attachment.file))
 
@@ -202,10 +197,16 @@ export function ReportIssuePage() {
 
           <label className="space-y-2 text-sm font-medium text-lokals-charcoal">
             <span>Address or landmark</span>
-            <Input name="location" placeholder="Nau-Aib, near the bus stop" defaultValue="Nau-Aib, Okahandja" required />
+            <Input name="location" placeholder="Nau-Aib, near the bus stop" value={location} onChange={(event) => setLocation(event.target.value)} required />
           </label>
-          <input type="hidden" name="lat" />
-          <input type="hidden" name="lng" />
+
+          <LocationPickerMap
+            label="Issue map pin"
+            value={coordinates}
+            onChange={setCoordinates}
+            helpText="Tap to place the issue pin. If the map is unavailable, the address above is still enough to submit the report."
+          />
+          <p className="text-sm text-lokals-muted">Selected coordinates: {formatCoordinates(coordinates)}</p>
 
           <label className="space-y-2 text-sm font-medium text-lokals-charcoal">
             <span>Detailed description</span>
