@@ -145,7 +145,7 @@ export function DashboardWorkspacePage({
               <p className="mt-2 text-sm leading-6 text-lokals-muted">
                 {workspaceQuery.data?.source === 'api'
                   ? 'This route is already drawing from a live endpoint. Use it as a working control surface while deeper detail pages continue to expand.'
-                  : 'This route is still using centralized fallback data, but the navigation, loading states, and table surface are already production-safe for later API wiring.'}
+                  : 'This route is using centralized fallback data for now, but the navigation, loading states, and workflow surface are already ready for API wiring.'}
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <Link to="/dashboard/modes" className="rounded-full border border-lokals-border bg-white px-4 py-2 text-sm font-semibold text-lokals-charcoal">

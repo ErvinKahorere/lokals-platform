@@ -8,6 +8,7 @@ import '../../../shared/widgets/app_network_image.dart';
 import '../../../shared/widgets/experience/contact_actions.dart';
 import '../../../shared/widgets/experience/save_button.dart';
 import '../../core/experience_helpers.dart';
+import '../../services/contact_action_service.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../discovery/discovery_repository.dart';
@@ -186,7 +187,15 @@ class AccommodationDetailsScreen extends ConsumerWidget {
                       ],
                     ),
                     const SizedBox(height: 10),
-                    const Text('Map preview will expand here as location coverage improves.', style: AppTextStyles.caption),
+                    AppButton(
+                      label: 'Open in maps',
+                      expanded: false,
+                      variant: AppButtonVariant.secondary,
+                      onPressed: () => const ContactActionService().openMaps(
+                        context,
+                        query: locationLabel.isEmpty ? (item.location ?? 'Okahandja') : locationLabel,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -206,8 +215,13 @@ class AccommodationDetailsScreen extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: AppButton(
-                      label: 'Book / Enquire',
-                      onPressed: () => _showBookingPlaceholder(context),
+                      label: 'Send enquiry',
+                      onPressed: () => _showBookingActions(
+                        context,
+                        ownerName: item.ownerName ?? item.businessName ?? item.userName ?? item.title,
+                        phone: item.ownerPhone ?? item.businessPhone ?? item.userPhone,
+                        whatsapp: item.ownerWhatsapp ?? item.businessWhatsapp ?? item.userWhatsapp ?? item.userPhone,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -291,7 +305,12 @@ class AccommodationDetailsScreen extends ConsumerWidget {
   }
 }
 
-void _showBookingPlaceholder(BuildContext context) {
+void _showBookingActions(
+  BuildContext context, {
+  required String ownerName,
+  required String? phone,
+  required String? whatsapp,
+}) {
   showModalBottomSheet<void>(
     context: context,
     builder: (context) => SafeArea(
@@ -304,10 +323,30 @@ void _showBookingPlaceholder(BuildContext context) {
             const Text('Booking / enquiry', style: AppTextStyles.h3),
             const SizedBox(height: 8),
             const Text(
-              'Direct booking is coming soon. Please call or WhatsApp the owner for now to confirm availability and pricing.',
+              'Direct booking is not enabled yet. Contact the owner now to confirm availability, pricing, and viewing details.',
               style: AppTextStyles.bodyMuted,
             ),
             const SizedBox(height: 16),
+            if (whatsapp != null && whatsapp.isNotEmpty) ...[
+              AppButton(
+                label: 'WhatsApp owner',
+                onPressed: () => const ContactActionService().openWhatsApp(
+                  context,
+                  phone: whatsapp,
+                  name: ownerName,
+                  message: 'Hi, I saw your accommodation listing on LOKALS and would like to enquire.',
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            if (phone != null && phone.isNotEmpty) ...[
+              AppButton(
+                label: 'Call owner',
+                variant: AppButtonVariant.secondary,
+                onPressed: () => const ContactActionService().call(context, phone),
+              ),
+              const SizedBox(height: 10),
+            ],
             AppButton(
               label: 'Close',
               onPressed: () => Navigator.of(context).pop(),

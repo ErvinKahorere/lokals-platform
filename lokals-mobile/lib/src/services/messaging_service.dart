@@ -2,6 +2,6 @@ class MessagingService {
   const MessagingService();
 
   String getPlaceholderMessage(String name) {
-    return 'Messaging is coming soon. Please call or WhatsApp $name for now.';
+    return 'In-app messaging is not ready for this contact yet. Please call or WhatsApp $name for the fastest reply.';
   }
 }

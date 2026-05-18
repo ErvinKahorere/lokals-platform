@@ -16,7 +16,6 @@ import 'features/activity/notifications_screen.dart';
 import 'features/bookings/booking_screen.dart';
 import 'features/bookings/my_bookings_screen.dart';
 import 'features/bookings/provider_bookings_screen.dart';
-import 'features/common/feature_placeholder_screen.dart';
 import 'features/community_projects/community_project_details_screen.dart';
 import 'features/community_projects/community_project_list_screen.dart';
 import 'features/community_projects/community_project_review_queue_screen.dart';
@@ -478,23 +477,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/following-organizations',
-        builder: (context, state) => const FeaturePlaceholderScreen(
-          title: 'Followed organizations',
-          description: 'A richer followed organizations feed is on the way. For now, open Activity to catch community updates and followed alerts in one place.',
-          primaryLabel: 'Open activity',
-          primaryRoute: '/activity',
-          icon: Icons.groups_2_outlined,
-        ),
+        builder: (context, state) => const ActivityScreen(),
       ),
       GoRoute(
         path: '/verification',
-        builder: (context, state) => const FeaturePlaceholderScreen(
-          title: 'Verification',
-          description: 'Profile verification tools are being polished. Keep your identity, business, and provider details updated from your profile in the meantime.',
-          primaryLabel: 'Open profile',
-          primaryRoute: '/profile/edit',
-          icon: Icons.verified_user_outlined,
-        ),
+        builder: (context, state) => const RoleModesScreen(),
       ),
       GoRoute(
         path: '/support',

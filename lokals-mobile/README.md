@@ -1,6 +1,6 @@
 # LOKALS Mobile
 
-Flutter mobile app for the LOKALS Phase 1 MVP.
+Flutter mobile app for the LOKALS civic platform.
 
 ## Setup
 
@@ -24,9 +24,9 @@ Use `http://127.0.0.1:8000/api/v1` for desktop/web Flutter targets when needed.
 
 ## Demo accounts
 
-- Resident: `+264810000002` / `password`
-- Provider: `+264810000003` / `password`
-- Admin: `+264810000001` / `password`
+- Demo Resident: `resident@lokals.test` / `password`
+- Demo Driver: `driver@lokals.test` / `password`
+- Demo Courier: `courier@lokals.test` / `password`
 
 ## Included screens
 
@@ -35,3 +35,9 @@ Use `http://127.0.0.1:8000/api/v1` for desktop/web Flutter targets when needed.
 - `BookingScreen`
 - `MyBookingsScreen`
 - `ProviderBookingsScreen`
+- `RideRequestScreen`
+- `RideDetailsScreen`
+- `DeliveryRequestScreen`
+- `DeliveryDetailsScreen`
+- `DriverDashboardScreen`
+- `CourierDashboardScreen`

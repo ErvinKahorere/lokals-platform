@@ -66,7 +66,7 @@ class TicketDetailsScreen extends ConsumerWidget {
                     ],
                     if (ticket.qrCodePayload != null) ...[
                       const SizedBox(height: 12),
-                      const Text('QR placeholder ready for a later check-in pass.'),
+                      const Text('Present this ticket code at check-in. QR check-in support will use the same access record when venue scanners are enabled.'),
                     ],
                     const SizedBox(height: 16),
                     Wrap(

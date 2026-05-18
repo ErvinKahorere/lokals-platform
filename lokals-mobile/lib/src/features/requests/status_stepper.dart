@@ -99,8 +99,24 @@ class StatusStepper extends StatelessWidget {
 
   String _label(String value) {
     final normalized = _normalizeStatus(value);
-    if (normalized == 'accepted') return 'Accepted';
-    return value
+    switch (normalized) {
+      case 'accepted':
+        return 'Assigned';
+      case 'driver_assigned':
+        return 'Driver assigned';
+      case 'courier_assigned':
+        return 'Courier assigned';
+      case 'pickup_confirmed':
+        return 'Pickup confirmed';
+      case 'in_progress':
+        return 'Trip in progress';
+      case 'in_transit':
+        return 'In transit';
+      default:
+        break;
+    }
+
+    return normalized
         .split('_')
         .map((part) => part.isEmpty ? part : '${part[0].toUpperCase()}${part.substring(1)}')
         .join(' ');
@@ -109,7 +125,7 @@ class StatusStepper extends StatelessWidget {
   String _normalizeStatus(String value) {
     switch (value) {
       case 'assigned':
-        return 'accepted';
+        return 'courier_assigned';
       default:
         return value;
     }

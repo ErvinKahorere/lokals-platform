@@ -40,4 +40,28 @@ class ContactActionService {
       const SnackBar(content: Text('Could not open WhatsApp right now.')),
     );
   }
+
+  Future<void> openMaps(BuildContext context, {required String query}) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Location details are not available yet.')),
+      );
+      return;
+    }
+
+    final uri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(trimmed)}',
+    );
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      return;
+    }
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Could not open maps right now. Use this address: $trimmed')),
+    );
+  }
 }

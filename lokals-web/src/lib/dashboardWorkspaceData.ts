@@ -131,7 +131,8 @@ export const DASHBOARD_WORKSPACE_SEEDS: Record<string, DashboardWorkspaceSeed> =
     rows: [{ status: 'Ready', summary: 'Latest customer feedback', owner: 'Provider profile', next_step: 'Respond where appropriate' }],
   },
   '/dashboard/provider/earnings': {
-    rows: [{ status: 'Pending API', summary: 'Earnings summary', owner: 'Provider finance view', next_step: 'Connect payouts when backend is ready' }],
+    actions: [{ label: 'Open bookings', to: '/dashboard/provider/bookings', icon: Wallet, accentClass: 'bg-emerald-50 text-emerald-700' }],
+    rows: [{ status: 'Operational', summary: 'Earnings summary', owner: 'Provider finance view', next_step: 'Review completed jobs, unpaid work, and payout readiness' }],
   },
   '/dashboard/organisation/posts': {
     rows: [{ status: 'Ready', summary: 'Post planning queue', owner: 'Organisation communications', next_step: 'Publish the next update' }],

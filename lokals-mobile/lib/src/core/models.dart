@@ -127,7 +127,7 @@ class ReportModel {
       category: (json['category'] ?? 'other').toString(),
       title: (json['title'] ?? 'Report').toString(),
       description: (json['description'] ?? '').toString(),
-      status: (json['status'] ?? 'open').toString(),
+      status: (json['status'] ?? 'submitted').toString(),
       location: json['location'] as String?,
       town: json['town'] as String?,
       area: json['area'] as String?,
@@ -596,6 +596,7 @@ class DeliveryModel {
     this.notes,
     this.photoUrl,
     this.status,
+    this.trackingStatus,
     this.statusLabel,
     this.referenceCode,
     this.createdAt,
@@ -621,6 +622,7 @@ class DeliveryModel {
   final String? notes;
   final String? photoUrl;
   final String? status;
+  final String? trackingStatus;
   final String? statusLabel;
   final String? referenceCode;
   final String? createdAt;
@@ -651,6 +653,7 @@ class DeliveryModel {
       notes: json['notes'] as String?,
       photoUrl: json['photo_url'] as String?,
       status: json['status']?.toString(),
+      trackingStatus: json['tracking_status']?.toString(),
       statusLabel: json['status_label']?.toString(),
       referenceCode: json['reference_code']?.toString(),
       createdAt: json['created_at'] as String?,
@@ -1049,6 +1052,7 @@ class RideModel {
     this.tripPurpose,
     this.notes,
     this.status,
+    this.trackingStatus,
     this.statusLabel,
     this.referenceCode,
     this.estimatedEtaMinutes,
@@ -1072,6 +1076,7 @@ class RideModel {
   final String? tripPurpose;
   final String? notes;
   final String? status;
+  final String? trackingStatus;
   final String? statusLabel;
   final String? referenceCode;
   final int? estimatedEtaMinutes;
@@ -1099,6 +1104,7 @@ class RideModel {
       tripPurpose: json['trip_purpose'] as String?,
       notes: json['notes'] as String?,
       status: json['status']?.toString(),
+      trackingStatus: json['tracking_status']?.toString(),
       statusLabel: json['status_label']?.toString(),
       referenceCode: json['reference_code']?.toString(),
       estimatedEtaMinutes: json['estimated_eta_minutes'] as int?,

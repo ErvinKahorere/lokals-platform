@@ -22,7 +22,7 @@ class ReportDetailsScreen extends ConsumerStatefulWidget {
 }
 
 class _ReportDetailsScreenState extends ConsumerState<ReportDetailsScreen> {
-  String _status = 'open';
+  String? _status;
   final _noteController = TextEditingController();
   bool _isSaving = false;
 
@@ -46,7 +46,7 @@ class _ReportDetailsScreenState extends ConsumerState<ReportDetailsScreen> {
       showBack: true,
       child: report.when(
         data: (item) {
-          _status = _status == 'open' ? item.status : _status;
+          final selectedStatus = _status ?? item.status;
 
           return ListView(
             padding: const EdgeInsets.all(20),
@@ -62,11 +62,13 @@ class _ReportDetailsScreenState extends ConsumerState<ReportDetailsScreen> {
                   children: [
                     AppBadge(
                       label: item.status.replaceAll('_', ' '),
-                      tone: item.status == 'resolved'
+                      tone: item.status == 'resolved' || item.status == 'closed'
                           ? AppBadgeTone.success
                           : item.status == 'rejected'
                               ? AppBadgeTone.danger
-                              : AppBadgeTone.warning,
+                              : item.status == 'in_progress' || item.status == 'assigned'
+                                  ? AppBadgeTone.info
+                                  : AppBadgeTone.warning,
                     ),
                     const SizedBox(height: 12),
                     Text(item.description, style: Theme.of(context).textTheme.bodyLarge),
@@ -91,14 +93,18 @@ class _ReportDetailsScreenState extends ConsumerState<ReportDetailsScreen> {
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
-                        initialValue: _status,
+                        initialValue: selectedStatus,
                         items: const [
-                          DropdownMenuItem(value: 'open', child: Text('Open')),
+                          DropdownMenuItem(value: 'submitted', child: Text('Submitted')),
+                          DropdownMenuItem(value: 'received', child: Text('Received')),
+                          DropdownMenuItem(value: 'in_review', child: Text('In review')),
+                          DropdownMenuItem(value: 'assigned', child: Text('Assigned')),
                           DropdownMenuItem(value: 'in_progress', child: Text('In progress')),
                           DropdownMenuItem(value: 'resolved', child: Text('Resolved')),
                           DropdownMenuItem(value: 'rejected', child: Text('Rejected')),
+                          DropdownMenuItem(value: 'closed', child: Text('Closed')),
                         ],
-                        onChanged: (value) => setState(() => _status = value ?? _status),
+                        onChanged: (value) => setState(() => _status = value ?? selectedStatus),
                         decoration: const InputDecoration(labelText: 'Status'),
                       ),
                       const SizedBox(height: 12),
@@ -116,7 +122,7 @@ class _ReportDetailsScreenState extends ConsumerState<ReportDetailsScreen> {
                           setState(() => _isSaving = true);
                           await ref.read(discoveryRepositoryProvider).updateReportStatus(
                                 reportId: item.id,
-                                status: _status,
+                                status: _status ?? item.status,
                                 resolutionNotes: _noteController.text.trim(),
                               );
                           ref.invalidate(reportDetailsProvider(widget.reportId));
@@ -135,11 +141,14 @@ class _ReportDetailsScreenState extends ConsumerState<ReportDetailsScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LokalsLoadingScreen(
+          title: 'Loading report details',
+          message: 'Fetching the latest status, notes, and response details...',
+        ),
         error: (error, _) => Center(
           child: EmptyStateView(
-            title: 'Unable to load this report.',
-            body: 'Please try again in a moment.',
+            title: 'Report details unavailable',
+            body: 'We could not refresh this report right now. Please try again shortly.',
             action: AppButton(
               label: 'Retry',
               expanded: false,

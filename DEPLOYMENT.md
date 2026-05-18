@@ -48,6 +48,16 @@ DB_SSLMODE=prefer
 CORS_ALLOWED_ORIGINS=https://lokals-platform.vercel.app,http://localhost:5173,http://127.0.0.1:5173
 QUEUE_CONNECTION=database
 FILESYSTEM_DISK=local
+BROADCAST_CONNECTION=reverb
+REDIS_HOST=
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REVERB_APP_ID=
+REVERB_APP_KEY=
+REVERB_APP_SECRET=
+REVERB_HOST=
+REVERB_PORT=443
+REVERB_SCHEME=https
 ```
 
 ### Render PostgreSQL Env Variables
@@ -82,6 +92,11 @@ VITE_API_URL=https://lokals-platform.onrender.com
 ```env
 VITE_APP_URL=https://lokals-platform.vercel.app
 VITE_USE_SANCTUM_COOKIE_AUTH=false
+VITE_API_BASE_URL=https://lokals-platform.onrender.com
+VITE_REVERB_HOST=
+VITE_REVERB_PORT=443
+VITE_REVERB_SCHEME=https
+VITE_REVERB_APP_KEY=
 ```
 
 Set `VITE_USE_SANCTUM_COOKIE_AUTH=true` only if the web app is using Sanctum cookie-based SPA auth. Leave it `false` for bearer-token-only flows.
@@ -93,3 +108,4 @@ Set `VITE_USE_SANCTUM_COOKIE_AUTH=true` only if the web app is using Sanctum coo
 - If `APP_KEY` is empty during deploy, [deploy-render.sh](</E:/src/xamp/htdocs/Lokals v1/lokals-backend/scripts/deploy-render.sh>) generates one safely.
 - The backend health endpoint is available at `/api/health`.
 - CORS is configured to allow `FRONTEND_URL`, `http://localhost:5173`, and `http://127.0.0.1:5173` with credentials enabled.
+- Render production should include a queue worker and websocket/broadcast service alongside the main API if live dashboard updates are required.

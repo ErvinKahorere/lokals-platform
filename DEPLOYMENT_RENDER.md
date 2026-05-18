@@ -43,6 +43,17 @@ SESSION_DRIVER=file
 SESSION_DOMAIN=
 SESSION_SECURE_COOKIE=true
 SESSION_SAME_SITE=none
+BROADCAST_CONNECTION=reverb
+QUEUE_CONNECTION=database
+REDIS_HOST=
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REVERB_APP_ID=
+REVERB_APP_KEY=
+REVERB_APP_SECRET=
+REVERB_HOST=
+REVERB_PORT=443
+REVERB_SCHEME=https
 ```
 
 ## Deploy Process
@@ -133,3 +144,9 @@ Render free tier does not provide an interactive shell, so automatic startup mig
 
 - Confirm the container is using [scripts/start-render.sh](</E:/src/xamp/htdocs/Lokals v1/scripts/start-render.sh>) as its startup command.
 - Confirm the database environment variables are available at runtime.
+
+### Realtime or queue updates do not appear
+
+- Confirm a queue worker is running for queued notifications and broadcasts.
+- Confirm Reverb or your Pusher-compatible broadcaster is deployed with the `REVERB_*` or `PUSHER_*` variables configured.
+- Confirm the frontend websocket host, port, scheme, and app key match the backend broadcaster settings.

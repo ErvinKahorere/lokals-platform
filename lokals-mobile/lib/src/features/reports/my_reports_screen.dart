@@ -61,11 +61,13 @@ class MyReportsScreen extends ConsumerWidget {
                               ),
                               AppBadge(
                                 label: report.status.replaceAll('_', ' '),
-                                tone: report.status == 'resolved'
+                                tone: report.status == 'resolved' || report.status == 'closed'
                                     ? AppBadgeTone.success
                                     : report.status == 'rejected'
                                         ? AppBadgeTone.danger
-                                        : AppBadgeTone.warning,
+                                        : report.status == 'in_progress' || report.status == 'assigned'
+                                            ? AppBadgeTone.info
+                                            : AppBadgeTone.warning,
                               ),
                             ],
                           ),
@@ -88,8 +90,8 @@ class MyReportsScreen extends ConsumerWidget {
         ),
         error: (error, _) => Center(
           child: EmptyStateView(
-            title: 'Unable to load reports.',
-            body: 'Please try again in a moment.',
+            title: 'Reports unavailable',
+            body: 'We could not load report activity right now. Try refreshing in a moment.',
             action: AppButton(
               label: 'Retry',
               expanded: false,

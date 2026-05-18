@@ -16,6 +16,9 @@ export function formatTransportStatus(
 
   const raw = String(status ?? 'requested')
   if (raw === 'accepted') return 'Assigned'
+  if (raw === 'driver_assigned') return 'Driver assigned'
+  if (raw === 'courier_assigned') return 'Courier assigned'
+  if (raw === 'searching') return 'Searching'
   return raw.replaceAll('_', ' ')
 }
 
@@ -32,6 +35,8 @@ export function transportStatusTone(status?: string | null): TransportTone {
     case 'searching':
     case 'requested':
     case 'accepted':
+    case 'driver_assigned':
+    case 'courier_assigned':
     case 'arrived':
     case 'in_progress':
     case 'pickup_confirmed':

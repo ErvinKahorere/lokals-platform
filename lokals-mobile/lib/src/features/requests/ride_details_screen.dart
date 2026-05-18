@@ -16,7 +16,7 @@ class RideDetailsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ride = ref.watch(rideDetailsProvider(rideId));
-    const steps = ['requested', 'accepted', 'in_progress', 'completed', 'cancelled'];
+    const steps = ['searching', 'driver_assigned', 'arrived', 'in_progress', 'completed', 'cancelled'];
 
     return LokalsShell(
       title: 'Ride status',
@@ -50,7 +50,7 @@ class RideDetailsScreen extends ConsumerWidget {
                               children: [
                                 Text(_rideTypeLabel(item.rideType), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
                                 const SizedBox(height: 4),
-                                AppBadge(label: item.statusLabel ?? (item.status ?? 'requested').replaceAll('_', ' ')),
+                                AppBadge(label: item.statusLabel ?? _statusLabel(item.trackingStatus ?? item.status)),
                               ],
                             ),
                           ),
@@ -67,50 +67,73 @@ class RideDetailsScreen extends ConsumerWidget {
                       const SizedBox(height: 14),
                       AppCard(
                         color: AppColors.neutralSoftAlt,
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const CircleAvatar(
-                              backgroundColor: Color(0xFFEDE9FE),
-                              child: Icon(Icons.local_taxi_outlined, color: AppColors.primaryPurple),
+                            Row(
+                              children: [
+                                const CircleAvatar(
+                                  backgroundColor: Color(0xFFEDE9FE),
+                                  child: Icon(Icons.local_taxi_outlined, color: AppColors.primaryPurple),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.driverName?.trim().isNotEmpty == true ? item.driverName! : 'Verified taxi operator pending',
+                                        style: const TextStyle(fontWeight: FontWeight.w700),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        (item.driverPhone ?? '').isNotEmpty
+                                            ? item.driverPhone!
+                                            : 'A driver contact will appear once a nearby taxi accepts your ride.',
+                                        style: const TextStyle(color: AppColors.mutedText),
+                                      ),
+                                      if ((item.vehicleLabel ?? '').isNotEmpty) ...[
+                                        const SizedBox(height: 4),
+                                        Text('Vehicle: ${item.vehicleLabel}', style: const TextStyle(color: AppColors.mutedText)),
+                                      ],
+                                      if ((item.driverVehicleRegistration ?? '').isNotEmpty) ...[
+                                        const SizedBox(height: 4),
+                                        Text('Plate: ${item.driverVehicleRegistration}', style: const TextStyle(color: AppColors.mutedText)),
+                                      ],
+                                      if (item.driverRating != null) ...[
+                                        const SizedBox(height: 4),
+                                        Text('Driver rating: ${item.driverRating!.toStringAsFixed(1)}/5', style: const TextStyle(color: AppColors.mutedText)),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                            if ((item.driverPhone ?? '').isNotEmpty) ...[
+                              const SizedBox(height: 12),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
                                 children: [
-                                  Text(
-                                    item.driverName?.trim().isNotEmpty == true ? item.driverName! : 'Verified taxi operator pending',
-                                    style: const TextStyle(fontWeight: FontWeight.w700),
+                                  AppButton(
+                                    label: 'Call',
+                                    expanded: false,
+                                    variant: AppButtonVariant.secondary,
+                                    onPressed: () => const ContactActionService().call(context, item.driverPhone!),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    (item.driverPhone ?? '').isNotEmpty
-                                        ? item.driverPhone!
-                                        : 'A driver contact will appear once a nearby taxi accepts your ride.',
-                                    style: const TextStyle(color: AppColors.mutedText),
+                                  AppButton(
+                                    label: 'WhatsApp',
+                                    expanded: false,
+                                    onPressed: () => const ContactActionService().openWhatsApp(
+                                      context,
+                                      phone: item.driverPhone!,
+                                      name: item.driverName,
+                                      message: 'Hi, I am tracking my LOKALS ride and need an update.',
+                                    ),
                                   ),
-                                  if ((item.vehicleLabel ?? '').isNotEmpty) ...[
-                                    const SizedBox(height: 4),
-                                    Text('Vehicle: ${item.vehicleLabel}', style: const TextStyle(color: AppColors.mutedText)),
-                                  ],
-                                  if ((item.driverVehicleRegistration ?? '').isNotEmpty) ...[
-                                    const SizedBox(height: 4),
-                                    Text('Plate: ${item.driverVehicleRegistration}', style: const TextStyle(color: AppColors.mutedText)),
-                                  ],
-                                  if (item.driverRating != null) ...[
-                                    const SizedBox(height: 4),
-                                    Text('Driver rating: ${item.driverRating!.toStringAsFixed(1)}/5', style: const TextStyle(color: AppColors.mutedText)),
-                                  ],
                                 ],
                               ),
-                            ),
-                            if ((item.driverPhone ?? '').isNotEmpty)
-                              AppButton(
-                                label: 'Call',
-                                expanded: false,
-                                variant: AppButtonVariant.secondary,
-                                onPressed: () => const ContactActionService().call(context, item.driverPhone!),
-                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -120,15 +143,15 @@ class RideDetailsScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 StatusStepper(
                   steps: steps,
-                  current: item.status ?? 'requested',
+                  current: _rideStepperStatus(item.trackingStatus ?? item.status),
                   updatedAt: item.updatedAt,
                 ),
               ],
             ),
             loading: () => const AppCard(child: LoadingSkeleton(height: 120)),
             error: (error, _) => EmptyState(
-              title: 'Unable to load ride',
-              body: 'Please try again in a moment.',
+              title: 'Ride details unavailable',
+              body: 'We could not refresh this ride right now. Check your connection and try again.',
               actionLabel: 'Retry',
               onAction: () => ref.invalidate(rideDetailsProvider(rideId)),
             ),
@@ -136,6 +159,35 @@ class RideDetailsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+String _rideStepperStatus(String? status) {
+  switch (status) {
+    case 'accepted':
+      return 'driver_assigned';
+    default:
+      return status ?? 'searching';
+  }
+}
+
+String _statusLabel(String? status) {
+  switch (status) {
+    case 'searching':
+      return 'Searching for driver';
+    case 'driver_assigned':
+    case 'accepted':
+      return 'Driver assigned';
+    case 'arrived':
+      return 'Driver arrived';
+    case 'in_progress':
+      return 'Trip in progress';
+    case 'completed':
+      return 'Completed';
+    case 'cancelled':
+      return 'Cancelled';
+    default:
+      return (status ?? 'searching').replaceAll('_', ' ');
   }
 }
 

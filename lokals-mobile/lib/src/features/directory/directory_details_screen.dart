@@ -7,6 +7,7 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/experience/contact_actions.dart';
 import '../../../shared/widgets/experience/trust_row.dart';
 import '../../core/experience_helpers.dart';
+import '../../services/contact_action_service.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../auth/auth_controller.dart';
@@ -248,15 +249,31 @@ class _DirectoryDetailsScreenState extends ConsumerState<DirectoryDetailsScreen>
                   ),
                 ),
               const SizedBox(height: 16),
-              const AppCard(
+              AppCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Location', style: AppTextStyles.h3),
-                    SizedBox(height: 8),
+                    const Text('Location', style: AppTextStyles.h3),
+                    const SizedBox(height: 8),
                     Text(
-                      'Map preview is coming soon. Use the listed address and contact actions for now.',
-                      style: AppTextStyles.bodyMuted,
+                      [item.location, item.area, item.town]
+                          .whereType<String>()
+                          .where((value) => value.isNotEmpty)
+                          .join(', '),
+                      style: AppTextStyles.body,
+                    ),
+                    const SizedBox(height: 12),
+                    AppButton(
+                      label: 'Open in maps',
+                      expanded: false,
+                      variant: AppButtonVariant.secondary,
+                      onPressed: () => const ContactActionService().openMaps(
+                        context,
+                        query: [item.location, item.area, item.town]
+                            .whereType<String>()
+                            .where((value) => value.isNotEmpty)
+                            .join(', '),
+                      ),
                     ),
                   ],
                 ),

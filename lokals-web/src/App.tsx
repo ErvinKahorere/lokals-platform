@@ -1,4 +1,3 @@
-import { Building2, Verified } from 'lucide-react'
 import { lazy, Suspense, type ReactElement } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AppShell } from './components/ui/AppShell'
@@ -84,7 +83,6 @@ import { CommunityImpactRewardsManagePage } from './pages/admin/CommunityImpactR
 import { CommunityImpactRedemptionsAdminPage } from './pages/admin/CommunityImpactRedemptionsPage'
 import { CommunityImpactUserProfilePage } from './pages/admin/CommunityImpactUserProfilePage'
 import { FeedModerationPage } from './pages/admin/FeedModerationPage'
-import { FeaturePlaceholderPage } from './pages/FeaturePlaceholderPage'
 import { SupportPage } from './pages/SupportPage'
 import { getDashboardWorkspaceData } from './lib/dashboardWorkspaceData'
 import { getRoleHomePath, hasActiveRole } from './lib/roles'
@@ -219,11 +217,11 @@ export default function App() {
           <Route path="/get-involved/:slug" element={<CommunityProjectDetailsPage />} />
           <Route path="/town/okahandja" element={<TownPortalPage />} />
           <Route path="/okahandja" element={<TownPortalPage />} />
-          <Route path="/organizations" element={<ProtectedRoute><FeaturePlaceholderPage title="Organizations" description="A fuller organizations browser is being prepared. Use your followed organizations feed for now to keep community groups and updates close." ctaLabel="Open followed organizations" ctaTo="/dashboard/feed" icon={Building2} /></ProtectedRoute>} />
+          <Route path="/organizations" element={<ProtectedRoute><DirectoryPage /></ProtectedRoute>} />
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/report-issue" element={<ProtectedRoute><ReportIssuePage /></ProtectedRoute>} />
           <Route path="/support" element={<ProtectedRoute><SupportPage /></ProtectedRoute>} />
-          <Route path="/verification" element={<ProtectedRoute><FeaturePlaceholderPage title="Verification" description="Verification tools are being consolidated into a cleaner trust workflow. Use your profile page for identity and account updates in the meantime." ctaLabel="Open profile" ctaTo="/dashboard/profile" icon={Verified} /></ProtectedRoute>} />
+          <Route path="/verification" element={<ProtectedRoute><RoleApplicationsPage /></ProtectedRoute>} />
           <Route path="/following-organizations" element={<ProtectedRoute><FollowingFeedPage /></ProtectedRoute>} />
           <Route path="/community-impact" element={<ProtectedRoute><CommunityImpactDashboardPage /></ProtectedRoute>} />
           <Route path="/community-impact/history" element={<ProtectedRoute><CommunityImpactHistoryPage /></ProtectedRoute>} />
@@ -285,7 +283,7 @@ export default function App() {
           <Route path="/dashboard/provider" element={<ServiceProviderRoute><ServiceProviderDashboardPage /></ServiceProviderRoute>} />
           <Route path="/dashboard/provider/requests" element={<ServiceProviderRoute><DashboardWorkspacePage mode="provider" path="/dashboard/provider/requests" title="Service requests" description="Keep new leads, follow-ups, and readiness queues visible." {...getDashboardWorkspaceData('/dashboard/provider/requests')} /></ServiceProviderRoute>} />
           <Route path="/dashboard/provider/reviews" element={<ServiceProviderRoute><DashboardWorkspacePage mode="provider" path="/dashboard/provider/reviews" title="Provider reviews" description="See customer ratings, trust signals, and fast-responder patterns." {...getDashboardWorkspaceData('/dashboard/provider/reviews')} /></ServiceProviderRoute>} />
-          <Route path="/dashboard/provider/earnings" element={<ServiceProviderRoute><DashboardWorkspacePage mode="provider" path="/dashboard/provider/earnings" title="Provider earnings" description="A placeholder for provider income summaries and payout reporting." {...getDashboardWorkspaceData('/dashboard/provider/earnings')} /></ServiceProviderRoute>} />
+          <Route path="/dashboard/provider/earnings" element={<ServiceProviderRoute><DashboardWorkspacePage mode="provider" path="/dashboard/provider/earnings" title="Provider earnings" description="Track booking income, outstanding work, and payout readiness in one practical finance view." {...getDashboardWorkspaceData('/dashboard/provider/earnings')} /></ServiceProviderRoute>} />
           <Route path="/dashboard/organization" element={<OrganizationRoute><OrganizationDashboardPage /></OrganizationRoute>} />
           <Route path="/dashboard/organisation" element={<OrganizationRoute><OrganizationDashboardPage /></OrganizationRoute>} />
           <Route path="/dashboard/organisation/posts" element={<OrganizationRoute><DashboardWorkspacePage mode="organisation" path="/dashboard/organisation/posts" title="Organisation posts" description="Publish updates, highlight initiatives, and keep followers informed." {...getDashboardWorkspaceData('/dashboard/organisation/posts')} /></OrganizationRoute>} />

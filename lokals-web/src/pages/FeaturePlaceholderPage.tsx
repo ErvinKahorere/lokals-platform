@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { Button, Card, PageHeader } from '../components/Ui'
 
 export function FeaturePlaceholderPage({
-  eyebrow = 'Feature in progress',
+  eyebrow = 'Operational shortcut',
   title,
   description,
   ctaLabel,
@@ -27,7 +27,7 @@ export function FeaturePlaceholderPage({
             <Icon className="h-6 w-6" />
           </div>
           <p className="max-w-2xl text-sm leading-6 text-lokals-muted">
-            This destination is being polished so it feels as complete as the rest of LOKALS. The route stays active, and you can use the shortcut below in the meantime.
+            This route stays active, and the shortcut below keeps the workflow practical while the fuller experience continues to expand.
           </p>
           <div>
             <Link to={ctaTo}>

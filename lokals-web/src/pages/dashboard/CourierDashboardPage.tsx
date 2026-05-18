@@ -82,6 +82,8 @@ export function CourierDashboardPage() {
             <button
               type="button"
               onClick={handleAvailabilityToggle}
+              aria-pressed={availability === 'online'}
+              aria-label={availability === 'online' ? 'Go offline' : 'Go online'}
               className="rounded-[22px] border border-lokals-border bg-white p-4 text-left shadow-card transition hover:-translate-y-0.5 hover:border-lokals-purple/30"
             >
               <div className="flex items-center justify-between gap-3">
@@ -96,7 +98,7 @@ export function CourierDashboardPage() {
               <p className="mt-1 text-sm text-lokals-muted">Control whether you are visible for parcel matching.</p>
             </button>
             <QuickActionTile to="/delivery" title="Delivery history" body="Review recently completed deliveries." icon={History} />
-            <QuickActionTile to="/dashboard/courier" title="Earnings" body="Track estimated and completed courier earnings." icon={Wallet} />
+            <QuickActionTile to="/dashboard/courier/earnings" title="Earnings" body="Track estimated and completed courier earnings." icon={Wallet} />
           </div>
         </DashboardSection>
 
@@ -126,7 +128,7 @@ export function CourierDashboardPage() {
                   <div>
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-lokals-purple">Priority request</p>
                     <p className="mt-1 text-base font-semibold text-lokals-charcoal">{priorityDelivery.pickup_location ?? priorityDelivery.pickup_address} → {priorityDelivery.dropoff_location ?? priorityDelivery.dropoff_address}</p>
-                    <p className="mt-2 text-sm text-lokals-muted">{priorityDelivery.user?.name ?? 'Sender'} • {priorityDelivery.parcel_size ?? 'Parcel'} • N$ {priorityDelivery.estimated_price ?? '0'}</p>
+                    <p className="mt-2 text-sm text-lokals-muted">{priorityDelivery.user?.name ?? 'Sender'} | {priorityDelivery.parcel_size ?? 'Parcel'} | N$ {priorityDelivery.estimated_price ?? '0'}</p>
                   </div>
                   <StatusBadge value={formatTransportStatus(priorityDelivery.tracking_status ?? priorityDelivery.status, priorityDelivery.status_label)} tone={transportStatusTone(priorityDelivery.status)} />
                 </div>
@@ -134,11 +136,16 @@ export function CourierDashboardPage() {
                   <Link to={`/delivery/${priorityDelivery.id}`}>
                     <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary">Details</Button>
                   </Link>
+                  {priorityDelivery.user?.phone ? (
+                    <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" onClick={() => { window.location.href = `tel:${priorityDelivery.user?.phone}` }}>
+                      Call sender
+                    </Button>
+                  ) : null}
                   <Button className="min-h-9 px-3 py-2 text-xs" onClick={() => handleDeliveryAction(priorityDelivery.id, 'accept')} disabled={deliveryActionState[priorityDelivery.id]?.pending}>
-                    {deliveryActionState[priorityDelivery.id]?.pending && deliveryActionState[priorityDelivery.id]?.action === 'accept' ? 'Accepting…' : 'Accept'}
+                    {deliveryActionState[priorityDelivery.id]?.pending && deliveryActionState[priorityDelivery.id]?.action === 'accept' ? 'Accepting...' : 'Accept'}
                   </Button>
                   <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" onClick={() => handleDeliveryAction(priorityDelivery.id, 'decline')} disabled={deliveryActionState[priorityDelivery.id]?.pending}>
-                    {deliveryActionState[priorityDelivery.id]?.pending && deliveryActionState[priorityDelivery.id]?.action === 'decline' ? 'Declining…' : 'Decline'}
+                    {deliveryActionState[priorityDelivery.id]?.pending && deliveryActionState[priorityDelivery.id]?.action === 'decline' ? 'Declining...' : 'Decline'}
                   </Button>
                 </div>
               </div>
@@ -170,10 +177,10 @@ export function CourierDashboardPage() {
                       </Button>
                     </Link>
                     <Button className="min-h-9 px-3 py-2 text-xs" disabled={isPending} onClick={() => handleDeliveryAction(delivery.id, 'accept')}>
-                      {isPending && deliveryState?.action === 'accept' ? 'Updating…' : 'Accept'}
+                      {isPending && deliveryState?.action === 'accept' ? 'Updating...' : 'Accept'}
                     </Button>
                     <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" disabled={isPending} onClick={() => handleDeliveryAction(delivery.id, 'decline')}>
-                      {isPending && deliveryState?.action === 'decline' ? 'Updating…' : 'Decline'}
+                      {isPending && deliveryState?.action === 'decline' ? 'Updating...' : 'Decline'}
                     </Button>
                   </div>
                 </div>
@@ -219,6 +226,13 @@ export function CourierDashboardPage() {
               <p className="mt-1 text-sm text-lokals-muted">
                 {activeDelivery.user?.name ?? 'Sender'}
               </p>
+              {activeDelivery.user?.phone ? (
+                <div className="mt-3">
+                  <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" onClick={() => { window.location.href = `tel:${activeDelivery.user?.phone}` }}>
+                    Call sender
+                  </Button>
+                </div>
+              ) : null}
               <div className="mt-2">
                 <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-lokals-charcoal">
                   {transportStatusTone(activeDelivery.status)}
@@ -238,17 +252,17 @@ export function CourierDashboardPage() {
                 </Link>
                 {activeDelivery.status === 'accepted' ? (
                   <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionState[activeDelivery.id]?.pending} onClick={() => handleDeliveryAction(activeDelivery.id, 'pickup-confirmed')}>
-                    {deliveryActionState[activeDelivery.id]?.pending && deliveryActionState[activeDelivery.id]?.action === 'pickup-confirmed' ? 'Updating…' : 'Pickup confirmed'}
+                    {deliveryActionState[activeDelivery.id]?.pending && deliveryActionState[activeDelivery.id]?.action === 'pickup-confirmed' ? 'Updating...' : 'Pickup confirmed'}
                   </Button>
                 ) : null}
                 {activeDelivery.status === 'pickup_confirmed' ? (
                   <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionState[activeDelivery.id]?.pending} onClick={() => handleDeliveryAction(activeDelivery.id, 'in-transit')}>
-                    {deliveryActionState[activeDelivery.id]?.pending && deliveryActionState[activeDelivery.id]?.action === 'in-transit' ? 'Updating…' : 'In transit'}
+                    {deliveryActionState[activeDelivery.id]?.pending && deliveryActionState[activeDelivery.id]?.action === 'in-transit' ? 'Updating...' : 'In transit'}
                   </Button>
                 ) : null}
                 {activeDelivery.status === 'in_transit' ? (
                   <Button className="min-h-9 px-3 py-2 text-xs" disabled={deliveryActionState[activeDelivery.id]?.pending} onClick={() => handleDeliveryAction(activeDelivery.id, 'delivered')}>
-                    {deliveryActionState[activeDelivery.id]?.pending && deliveryActionState[activeDelivery.id]?.action === 'delivered' ? 'Updating…' : 'Delivered'}
+                    {deliveryActionState[activeDelivery.id]?.pending && deliveryActionState[activeDelivery.id]?.action === 'delivered' ? 'Updating...' : 'Delivered'}
                   </Button>
                 ) : null}
               </div>
