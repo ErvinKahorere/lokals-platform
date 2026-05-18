@@ -8,16 +8,24 @@ import '../../services/contact_action_service.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../../../shared/widgets/location_preview_map.dart';
+import '../../../shared/widgets/transport_surface.dart';
 import 'status_stepper.dart';
 
-class RideDetailsScreen extends ConsumerWidget {
+class RideDetailsScreen extends ConsumerStatefulWidget {
   const RideDetailsScreen({super.key, required this.rideId});
 
   final String rideId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final ride = ref.watch(rideDetailsProvider(rideId));
+  ConsumerState<RideDetailsScreen> createState() => _RideDetailsScreenState();
+}
+
+class _RideDetailsScreenState extends ConsumerState<RideDetailsScreen> {
+  String _activeTab = 'overview';
+
+  @override
+  Widget build(BuildContext context) {
+    final ride = ref.watch(rideDetailsProvider(widget.rideId));
     const steps = ['searching', 'driver_assigned', 'arrived', 'in_progress', 'completed', 'cancelled'];
 
     return LokalsShell(
@@ -26,101 +34,145 @@ class RideDetailsScreen extends ConsumerWidget {
       child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const SectionTitle(
-            title: 'Track your ride request',
-            subtitle: 'Watch ride progress and reach the driver quickly if needed.',
+          const TransportHeroBanner(
+            title: 'Ride workspace',
+            subtitle: 'Keep route, status, contact, and next steps separated into cleaner tabs.',
+            icon: Icons.local_taxi_outlined,
+          ),
+          const SizedBox(height: 16),
+          TransportSegmentTabs(
+            items: const [
+              (value: 'overview', label: 'Overview'),
+              (value: 'route', label: 'Route'),
+              (value: 'timeline', label: 'Timeline'),
+              (value: 'contact', label: 'Contact'),
+            ],
+            value: _activeTab,
+            onChanged: (value) => setState(() => _activeTab = value),
           ),
           const SizedBox(height: 16),
           ride.when(
-            data: (item) => Column(
-              children: [
-                AppCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+            data: (item) {
+              final pickupPoint = item.pickupLatitude != null && item.pickupLongitude != null
+                  ? LocationPointModel(latitude: item.pickupLatitude!, longitude: item.pickupLongitude!)
+                  : null;
+              final dropoffPoint = item.dropoffLatitude != null && item.dropoffLongitude != null
+                  ? LocationPointModel(latitude: item.dropoffLatitude!, longitude: item.dropoffLongitude!)
+                  : null;
+
+              return Column(
+                children: [
+                  if (_activeTab == 'overview')
+                    TransportPanel(
+                      title: 'Ride overview',
+                      subtitle: 'A simpler view of the ride, fare, and trip context.',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const CircleAvatar(
-                            radius: 24,
-                            backgroundColor: Color(0xFFEEF2FF),
-                            child: Icon(Icons.local_taxi_outlined, color: Colors.deepPurple),
+                          Row(
+                            children: [
+                              const CircleAvatar(
+                                radius: 24,
+                                backgroundColor: Color(0xFFEEF2FF),
+                                child: Icon(Icons.local_taxi_outlined, color: Colors.deepPurple),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(_rideTypeLabel(item.rideType), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                                    const SizedBox(height: 4),
+                                    AppBadge(label: item.statusLabel ?? _statusLabel(item.trackingStatus ?? item.status)),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(_rideTypeLabel(item.rideType), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-                                const SizedBox(height: 4),
-                                AppBadge(label: item.statusLabel ?? _statusLabel(item.trackingStatus ?? item.status)),
-                              ],
-                            ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(child: TransportMiniStat(label: 'Fare estimate', value: item.fareEstimate == null ? 'Open fare' : 'N\$ ${item.fareEstimate}')),
+                              const SizedBox(width: 10),
+                              Expanded(child: TransportMiniStat(label: 'ETA', value: item.estimatedEtaMinutes == null ? 'Pending' : '${item.estimatedEtaMinutes} min')),
+                            ],
                           ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Expanded(child: TransportMiniStat(label: 'Pickup', value: item.pickupLocation)),
+                              const SizedBox(width: 10),
+                              Expanded(child: TransportMiniStat(label: 'Destination', value: item.dropoffLocation)),
+                            ],
+                          ),
+                          if ((item.notes ?? '').isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            Text(item.notes!, style: const TextStyle(color: AppColors.mutedText)),
+                          ],
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      _InfoRow(label: 'Pickup', value: item.pickupLocation),
-                      _InfoRow(label: 'Destination', value: item.dropoffLocation),
-                      _InfoRow(label: 'Trip purpose', value: item.tripPurpose ?? 'General trip'),
-                      _InfoRow(label: 'Fare estimate', value: item.fareEstimate == null ? 'Open fare' : 'N\$ ${item.fareEstimate}'),
-                      if ((item.referenceCode ?? '').isNotEmpty) _InfoRow(label: 'Reference', value: item.referenceCode!),
-                      if (item.estimatedEtaMinutes != null) _InfoRow(label: 'ETA', value: '${item.estimatedEtaMinutes} min'),
-                      if (item.estimatedDistanceKm != null) _InfoRow(label: 'Estimated distance', value: '${item.estimatedDistanceKm!.toStringAsFixed(1)} km'),
-                      if ((item.notes ?? '').isNotEmpty) _InfoRow(label: 'Notes', value: item.notes!),
-                      const SizedBox(height: 14),
-                      LocationPreviewMap(
-                        primary: item.pickupLatitude != null && item.pickupLongitude != null
-                            ? LocationPointModel(latitude: item.pickupLatitude!, longitude: item.pickupLongitude!)
-                            : null,
-                        secondary: item.dropoffLatitude != null && item.dropoffLongitude != null
-                            ? LocationPointModel(latitude: item.dropoffLatitude!, longitude: item.dropoffLongitude!)
-                            : null,
+                    ),
+                  if (_activeTab == 'route')
+                    Column(
+                      children: [
+                        TransportPanel(
+                          title: 'Route preview',
+                          subtitle: 'A single dominant route preview with pickup and destination context.',
+                          child: Column(
+                            children: [
+                              LocationPreviewMap(primary: pickupPoint, secondary: dropoffPoint),
+                              const SizedBox(height: 12),
+                              _InfoRow(label: 'Pickup', value: item.pickupLocation),
+                              _InfoRow(label: 'Destination', value: item.dropoffLocation),
+                              _InfoRow(label: 'Trip purpose', value: item.tripPurpose ?? 'General trip'),
+                              if (item.estimatedDistanceKm != null) _InfoRow(label: 'Estimated distance', value: '${item.estimatedDistanceKm!.toStringAsFixed(1)} km'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  if (_activeTab == 'timeline')
+                    TransportPanel(
+                      title: 'Status timeline',
+                      subtitle: 'Follow the current stage without reading through the whole detail page.',
+                      child: StatusStepper(
+                        steps: steps,
+                        current: _rideStepperStatus(item.trackingStatus ?? item.status),
+                        updatedAt: item.updatedAt,
                       ),
-                      const SizedBox(height: 14),
-                      AppCard(
+                    ),
+                  if (_activeTab == 'contact')
+                    TransportPanel(
+                      title: 'Driver contact',
+                      subtitle: 'Reach the assigned operator quickly when contact details are available.',
+                      child: AppCard(
                         color: AppColors.neutralSoftAlt,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              children: [
-                                const CircleAvatar(
-                                  backgroundColor: Color(0xFFEDE9FE),
-                                  child: Icon(Icons.local_taxi_outlined, color: AppColors.primaryPurple),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item.driverName?.trim().isNotEmpty == true ? item.driverName! : 'Verified taxi operator pending',
-                                        style: const TextStyle(fontWeight: FontWeight.w700),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        (item.driverPhone ?? '').isNotEmpty
-                                            ? item.driverPhone!
-                                            : 'A driver contact will appear once a nearby taxi accepts your ride.',
-                                        style: const TextStyle(color: AppColors.mutedText),
-                                      ),
-                                      if ((item.vehicleLabel ?? '').isNotEmpty) ...[
-                                        const SizedBox(height: 4),
-                                        Text('Vehicle: ${item.vehicleLabel}', style: const TextStyle(color: AppColors.mutedText)),
-                                      ],
-                                      if ((item.driverVehicleRegistration ?? '').isNotEmpty) ...[
-                                        const SizedBox(height: 4),
-                                        Text('Plate: ${item.driverVehicleRegistration}', style: const TextStyle(color: AppColors.mutedText)),
-                                      ],
-                                      if (item.driverRating != null) ...[
-                                        const SizedBox(height: 4),
-                                        Text('Driver rating: ${item.driverRating!.toStringAsFixed(1)}/5', style: const TextStyle(color: AppColors.mutedText)),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                              ],
+                            Text(
+                              item.driverName?.trim().isNotEmpty == true ? item.driverName! : 'Verified taxi operator pending',
+                              style: const TextStyle(fontWeight: FontWeight.w700),
                             ),
+                            const SizedBox(height: 6),
+                            Text(
+                              (item.driverPhone ?? '').isNotEmpty
+                                  ? item.driverPhone!
+                                  : 'A driver contact will appear once a nearby taxi accepts your ride.',
+                              style: const TextStyle(color: AppColors.mutedText),
+                            ),
+                            if ((item.vehicleLabel ?? '').isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Text('Vehicle: ${item.vehicleLabel}', style: const TextStyle(color: AppColors.mutedText)),
+                            ],
+                            if ((item.driverVehicleRegistration ?? '').isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Text('Plate: ${item.driverVehicleRegistration}', style: const TextStyle(color: AppColors.mutedText)),
+                            ],
+                            if (item.driverRating != null) ...[
+                              const SizedBox(height: 6),
+                              Text('Driver rating: ${item.driverRating!.toStringAsFixed(1)}/5', style: const TextStyle(color: AppColors.mutedText)),
+                            ],
                             if ((item.driverPhone ?? '').isNotEmpty) ...[
                               const SizedBox(height: 12),
                               Wrap(
@@ -149,23 +201,16 @@ class RideDetailsScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                StatusStepper(
-                  steps: steps,
-                  current: _rideStepperStatus(item.trackingStatus ?? item.status),
-                  updatedAt: item.updatedAt,
-                ),
-              ],
-            ),
+                    ),
+                ],
+              );
+            },
             loading: () => const AppCard(child: LoadingSkeleton(height: 120)),
             error: (error, _) => EmptyState(
               title: 'Ride details unavailable',
               body: 'We could not refresh this ride right now. Check your connection and try again.',
               actionLabel: 'Retry',
-              onAction: () => ref.invalidate(rideDetailsProvider(rideId)),
+              onAction: () => ref.invalidate(rideDetailsProvider(widget.rideId)),
             ),
           ),
         ],

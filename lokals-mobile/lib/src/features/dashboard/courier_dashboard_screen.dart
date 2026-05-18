@@ -8,6 +8,7 @@ import '../../features/discovery/discovery_repository.dart';
 import '../../services/contact_action_service.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
+import '../../../shared/widgets/transport_surface.dart';
 import 'dashboard_repository.dart';
 import 'widgets/dashboard_common.dart';
 
@@ -24,6 +25,7 @@ class _CourierDashboardScreenState
   bool _isUpdatingAvailability = false;
   int? _busyDeliveryId;
   Timer? _refreshTimer;
+  String _activeTab = 'available';
 
   @override
   void initState() {
@@ -156,6 +158,17 @@ class _CourierDashboardScreenState
                 .map((item) => Map<String, dynamic>.from(item as Map))
                 .toList(),
             extraSections: [
+              TransportSegmentTabs(
+                items: const [
+                  (value: 'available', label: 'Available'),
+                  (value: 'active', label: 'Active'),
+                  (value: 'earnings', label: 'Earnings'),
+                  (value: 'history', label: 'History'),
+                ],
+                value: _activeTab,
+                onChanged: (value) => setState(() => _activeTab = value),
+              ),
+              const SizedBox(height: 16),
               _StatusHintCard(
                 title: 'Availability',
                 body: isOnline
@@ -174,122 +187,177 @@ class _CourierDashboardScreenState
                 ),
               ],
               const SizedBox(height: 16),
-              if (activeDelivery != null)
+              if (_activeTab == 'active')
                 _ActionSection(
                   title: 'Active delivery',
                   subtitle:
                       'Move the current parcel through its next handoff step.',
-                  child: _TransportCard(
-                    title:
-                        '${activeDelivery['pickup_location'] ?? activeDelivery['pickup_address'] ?? 'Pickup'} -> ${activeDelivery['dropoff_location'] ?? activeDelivery['dropoff_address'] ?? 'Drop-off'}',
-                    body:
-                        '${activeDelivery['user']?['name'] ?? 'Resident'} | ${activeDelivery['status_label'] ?? activeDelivery['status'] ?? 'accepted'}',
-                    actions: [
-                      if (activeDelivery['status'] == 'accepted')
-                        _CardAction(
-                          label: _busyDeliveryId == activeDelivery['id']
-                              ? 'Updating...'
-                              : 'Pickup confirmed',
-                          onPressed: _busyDeliveryId == activeDelivery['id']
-                              ? null
-                              : () => _handleDeliveryAction(
-                                  activeDelivery['id'] as int,
-                                  'pickup-confirmed',
-                                ),
+                  child: activeDelivery == null
+                      ? const Text(
+                          'No active delivery yet. Once you accept a parcel request it will appear here.',
+                          style: TextStyle(color: AppColors.mutedText),
+                        )
+                      : _TransportCard(
+                          title:
+                              '${activeDelivery['pickup_location'] ?? activeDelivery['pickup_address'] ?? 'Pickup'} -> ${activeDelivery['dropoff_location'] ?? activeDelivery['dropoff_address'] ?? 'Drop-off'}',
+                          body:
+                              '${activeDelivery['user']?['name'] ?? 'Resident'} | ${activeDelivery['status_label'] ?? activeDelivery['status'] ?? 'accepted'}',
+                          actions: [
+                            if (activeDelivery['status'] == 'accepted')
+                              _CardAction(
+                                label: _busyDeliveryId == activeDelivery['id']
+                                    ? 'Updating...'
+                                    : 'Pickup confirmed',
+                                onPressed: _busyDeliveryId == activeDelivery['id']
+                                    ? null
+                                    : () => _handleDeliveryAction(
+                                        activeDelivery['id'] as int,
+                                        'pickup-confirmed',
+                                      ),
+                              ),
+                            if (activeDelivery['status'] == 'pickup_confirmed')
+                              _CardAction(
+                                label: _busyDeliveryId == activeDelivery['id']
+                                    ? 'Updating...'
+                                    : 'In transit',
+                                onPressed: _busyDeliveryId == activeDelivery['id']
+                                    ? null
+                                    : () => _handleDeliveryAction(
+                                        activeDelivery['id'] as int,
+                                        'in-transit',
+                                      ),
+                              ),
+                            if (activeDelivery['status'] == 'in_transit')
+                              _CardAction(
+                                label: _busyDeliveryId == activeDelivery['id']
+                                    ? 'Updating...'
+                                    : 'Delivered',
+                                onPressed: _busyDeliveryId == activeDelivery['id']
+                                    ? null
+                                    : () => _handleDeliveryAction(
+                                        activeDelivery['id'] as int,
+                                        'delivered',
+                                      ),
+                              ),
+                            if ((activeDelivery['user']?['phone'] ?? '')
+                                .toString()
+                                .isNotEmpty)
+                              _CardAction(
+                                label: 'Call sender',
+                                variant: AppButtonVariant.secondary,
+                                onPressed: () =>
+                                    const ContactActionService().call(
+                                      context,
+                                      activeDelivery['user']['phone']
+                                          .toString(),
+                                    ),
+                              ),
+                          ],
                         ),
-                      if (activeDelivery['status'] == 'pickup_confirmed')
-                        _CardAction(
-                          label: _busyDeliveryId == activeDelivery['id']
-                              ? 'Updating...'
-                              : 'In transit',
-                          onPressed: _busyDeliveryId == activeDelivery['id']
-                              ? null
-                              : () => _handleDeliveryAction(
-                                  activeDelivery['id'] as int,
-                                  'in-transit',
-                                ),
+                ),
+              if (_activeTab == 'available')
+                _ActionSection(
+                  title: 'Available deliveries',
+                  subtitle: 'Parcel requests still waiting for a courier.',
+                  child: availableDeliveries.isEmpty
+                      ? const Text(
+                          'New delivery requests will appear here when residents or businesses need a courier.',
+                          style: TextStyle(color: AppColors.mutedText),
+                        )
+                      : Column(
+                          children: availableDeliveries.take(5).map((item) {
+                            final deliveryId = item['id'] as int;
+                            final isBusy = _busyDeliveryId == deliveryId;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: _TransportCard(
+                                title:
+                                    '${item['pickup_location'] ?? item['pickup_address'] ?? 'Pickup'} -> ${item['dropoff_location'] ?? item['dropoff_address'] ?? 'Drop-off'}',
+                                body:
+                                    '${item['user']?['name'] ?? 'Resident'} | ${item['parcel_size'] ?? 'Parcel'} | N\$ ${item['estimated_price'] ?? '0'}',
+                                actions: [
+                                  _CardAction(
+                                    label:
+                                        isBusy ? 'Updating...' : 'Accept',
+                                    onPressed: isBusy
+                                        ? null
+                                        : () => _handleDeliveryAction(
+                                            deliveryId,
+                                            'accept',
+                                          ),
+                                  ),
+                                  _CardAction(
+                                    label: 'Decline',
+                                    variant: AppButtonVariant.secondary,
+                                    onPressed: isBusy
+                                        ? null
+                                        : () => _handleDeliveryAction(
+                                            deliveryId,
+                                            'decline',
+                                          ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
                         ),
-                      if (activeDelivery['status'] == 'in_transit')
-                        _CardAction(
-                          label: _busyDeliveryId == activeDelivery['id']
-                              ? 'Updating...'
-                              : 'Delivered',
-                          onPressed: _busyDeliveryId == activeDelivery['id']
-                              ? null
-                              : () => _handleDeliveryAction(
-                                  activeDelivery['id'] as int,
-                                  'delivered',
-                                ),
-                        ),
-                      if ((activeDelivery['user']?['phone'] ?? '').toString().isNotEmpty)
-                        _CardAction(
-                          label: 'Call sender',
-                          variant: AppButtonVariant.secondary,
-                          onPressed: () => const ContactActionService().call(
-                            context,
-                            activeDelivery['user']['phone'].toString(),
+                ),
+              if (_activeTab == 'earnings')
+                TransportPanel(
+                  title: 'Courier earnings visibility',
+                  subtitle:
+                      'Keep daily income, throughput, and delivery demand in one compact view.',
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TransportMiniStat(
+                              label: 'Today',
+                              value: '${stats['earnings_today'] ?? 0}',
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TransportMiniStat(
+                              label: 'Completed deliveries',
+                              value: '${stats['completed_deliveries'] ?? 0}',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TransportMiniStat(
+                              label: 'Available requests',
+                              value: '${stats['available_deliveries'] ?? 0}',
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TransportMiniStat(
+                              label: 'Active deliveries',
+                              value: '${stats['active_deliveries'] ?? 0}',
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-              if (activeDelivery != null) const SizedBox(height: 16),
-              _ActionSection(
-                title: 'Available deliveries',
-                subtitle: 'Parcel requests still waiting for a courier.',
-                child: availableDeliveries.isEmpty
-                    ? const Text(
-                        'New delivery requests will appear here when residents or businesses need a courier.',
-                        style: TextStyle(color: AppColors.mutedText),
-                      )
-                    : Column(
-                        children: availableDeliveries.take(5).map((item) {
-                          final deliveryId = item['id'] as int;
-                          final isBusy = _busyDeliveryId == deliveryId;
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _TransportCard(
-                              title:
-                                  '${item['pickup_location'] ?? item['pickup_address'] ?? 'Pickup'} -> ${item['dropoff_location'] ?? item['dropoff_address'] ?? 'Drop-off'}',
-                              body:
-                                  '${item['user']?['name'] ?? 'Resident'} | ${item['parcel_size'] ?? 'Parcel'} | N\$ ${item['estimated_price'] ?? '0'}',
-                              actions: [
-                                _CardAction(
-                                  label: isBusy ? 'Updating...' : 'Accept',
-                                  onPressed: isBusy
-                                      ? null
-                                      : () => _handleDeliveryAction(
-                                          deliveryId,
-                                          'accept',
-                                        ),
-                                ),
-                                _CardAction(
-                                  label: 'Decline',
-                                  variant: AppButtonVariant.secondary,
-                                  onPressed: isBusy
-                                      ? null
-                                      : () => _handleDeliveryAction(
-                                          deliveryId,
-                                          'decline',
-                                        ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      ),
-              ),
-              const SizedBox(height: 16),
-              buildDashboardCollectionSection(
-                title: 'Delivery history',
-                subtitle: 'Recent courier work and status changes.',
-                items: deliveryHistory,
-                emptyMessage:
-                    'Accepted and completed deliveries will show up here once you start working.',
-                icon: Icons.history_toggle_off_outlined,
-                bodyBuilder: (item) =>
-                    '${item['status_label'] ?? item['status'] ?? 'requested'} | ${item['user']?['name'] ?? 'Resident'}',
-              ),
+              if (_activeTab == 'history')
+                buildDashboardCollectionSection(
+                  title: 'Delivery history',
+                  subtitle: 'Recent courier work and status changes.',
+                  items: deliveryHistory,
+                  emptyMessage:
+                      'Accepted and completed deliveries will show up here once you start working.',
+                  icon: Icons.history_toggle_off_outlined,
+                  bodyBuilder: (item) =>
+                      '${item['status_label'] ?? item['status'] ?? 'requested'} | ${item['user']?['name'] ?? 'Resident'}',
+                ),
             ],
           );
         },
