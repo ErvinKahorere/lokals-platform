@@ -227,7 +227,12 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
     return LayoutBuilder(
       key: const ValueKey('ride-request'),
       builder: (context, constraints) {
-        final sheetHeight = dart_math.min(constraints.maxHeight * 0.56, 430.0);
+        final isCompactHeight = constraints.maxHeight < 760;
+        final sheetHeight =
+            (constraints.maxHeight * (isCompactHeight ? 0.61 : 0.57)).clamp(
+              390.0,
+              470.0,
+            );
 
         return Stack(
           children: [
@@ -265,9 +270,9 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
               ),
             ),
             Positioned(
-              top: 16,
-              left: 16,
-              right: 16,
+              top: 12,
+              left: 14,
+              right: 14,
               child: Column(
                 children: [
                   TransportFloatingHeader(
@@ -294,7 +299,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 10),
                   TransportRouteCard(
                     pickupController: _pickupController,
                     destinationController: _dropoffController,
@@ -364,6 +369,8 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                       const SizedBox(height: 12),
                       Expanded(
                         child: SingleChildScrollView(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          physics: const BouncingScrollPhysics(),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -387,24 +394,27 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: Row(
-                                  children: _rideChoices.map((choice) {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(right: 10),
-                                      child: TransportOptionCard(
-                                        title: choice.title,
-                                        subtitle: choice.eta,
-                                        price: 'N\$ ${choice.baseFare}+',
-                                        icon: choice.icon,
-                                        isSelected: _rideType == choice.title,
-                                        onTap: () => setState(
-                                          () => _rideType = choice.title,
-                                        ),
+                              SizedBox(
+                                height: 132,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  physics: const BouncingScrollPhysics(),
+                                  itemCount: _rideChoices.length,
+                                  separatorBuilder: (_, _) =>
+                                      const SizedBox(width: 10),
+                                  itemBuilder: (context, index) {
+                                    final choice = _rideChoices[index];
+                                    return TransportOptionCard(
+                                      title: choice.title,
+                                      subtitle: choice.eta,
+                                      price: 'N\$ ${choice.baseFare}+',
+                                      icon: choice.icon,
+                                      isSelected: _rideType == choice.title,
+                                      onTap: () => setState(
+                                        () => _rideType = choice.title,
                                       ),
                                     );
-                                  }).toList(),
+                                  },
                                 ),
                               ),
                               const SizedBox(height: 14),
@@ -535,48 +545,57 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                                   ),
                                 ),
                               ],
+                              const SizedBox(height: 4),
                             ],
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: AppButton(
-                              label: _isBusy
-                                  ? 'Requesting taxi...'
-                                  : 'Request taxi',
-                              isLoading: _isBusy,
-                              onPressed: _submitRideRequest,
-                            ),
+                      Container(
+                        padding: const EdgeInsets.only(top: 12),
+                        decoration: const BoxDecoration(
+                          border: Border(
+                            top: BorderSide(color: AppColors.border),
                           ),
-                          const SizedBox(width: 12),
-                          SizedBox(
-                            width: 88,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  'N\$ $_estimatedFare',
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.primaryPurple,
-                                  ),
-                                ),
-                                const Text(
-                                  'Est. fare',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.mutedText,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: AppButton(
+                                label: _isBusy
+                                    ? 'Requesting taxi...'
+                                    : 'Request taxi',
+                                isLoading: _isBusy,
+                                onPressed: _submitRideRequest,
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 12),
+                            SizedBox(
+                              width: 92,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    'N\$ $_estimatedFare',
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.primaryPurple,
+                                    ),
+                                  ),
+                                  const Text(
+                                    'Est. fare',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.mutedText,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),

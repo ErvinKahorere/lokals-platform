@@ -220,14 +220,14 @@ class TransportFloatingIconButton extends StatelessWidget {
         Material(
           color: Colors.transparent,
           child: InkWell(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
             onTap: onPressed,
             child: Ink(
-              width: 44,
-              height: 44,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: backgroundColor,
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.08),
@@ -236,7 +236,7 @@ class TransportFloatingIconButton extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Icon(icon, color: foregroundColor, size: 22),
+              child: Icon(icon, color: foregroundColor, size: 20),
             ),
           ),
         ),
@@ -284,14 +284,14 @@ class TransportProfileShortcut extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         onTap: onPressed,
         child: Ink(
-          width: 44,
-          height: 44,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
             color: backgroundColor,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.08),
@@ -340,10 +340,10 @@ class TransportFloatingHeader extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.92),
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.08),
@@ -358,8 +358,8 @@ class TransportFloatingHeader extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.deepCharcoal,
                   ),
                 ),
@@ -368,7 +368,7 @@ class TransportFloatingHeader extends StatelessWidget {
                   subtitle,
                   style: const TextStyle(
                     color: AppColors.mutedText,
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -403,15 +403,15 @@ class TransportRouteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 28,
-            offset: const Offset(0, 18),
+            blurRadius: 24,
+            offset: const Offset(0, 14),
           ),
         ],
       ),
@@ -478,12 +478,14 @@ class TransportBottomSheetCard extends StatelessWidget {
           ),
         ],
       ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
-          child: child,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          18,
+          12,
+          18,
+          MediaQuery.of(context).padding.bottom + 12,
         ),
+        child: child,
       ),
     );
   }
@@ -517,8 +519,9 @@ class TransportOptionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         onTap: onTap,
         child: Ink(
-          width: 118,
-          padding: const EdgeInsets.all(14),
+          width: 112,
+          height: 132,
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: isSelected
                 ? accentColor.withValues(alpha: 0.1)
@@ -560,7 +563,8 @@ class TransportOptionCard extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 10),
+              const Spacer(),
+              const SizedBox(height: 8),
               Text(
                 price,
                 style: TextStyle(
@@ -640,7 +644,7 @@ class _TransportFieldRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             decoration: BoxDecoration(
               color: AppColors.softBackground,
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(16),
             ),
             child: TextField(
               controller: controller,

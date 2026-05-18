@@ -187,7 +187,12 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
     return LayoutBuilder(
       key: const ValueKey('delivery-request'),
       builder: (context, constraints) {
-        final sheetHeight = (constraints.maxHeight * 0.58).clamp(360.0, 450.0);
+        final isCompactHeight = constraints.maxHeight < 760;
+        final sheetHeight =
+            (constraints.maxHeight * (isCompactHeight ? 0.63 : 0.59)).clamp(
+              400.0,
+              485.0,
+            );
 
         return Stack(
           children: [
@@ -225,9 +230,9 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
               ),
             ),
             Positioned(
-              top: 16,
-              left: 16,
-              right: 16,
+              top: 12,
+              left: 14,
+              right: 14,
               child: Column(
                 children: [
                   TransportFloatingHeader(
@@ -254,7 +259,7 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 10),
                   TransportRouteCard(
                     pickupController: _pickupController,
                     destinationController: _dropoffController,
@@ -324,6 +329,8 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                       const SizedBox(height: 12),
                       Expanded(
                         child: SingleChildScrollView(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          physics: const BouncingScrollPhysics(),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -345,25 +352,28 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: Row(
-                                  children: _parcelSizes.map((item) {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(right: 10),
-                                      child: TransportOptionCard(
-                                        title: item.label,
-                                        subtitle: item.detail,
-                                        price: 'N\$ ${item.estimate}',
-                                        icon: Icons.inventory_2_outlined,
-                                        accentColor: AppColors.lokalsGreen,
-                                        isSelected: _parcelSize == item.value,
-                                        onTap: () => setState(
-                                          () => _parcelSize = item.value,
-                                        ),
+                              SizedBox(
+                                height: 132,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  physics: const BouncingScrollPhysics(),
+                                  itemCount: _parcelSizes.length,
+                                  separatorBuilder: (_, _) =>
+                                      const SizedBox(width: 10),
+                                  itemBuilder: (context, index) {
+                                    final item = _parcelSizes[index];
+                                    return TransportOptionCard(
+                                      title: item.label,
+                                      subtitle: item.detail,
+                                      price: 'N\$ ${item.estimate}',
+                                      icon: Icons.inventory_2_outlined,
+                                      accentColor: AppColors.lokalsGreen,
+                                      isSelected: _parcelSize == item.value,
+                                      onTap: () => setState(
+                                        () => _parcelSize = item.value,
                                       ),
                                     );
-                                  }).toList(),
+                                  },
                                 ),
                               ),
                               const SizedBox(height: 14),
@@ -525,50 +535,59 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                                   ),
                                 ),
                               ],
+                              const SizedBox(height: 4),
                             ],
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: AppButton(
-                              label: _isBusy
-                                  ? 'Requesting delivery...'
-                                  : AppConfig.isDemoMode
-                                  ? 'Simulate delivery'
-                                  : 'Request delivery',
-                              isLoading: _isBusy,
-                              onPressed: _submitDeliveryRequest,
-                            ),
+                      Container(
+                        padding: const EdgeInsets.only(top: 12),
+                        decoration: const BoxDecoration(
+                          border: Border(
+                            top: BorderSide(color: AppColors.border),
                           ),
-                          const SizedBox(width: 12),
-                          SizedBox(
-                            width: 88,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  'N\$ $_estimatedTotal',
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.lokalsGreen,
-                                  ),
-                                ),
-                                const Text(
-                                  'Est. fee',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.mutedText,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: AppButton(
+                                label: _isBusy
+                                    ? 'Requesting delivery...'
+                                    : AppConfig.isDemoMode
+                                    ? 'Simulate delivery'
+                                    : 'Request delivery',
+                                isLoading: _isBusy,
+                                onPressed: _submitDeliveryRequest,
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 12),
+                            SizedBox(
+                              width: 92,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    'N\$ $_estimatedTotal',
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.lokalsGreen,
+                                    ),
+                                  ),
+                                  const Text(
+                                    'Est. fee',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.mutedText,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
