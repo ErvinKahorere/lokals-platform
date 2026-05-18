@@ -282,8 +282,10 @@ export default function App() {
           <Route path="/dashboard/service-provider" element={<ServiceProviderRoute><ServiceProviderDashboardPage /></ServiceProviderRoute>} />
           <Route path="/dashboard/provider" element={<ServiceProviderRoute><ServiceProviderDashboardPage /></ServiceProviderRoute>} />
           <Route path="/dashboard/provider/requests" element={<ServiceProviderRoute><DashboardWorkspacePage mode="provider" path="/dashboard/provider/requests" title="Service requests" description="Keep new leads, follow-ups, and readiness queues visible." {...getDashboardWorkspaceData('/dashboard/provider/requests')} /></ServiceProviderRoute>} />
+          <Route path="/dashboard/provider/bookings" element={<ServiceProviderRoute><DashboardWorkspacePage mode="provider" path="/dashboard/provider/bookings" title="Provider bookings" description="Track booking demand, readiness, and follow-up actions from one practical operations queue." {...getDashboardWorkspaceData('/dashboard/provider/bookings')} /></ServiceProviderRoute>} />
           <Route path="/dashboard/provider/reviews" element={<ServiceProviderRoute><DashboardWorkspacePage mode="provider" path="/dashboard/provider/reviews" title="Provider reviews" description="See customer ratings, trust signals, and fast-responder patterns." {...getDashboardWorkspaceData('/dashboard/provider/reviews')} /></ServiceProviderRoute>} />
           <Route path="/dashboard/provider/earnings" element={<ServiceProviderRoute><DashboardWorkspacePage mode="provider" path="/dashboard/provider/earnings" title="Provider earnings" description="Track booking income, outstanding work, and payout readiness in one practical finance view." {...getDashboardWorkspaceData('/dashboard/provider/earnings')} /></ServiceProviderRoute>} />
+          <Route path="/provider-bookings" element={<ServiceProviderRoute><Navigate to="/dashboard/provider/bookings" replace /></ServiceProviderRoute>} />
           <Route path="/dashboard/organization" element={<OrganizationRoute><OrganizationDashboardPage /></OrganizationRoute>} />
           <Route path="/dashboard/organisation" element={<OrganizationRoute><OrganizationDashboardPage /></OrganizationRoute>} />
           <Route path="/dashboard/organisation/posts" element={<OrganizationRoute><DashboardWorkspacePage mode="organisation" path="/dashboard/organisation/posts" title="Organisation posts" description="Publish updates, highlight initiatives, and keep followers informed." {...getDashboardWorkspaceData('/dashboard/organisation/posts')} /></OrganizationRoute>} />
@@ -325,6 +327,8 @@ export default function App() {
           <Route path="/admin" element={<AdminRoute><SuperAdminDashboardPage /></AdminRoute>} />
           <Route path="/dashboard/admin" element={<AdminRoute><SuperAdminDashboardPage /></AdminRoute>} />
           <Route path="/dashboard/admin/towns" element={<AdminRoute><DashboardWorkspacePage mode="admin" path="/dashboard/admin/towns" title="Towns management" description="Review onboarded towns, operating status, and municipality readiness." {...getDashboardWorkspaceData('/dashboard/admin/towns')} /></AdminRoute>} />
+          <Route path="/dashboard/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
+          <Route path="/dashboard/admin/role-applications" element={<AdminRoute><RoleApplicationsAdminPage /></AdminRoute>} />
           <Route path="/dashboard/admin/roles" element={<AdminRoute><DashboardWorkspacePage mode="admin" path="/dashboard/admin/roles" title="Roles and permissions" description="Review role access, approval logic, and permission surface area." {...getDashboardWorkspaceData('/dashboard/admin/roles')} /></AdminRoute>} />
           <Route path="/dashboard/admin/system-health" element={<AdminRoute><DashboardWorkspacePage mode="admin" path="/dashboard/admin/system-health" title="System health" description="Monitor jobs, storage, notifications, and system pressure." {...getDashboardWorkspaceData('/dashboard/admin/system-health')} /></AdminRoute>} />
           <Route path="/dashboard/admin/feature-flags" element={<AdminRoute><DashboardWorkspacePage mode="admin" path="/dashboard/admin/feature-flags" title="Feature flags" description="Control rollout posture for practical platform features." {...getDashboardWorkspaceData('/dashboard/admin/feature-flags')} /></AdminRoute>} />
@@ -341,6 +345,10 @@ export default function App() {
           <Route path="/admin/role-applications" element={<AdminRoute><RoleApplicationsAdminPage /></AdminRoute>} />
           <Route path="/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
           <Route path="/admin/overview" element={<AdminRoute><AdminOverviewPage /></AdminRoute>} />
+          <Route path="/admin/towns" element={<AdminRoute><Navigate to="/dashboard/admin/towns" replace /></AdminRoute>} />
+          <Route path="/admin/system-health" element={<AdminRoute><Navigate to="/dashboard/admin/system-health" replace /></AdminRoute>} />
+          <Route path="/admin/audit-logs" element={<AdminRoute><Navigate to="/dashboard/admin/audit-logs" replace /></AdminRoute>} />
+          <Route path="/admin/feature-flags" element={<AdminRoute><Navigate to="/dashboard/admin/feature-flags" replace /></AdminRoute>} />
         </Route>
       </Routes>
     </Suspense>

@@ -272,6 +272,11 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/admin/summary', [AdminController::class, 'summary']);
             Route::get('/admin/overview', [AdminController::class, 'overview']);
             Route::get('/admin/municipality-dashboard', [AdminController::class, 'municipalityDashboard']);
+            Route::get('/admin/system-health', [AdminController::class, 'systemHealth']);
+            Route::get('/admin/audit-logs', [AdminController::class, 'auditLogs']);
+            Route::get('/admin/feature-flags', [AdminController::class, 'featureFlags']);
+            Route::get('/admin/towns', [AdminController::class, 'towns']);
+            Route::get('/admin/users', [AdminController::class, 'users']);
             Route::get('/admin/reports', [CityServiceController::class, 'reports']);
             Route::get('/admin/news-sources', [NewsSourceController::class, 'index']);
             Route::post('/admin/news-sources', [NewsSourceController::class, 'store']);

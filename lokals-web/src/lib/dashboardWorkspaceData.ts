@@ -127,6 +127,10 @@ export const DASHBOARD_WORKSPACE_SEEDS: Record<string, DashboardWorkspaceSeed> =
   '/dashboard/provider/requests': {
     rows: [{ status: 'Open', summary: 'Resident request for electrical repair', owner: 'Incoming provider lead', next_step: 'Reply or convert to booking' }],
   },
+  '/dashboard/provider/bookings': {
+    actions: [{ label: 'Open earnings', to: '/dashboard/provider/earnings', icon: Wallet, accentClass: 'bg-emerald-50 text-emerald-700' }],
+    rows: [{ status: 'Pending', summary: 'Upcoming provider booking queue', owner: 'Service bookings', next_step: 'Confirm timing, availability, and customer follow-up' }],
+  },
   '/dashboard/provider/reviews': {
     rows: [{ status: 'Ready', summary: 'Latest customer feedback', owner: 'Provider profile', next_step: 'Respond where appropriate' }],
   },

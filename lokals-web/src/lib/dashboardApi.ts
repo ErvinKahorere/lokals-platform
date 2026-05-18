@@ -104,8 +104,8 @@ export async function fetchMessages(): Promise<ConversationThread[]> {
   return payload.data ?? []
 }
 
-export async function fetchAdminOverview(): Promise<Record<string, number | string> | null> {
-  return (await api.get('/admin/overview')).data as Record<string, number | string>
+export async function fetchAdminOverview(): Promise<Record<string, unknown> | null> {
+  return (await api.get('/admin/overview')).data as Record<string, unknown>
 }
 
 export async function fetchTownManagerApprovals(): Promise<PendingApprovalSummary[]> {
@@ -333,6 +333,164 @@ export async function fetchDashboardWorkspaceResource(path: string): Promise<Das
       })),
       filters: [{ label: 'Live', value: 'live' }],
       actions: [],
+      source: 'api',
+    }
+  }
+
+  if (path === '/dashboard/provider/bookings') {
+    const payload = (await api.get('/provider/bookings').catch(() => ({ data: { data: [] as Booking[] } }))).data as { data?: Booking[] }
+    return {
+      rows: asArray<Booking>(payload.data).slice(0, 12).map((booking) => ({
+        status: String(booking.status ?? 'pending').replaceAll('_', ' '),
+        summary: booking.service?.name ?? 'Service booking',
+        owner: `${booking.user?.name ?? 'Customer'} | ${booking.booking_date ?? 'Schedule pending'}`,
+        next_step: 'Confirm timing, adjust availability, or follow up with the customer.',
+      })),
+      filters: [{ label: 'Pending', value: 'pending' }, { label: 'Confirmed', value: 'confirmed' }, { label: 'Completed', value: 'completed' }],
+      actions: [{ label: 'Open earnings', to: '/dashboard/provider/earnings', accentClass: 'bg-emerald-50 text-emerald-700', iconName: 'Wallet' }],
+      source: 'api',
+    }
+  }
+
+  if (path === '/dashboard/admin/towns') {
+    const payload = (await api.get('/admin/towns').catch(() => ({ data: { data: [] as Array<Record<string, unknown>> } }))).data as {
+      data?: Array<Record<string, unknown>>
+    }
+
+    return {
+      rows: asArray<Record<string, unknown>>(payload.data).map((town) => ({
+        status: 'Live',
+        summary: String(town.town ?? 'Town'),
+        owner: `${String(town.users ?? 0)} users | ${String(town.businesses ?? 0)} businesses | ${String(town.providers ?? 0)} providers`,
+        next_step: `${String(town.open_reports ?? 0)} open reports and ${String(town.active_alerts ?? 0)} active alerts currently tracked.`,
+      })),
+      filters: [{ label: 'Live', value: 'live' }],
+      actions: [{ label: 'Open overview', to: '/dashboard/admin', accentClass: 'bg-lokals-purple-soft text-lokals-purple', iconName: 'LayoutDashboard' }],
+      source: 'api',
+    }
+  }
+
+  if (path === '/dashboard/admin/system-health') {
+    const payload = (await api.get('/admin/system-health').catch(() => ({ data: { system_health: [] as Array<Record<string, unknown>> } }))).data as {
+      system_health?: Array<Record<string, unknown>>
+    }
+
+    return {
+      rows: asArray<Record<string, unknown>>(payload.system_health).map((item) => ({
+        status: String(item.status ?? 'unknown').replaceAll('_', ' '),
+        summary: String(item.label ?? 'System health'),
+        owner: String(item.detail ?? 'Operational health signal'),
+        next_step: `Current value: ${String(item.value ?? 'n/a')}`,
+      })),
+      filters: [{ label: 'Healthy', value: 'healthy' }, { label: 'Warning', value: 'warning' }, { label: 'Degraded', value: 'degraded' }],
+      actions: [{ label: 'Audit logs', to: '/dashboard/admin/audit-logs', accentClass: 'bg-sky-50 text-sky-700', iconName: 'ScrollText' }],
+      source: 'api',
+    }
+  }
+
+  if (path === '/dashboard/admin/feature-flags') {
+    const payload = (await api.get('/admin/feature-flags').catch(() => ({ data: { data: [] as Array<Record<string, unknown>> } }))).data as {
+      data?: Array<Record<string, unknown>>
+    }
+
+    return {
+      rows: asArray<Record<string, unknown>>(payload.data).map((flag) => ({
+        status: flag.enabled ? 'enabled' : 'disabled',
+        summary: String(flag.label ?? flag.key ?? 'Feature flag'),
+        owner: `${String(flag.scope ?? 'platform')} | ${String(flag.status ?? 'live')}`,
+        next_step: String(flag.description ?? 'Operational feature flag status.'),
+      })),
+      filters: [{ label: 'Enabled', value: 'enabled' }, { label: 'Disabled', value: 'disabled' }],
+      actions: [{ label: 'System health', to: '/dashboard/admin/system-health', accentClass: 'bg-amber-50 text-amber-700', iconName: 'Wrench' }],
+      source: 'api',
+    }
+  }
+
+  if (path === '/dashboard/admin/audit-logs' || path === '/dashboard/admin/ai-logs') {
+    const payload = (await api.get('/admin/audit-logs').catch(() => ({ data: { data: [] as Array<Record<string, unknown>> } }))).data as {
+      data?: Array<Record<string, unknown>>
+    }
+
+    return {
+      rows: asArray<Record<string, unknown>>(payload.data).map((item) => ({
+        status: String(item.type ?? 'activity').replaceAll('_', ' '),
+        summary: String(item.title ?? 'Admin activity'),
+        owner: String(item.body ?? 'Operational change'),
+        next_step: String(item.timestamp ?? 'Recent'),
+      })),
+      filters: [{ label: 'Role', value: 'role' }, { label: 'Alert', value: 'alert' }, { label: 'Project', value: 'project' }],
+      actions: [{ label: 'System health', to: '/dashboard/admin/system-health', accentClass: 'bg-emerald-50 text-emerald-700', iconName: 'Activity' }],
+      source: 'api',
+    }
+  }
+
+  if (path === '/dashboard/admin/roles') {
+    const payload = (await api.get('/admin/role-applications', { params: { status: 'pending_review' } }).catch(() => ({ data: { data: [] as RoleApplication[] } }))).data as {
+      data?: RoleApplication[]
+    }
+
+    return {
+      rows: asArray<RoleApplication>(payload.data).slice(0, 12).map((application) => ({
+        status: application.status.replaceAll('_', ' '),
+        summary: `${application.full_name} requested ${application.requested_role.replaceAll('_', ' ')}`,
+        owner: application.business_name || application.phone || 'Role approvals',
+        next_step: 'Open the full approval queue to approve, reject, or request changes.',
+      })),
+      filters: [{ label: 'Pending review', value: 'pending' }, { label: 'Approved', value: 'approved' }, { label: 'Rejected', value: 'rejected' }],
+      actions: [{ label: 'Open approvals', to: '/dashboard/admin/role-applications', accentClass: 'bg-lokals-purple-soft text-lokals-purple', iconName: 'ClipboardCheck' }],
+      source: 'api',
+    }
+  }
+
+  if (path === '/dashboard/admin/feed-engine') {
+    const payload = (await api.get('/admin/feed/pending').catch(() => ({ data: { data: [] as FeedPost[] } }))).data as { data?: FeedPost[] }
+
+    return {
+      rows: asArray<FeedPost>(payload.data).slice(0, 12).map((post) => ({
+        status: String(post.status ?? 'pending').replaceAll('_', ' '),
+        summary: post.title,
+        owner: [post.town, post.area].filter(Boolean).join(', ') || 'Community feed',
+        next_step: 'Moderate this post before it reaches the public feed.',
+      })),
+      filters: [{ label: 'Pending', value: 'pending' }, { label: 'Approved', value: 'approved' }],
+      actions: [{ label: 'Moderate feed', to: '/dashboard/town-manager/feed/pending', accentClass: 'bg-emerald-50 text-emerald-700', iconName: 'ShieldCheck' }],
+      source: 'api',
+    }
+  }
+
+  if (path === '/dashboard/admin/notifications') {
+    const payload = (await api.get('/admin/system-health').catch(() => ({ data: { notifications: {} as Record<string, unknown> } }))).data as {
+      notifications?: Record<string, unknown>
+    }
+    const notifications = payload.notifications ?? {}
+
+    return {
+      rows: Object.entries(notifications).map(([key, value]) => ({
+        status: 'live',
+        summary: key.replaceAll('_', ' '),
+        owner: String(value),
+        next_step: 'Use these counts to judge communication pressure and unread backlog.',
+      })),
+      filters: [{ label: 'Live', value: 'live' }],
+      actions: [{ label: 'Open system health', to: '/dashboard/admin/system-health', accentClass: 'bg-sky-50 text-sky-700', iconName: 'Bell' }],
+      source: 'api',
+    }
+  }
+
+  if (path === '/dashboard/admin/rewards') {
+    const payload = (await api.get('/admin/community-impact/pending').catch(() => ({ data: { data: [] as CommunityImpactTransaction[] } }))).data as {
+      data?: CommunityImpactTransaction[]
+    }
+
+    return {
+      rows: asArray<CommunityImpactTransaction>(payload.data).slice(0, 12).map((transaction) => ({
+        status: String(transaction.verification_status ?? 'pending').replaceAll('_', ' '),
+        summary: transaction.reason || 'Community impact verification',
+        owner: `${String(transaction.points ?? 0)} points`,
+        next_step: 'Review reward evidence and decide whether to verify the contribution.',
+      })),
+      filters: [{ label: 'Pending', value: 'pending' }, { label: 'Verified', value: 'verified' }],
+      actions: [{ label: 'Town reward queue', to: '/dashboard/town-manager/community-impact/pending', accentClass: 'bg-amber-50 text-amber-700', iconName: 'Gift' }],
       source: 'api',
     }
   }

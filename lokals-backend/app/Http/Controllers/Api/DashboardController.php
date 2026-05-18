@@ -14,6 +14,7 @@ use App\Models\DriverProfile;
 use App\Models\Event;
 use App\Models\EventSave;
 use App\Models\EventTicket;
+use App\Models\FeedPost;
 use App\Models\Follow;
 use App\Models\JobApplication;
 use App\Models\JobPost;
@@ -26,6 +27,8 @@ use App\Models\RoleApplication;
 use App\Models\Service;
 use App\Models\ServiceProvider;
 use App\Models\User;
+use App\Models\CommunityImpactTransaction;
+use App\Models\CommunityProject;
 use App\Support\PilotLocation;
 use App\Models\WorkerProfile;
 use Illuminate\Http\JsonResponse;
@@ -497,6 +500,52 @@ class DashboardController extends Controller
                         ->orWhereNull('town_name');
                 });
             });
+        $pendingCommunityProjects = CommunityProject::query()
+            ->where('verification_status', 'pending')
+            ->when(! $user->hasRole('super_admin'), fn ($query) => $query->where('town', PilotLocation::profileTown($user->default_town)));
+        $feedPending = FeedPost::query()
+            ->where('status', 'pending')
+            ->when(! $user->hasRole('super_admin'), fn ($query) => $query->where('town', PilotLocation::profileTown($user->default_town)));
+        $rewardVerificationQueue = CommunityImpactTransaction::query()
+            ->where('verification_status', 'pending')
+            ->when(! $user->hasRole('super_admin'), fn ($query) => $query->where('town', PilotLocation::profileTown($user->default_town)));
+        $businessQuery = Organization::query()
+            ->where('is_public_service', false)
+            ->when(! $user->hasRole('super_admin'), fn ($query) => $query->where('town', PilotLocation::profileTown($user->default_town)));
+        $providerQuery = ServiceProvider::query()
+            ->when(! $user->hasRole('super_admin'), fn ($query) => $query->where('town', PilotLocation::profileTown($user->default_town)));
+        $driverProfiles = DriverProfile::query()
+            ->when(! $user->hasRole('super_admin'), fn ($query) => $query->whereHas('user', fn ($userQuery) => $userQuery->where('default_town', PilotLocation::profileTown($user->default_town))));
+        $courierProfiles = CourierProfile::query()
+            ->when(! $user->hasRole('super_admin'), fn ($query) => $query->whereHas('user', fn ($userQuery) => $userQuery->where('default_town', PilotLocation::profileTown($user->default_town))));
+        $rideQuery = RideRequest::query()->whereIn('status', ['requested', 'searching', 'accepted', 'arrived', 'in_progress']);
+        $deliveryQuery = DeliveryRequest::query()->whereIn('status', ['requested', 'searching', 'accepted', 'pickup_confirmed', 'in_transit']);
+        $residentQuery = User::query()
+            ->where('default_town', PilotLocation::profileTown($user->default_town))
+            ->where(function ($query): void {
+                $query->whereNull('current_role')->orWhere('current_role', 'citizen');
+            });
+        $reportCategories = (clone $reportQuery)
+            ->selectRaw('category, count(*) as total')
+            ->groupBy('category')
+            ->orderByDesc('total')
+            ->limit(6)
+            ->get();
+        $communicationStats = [
+            'total_alerts' => (clone $alertQuery)->count(),
+            'emergency_alerts' => (clone $alertQuery)->where('type', 'emergency_alert')->count(),
+            'announcements' => (clone $alertQuery)->whereIn('type', ['municipal_alert', 'public_notice'])->count(),
+            'service_updates' => (clone $alertQuery)->where('type', 'service_update')->count(),
+        ];
+        $areaBreakdown = collect(PilotLocation::allowedAreas())
+            ->map(fn (string $area) => [
+                'area' => $area,
+                'reports' => (clone $reportQuery)->where('area', $area)->count(),
+                'residents' => (clone $residentQuery)->where('default_area', $area)->count(),
+                'providers' => (clone $providerQuery)->where('area', $area)->count(),
+            ])
+            ->filter(fn (array $row) => $row['reports'] > 0 || $row['residents'] > 0 || $row['providers'] > 0)
+            ->values();
 
         return response()->json([
             'role' => 'town_manager',
@@ -509,29 +558,54 @@ class DashboardController extends Controller
                 'municipal_alerts_sent' => (clone $alertQuery)->count(),
                 'public_service_entries' => (clone $publicServicesQuery)->count(),
                 'pending_approvals' => (clone $pendingRoleApplications)->count(),
-                'registered_businesses' => Organization::query()
-                    ->where('town', PilotLocation::profileTown($user->default_town))
-                    ->where('is_public_service', false)
-                    ->count(),
+                'registered_businesses' => (clone $businessQuery)->count(),
+                'service_providers' => (clone $providerQuery)->count(),
+                'active_emergency_alerts' => (clone $alertQuery)->where('type', 'emergency_alert')->count(),
             ],
             'quick_actions' => [
                 ['label' => 'Send Announcement', 'href' => '/dashboard/town-manager', 'icon' => 'megaphone'],
                 ['label' => 'Send Emergency Alert', 'href' => '/dashboard/town-manager', 'icon' => 'siren'],
                 ['label' => 'Pending Approvals', 'href' => '/dashboard/town-manager/role-applications', 'icon' => 'check-square'],
-                ['label' => 'View Reports', 'href' => '/my-reports', 'icon' => 'clipboard-list'],
-                ['label' => 'Add Public Service', 'href' => '/directory', 'icon' => 'building'],
-                ['label' => 'Create Event', 'href' => '/dashboard/events/create', 'icon' => 'calendar-plus'],
+                ['label' => 'Review Reports', 'href' => '/dashboard/town-manager/reports', 'icon' => 'clipboard-list'],
+                ['label' => 'Moderate Feed', 'href' => '/dashboard/town-manager/feed/pending', 'icon' => 'shield'],
+                ['label' => 'Town Analytics', 'href' => '/dashboard/town-manager/analytics', 'icon' => 'activity'],
             ],
             'pending_tasks' => [
                 ['label' => 'Urgent reports', 'count' => (clone $reportQuery)->where('priority', 'high')->whereIn('status', $this->activeReportStatuses)->count()],
                 ['label' => 'Open reports', 'count' => (clone $reportQuery)->whereIn('status', $this->activeReportStatuses)->count()],
                 ['label' => 'Role approvals waiting', 'count' => (clone $pendingRoleApplications)->count()],
+                ['label' => 'Feed posts pending', 'count' => (clone $feedPending)->count()],
             ],
             'reports_by_status' => $reportsByStatus,
+            'report_categories' => $reportCategories,
             'pending_approvals' => (clone $pendingRoleApplications)->latest()->limit(6)->get(['id', 'requested_role', 'status', 'full_name', 'phone', 'created_at']),
             'recent_reports' => (clone $reportQuery)->latest()->limit(6)->get(['id', 'title', 'category', 'location', 'town', 'area', 'status', 'priority', 'created_at']),
             'active_alerts' => (clone $alertQuery)->latest()->limit(5)->get(['id', 'title', 'body', 'type', 'priority', 'location', 'town', 'area', 'created_at']),
             'upcoming_events' => (clone $eventQuery)->where('status', 'published')->where('starts_at', '>=', now())->orderBy('starts_at')->limit(5)->get(['id', 'title', 'category', 'town', 'area', 'starts_at']),
+            'pending_community_projects' => (clone $pendingCommunityProjects)->latest()->limit(6)->get(['id', 'title', 'town', 'area', 'verification_status', 'created_at']),
+            'feed_moderation_queue' => (clone $feedPending)->latest()->limit(6)->get(['id', 'title', 'town', 'area', 'status', 'updated_at']),
+            'reward_verification_queue' => (clone $rewardVerificationQueue)->latest()->limit(6)->get(['id', 'user_id', 'points', 'reason', 'verification_status', 'updated_at']),
+            'local_directory_stats' => [
+                'businesses' => (clone $businessQuery)->count(),
+                'providers' => (clone $providerQuery)->count(),
+                'public_services' => (clone $publicServicesQuery)->count(),
+            ],
+            'transport_activity' => [
+                'active_rides' => (clone $rideQuery)->count(),
+                'active_deliveries' => (clone $deliveryQuery)->count(),
+                'drivers_online' => (clone $driverProfiles)->where('is_online', true)->count(),
+                'couriers_online' => (clone $courierProfiles)->where('is_online', true)->count(),
+                'verified_drivers' => (clone $driverProfiles)->where('is_verified', true)->count(),
+                'verified_couriers' => (clone $courierProfiles)->where('is_verified', true)->count(),
+            ],
+            'resident_engagement' => [
+                'residents' => (clone $residentQuery)->count(),
+                'reports_last_7_days' => (clone $reportQuery)->where('created_at', '>=', now()->subDays(7))->count(),
+                'alerts_last_7_days' => (clone $alertQuery)->where('created_at', '>=', now()->subDays(7))->count(),
+                'announcement_reach_proxy' => Follow::query()->count(),
+            ],
+            'communication_stats' => $communicationStats,
+            'town_activity_overview' => $areaBreakdown,
             'recent_activity' => $this->mergeActivity([
                 (clone $reportQuery)->latest()->limit(4)->get()->map(fn (CityReport $report) => [
                     'type' => 'report',
@@ -544,6 +618,12 @@ class DashboardController extends Controller
                     'title' => $alert->title,
                     'body' => $alert->priority,
                     'timestamp' => optional($alert->updated_at)->toIso8601String(),
+                ]),
+                (clone $pendingCommunityProjects)->latest()->limit(2)->get()->map(fn (CommunityProject $project) => [
+                    'type' => 'community_project',
+                    'title' => $project->title,
+                    'body' => $project->verification_status ?? 'pending',
+                    'timestamp' => optional($project->updated_at)->toIso8601String(),
                 ]),
             ]),
         ]);
@@ -558,17 +638,30 @@ class DashboardController extends Controller
             'role' => 'admin',
             'stats' => [
                 'users' => User::count(),
-                'roles' => \Spatie\Permission\Models\Role::count(),
-                'organizations' => Organization::count(),
-                'businesses' => Organization::query()->whereNotNull('owner_user_id')->count(),
+                'roles' => RoleApplication::query()->whereIn('status', ['submitted', 'pending_review'])->count(),
                 'providers' => ServiceProvider::count(),
-                'reports' => CityReport::count(),
-                'alerts' => Alert::count(),
+                'reports' => CityReport::query()->whereIn('status', $this->activeReportStatuses)->count(),
+                'alerts' => Alert::query()->where('is_active', true)->count(),
                 'events' => Event::count(),
                 'products' => Product::count(),
                 'accommodations' => Accommodation::count(),
-                'flagged_content' => ModerationFlag::count(),
-                'pending_approvals' => RoleApplication::query()->whereIn('status', ['submitted', 'pending_review'])->count(),
+                'flagged_content' => ModerationFlag::query()->where('status', 'open')->count(),
+                'total_users' => User::count(),
+                'residents' => $this->residentCount(),
+                'businesses' => Organization::query()->whereNotNull('owner_user_id')->count(),
+                'service_providers' => ServiceProvider::count(),
+                'drivers' => User::role('driver')->count(),
+                'couriers' => User::role('courier')->count(),
+                'organizations' => Organization::count(),
+                'town_managers' => User::role('town_manager')->count() + User::role('municipality_admin')->count(),
+                'pending_role_applications' => RoleApplication::query()->whereIn('status', ['submitted', 'pending_review'])->count(),
+                'pending_community_projects' => CommunityProject::query()->where('verification_status', 'pending')->count(),
+                'pending_feed_posts' => FeedPost::query()->where('status', 'pending')->count(),
+                'pending_reward_approvals' => CommunityImpactTransaction::query()->where('verification_status', 'pending')->count(),
+                'active_reports' => CityReport::query()->whereIn('status', $this->activeReportStatuses)->count(),
+                'active_rides' => RideRequest::query()->whereIn('status', ['requested', 'searching', 'accepted', 'arrived', 'in_progress'])->count(),
+                'active_deliveries' => DeliveryRequest::query()->whereIn('status', ['requested', 'searching', 'accepted', 'pickup_confirmed', 'in_transit'])->count(),
+                'notification_volume' => $this->notificationCount(),
             ],
             'system_overview' => [
                 'total_listings' => Listing::count(),
@@ -577,20 +670,84 @@ class DashboardController extends Controller
                 'towns_live' => 1,
             ],
             'quick_actions' => [
-                ['label' => 'Manage Users', 'href' => '/admin/users', 'icon' => 'users'],
-                ['label' => 'Manage Directory', 'href' => '/admin/providers', 'icon' => 'building'],
-                ['label' => 'All Approvals', 'href' => '/admin/role-applications', 'icon' => 'check-square'],
-                ['label' => 'Moderate Content', 'href' => '/admin/reports', 'icon' => 'shield'],
-                ['label' => 'View System Health', 'href' => '/admin/overview', 'icon' => 'activity'],
+                ['label' => 'Manage towns', 'href' => '/dashboard/admin/towns', 'icon' => 'building'],
+                ['label' => 'Manage users', 'href' => '/dashboard/admin/users', 'icon' => 'users'],
+                ['label' => 'Review role applications', 'href' => '/dashboard/admin/role-applications', 'icon' => 'check-square'],
+                ['label' => 'View audit logs', 'href' => '/dashboard/admin/audit-logs', 'icon' => 'scroll-text'],
+                ['label' => 'View system health', 'href' => '/dashboard/admin/system-health', 'icon' => 'activity'],
+                ['label' => 'View feature flags', 'href' => '/dashboard/admin/feature-flags', 'icon' => 'sparkles'],
             ],
             'pending_tasks' => [
                 ['label' => 'Open flags', 'count' => ModerationFlag::query()->where('status', 'open')->count()],
                 ['label' => 'Open reports', 'count' => CityReport::query()->whereIn('status', $this->activeReportStatuses)->count()],
                 ['label' => 'Pending role approvals', 'count' => RoleApplication::query()->whereIn('status', ['submitted', 'pending_review'])->count()],
+                ['label' => 'Pending community projects', 'count' => CommunityProject::query()->where('verification_status', 'pending')->count()],
             ],
             'pending_approvals' => RoleApplication::query()->latest()->limit(6)->get(['id', 'requested_role', 'status', 'full_name', 'phone', 'created_at']),
             'moderation_flags' => ModerationFlag::query()->latest()->limit(6)->get(['id', 'reason', 'status', 'notes', 'created_at']),
             'recent_reports' => CityReport::query()->latest()->limit(5)->get(['id', 'title', 'category', 'status', 'priority', 'created_at']),
+            'user_mix' => [
+                'residents' => $this->residentCount(),
+                'business_owners' => User::role('business_owner')->count() + User::role('seller')->count(),
+                'service_providers' => User::role('service_provider')->count(),
+                'drivers' => User::role('driver')->count(),
+                'couriers' => User::role('courier')->count(),
+                'town_managers' => User::role('town_manager')->count() + User::role('municipality_admin')->count(),
+            ],
+            'approval_breakdown' => [
+                'role_applications' => RoleApplication::query()->whereIn('status', ['submitted', 'pending_review'])->count(),
+                'community_projects' => CommunityProject::query()->where('verification_status', 'pending')->count(),
+                'feed_posts' => FeedPost::query()->where('status', 'pending')->count(),
+                'reward_verifications' => CommunityImpactTransaction::query()->where('verification_status', 'pending')->count(),
+            ],
+            'active_workloads' => [
+                'reports' => CityReport::query()->whereIn('status', $this->activeReportStatuses)->count(),
+                'rides' => RideRequest::query()->whereIn('status', ['requested', 'searching', 'accepted', 'arrived', 'in_progress'])->count(),
+                'deliveries' => DeliveryRequest::query()->whereIn('status', ['requested', 'searching', 'accepted', 'pickup_confirmed', 'in_transit'])->count(),
+                'flags' => ModerationFlag::query()->where('status', 'open')->count(),
+            ],
+            'notification_volume' => [
+                'total_notifications' => $this->notificationCount(),
+                'sent_last_24_hours' => $this->notificationCount(now()->subDay()),
+                'unread_notifications' => $this->unreadNotificationCount(),
+            ],
+            'health_summary' => [
+                [
+                    'label' => 'Queue backlog',
+                    'status' => $this->queueSize() > 25 ? 'warning' : 'healthy',
+                    'value' => (string) ($this->queueSize() ?? 0),
+                    'detail' => 'Pending jobs in the queue.',
+                ],
+                [
+                    'label' => 'Failed jobs',
+                    'status' => $this->failedJobsCount() > 0 ? 'warning' : 'healthy',
+                    'value' => (string) ($this->failedJobsCount() ?? 0),
+                    'detail' => 'Recent queue failures.',
+                ],
+                [
+                    'label' => 'Realtime transport',
+                    'status' => filled(config('broadcasting.default')) ? 'healthy' : 'degraded',
+                    'value' => (string) config('broadcasting.default'),
+                    'detail' => 'Configured broadcast driver.',
+                ],
+            ],
+            'queue_health' => [
+                'queue_driver' => (string) config('queue.default'),
+                'pending_jobs' => $this->queueSize(),
+                'failed_jobs' => $this->failedJobsCount(),
+            ],
+            'realtime_health' => [
+                'broadcast_driver' => (string) config('broadcasting.default'),
+                'queue_driver' => (string) config('queue.default'),
+                'configured' => filled(config('broadcasting.default')),
+            ],
+            'town_activity_overview' => [[
+                'town' => PilotLocation::town(),
+                'users' => User::query()->where('default_town', PilotLocation::town())->count(),
+                'open_reports' => CityReport::query()->where('town', PilotLocation::town())->whereIn('status', $this->activeReportStatuses)->count(),
+                'businesses' => Organization::query()->where('town', PilotLocation::town())->count(),
+                'providers' => ServiceProvider::query()->where('town', PilotLocation::town())->count(),
+            ]],
             'recent_activity' => $this->mergeActivity([
                 ModerationFlag::query()->latest()->limit(3)->get()->map(fn (ModerationFlag $flag) => [
                     'type' => 'flag',
@@ -604,8 +761,70 @@ class DashboardController extends Controller
                     'body' => $event->status ?? 'published',
                     'timestamp' => optional($event->updated_at)->toIso8601String(),
                 ]),
+                RoleApplication::query()->latest()->limit(2)->get()->map(fn (RoleApplication $application) => [
+                    'type' => 'role_application',
+                    'title' => $application->full_name,
+                    'body' => $application->requested_role.' '.$application->status,
+                    'timestamp' => optional($application->updated_at)->toIso8601String(),
+                ]),
             ]),
         ]);
+    }
+
+    protected function residentCount(): int
+    {
+        return User::query()
+            ->where(function ($query): void {
+                $query->whereNull('current_role')->orWhere('current_role', 'citizen');
+            })
+            ->count();
+    }
+
+    protected function notificationCount($since = null): int
+    {
+        if (! \Illuminate\Support\Facades\Schema::hasTable('notifications')) {
+            return 0;
+        }
+
+        $query = \Illuminate\Support\Facades\DB::table('notifications');
+        if ($since !== null) {
+            $query->where('created_at', '>=', $since);
+        }
+
+        return (int) $query->count();
+    }
+
+    protected function unreadNotificationCount(): int
+    {
+        if (! \Illuminate\Support\Facades\Schema::hasTable('notifications')) {
+            return 0;
+        }
+
+        return (int) \Illuminate\Support\Facades\DB::table('notifications')->whereNull('read_at')->count();
+    }
+
+    protected function queueSize(): ?int
+    {
+        try {
+            $size = \Illuminate\Support\Facades\Queue::size();
+
+            return is_numeric($size) ? (int) $size : null;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    protected function failedJobsCount(): ?int
+    {
+        try {
+            if (! \Illuminate\Support\Facades\Schema::hasTable('failed_jobs')) {
+                return null;
+            }
+
+            return (int) \Illuminate\Support\Facades\DB::table('failed_jobs')->count();
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     protected function mergeActivity(array $groups): Collection

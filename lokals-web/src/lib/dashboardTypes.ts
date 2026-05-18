@@ -79,7 +79,7 @@ export type DashboardAdapterPayload = {
   notifications: NotificationItem[]
   messages: ConversationThread[]
   townManagerApprovals: Array<{ id: string; type: string; title: string; status: string }>
-  adminOverview: Record<string, number | string> | null
+  adminOverview: Record<string, unknown> | null
 }
 
 export type DashboardUnreadSummary = {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarPlus2, ClipboardList, Megaphone, Newspaper, ShieldCheck, Siren, Truck } from 'lucide-react'
+import { Activity, CalendarPlus2, ClipboardList, Megaphone, Newspaper, ShieldCheck, Siren, Truck } from 'lucide-react'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { DashboardSection } from '../../components/dashboard/DashboardSection'
 import { RecentActivityList } from '../../components/dashboard/RecentActivityList'
@@ -83,6 +83,12 @@ export function MunicipalityDashboardPage() {
   const upcomingEvents = (dashboard?.upcoming_events ?? []) as EventItem[]
   const pendingApprovals = data?.approvals ?? []
   const analyticsSummary = data?.analyticsSummary ?? {}
+  const reportCategories = Array.isArray(dashboard?.report_categories) ? dashboard.report_categories as Array<{ category?: string; total?: number }> : []
+  const localDirectoryStats = (dashboard?.local_directory_stats ?? {}) as Record<string, number | string>
+  const transportActivity = (dashboard?.transport_activity ?? {}) as Record<string, number | string>
+  const residentEngagement = (dashboard?.resident_engagement ?? {}) as Record<string, number | string>
+  const communicationStats = (dashboard?.communication_stats ?? {}) as Record<string, number | string>
+  const townActivityOverview = Array.isArray(dashboard?.town_activity_overview) ? dashboard.town_activity_overview as Array<{ area?: string; reports?: number; residents?: number; providers?: number }> : []
 
   const focusAlertForm = (nextType: string) => {
     setType(nextType)
@@ -166,6 +172,33 @@ export function MunicipalityDashboardPage() {
             <div>
               <p className="font-semibold text-lokals-charcoal">Feed approvals</p>
               <p className="mt-1 text-sm text-lokals-muted">Moderate local posts before they reach the public feed.</p>
+            </div>
+          </Link>
+          <Link to="/dashboard/town-manager/role-applications" className="flex min-h-24 items-start gap-3 rounded-[22px] border border-lokals-border bg-lokals-bg px-4 py-4 transition hover:-translate-y-0.5 hover:border-lokals-purple/30">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple">
+              <Truck className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-semibold text-lokals-charcoal">Approve role applications</p>
+              <p className="mt-1 text-sm text-lokals-muted">Review local operators, drivers, and couriers waiting for approval.</p>
+            </div>
+          </Link>
+          <Link to="/dashboard/town-manager/community-projects" className="flex min-h-24 items-start gap-3 rounded-[22px] border border-lokals-border bg-lokals-bg px-4 py-4 transition hover:-translate-y-0.5 hover:border-lokals-purple/30">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-semibold text-lokals-charcoal">Review community projects</p>
+              <p className="mt-1 text-sm text-lokals-muted">Follow up on pending local projects and community impact work.</p>
+            </div>
+          </Link>
+          <Link to="/dashboard/town-manager/analytics" className="flex min-h-24 items-start gap-3 rounded-[22px] border border-lokals-border bg-lokals-bg px-4 py-4 transition hover:-translate-y-0.5 hover:border-lokals-purple/30">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple">
+              <Activity className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-semibold text-lokals-charcoal">View town analytics</p>
+              <p className="mt-1 text-sm text-lokals-muted">Track local transport, engagement, and communications health.</p>
             </div>
           </Link>
         </div>
@@ -342,7 +375,7 @@ export function MunicipalityDashboardPage() {
           <div className="space-y-3">
             {[
               { label: 'Role applications', value: data?.roleApplicationsPending ?? 0, icon: Truck, to: '/dashboard/town-manager/role-applications' },
-              { label: 'Community projects', value: data?.communityProjectsPending.length ?? 0, icon: ShieldCheck, to: '/dashboard/town-manager/projects' },
+              { label: 'Community projects', value: data?.communityProjectsPending.length ?? 0, icon: ShieldCheck, to: '/dashboard/town-manager/community-projects' },
               { label: 'Feed moderation', value: data?.feedPending.length ?? 0, icon: Newspaper, to: '/dashboard/town-manager/feed/pending' },
               { label: 'Reward approvals', value: data?.rewardsPending.length ?? 0, icon: Megaphone, to: '/dashboard/town-manager/community-impact/pending' },
             ].map((item) => (
@@ -362,6 +395,50 @@ export function MunicipalityDashboardPage() {
           <StatusBreakdownCard items={Object.entries(analyticsSummary).slice(0, 5).map(([label, value]) => ({ label: label.replaceAll('_', ' '), value }))} />
         </DashboardSection>
       </div>
+
+      <div className="grid gap-4 xl:grid-cols-3">
+        <DashboardSection title="Issue categories" description="Which issue types are currently driving the municipal workload.">
+          {reportCategories.length > 0 ? (
+            <StatusBreakdownCard items={reportCategories.map((item) => ({ label: formatLabel(item.category), value: item.total ?? 0 }))} />
+          ) : (
+            <p className="text-sm text-lokals-muted">Issue category trends will appear here as more town reports are filed.</p>
+          )}
+        </DashboardSection>
+        <DashboardSection title="Local directory" description="A quick view of visible businesses, providers, and public services in town.">
+          <StatusBreakdownCard items={Object.entries(localDirectoryStats).map(([label, value]) => ({ label: formatLabel(label), value }))} />
+        </DashboardSection>
+        <DashboardSection title="Transport activity" description="Rides, deliveries, and operator readiness across the town.">
+          <StatusBreakdownCard items={Object.entries(transportActivity).map(([label, value]) => ({ label: formatLabel(label), value }))} />
+        </DashboardSection>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+        <DashboardSection title="Resident engagement" description="Signals that help explain current local activity and response pressure.">
+          <StatusBreakdownCard items={Object.entries(residentEngagement).map(([label, value]) => ({ label: formatLabel(label), value }))} />
+        </DashboardSection>
+        <DashboardSection title="Communication stats" description="Announcements and emergency communications currently sent to residents.">
+          <StatusBreakdownCard items={Object.entries(communicationStats).map(([label, value]) => ({ label: formatLabel(label), value }))} />
+        </DashboardSection>
+      </div>
+
+      <DashboardSection title="Town activity by area" description="A neighborhood-level view for local pressure and service coverage.">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {townActivityOverview.map((area) => (
+            <div key={area.area ?? 'town-area'} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-semibold text-lokals-charcoal">{area.area ?? 'Area'}</p>
+                <StatusBadge value={`${area.reports ?? 0} reports`} tone={Number(area.reports ?? 0) > 0 ? 'warning' : 'success'} />
+              </div>
+              <p className="mt-2 text-sm text-lokals-muted">{area.residents ?? 0} residents and {area.providers ?? 0} providers currently associated with this area.</p>
+            </div>
+          ))}
+          {townActivityOverview.length === 0 ? (
+            <div className="rounded-[20px] border border-dashed border-lokals-border bg-white px-4 py-4 text-sm text-lokals-muted">
+              Area-level activity will appear here when enough local data is available to group by neighborhood.
+            </div>
+          ) : null}
+        </div>
+      </DashboardSection>
 
       <DashboardSection title="Recent activity" description="Fresh report and alert movement across the town.">
         <RecentActivityList items={dashboard?.recent_activity ?? []} />

@@ -27,8 +27,8 @@ export function ServiceProviderDashboardPage() {
         <DashboardSection title="Quick actions" description="Keep services and availability easy to manage.">
           <div className="grid gap-3 md:grid-cols-2">
             <QuickActionTile to="/services" title="Add Service" body="Publish another service or rate." icon={PlusCircle} />
-            <QuickActionTile to="/provider-bookings" title="Manage Availability" body="Adjust slots and readiness." icon={CalendarRange} />
-            <QuickActionTile to="/provider-bookings" title="View Bookings" body="Track incoming service demand." icon={BookOpenCheck} />
+            <QuickActionTile to="/dashboard/provider/bookings" title="Manage Availability" body="Adjust slots and readiness." icon={CalendarRange} />
+            <QuickActionTile to="/dashboard/provider/bookings" title="View Bookings" body="Track incoming service demand." icon={BookOpenCheck} />
             <QuickActionTile to="/dashboard/service-provider" title="Post Alert" body="Share service updates with followers." icon={BellRing} />
           </div>
         </DashboardSection>
