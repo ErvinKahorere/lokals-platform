@@ -17,7 +17,8 @@ class DeliveryDetailsScreen extends ConsumerStatefulWidget {
   final String deliveryId;
 
   @override
-  ConsumerState<DeliveryDetailsScreen> createState() => _DeliveryDetailsScreenState();
+  ConsumerState<DeliveryDetailsScreen> createState() =>
+      _DeliveryDetailsScreenState();
 }
 
 class _DeliveryDetailsScreenState extends ConsumerState<DeliveryDetailsScreen> {
@@ -26,200 +27,325 @@ class _DeliveryDetailsScreenState extends ConsumerState<DeliveryDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final delivery = ref.watch(deliveryDetailsProvider(widget.deliveryId));
-    const steps = ['searching', 'courier_assigned', 'pickup_confirmed', 'in_transit', 'delivered', 'cancelled'];
+    const steps = [
+      'searching',
+      'courier_assigned',
+      'pickup_confirmed',
+      'in_transit',
+      'delivered',
+      'cancelled',
+    ];
 
     return LokalsShell(
-      title: 'Delivery status',
+      title: 'Delivery details',
       showBack: true,
-      child: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          const TransportHeroBanner(
-            title: 'Delivery workspace',
-            subtitle: 'Keep route, proof, contact, and status updates split into focused delivery tabs.',
-            icon: Icons.inventory_2_outlined,
-            colors: [Color(0xFFF59E0B), Color(0xFFF97316)],
-          ),
-          const SizedBox(height: 16),
-          TransportSegmentTabs(
-            items: const [
-              (value: 'overview', label: 'Overview'),
-              (value: 'route', label: 'Route'),
-              (value: 'timeline', label: 'Timeline'),
-              (value: 'contact', label: 'Contact'),
-              (value: 'proof', label: 'Proof'),
-            ],
-            value: _activeTab,
-            onChanged: (value) => setState(() => _activeTab = value),
-          ),
-          const SizedBox(height: 16),
-          delivery.when(
-            data: (item) {
-              final pickupPoint = item.pickupLatitude != null && item.pickupLongitude != null
-                  ? LocationPointModel(latitude: item.pickupLatitude!, longitude: item.pickupLongitude!)
-                  : null;
-              final dropoffPoint = item.dropoffLatitude != null && item.dropoffLongitude != null
-                  ? LocationPointModel(latitude: item.dropoffLatitude!, longitude: item.dropoffLongitude!)
-                  : null;
+      child: delivery.when(
+        data: (item) {
+          final pickupPoint =
+              item.pickupLatitude != null && item.pickupLongitude != null
+              ? LocationPointModel(
+                  latitude: item.pickupLatitude!,
+                  longitude: item.pickupLongitude!,
+                )
+              : null;
+          final dropoffPoint =
+              item.dropoffLatitude != null && item.dropoffLongitude != null
+              ? LocationPointModel(
+                  latitude: item.dropoffLatitude!,
+                  longitude: item.dropoffLongitude!,
+                )
+              : null;
 
-              return Column(
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final sheetHeight = (constraints.maxHeight * 0.58).clamp(
+                330.0,
+                450.0,
+              );
+              return Stack(
                 children: [
-                  if (_activeTab == 'overview')
-                    TransportPanel(
-                      title: 'Delivery overview',
-                      subtitle: 'A simpler summary of the parcel, pricing, and current status.',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const CircleAvatar(
-                                radius: 24,
-                                backgroundColor: Color(0xFFFEF3C7),
-                                child: Icon(Icons.inventory_2_outlined, color: Colors.black87),
+                  Positioned.fill(
+                    child: LocationPreviewMap(
+                      primary: pickupPoint,
+                      secondary: dropoffPoint,
+                      height: constraints.maxHeight,
+                      showFrame: false,
+                      showOpenAction: false,
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.white.withValues(alpha: 0.06),
+                              Colors.white.withValues(alpha: 0.0),
+                              Colors.black.withValues(alpha: 0.1),
+                            ],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: TransportBottomSheetCard(
+                      maxHeight: sheetHeight,
+                      child: SizedBox(
+                        height: sheetHeight,
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 42,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: AppColors.border,
+                                borderRadius: BorderRadius.circular(999),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
+                            ),
+                            const SizedBox(height: 12),
+                            AppBadge(
+                              label:
+                                  item.statusLabel ??
+                                  _deliveryStatusLabel(
+                                    item.trackingStatus ?? item.status,
+                                  ),
+                              tone: AppBadgeTone.success,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _deliveryTitle(item),
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              item.status == 'in_transit'
+                                  ? 'The courier is moving this parcel now.'
+                                  : 'Follow each handoff step in one place.',
+                              style: const TextStyle(
+                                color: AppColors.mutedText,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 12),
+                            TransportSegmentTabs(
+                              items: const [
+                                (value: 'overview', label: 'Overview'),
+                                (value: 'route', label: 'Route'),
+                                (value: 'timeline', label: 'Timeline'),
+                                (value: 'contact', label: 'Contact'),
+                                (value: 'proof', label: 'Proof'),
+                              ],
+                              value: _activeTab,
+                              onChanged: (value) =>
+                                  setState(() => _activeTab = value),
+                            ),
+                            const SizedBox(height: 12),
+                            Expanded(
+                              child: SingleChildScrollView(
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(item.itemDescription, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-                                    const SizedBox(height: 4),
-                                    AppBadge(label: item.statusLabel ?? _deliveryStatusLabel(item.trackingStatus ?? item.status)),
+                                    if (_activeTab == 'overview')
+                                      Column(
+                                        children: [
+                                          TransportSummaryRow(
+                                            primaryLabel: 'Fare',
+                                            primaryValue: item.price == null
+                                                ? 'Open'
+                                                : 'N\$ ${item.price}',
+                                            secondaryLabel: 'Parcel',
+                                            secondaryValue:
+                                                item.parcelSize ?? 'Medium',
+                                          ),
+                                          const SizedBox(height: 12),
+                                          _SheetInfoCard(
+                                            children: [
+                                              _InfoRow(
+                                                label: 'Pickup',
+                                                value: item.pickupAddress,
+                                              ),
+                                              _InfoRow(
+                                                label: 'Drop-off',
+                                                value: item.dropoffAddress,
+                                              ),
+                                              _InfoRow(
+                                                label: 'Urgency',
+                                                value:
+                                                    item.urgency ?? 'Standard',
+                                              ),
+                                              _InfoRow(
+                                                label: 'Weight',
+                                                value:
+                                                    (item.weightKg ?? '')
+                                                        .isEmpty
+                                                    ? 'Pending'
+                                                    : '${item.weightKg} kg',
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    if (_activeTab == 'route')
+                                      _SheetInfoCard(
+                                        children: [
+                                          _InfoRow(
+                                            label: 'Pickup',
+                                            value: item.pickupAddress,
+                                          ),
+                                          _InfoRow(
+                                            label: 'Drop-off',
+                                            value: item.dropoffAddress,
+                                          ),
+                                          if (item.estimatedDistanceKm != null)
+                                            _InfoRow(
+                                              label: 'Estimated distance',
+                                              value:
+                                                  '${item.estimatedDistanceKm!.toStringAsFixed(1)} km',
+                                            ),
+                                          if ((item.notes ?? '').isNotEmpty)
+                                            _InfoRow(
+                                              label: 'Notes',
+                                              value: item.notes!,
+                                            ),
+                                        ],
+                                      ),
+                                    if (_activeTab == 'timeline')
+                                      _SheetInfoCard(
+                                        children: [
+                                          StatusStepper(
+                                            steps: steps,
+                                            current: _deliveryStepperStatus(
+                                              item.trackingStatus ??
+                                                  item.status,
+                                            ),
+                                            updatedAt: item.updatedAt,
+                                          ),
+                                        ],
+                                      ),
+                                    if (_activeTab == 'contact')
+                                      _SheetInfoCard(
+                                        children: [
+                                          Text(
+                                            item.driverName
+                                                        ?.trim()
+                                                        .isNotEmpty ==
+                                                    true
+                                                ? item.driverName!
+                                                : 'Courier operator pending',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            (item.driverPhone ?? '').isNotEmpty
+                                                ? item.driverPhone!
+                                                : 'A courier contact will appear here once the request is accepted.',
+                                            style: const TextStyle(
+                                              color: AppColors.mutedText,
+                                            ),
+                                          ),
+                                          if ((item.driverVehicleType ?? '')
+                                              .isNotEmpty) ...[
+                                            const SizedBox(height: 10),
+                                            _InfoRow(
+                                              label: 'Vehicle',
+                                              value: item.driverVehicleType!,
+                                            ),
+                                          ],
+                                          if ((item.driverVehicleRegistration ??
+                                                  '')
+                                              .isNotEmpty)
+                                            _InfoRow(
+                                              label: 'Plate',
+                                              value: item
+                                                  .driverVehicleRegistration!,
+                                            ),
+                                          if ((item.driverPhone ?? '')
+                                              .isNotEmpty) ...[
+                                            const SizedBox(height: 12),
+                                            Wrap(
+                                              spacing: 8,
+                                              runSpacing: 8,
+                                              children: [
+                                                AppButton(
+                                                  label: 'Call',
+                                                  expanded: false,
+                                                  variant: AppButtonVariant
+                                                      .secondary,
+                                                  onPressed: () =>
+                                                      const ContactActionService()
+                                                          .call(
+                                                            context,
+                                                            item.driverPhone!,
+                                                          ),
+                                                ),
+                                                AppButton(
+                                                  label: 'WhatsApp',
+                                                  expanded: false,
+                                                  onPressed: () =>
+                                                      const ContactActionService()
+                                                          .openWhatsApp(
+                                                            context,
+                                                            phone: item
+                                                                .driverPhone!,
+                                                            name:
+                                                                item.driverName,
+                                                            message:
+                                                                'Hi, I am tracking my LOKALS delivery and need an update.',
+                                                          ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    if (_activeTab == 'proof')
+                                      _SheetInfoCard(
+                                        children: [
+                                          Text(
+                                            item.proofOfDeliveryLabel ??
+                                                'Proof of delivery will appear here once the courier confirms handoff.',
+                                            style: const TextStyle(
+                                              color: AppColors.mutedText,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                   ],
                                 ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(child: TransportMiniStat(label: 'Estimate', value: item.price == null ? 'Open' : 'N\$ ${item.price}')),
-                              const SizedBox(width: 10),
-                              Expanded(child: TransportMiniStat(label: 'Parcel size', value: item.parcelSize ?? 'Medium')),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Expanded(child: TransportMiniStat(label: 'Urgency', value: item.urgency ?? 'Standard')),
-                              const SizedBox(width: 10),
-                              Expanded(child: TransportMiniStat(label: 'Weight', value: (item.weightKg ?? '').isEmpty ? 'Pending' : '${item.weightKg} kg')),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  if (_activeTab == 'route')
-                    TransportPanel(
-                      title: 'Route preview',
-                      subtitle: 'A single dominant route preview with pickup and drop-off context.',
-                      child: Column(
-                        children: [
-                          LocationPreviewMap(primary: pickupPoint, secondary: dropoffPoint),
-                          const SizedBox(height: 12),
-                          _InfoRow(label: 'Pickup', value: item.pickupAddress),
-                          _InfoRow(label: 'Drop-off', value: item.dropoffAddress),
-                          if (item.estimatedDistanceKm != null) _InfoRow(label: 'Estimated distance', value: '${item.estimatedDistanceKm!.toStringAsFixed(1)} km'),
-                          if ((item.notes ?? '').isNotEmpty) _InfoRow(label: 'Notes', value: item.notes!),
-                        ],
-                      ),
-                    ),
-                  if (_activeTab == 'timeline')
-                    TransportPanel(
-                      title: 'Status timeline',
-                      subtitle: 'Follow the current delivery stage without scanning the whole detail screen.',
-                      child: StatusStepper(
-                        steps: steps,
-                        current: _deliveryStepperStatus(item.trackingStatus ?? item.status),
-                        updatedAt: item.updatedAt,
-                      ),
-                    ),
-                  if (_activeTab == 'contact')
-                    TransportPanel(
-                      title: 'Courier contact',
-                      subtitle: 'Reach the assigned courier quickly when contact details are available.',
-                      child: AppCard(
-                        color: AppColors.neutralSoftAlt,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item.driverName?.trim().isNotEmpty == true ? item.driverName! : 'Courier operator pending',
-                              style: const TextStyle(fontWeight: FontWeight.w700),
                             ),
-                            const SizedBox(height: 6),
-                            Text(
-                              (item.driverPhone ?? '').isNotEmpty
-                                  ? item.driverPhone!
-                                  : 'A courier contact will appear here once the request is accepted.',
-                              style: const TextStyle(color: AppColors.mutedText),
-                            ),
-                            if ((item.driverVehicleType ?? '').isNotEmpty) ...[
-                              const SizedBox(height: 6),
-                              Text('Vehicle: ${item.driverVehicleType}', style: const TextStyle(color: AppColors.mutedText)),
-                            ],
-                            if ((item.driverVehicleRegistration ?? '').isNotEmpty) ...[
-                              const SizedBox(height: 6),
-                              Text('Plate: ${item.driverVehicleRegistration}', style: const TextStyle(color: AppColors.mutedText)),
-                            ],
-                            if (item.driverRating != null) ...[
-                              const SizedBox(height: 6),
-                              Text('Courier rating: ${item.driverRating!.toStringAsFixed(1)}/5', style: const TextStyle(color: AppColors.mutedText)),
-                            ],
-                            if ((item.driverPhone ?? '').isNotEmpty) ...[
-                              const SizedBox(height: 12),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  AppButton(
-                                    label: 'Call',
-                                    expanded: false,
-                                    variant: AppButtonVariant.secondary,
-                                    onPressed: () => const ContactActionService().call(context, item.driverPhone!),
-                                  ),
-                                  AppButton(
-                                    label: 'WhatsApp',
-                                    expanded: false,
-                                    onPressed: () => const ContactActionService().openWhatsApp(
-                                      context,
-                                      phone: item.driverPhone!,
-                                      name: item.driverName,
-                                      message: 'Hi, I am tracking my LOKALS delivery and need an update.',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
                           ],
                         ),
                       ),
                     ),
-                  if (_activeTab == 'proof')
-                    TransportPanel(
-                      title: 'Proof of delivery',
-                      subtitle: 'Keep the handoff confirmation separate from route and contact details.',
-                      child: AppCard(
-                        color: AppColors.neutralSoftAlt,
-                        child: Text(
-                          item.proofOfDeliveryLabel ?? 'Proof of delivery will appear here once the courier confirms handoff.',
-                          style: const TextStyle(color: AppColors.mutedText),
-                        ),
-                      ),
-                    ),
+                  ),
                 ],
               );
             },
-            loading: () => const AppCard(child: LoadingSkeleton(height: 120)),
-            error: (error, _) => EmptyState(
-              title: 'Delivery details unavailable',
-              body: 'We could not refresh this delivery right now. Check your connection and try again.',
-              actionLabel: 'Retry',
-              onAction: () => ref.invalidate(deliveryDetailsProvider(widget.deliveryId)),
-            ),
-          ),
-        ],
+          );
+        },
+        loading: () => const AppCard(child: LoadingSkeleton(height: 120)),
+        error: (error, _) => EmptyState(
+          title: 'Delivery details unavailable',
+          body:
+              'We could not refresh this delivery right now. Check your connection and try again.',
+          actionLabel: 'Retry',
+          onAction: () =>
+              ref.invalidate(deliveryDetailsProvider(widget.deliveryId)),
+        ),
       ),
     );
   }
@@ -257,6 +383,36 @@ String _deliveryStatusLabel(String? status) {
   }
 }
 
+String _deliveryTitle(DeliveryModel item) {
+  final driverName = item.driverName?.trim();
+  if (driverName != null && driverName.isNotEmpty) {
+    return '$driverName is on the way';
+  }
+  return 'Delivery details';
+}
+
+class _SheetInfoCard extends StatelessWidget {
+  const _SheetInfoCard({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.neutralSoftAlt,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
+    );
+  }
+}
+
 class _InfoRow extends StatelessWidget {
   const _InfoRow({required this.label, required this.value});
 
@@ -270,7 +426,14 @@ class _InfoRow extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.mutedText,
+            ),
+          ),
           const SizedBox(height: 4),
           Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
         ],
