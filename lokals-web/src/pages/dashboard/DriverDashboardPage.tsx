@@ -1,37 +1,37 @@
-import { Bell, CarFront, History, MessageSquare, Power, Star, Wallet, AlertCircle } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { AlertCircle, Bell, CarFront, MessageSquare, Power, Star, Wallet } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button, StatusBadge } from '../../components/Ui'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
-import { DashboardSection } from '../../components/dashboard/DashboardSection'
-import { QuickActionTile } from '../../components/dashboard/QuickActionTile'
 import { RecentActivityList } from '../../components/dashboard/RecentActivityList'
-import { StatusBreakdownCard } from '../../components/dashboard/StatusBreakdownCard'
-import { useDriverOperationalData } from '../../lib/dashboardDataProvider'
-import { getDashboardActivity, type DriverDashboardData } from '../../lib/dashboardTypes'
-import { formatTransportStatus, transportStatusTone } from '../../lib/transportStatus'
+import { TransportPanel, TransportTabs } from '../../components/transport/TransportSurface'
 import { useDriverRideAction, useUpdateDriverAvailability } from '../../hooks/queries'
+import { useDriverOperationalData } from '../../lib/dashboardDataProvider'
+import { type DriverDashboardData, getDashboardActivity } from '../../lib/dashboardTypes'
 import { getApiErrorMessage } from '../../lib/api'
+import { formatTransportStatus, transportStatusTone } from '../../lib/transportStatus'
+
+const dashboardTabs = [
+  { label: 'Available', value: 'available' },
+  { label: 'Active', value: 'active' },
+  { label: 'Earnings', value: 'earnings' },
+  { label: 'History', value: 'history' },
+]
 
 export function DriverDashboardPage() {
   const dashboardQuery = useDriverOperationalData()
   const data = dashboardQuery.data as DriverDashboardData | undefined
-
-  const stats = useMemo(() => data?.dashboard?.stats ?? {}, [data?.dashboard?.stats])
+  const [activeTab, setActiveTab] = useState('available')
   const availability = data?.availability ?? 'unknown'
   const availabilityTone = availability === 'online' ? 'success' : availability === 'offline' ? 'warning' : 'neutral'
   const availabilityLabel = availability === 'online' ? 'online' : availability === 'offline' ? 'offline' : 'unknown'
 
   const updateAvailabilityMutation = useUpdateDriverAvailability()
   const rideActionMutation = useDriverRideAction()
-  
-  // Per-ride pending state and error tracking
   const [rideActionState, setRideActionState] = useState<Record<number, { action: string; pending: boolean; error?: string }>>({})
 
   const activeTrip = data?.activeTrip
   const availableRequests = data?.availableRequests ?? []
-  const priorityRide = availableRequests[0]
-  const remainingRequests = availableRequests.slice(1)
   const tripHistory = data?.tripHistory ?? []
   const earningsSummary = data?.earningsSummary ?? {}
   const ratingsSummary = data?.ratingsSummary ?? { average: '0', total: '0' }
@@ -70,255 +70,230 @@ export function DriverDashboardPage() {
     <DashboardShell
       mode="driver"
       eyebrow="Driver mode"
-      title="Driver dashboard"
-      description="Go online, pick up nearby ride requests, track active trips, and keep earnings in view."
+      title="Driver workspace"
+      description="A cleaner operational workspace built around available requests, the active trip, and the next required action."
       isLoading={dashboardQuery.isLoading}
       error={dashboardQuery.error}
-      stats={stats}
+      stats={{
+        availability: availabilityLabel,
+        available_requests: availableRequests.length,
+        active_trip: activeTrip ? 1 : 0,
+        unread_notifications: unreadNotifications,
+      }}
+      actions={
+        <Button variant={availability === 'online' ? 'secondary' : 'primary'} onClick={handleAvailabilityToggle} disabled={updateAvailabilityMutation.isPending}>
+          <Power className="mr-2 h-4 w-4" />
+          {updateAvailabilityMutation.isPending ? 'Updating...' : availability === 'online' ? 'Go offline' : 'Go online'}
+        </Button>
+      }
     >
-      <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-        <DashboardSection title="Quick actions" description="Practical controls for your next trip.">
-          <div className="grid gap-3 md:grid-cols-2">
-            <QuickActionTile to="/ride" title="Available rides" body="Review nearby resident requests." icon={CarFront} />
-            <button
-              type="button"
-              onClick={handleAvailabilityToggle}
-              aria-pressed={availability === 'online'}
-              aria-label={availability === 'online' ? 'Go offline' : 'Go online'}
-              className="rounded-[22px] border border-lokals-border bg-white p-4 text-left shadow-card transition hover:-translate-y-0.5 hover:border-lokals-purple/30"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple">
-                  <Power className="h-5 w-5" />
-                </div>
-                <StatusBadge value={availabilityLabel} tone={availabilityTone} />
-              </div>
-              <p className="mt-3 text-base font-semibold text-lokals-charcoal">
-                {availability === 'online' ? 'Go offline' : 'Go online'}
+      <div className="space-y-5">
+        <div className="rounded-[28px] border border-lokals-purple/10 bg-[linear-gradient(180deg,#ffffff,#f9faff)] p-5 shadow-card">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-purple">Operational focus</p>
+              <h3 className="mt-1 text-xl font-semibold text-lokals-charcoal">{activeTrip ? 'Active trip in progress' : 'Waiting for the next request'}</h3>
+              <p className="mt-2 text-sm text-lokals-muted">
+                {activeTrip ? `${activeTrip.pickup_location} to ${activeTrip.dropoff_location}` : 'Stay online and the next nearby rider request will appear here.'}
               </p>
-              <p className="mt-1 text-sm text-lokals-muted">Control whether you are visible for ride matching.</p>
-            </button>
-            <QuickActionTile to="/ride" title="Trip history" body="Review recently completed trips." icon={History} />
-            <QuickActionTile to="/dashboard/driver/earnings" title="Earnings" body="See your latest ride totals and payouts." icon={Wallet} />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <StatusBadge value={availabilityLabel} tone={availabilityTone} />
+              <StatusBadge value={`${availableRequests.length} open requests`} tone="accent" />
+            </div>
           </div>
-        </DashboardSection>
+        </div>
 
-        <DashboardSection title="Operational summary" description="A live view of availability, work, and communication.">
-          <StatusBreakdownCard
-            items={[
-              { label: 'Availability', value: availabilityLabel },
-              { label: 'Unread notifications', value: unreadNotifications },
-              { label: 'Unread messages', value: unreadMessages },
-              { label: 'Open ride requests', value: availableRequests.length },
-            ]}
-          />
-        </DashboardSection>
-      </div>
+        <TransportTabs items={dashboardTabs} value={activeTab} onChange={setActiveTab} />
 
-      <div className="grid gap-4 xl:grid-cols-2">
-        <DashboardSection title="Available ride requests" description="Fresh resident requests that still need a driver.">
-          <div className="space-y-3">
-            {availability !== 'online' && availableRequests.length > 0 ? (
-              <div className="rounded-[20px] border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                You are offline and will not receive new ride alerts until you go online.
-              </div>
-            ) : null}
-            {priorityRide ? (
-              <div className="rounded-[22px] border border-lokals-purple/20 bg-violet-50 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-lokals-purple">Priority request</p>
-                    <p className="mt-1 text-base font-semibold text-lokals-charcoal">{priorityRide.pickup_location} → {priorityRide.dropoff_location}</p>
-                    <p className="mt-2 text-sm text-lokals-muted">{priorityRide.user?.name ?? 'Resident'} | {priorityRide.ride_type ?? 'Standard'} | N$ {priorityRide.fare_estimate ?? '0'}</p>
-                  </div>
-                  <StatusBadge value={formatTransportStatus(priorityRide.tracking_status ?? priorityRide.status, priorityRide.status_label)} tone={transportStatusTone(priorityRide.status)} />
+        {activeTab === 'available' ? (
+          <TransportPanel title="Available requests" description="Accept or decline from a compact request list with clearer status and stronger action hierarchy.">
+            <div className="space-y-3">
+              {availability !== 'online' && availableRequests.length > 0 ? (
+                <div className="rounded-[20px] border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                  You are offline and will not receive new ride alerts until you go online.
                 </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Link to={`/ride/${priorityRide.id}`}>
-                    <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary">Details</Button>
-                  </Link>
-                  {priorityRide.user?.phone ? (
-                    <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" onClick={() => { window.location.href = `tel:${priorityRide.user?.phone}` }}>
-                      Call resident
-                    </Button>
-                  ) : null}
-                  <Button className="min-h-9 px-3 py-2 text-xs" onClick={() => handleRideAction(priorityRide.id, 'accept')} disabled={rideActionState[priorityRide.id]?.pending}>
-                    {rideActionState[priorityRide.id]?.pending && rideActionState[priorityRide.id]?.action === 'accept' ? 'Accepting...' : 'Accept'}
-                  </Button>
-                  <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" onClick={() => handleRideAction(priorityRide.id, 'decline')} disabled={rideActionState[priorityRide.id]?.pending}>
-                    {rideActionState[priorityRide.id]?.pending && rideActionState[priorityRide.id]?.action === 'decline' ? 'Declining...' : 'Decline'}
-                  </Button>
-                </div>
-              </div>
-            ) : null}
-            {remainingRequests.slice(0, 5).map((ride) => {
-              const rideState = rideActionState[ride.id]
-              const isPending = rideState?.pending ?? false
-              const error = rideState?.error
+              ) : null}
+              {availableRequests.map((ride, index) => {
+                const rideState = rideActionState[ride.id]
+                const isPending = rideState?.pending ?? false
+                const isPriority = index === 0
 
-              return (
-                <div key={ride.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-semibold text-lokals-charcoal">{ride.pickup_location} {'->'} {ride.dropoff_location}</p>
-                    <StatusBadge value={formatTransportStatus(ride.tracking_status ?? ride.status, ride.status_label)} tone={transportStatusTone(ride.status)} />
+                return (
+                  <div key={ride.id} className={`rounded-[24px] border px-4 py-4 ${isPriority ? 'border-lokals-purple/20 bg-violet-50' : 'border-lokals-border bg-white'}`}>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          {isPriority ? <StatusBadge value="Priority" tone="accent" /> : null}
+                          <p className="font-semibold text-lokals-charcoal">{ride.pickup_location} to {ride.dropoff_location}</p>
+                        </div>
+                        <p className="mt-2 text-sm text-lokals-muted">{ride.user?.name ?? 'Resident'} | {ride.ride_type ?? 'Standard'} | N$ {ride.fare_estimate ?? '0'}</p>
+                      </div>
+                      <StatusBadge value={formatTransportStatus(ride.tracking_status ?? ride.status, ride.status_label)} tone={transportStatusTone(ride.status)} />
+                    </div>
+                    {rideState?.error ? (
+                      <div className="mt-3 flex items-start gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                        <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                        <p>{rideState.error}</p>
+                      </div>
+                    ) : null}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button disabled={isPending} onClick={() => handleRideAction(ride.id, 'accept')}>
+                        {isPending && rideState?.action === 'accept' ? 'Accepting...' : 'Accept'}
+                      </Button>
+                      <Button variant="secondary" disabled={isPending} onClick={() => handleRideAction(ride.id, 'decline')}>
+                        {isPending && rideState?.action === 'decline' ? 'Declining...' : 'Decline'}
+                      </Button>
+                      <Link to={`/ride/${ride.id}`}><Button variant="secondary">Details</Button></Link>
+                      {ride.user?.phone ? (
+                        <Button variant="secondary" onClick={() => { window.location.href = `tel:${ride.user?.phone}` }}>
+                          Call rider
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
-                  <p className="mt-1 text-sm text-lokals-muted">
-                    {ride.user?.name ?? 'Resident'} | {ride.ride_type ?? 'Standard'} | N$ {ride.fare_estimate ?? '0'}
-                  </p>
-                  {error ? (
-                    <div className="mt-2 flex items-start gap-2 rounded-lg bg-red-50 p-2 text-sm text-red-700">
+                )
+              })}
+              {!availableRequests.length ? (
+                <div className="rounded-[24px] border border-lokals-border bg-white p-6 text-center text-sm text-lokals-muted">
+                  No ride requests right now. Stay online and the next nearby request will appear here.
+                </div>
+              ) : null}
+            </div>
+          </TransportPanel>
+        ) : null}
+
+        {activeTab === 'active' ? (
+          <TransportPanel title="Active trip" description="Keep the current trip and its next required action in one focused workspace.">
+            {activeTrip ? (
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+                <div className="rounded-[24px] border border-lokals-border bg-white p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-lokals-charcoal">{activeTrip.pickup_location} to {activeTrip.dropoff_location}</p>
+                      <p className="mt-1 text-sm text-lokals-muted">{activeTrip.user?.name ?? 'Resident'} | {activeTrip.user?.phone ?? 'No phone yet'}</p>
+                    </div>
+                    <StatusBadge value={formatTransportStatus(activeTrip.tracking_status ?? activeTrip.status, activeTrip.status_label)} tone={transportStatusTone(activeTrip.status)} />
+                  </div>
+                  {rideActionState[activeTrip.id]?.error ? (
+                    <div className="mt-3 flex items-start gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">
                       <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                      <p>{error}</p>
+                      <p>{rideActionState[activeTrip.id]?.error}</p>
                     </div>
                   ) : null}
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Link to={`/ride/${ride.id}`}>
-                      <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" disabled={isPending}>
-                        Details
-                      </Button>
-                    </Link>
-                    <Button className="min-h-9 px-3 py-2 text-xs" disabled={isPending} onClick={() => handleRideAction(ride.id, 'accept')}>
-                      {isPending && rideState.action === 'accept' ? 'Updating...' : 'Accept'}
-                    </Button>
-                    <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" disabled={isPending} onClick={() => handleRideAction(ride.id, 'decline')}>
-                      {isPending && rideState.action === 'decline' ? 'Updating...' : 'Decline'}
-                    </Button>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Link to={`/ride/${activeTrip.id}`}><Button variant="secondary">Open details</Button></Link>
+                    {activeTrip.user?.phone ? <Button variant="secondary" onClick={() => { window.location.href = `tel:${activeTrip.user?.phone}` }}>Call rider</Button> : null}
+                    {activeTrip.status === 'accepted' ? <Button disabled={rideActionState[activeTrip.id]?.pending} onClick={() => handleRideAction(activeTrip.id, 'arrived')}>{rideActionState[activeTrip.id]?.pending && rideActionState[activeTrip.id]?.action === 'arrived' ? 'Updating...' : 'Mark arrived'}</Button> : null}
+                    {activeTrip.status === 'arrived' ? <Button disabled={rideActionState[activeTrip.id]?.pending} onClick={() => handleRideAction(activeTrip.id, 'start')}>{rideActionState[activeTrip.id]?.pending && rideActionState[activeTrip.id]?.action === 'start' ? 'Updating...' : 'Start trip'}</Button> : null}
+                    {activeTrip.status === 'in_progress' ? <Button disabled={rideActionState[activeTrip.id]?.pending} onClick={() => handleRideAction(activeTrip.id, 'complete')}>{rideActionState[activeTrip.id]?.pending && rideActionState[activeTrip.id]?.action === 'complete' ? 'Updating...' : 'Complete trip'}</Button> : null}
                   </div>
                 </div>
-              )
-            })}
-            {!availableRequests.length ? (
-              <div className="rounded-[20px] border border-lokals-border bg-white p-6 text-center">
-                <p className="font-semibold text-lokals-charcoal">No ride requests right now</p>
-                <p className="mt-2 text-sm text-lokals-muted">Stay online and the next request will appear as soon as a resident needs a ride.</p>
-              </div>
-            ) : null}
-          </div>
-        </DashboardSection>
-
-        <DashboardSection title="Trip history" description="Recent trips and their current outcome.">
-          <div className="space-y-3">
-            {tripHistory.slice(0, 6).map((ride) => (
-              <div key={ride.id} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="font-semibold text-lokals-charcoal">{ride.pickup_location} {'->'} {ride.dropoff_location}</p>
-                  <StatusBadge value={formatTransportStatus(ride.tracking_status ?? ride.status, ride.status_label)} tone={transportStatusTone(ride.status)} />
+                <div className="space-y-3">
+                  {[
+                    { label: 'Status', value: formatTransportStatus(activeTrip.tracking_status ?? activeTrip.status, activeTrip.status_label), icon: CarFront },
+                    { label: 'Ride type', value: activeTrip.ride_type ?? 'Standard', icon: CarFront },
+                    { label: 'Fare estimate', value: activeTrip.fare_estimate ? `N$ ${activeTrip.fare_estimate}` : 'Open fare', icon: Wallet },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center justify-between rounded-[24px] border border-lokals-border bg-white px-4 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple">
+                          <item.icon className="h-4 w-4" />
+                        </div>
+                        <p className="font-semibold text-lokals-charcoal">{item.label}</p>
+                      </div>
+                      <span className="text-sm font-semibold text-lokals-charcoal">{item.value}</span>
+                    </div>
+                  ))}
                 </div>
-                <p className="mt-1 text-sm text-lokals-muted">
-                  {ride.user?.name ?? 'Resident'}
-                </p>
               </div>
-            ))}
-            {!tripHistory.length ? (
-              <p className="text-sm text-lokals-muted">Completed and cancelled trips will appear here as you start working rides.</p>
-            ) : null}
-          </div>
-        </DashboardSection>
-      </div>
+            ) : (
+              <div className="rounded-[24px] border border-lokals-border bg-white p-6 text-center text-sm text-lokals-muted">
+                No active trip yet. Once you accept a rider request it will appear here.
+              </div>
+            )}
+          </TransportPanel>
+        ) : null}
 
-      <div className="grid gap-4 xl:grid-cols-3">
-        <DashboardSection title="Active trip" description="The ride currently assigned to you, if any.">
-          {activeTrip ? (
-            <div className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
-              <div className="flex items-center justify-between gap-3">
-                <p className="font-semibold text-lokals-charcoal">{activeTrip.pickup_location} {'->'} {activeTrip.dropoff_location}</p>
-                <StatusBadge value={formatTransportStatus(activeTrip.tracking_status ?? activeTrip.status, activeTrip.status_label)} tone={transportStatusTone(activeTrip.status)} />
-              </div>
-              <p className="mt-1 text-sm text-lokals-muted">
-                {activeTrip.user?.name ?? 'Resident'}
-              </p>
-              {activeTrip.user?.phone ? (
-                <div className="mt-3">
-                  <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary" onClick={() => { window.location.href = `tel:${activeTrip.user?.phone}` }}>
-                    Call resident
-                  </Button>
-                </div>
-              ) : null}
-              <div className="mt-2">
-                <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-lokals-charcoal">
-                  {transportStatusTone(activeTrip.status)}
-                </span>
-              </div>
-              {rideActionState[activeTrip.id]?.error ? (
-                <div className="mt-3 flex items-start gap-2 rounded-lg bg-red-50 p-2 text-sm text-red-700">
-                  <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                  <p>{rideActionState[activeTrip.id]?.error}</p>
-                </div>
-              ) : null}
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Link to={`/ride/${activeTrip.id}`}>
-                  <Button className="min-h-9 px-3 py-2 text-xs" variant="secondary">
-                    Details
-                  </Button>
-                </Link>
-                {activeTrip.status === 'accepted' ? (
-                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionState[activeTrip.id]?.pending} onClick={() => handleRideAction(activeTrip.id, 'arrived')}>
-                    {rideActionState[activeTrip.id]?.pending && rideActionState[activeTrip.id]?.action === 'arrived' ? 'Updating...' : 'Mark arrived'}
-                  </Button>
-                ) : null}
-                {activeTrip.status === 'arrived' ? (
-                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionState[activeTrip.id]?.pending} onClick={() => handleRideAction(activeTrip.id, 'start')}>
-                    {rideActionState[activeTrip.id]?.pending && rideActionState[activeTrip.id]?.action === 'start' ? 'Updating...' : 'Start trip'}
-                  </Button>
-                ) : null}
-                {activeTrip.status === 'in_progress' ? (
-                  <Button className="min-h-9 px-3 py-2 text-xs" disabled={rideActionState[activeTrip.id]?.pending} onClick={() => handleRideAction(activeTrip.id, 'complete')}>
-                    {rideActionState[activeTrip.id]?.pending && rideActionState[activeTrip.id]?.action === 'complete' ? 'Updating...' : 'Complete trip'}
-                  </Button>
-                ) : null}
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-lokals-muted">No active trip yet. Once you accept a resident request it will appear here.</p>
-          )}
-        </DashboardSection>
-
-        <DashboardSection title="Earnings summary" description="Latest payout and trip totals from your dashboard feed.">
-          {Object.keys(earningsSummary).length ? (
-            <StatusBreakdownCard
-              items={Object.entries(earningsSummary).slice(0, 4).map(([label, value]) => ({
-                label: label.replaceAll('_', ' '),
-                value,
-              }))}
-            />
-          ) : (
-            <div className="rounded-[20px] border border-lokals-border bg-white p-6 text-center text-sm text-lokals-muted">
-              No earnings yet. Complete your first ride to see totals here.
-            </div>
-          )}
-        </DashboardSection>
-
-        <DashboardSection title="Ratings and comms" description="Trust and response readiness at a glance.">
-          <div className="space-y-3">
-            {[
-              { label: 'Average rating', value: ratingsSummary.average ?? '0', icon: Star },
-              { label: 'Total ratings', value: ratingsSummary.total ?? '0', icon: Star },
-              { label: 'Unread notifications', value: unreadNotifications, icon: Bell },
-              { label: 'Unread messages', value: unreadMessages, icon: MessageSquare },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between rounded-[20px] border border-lokals-border bg-white px-4 py-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple">
-                    <item.icon className="h-4 w-4" />
+        {activeTab === 'earnings' ? (
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+            <TransportPanel title="Earnings visibility" description="Keep today, total, and trust signals in a compact operational view.">
+              <div className="grid gap-3 md:grid-cols-2">
+                {Object.entries(earningsSummary).slice(0, 6).map(([label, value]) => (
+                  <div key={label} className="rounded-[24px] border border-lokals-border bg-white px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">{label.replaceAll('_', ' ')}</p>
+                    <p className="mt-2 text-xl font-semibold text-lokals-charcoal">{String(value)}</p>
                   </div>
-                  <p className="font-semibold text-lokals-charcoal">{item.label}</p>
-                </div>
-                <span className="text-sm font-semibold text-lokals-charcoal">{item.value}</span>
+                ))}
+                {!Object.keys(earningsSummary).length ? (
+                  <div className="rounded-[24px] border border-lokals-border bg-white p-6 text-sm text-lokals-muted">
+                    No earnings yet. Complete your first ride to see totals here.
+                  </div>
+                ) : null}
               </div>
-            ))}
-          </div>
-        </DashboardSection>
-      </div>
+            </TransportPanel>
 
-      <DashboardSection title="Recent activity" description="Latest movement across your driver workspace.">
-        {recentActivity.length ? (
-          <RecentActivityList items={recentActivity} />
-        ) : (
-          <div className="rounded-[20px] border border-lokals-border bg-white p-6 text-center text-sm text-lokals-muted">
-            No recent activity yet. Your driver dashboard will populate as ride requests and trips update.
+            <div className="space-y-3">
+              {[
+                { label: 'Average rating', value: String(ratingsSummary.average ?? '0'), icon: Star },
+                { label: 'Total ratings', value: String(ratingsSummary.total ?? '0'), icon: Star },
+                { label: 'Unread notifications', value: String(unreadNotifications), icon: Bell },
+                { label: 'Unread messages', value: String(unreadMessages), icon: MessageSquare },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between rounded-[24px] border border-lokals-border bg-white px-4 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple">
+                      <item.icon className="h-4 w-4" />
+                    </div>
+                    <p className="font-semibold text-lokals-charcoal">{item.label}</p>
+                  </div>
+                  <span className="text-sm font-semibold text-lokals-charcoal">{item.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        )}
-      </DashboardSection>
+        ) : null}
+
+        {activeTab === 'history' ? (
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+            <TransportPanel title="Trip history" description="A lighter history view focused on route, outcome, and quick detail access.">
+              <div className="space-y-3">
+                {tripHistory.slice(0, 8).map((ride) => (
+                  <div key={ride.id} className="rounded-[24px] border border-lokals-border bg-white px-4 py-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-lokals-charcoal">{ride.pickup_location} to {ride.dropoff_location}</p>
+                        <p className="mt-1 text-sm text-lokals-muted">{ride.user?.name ?? 'Resident'} | {ride.fare_estimate ? `N$ ${ride.fare_estimate}` : 'Open fare'}</p>
+                      </div>
+                      <div className="text-right">
+                        <StatusBadge value={formatTransportStatus(ride.tracking_status ?? ride.status, ride.status_label)} tone={transportStatusTone(ride.status)} />
+                        <div className="mt-2">
+                          <Link to={`/ride/${ride.id}`}><Button variant="secondary">Details</Button></Link>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {!tripHistory.length ? (
+                  <div className="rounded-[24px] border border-lokals-border bg-white p-6 text-center text-sm text-lokals-muted">
+                    Completed and cancelled trips will appear here as you start working rides.
+                  </div>
+                ) : null}
+              </div>
+            </TransportPanel>
+
+            <TransportPanel title="Recent activity" description="Latest movement across your driver workspace.">
+              {recentActivity.length ? (
+                <RecentActivityList items={recentActivity} />
+              ) : (
+                <div className="rounded-[24px] border border-lokals-border bg-white p-6 text-center text-sm text-lokals-muted">
+                  No recent activity yet. Your driver dashboard will populate as ride requests and trips update.
+                </div>
+              )}
+            </TransportPanel>
+          </div>
+        ) : null}
+      </div>
     </DashboardShell>
   )
 }

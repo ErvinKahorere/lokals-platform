@@ -54,6 +54,8 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
   LocationPointModel? _dropoffPoint;
   String _tripPurpose = _tripPurposes.first;
   String _rideType = _rideChoices.first.title;
+  String _activeTab = 'request';
+  String _mapTarget = 'pickup';
   final _notesController = TextEditingController();
   final _pickupController = TextEditingController(text: _stops.first);
   final _dropoffController = TextEditingController(text: 'Okahandja Town Council');
@@ -108,6 +110,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
   @override
   Widget build(BuildContext context) {
     final rides = ref.watch(ridesProvider);
+    final activeRide = rides.asData?.value.where((item) => !['completed', 'cancelled'].contains((item.status ?? '').toLowerCase())).cast<RideModel?>().firstWhere((item) => item != null, orElse: () => null);
 
     return LokalsShell(
       title: 'Ride',
@@ -138,6 +141,33 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
             ),
           ),
           const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: const [
+              ('request', 'Request'),
+              ('recent', 'Recent rides'),
+              ('active', 'Active ride'),
+            ].map((item) {
+              return item;
+            }).map((item) {
+              final value = item.$1;
+              final label = item.$2;
+              final isSelected = _activeTab == value;
+              return ChoiceChip(
+                label: Text(label),
+                selected: isSelected,
+                onSelected: (_) => setState(() => _activeTab = value),
+                selectedColor: AppColors.primaryPurple,
+                labelStyle: TextStyle(
+                  color: isSelected ? Colors.white : AppColors.deepCharcoal,
+                  fontWeight: FontWeight.w700,
+                ),
+                backgroundColor: AppColors.neutralSoftAlt,
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
           if (_successItem != null)
             RequestSuccessState(
               title: 'Ride requested',
@@ -155,17 +185,79 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
               secondaryLabel: 'Back home',
               onSecondary: () => context.go('/'),
             )
+          else if (_activeTab == 'recent')
+            rides.when(
+              data: (items) => items.isEmpty
+                  ? const EmptyState(
+                      title: 'No ride requests yet',
+                      body: 'Your recent Okahandja ride requests will appear here.',
+                    )
+                  : Column(
+                      children: items.take(5).map((item) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(20),
+                            onTap: () => context.push('/ride/${item.id}'),
+                            child: LokalsCard(
+                              child: ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                title: Text('${item.pickupLocation} -> ${item.dropoffLocation}'),
+                                subtitle: Text('${item.rideType ?? 'Standard'} - ${item.tripPurpose ?? 'General trip'}'),
+                                trailing: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(item.fareEstimate == null ? 'Open' : 'N\$ ${item.fareEstimate}'),
+                                    const SizedBox(height: 4),
+                                    AppBadge(label: item.statusLabel ?? item.status ?? 'requested'),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+              loading: () => const AppCard(child: LoadingSkeleton(height: 120)),
+              error: (error, _) => EmptyState(
+                title: 'Unable to load rides',
+                body: 'Please try again in a moment.',
+                actionLabel: 'Retry',
+                onAction: () => ref.invalidate(ridesProvider),
+              ),
+            )
+          else if (_activeTab == 'active')
+            activeRide != null
+                ? LokalsCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SectionTitle(
+                          title: 'Active ride',
+                          subtitle: 'The current ride that needs attention first.',
+                        ),
+                        const SizedBox(height: 12),
+                        Text('${activeRide.pickupLocation} -> ${activeRide.dropoffLocation}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 6),
+                        Text('${activeRide.rideType ?? 'Standard'} | ${activeRide.statusLabel ?? activeRide.status ?? 'requested'}', style: const TextStyle(color: AppColors.mutedText)),
+                        const SizedBox(height: 16),
+                        AppButton(
+                          label: 'Open ride workspace',
+                          expanded: false,
+                          onPressed: () => context.push('/ride/${activeRide.id}'),
+                        ),
+                      ],
+                    ),
+                  )
+                : const EmptyState(
+                    title: 'No active ride',
+                    body: 'When a ride is searching, accepted, or in progress, it will appear here.',
+                  )
           else
             AppCard(
               child: Column(
                 children: [
-                  DropdownButtonFormField<String>(
-                    initialValue: _tripPurpose,
-                    decoration: const InputDecoration(labelText: 'Trip purpose'),
-                    items: _tripPurposes.map((purpose) => DropdownMenuItem(value: purpose, child: Text(purpose))).toList(),
-                    onChanged: (value) => setState(() => _tripPurpose = value ?? _tripPurpose),
-                  ),
-                  const SizedBox(height: 12),
                   LokalsTextField(
                     controller: _pickupController,
                     label: 'Pickup location',
@@ -193,18 +285,55 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  LocationPickerMap(
-                    label: 'Pickup map pin',
-                    value: _pickupPoint,
-                    onChanged: (value) => setState(() => _pickupPoint = value),
-                    helpText: 'Tap to place the pickup pin. Manual address entry still works if you skip the map.',
+                  LocationPreviewMap(primary: _pickupPoint, secondary: _dropoffPoint),
+                  const SizedBox(height: 12),
+                  ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: const Text('Advanced map options', style: TextStyle(fontWeight: FontWeight.w700)),
+                    subtitle: const Text('Use one map surface to refine pickup or destination pins only when needed.'),
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            ChoiceChip(
+                              label: const Text('Pickup pin'),
+                              selected: _mapTarget == 'pickup',
+                              onSelected: (_) => setState(() => _mapTarget = 'pickup'),
+                            ),
+                            ChoiceChip(
+                              label: const Text('Destination pin'),
+                              selected: _mapTarget == 'dropoff',
+                              onSelected: (_) => setState(() => _mapTarget = 'dropoff'),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      LocationPickerMap(
+                        label: _mapTarget == 'pickup' ? 'Pickup map pin' : 'Destination map pin',
+                        value: _mapTarget == 'pickup' ? _pickupPoint : _dropoffPoint,
+                        onChanged: (value) => setState(() {
+                          if (_mapTarget == 'pickup') {
+                            _pickupPoint = value;
+                          } else {
+                            _dropoffPoint = value;
+                          }
+                        }),
+                        helpText: _mapTarget == 'pickup'
+                            ? 'Tap to place the pickup pin. Manual address entry still works if you skip the map.'
+                            : 'Tap to place the destination pin. Manual address entry still works if you skip the map.',
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
-                  LocationPickerMap(
-                    label: 'Destination map pin',
-                    value: _dropoffPoint,
-                    onChanged: (value) => setState(() => _dropoffPoint = value),
-                    helpText: 'Tap to place the destination pin. This improves the estimated distance and time.',
+                  DropdownButtonFormField<String>(
+                    initialValue: _tripPurpose,
+                    decoration: const InputDecoration(labelText: 'Trip purpose'),
+                    items: _tripPurposes.map((purpose) => DropdownMenuItem(value: purpose, child: Text(purpose))).toList(),
+                    onChanged: (value) => setState(() => _tripPurpose = value ?? _tripPurpose),
                   ),
                   const SizedBox(height: 12),
                   AppCard(
@@ -323,50 +452,6 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                 ],
               ),
             ),
-          const SizedBox(height: 18),
-          const SectionTitle(title: 'Recent ride requests'),
-          const SizedBox(height: 12),
-          rides.when(
-            data: (items) => items.isEmpty
-                ? const EmptyState(
-                    title: 'No ride requests yet',
-                    body: 'Your recent Okahandja ride requests will appear here.',
-                  )
-                : Column(
-                    children: items.take(5).map((item) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(20),
-                          onTap: () => context.push('/ride/${item.id}'),
-                          child: LokalsCard(
-                            child: ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              title: Text('${item.pickupLocation} -> ${item.dropoffLocation}'),
-                              subtitle: Text('${item.rideType ?? 'Standard'} - ${item.tripPurpose ?? 'General trip'}'),
-                              trailing: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(item.fareEstimate == null ? 'Open' : 'N\$ ${item.fareEstimate}'),
-                                  const SizedBox(height: 4),
-                                  AppBadge(label: item.statusLabel ?? item.status ?? 'requested'),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-            loading: () => const AppCard(child: LoadingSkeleton(height: 120)),
-            error: (error, _) => EmptyState(
-              title: 'Unable to load rides',
-              body: 'Please try again in a moment.',
-              actionLabel: 'Retry',
-              onAction: () => ref.invalidate(ridesProvider),
-            ),
-          ),
         ],
       ),
     );

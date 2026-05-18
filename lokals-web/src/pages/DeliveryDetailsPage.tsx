@@ -4,15 +4,23 @@ import { Link, useParams } from 'react-router-dom'
 import type { AxiosError } from 'axios'
 import { ContactActions } from '../components/experience/ContactActions'
 import { LocationPreviewMap } from '../components/maps/LocationPreviewMap'
-import { Button, EmptyState, Input, QueryState, SectionCard, StatusBadge, TextArea } from '../components/Ui'
+import { Button, EmptyState, Input, QueryState, StatusBadge, TextArea } from '../components/Ui'
 import { StatusStepper } from '../components/transport/StatusStepper'
+import { TransportPanel, TransportSummaryCard, TransportTabs } from '../components/transport/TransportSurface'
 import { useCancelDelivery, useCourierDeliveryAction, useDelivery, useRateDelivery } from '../hooks/queries'
-import { formatTransportStatus, formatTransportTimestamp, normalizeTransportTimeline, transportStatusTone } from '../lib/transportStatus'
 import { getApiErrorMessage } from '../lib/api'
 import type { LocationPoint } from '../lib/location'
+import { formatTransportStatus, formatTransportTimestamp, normalizeTransportTimeline, transportStatusTone } from '../lib/transportStatus'
 import { useAuthStore } from '../store/auth'
 
 const deliverySteps = ['requested', 'accepted', 'pickup_confirmed', 'in_transit', 'delivered', 'cancelled']
+const detailTabs = [
+  { label: 'Overview', value: 'overview' },
+  { label: 'Route', value: 'route' },
+  { label: 'Timeline', value: 'timeline' },
+  { label: 'Contact', value: 'contact' },
+  { label: 'Proof', value: 'proof' },
+]
 
 export function DeliveryDetailsPage() {
   const { id } = useParams()
@@ -22,6 +30,7 @@ export function DeliveryDetailsPage() {
   const cancelDelivery = useCancelDelivery()
   const rateDelivery = useRateDelivery()
   const deliveryActionMutation = useCourierDeliveryAction()
+  const [activeTab, setActiveTab] = useState('overview')
   const [deliveryActionState, setDeliveryActionState] = useState<Record<number, { action: string; pending: boolean; error?: string }>>({})
   const [cancelReason, setCancelReason] = useState('')
   const [rating, setRating] = useState('5')
@@ -49,12 +58,8 @@ export function DeliveryDetailsPage() {
     ]),
     [delivery],
   )
-  const pickupPoint: LocationPoint | null = delivery?.pickup_latitude != null && delivery?.pickup_longitude != null
-    ? { lat: delivery.pickup_latitude, lng: delivery.pickup_longitude }
-    : null
-  const dropoffPoint: LocationPoint | null = delivery?.dropoff_latitude != null && delivery?.dropoff_longitude != null
-    ? { lat: delivery.dropoff_latitude, lng: delivery.dropoff_longitude }
-    : null
+  const pickupPoint: LocationPoint | null = delivery?.pickup_latitude != null && delivery?.pickup_longitude != null ? { lat: delivery.pickup_latitude, lng: delivery.pickup_longitude } : null
+  const dropoffPoint: LocationPoint | null = delivery?.dropoff_latitude != null && delivery?.dropoff_longitude != null ? { lat: delivery.dropoff_latitude, lng: delivery.dropoff_longitude } : null
 
   const handleDeliveryAction = (action: 'accept' | 'decline' | 'pickup-confirmed' | 'in-transit' | 'delivered') => {
     if (!delivery?.id) return
@@ -83,253 +88,224 @@ export function DeliveryDetailsPage() {
 
   return (
     <div className="space-y-5">
-      <SectionCard className="bg-white">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-purple">Delivery request</p>
-            <h1 className="mt-1 text-3xl font-semibold text-lokals-charcoal">Track your parcel request</h1>
-          </div>
-          <Link to="/delivery"><Button variant="secondary">Back to delivery</Button></Link>
-        </div>
-      </SectionCard>
-
-      {isDeliveryAccessError ? (
-        <SectionCard className="bg-white">
+      <TransportPanel
+        title="Delivery workspace"
+        description="A clearer delivery flow with overview, route, timeline, contact, and proof separated into focused tabs."
+        aside={<Link to="/delivery"><Button variant="secondary">Back to delivery</Button></Link>}
+      >
+        {isDeliveryAccessError ? (
           <EmptyState
-            title={isDeliveryUnauthorized ? 'Please login to view this delivery.' : 'You don’t have access to this delivery.'}
+            title={isDeliveryUnauthorized ? 'Please login to view this delivery.' : 'You do not have access to this delivery.'}
             body={isDeliveryUnauthorized ? 'Sign in to continue and access your delivery details.' : 'This delivery is private or reserved for another account.'}
-            action={
-              isDeliveryUnauthorized ? (
-                <div className="grid gap-3 sm:grid-cols-[auto_auto]">
-                  <Link to="/login"><Button>Login</Button></Link>
-                  <Link to="/delivery"><Button variant="secondary">Back to delivery</Button></Link>
-                </div>
-              ) : (
-                <Link to="/delivery"><Button>Back to delivery</Button></Link>
-              )
-            }
+            action={isDeliveryUnauthorized ? <Link to="/login"><Button>Login</Button></Link> : <Link to="/delivery"><Button>Back to delivery</Button></Link>}
           />
-        </SectionCard>
-      ) : (
-        <QueryState isLoading={deliveryQuery.isLoading} error={deliveryQuery.error} empty={!delivery}>
-        {!delivery ? (
-          <EmptyState title="Delivery not found" body="We could not find this delivery request." action={<Link to="/delivery"><Button>Back</Button></Link>} />
         ) : (
-          <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-            <SectionCard className="bg-white">
-              <div className="flex items-start gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-lokals-gold-soft text-lokals-charcoal">
-                  <Package className="h-6 w-6" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h2 className="text-2xl font-semibold text-lokals-charcoal">Parcel details</h2>
-                    <StatusBadge value={formatTransportStatus(delivery.tracking_status ?? delivery.status, delivery.status_label)} tone={transportStatusTone(delivery.status)} />
+          <QueryState isLoading={deliveryQuery.isLoading} error={deliveryQuery.error} empty={!delivery}>
+            {!delivery ? (
+              <EmptyState title="Delivery not found" body="We could not find this delivery request." action={<Link to="/delivery"><Button>Back</Button></Link>} />
+            ) : (
+              <div className="space-y-5">
+                <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+                  <div className="rounded-[28px] border border-lokals-purple/10 bg-[linear-gradient(180deg,#ffffff,#fbfcff)] p-5 shadow-card">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex items-start gap-4">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-lokals-gold-soft text-lokals-charcoal">
+                          <Package className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-purple">Active-state focus</p>
+                          <h1 className="mt-1 text-2xl font-semibold text-lokals-charcoal">{delivery.parcel_description ?? delivery.item_description ?? 'Parcel details'}</h1>
+                          <p className="mt-2 text-sm text-lokals-muted">{delivery.pickup_address ?? delivery.pickup_location} to {delivery.dropoff_address ?? delivery.dropoff_location}</p>
+                        </div>
+                      </div>
+                      <StatusBadge value={formatTransportStatus(delivery.tracking_status ?? delivery.status, delivery.status_label)} tone={transportStatusTone(delivery.status)} />
+                    </div>
+                    {delivery.photo_url ? <img src={delivery.photo_url} alt="Parcel" className="mt-4 h-56 w-full rounded-[24px] object-cover" /> : null}
                   </div>
-                  <p className="mt-3 text-sm text-lokals-muted">{delivery.parcel_description ?? delivery.item_description ?? 'Parcel request'}</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {delivery.reference_code ? <StatusBadge value={delivery.reference_code} tone="neutral" /> : null}
-                    {delivery.urgency ? <StatusBadge value={delivery.urgency} tone="accent" /> : null}
-                  </div>
-                </div>
-              </div>
-
-              {delivery.photo_url ? <img src={delivery.photo_url} alt="Parcel" className="mt-4 h-56 w-full rounded-[24px] object-cover" /> : null}
-
-              <div className="mt-5 grid gap-3 md:grid-cols-2">
-                <article className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Pickup</p>
-                  <p className="mt-2 font-semibold text-lokals-charcoal">{delivery.pickup_address ?? delivery.pickup_location}</p>
-                </article>
-                <article className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Drop-off</p>
-                  <p className="mt-2 font-semibold text-lokals-charcoal">{delivery.dropoff_address ?? delivery.dropoff_location}</p>
-                </article>
-                <article className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Parcel size</p>
-                  <p className="mt-2 font-semibold capitalize text-lokals-charcoal">{delivery.parcel_size ?? 'Medium'}</p>
-                </article>
-                <article className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Estimate</p>
-                  <p className="mt-2 font-semibold text-lokals-charcoal">{delivery.estimated_price || delivery.price ? `N$ ${delivery.estimated_price ?? delivery.price}` : 'Open estimate'}</p>
-                </article>
-                <article className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Weight</p>
-                  <p className="mt-2 font-semibold text-lokals-charcoal">{delivery.weight_kg ? `${delivery.weight_kg} kg` : 'Not specified'}</p>
-                </article>
-                <article className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Estimated distance</p>
-                  <p className="mt-2 font-semibold text-lokals-charcoal">{delivery.estimated_distance_km ? `${delivery.estimated_distance_km} km` : 'Address-based estimate'}</p>
-                </article>
-              </div>
-
-              <div className="mt-5">
-                <LocationPreviewMap
-                  primary={pickupPoint}
-                  secondary={dropoffPoint}
-                  primaryLabel={delivery.pickup_address ?? delivery.pickup_location ?? 'Pickup'}
-                  secondaryLabel={delivery.dropoff_address ?? delivery.dropoff_location ?? 'Drop-off'}
-                />
-              </div>
-
-              {delivery.notes ? (
-                <div className="mt-4 rounded-2xl border border-lokals-border p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Notes</p>
-                  <p className="mt-2 text-sm text-lokals-charcoal">{delivery.notes}</p>
-                </div>
-              ) : null}
-
-              <div className="mt-4 rounded-2xl border border-lokals-border p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-lokals-charcoal">{delivery.driver?.name ?? 'Courier operator pending'}</p>
-                    <p className="text-sm text-lokals-muted">{delivery.driver?.phone ?? 'A courier contact will appear here once the request is accepted.'}</p>
-                    {delivery.courier_profile?.vehicle_type ? <p className="mt-1 text-sm text-lokals-muted">Vehicle: {delivery.courier_profile.vehicle_type}</p> : null}
-                    {delivery.courier_profile?.vehicle_registration ? <p className="mt-1 text-sm text-lokals-muted">Plate: {delivery.courier_profile.vehicle_registration}</p> : null}
-                    {delivery.courier_profile?.rating != null ? <p className="mt-1 text-sm text-lokals-muted">Courier rating: {delivery.courier_profile.rating}/5</p> : null}
-                  </div>
-                  <ContactActions
-                    className="flex flex-wrap gap-2"
-                    name={delivery.driver?.name ?? 'Courier'}
-                    phone={delivery.driver?.phone}
-                    conversationUserId={delivery.driver?.id ?? null}
-                    conversationContext="delivery"
-                    conversationSubject={delivery.reference_code ?? `Delivery ${delivery.id}`}
-                    whatsappMessage={`Hi, I am checking on delivery ${delivery.reference_code ?? delivery.id}.`}
+                  <TransportSummaryCard
+                    title="Delivery summary"
+                    items={[
+                      { label: 'Estimate', value: delivery.estimated_price || delivery.price ? `N$ ${delivery.estimated_price ?? delivery.price}` : 'Open estimate', accent: true },
+                      { label: 'Parcel size', value: delivery.parcel_size ?? 'Medium' },
+                      { label: 'Urgency', value: delivery.urgency ?? 'standard' },
+                      { label: 'Reference', value: delivery.reference_code ?? 'Pending' },
+                    ]}
                   />
                 </div>
-              </div>
 
-              {(canAcceptDelivery || isAssignedCourier) ? (
-                <div className="mt-4 rounded-2xl border border-lokals-border p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-lokals-charcoal">{canAcceptDelivery ? 'Courier response' : 'Courier workflow'}</p>
-                      <p className="mt-2 text-sm text-lokals-muted">
-                        {canAcceptDelivery
-                          ? 'Accept or decline this delivery request if you can collect and deliver the parcel.'
-                          : 'Update the parcel status as pickup and delivery progress.'}
-                      </p>
-                    </div>
-                  </div>
-                  {deliveryActionState[delivery.id]?.error ? (
-                    <div className="mt-4 flex items-start gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-                      <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                      <p>{deliveryActionState[delivery.id]?.error}</p>
-                    </div>
-                  ) : null}
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {canAcceptDelivery ? (
-                      <>
-                        <Button
-                          className="min-h-9 px-3 py-2 text-xs"
-                          disabled={deliveryActionState[delivery.id]?.pending}
-                          onClick={() => handleDeliveryAction('accept')}
-                        >
-                          {deliveryActionState[delivery.id]?.pending && deliveryActionState[delivery.id]?.action === 'accept' ? 'Accepting…' : 'Accept delivery'}
-                        </Button>
-                        <Button
-                          className="min-h-9 px-3 py-2 text-xs"
-                          variant="secondary"
-                          disabled={deliveryActionState[delivery.id]?.pending}
-                          onClick={() => handleDeliveryAction('decline')}
-                        >
-                          {deliveryActionState[delivery.id]?.pending && deliveryActionState[delivery.id]?.action === 'decline' ? 'Declining…' : 'Decline'}
-                        </Button>
-                      </>
-                    ) : null}
-                    {isAssignedCourier && delivery.status === 'accepted' ? (
-                      <Button
-                        className="min-h-9 px-3 py-2 text-xs"
-                        disabled={deliveryActionState[delivery.id]?.pending}
-                        onClick={() => handleDeliveryAction('pickup-confirmed')}
-                      >
-                        {deliveryActionState[delivery.id]?.pending && deliveryActionState[delivery.id]?.action === 'pickup-confirmed' ? 'Updating…' : 'Confirm pickup'}
-                      </Button>
-                    ) : null}
-                    {isAssignedCourier && delivery.status === 'pickup_confirmed' ? (
-                      <Button
-                        className="min-h-9 px-3 py-2 text-xs"
-                        disabled={deliveryActionState[delivery.id]?.pending}
-                        onClick={() => handleDeliveryAction('in-transit')}
-                      >
-                        {deliveryActionState[delivery.id]?.pending && deliveryActionState[delivery.id]?.action === 'in-transit' ? 'Updating…' : 'Mark in transit'}
-                      </Button>
-                    ) : null}
-                    {isAssignedCourier && delivery.status === 'in_transit' ? (
-                      <Button
-                        className="min-h-9 px-3 py-2 text-xs"
-                        disabled={deliveryActionState[delivery.id]?.pending}
-                        onClick={() => handleDeliveryAction('delivered')}
-                      >
-                        {deliveryActionState[delivery.id]?.pending && deliveryActionState[delivery.id]?.action === 'delivered' ? 'Updating…' : 'Mark delivered'}
-                      </Button>
-                    ) : null}
-                  </div>
-                </div>
-              ) : null}
+                <TransportTabs items={detailTabs} value={activeTab} onChange={setActiveTab} />
 
-              <div className="mt-4 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50 p-4">
-                <div className="flex items-center gap-2 text-lokals-charcoal">
-                  <ShieldCheck className="h-4 w-4 text-emerald-700" />
-                  <p className="font-semibold">Proof of delivery</p>
-                </div>
-                <p className="mt-2 text-sm text-lokals-muted">{delivery.proof_of_delivery?.label ?? 'Proof of delivery will appear here once confirmed.'}</p>
-              </div>
-
-              {timeline.length ? (
-                <div className="mt-4 rounded-2xl border border-lokals-border p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Status timeline</p>
-                  <div className="mt-3 space-y-3">
-                    {timeline.map((item) => (
-                      <div key={item.label} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3">
-                        <p className="font-semibold text-lokals-charcoal">{item.label}</p>
-                        <p className="text-sm text-lokals-muted">{formatTransportTimestamp(item.timestamp) ?? 'Recently'}</p>
+                {activeTab === 'overview' ? (
+                  <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+                    <div className="rounded-[28px] border border-lokals-purple/10 bg-white p-5 shadow-card">
+                      <div className="grid gap-3 md:grid-cols-2">
+                        {[
+                          ['Pickup', delivery.pickup_address ?? delivery.pickup_location ?? 'Pickup'],
+                          ['Drop-off', delivery.dropoff_address ?? delivery.dropoff_location ?? 'Drop-off'],
+                          ['Parcel size', delivery.parcel_size ?? 'Medium'],
+                          ['Estimate', delivery.estimated_price || delivery.price ? `N$ ${delivery.estimated_price ?? delivery.price}` : 'Open estimate'],
+                          ['Weight', delivery.weight_kg ? `${delivery.weight_kg} kg` : 'Not specified'],
+                          ['Notes', delivery.notes ?? 'No extra delivery notes'],
+                        ].map(([label, value]) => (
+                          <div key={label} className="rounded-[22px] bg-slate-50 px-4 py-4">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">{label}</p>
+                            <p className="mt-2 font-semibold text-lokals-charcoal">{value}</p>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
+                    </div>
 
-              {canCancel ? (
-                <div className="mt-4 rounded-2xl border border-lokals-border p-4">
-                  <p className="font-semibold text-lokals-charcoal">Cancel this delivery</p>
-                  <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-                    <Input value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} placeholder="Optional reason" />
-                    <Button variant="danger" disabled={cancelDelivery.isPending} onClick={() => {
-                      if (!delivery?.id) return
-                      cancelDelivery.mutate({ deliveryId: delivery.id, reason: cancelReason || undefined })
-                    }}>
-                      {cancelDelivery.isPending ? 'Cancelling...' : 'Cancel delivery'}
-                    </Button>
-                  </div>
-                </div>
-              ) : null}
+                    <div className="space-y-4">
+                      {(canAcceptDelivery || isAssignedCourier) ? (
+                        <div className="rounded-[28px] border border-lokals-purple/10 bg-white p-5 shadow-card">
+                          <p className="font-semibold text-lokals-charcoal">{canAcceptDelivery ? 'Courier response' : 'Courier workflow'}</p>
+                          <p className="mt-1 text-sm text-lokals-muted">
+                            {canAcceptDelivery ? 'Accept or decline this delivery request if you can collect it now.' : 'Move the parcel through pickup, in-transit, and delivery.'}
+                          </p>
+                          {deliveryActionState[delivery.id]?.error ? (
+                            <div className="mt-4 flex items-start gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                              <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                              <p>{deliveryActionState[delivery.id]?.error}</p>
+                            </div>
+                          ) : null}
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            {canAcceptDelivery ? (
+                              <>
+                                <Button disabled={deliveryActionState[delivery.id]?.pending} onClick={() => handleDeliveryAction('accept')}>
+                                  {deliveryActionState[delivery.id]?.pending && deliveryActionState[delivery.id]?.action === 'accept' ? 'Accepting...' : 'Accept delivery'}
+                                </Button>
+                                <Button variant="secondary" disabled={deliveryActionState[delivery.id]?.pending} onClick={() => handleDeliveryAction('decline')}>
+                                  {deliveryActionState[delivery.id]?.pending && deliveryActionState[delivery.id]?.action === 'decline' ? 'Declining...' : 'Decline'}
+                                </Button>
+                              </>
+                            ) : null}
+                            {isAssignedCourier && delivery.status === 'accepted' ? <Button disabled={deliveryActionState[delivery.id]?.pending} onClick={() => handleDeliveryAction('pickup-confirmed')}>{deliveryActionState[delivery.id]?.pending && deliveryActionState[delivery.id]?.action === 'pickup-confirmed' ? 'Updating...' : 'Confirm pickup'}</Button> : null}
+                            {isAssignedCourier && delivery.status === 'pickup_confirmed' ? <Button disabled={deliveryActionState[delivery.id]?.pending} onClick={() => handleDeliveryAction('in-transit')}>{deliveryActionState[delivery.id]?.pending && deliveryActionState[delivery.id]?.action === 'in-transit' ? 'Updating...' : 'Mark in transit'}</Button> : null}
+                            {isAssignedCourier && delivery.status === 'in_transit' ? <Button disabled={deliveryActionState[delivery.id]?.pending} onClick={() => handleDeliveryAction('delivered')}>{deliveryActionState[delivery.id]?.pending && deliveryActionState[delivery.id]?.action === 'delivered' ? 'Updating...' : 'Mark delivered'}</Button> : null}
+                          </div>
+                        </div>
+                      ) : null}
 
-              {canRate ? (
-                <div className="mt-4 rounded-2xl border border-lokals-border p-4">
-                  <p className="font-semibold text-lokals-charcoal">Rate this courier</p>
-                  <div className="mt-3 grid gap-3 md:grid-cols-[180px_1fr]">
-                    <Input value={rating} onChange={(event) => setRating(event.target.value)} type="number" min="1" max="5" />
-                    <TextArea value={ratingComment} onChange={(event) => setRatingComment(event.target.value)} rows={3} placeholder="Share a short note about the delivery." />
-                  </div>
-                  <div className="mt-3">
-                    <Button disabled={rateDelivery.isPending} onClick={() => {
-                      if (!delivery?.id) return
-                      rateDelivery.mutate({ deliveryId: delivery.id, rating: Number(rating), comment: ratingComment || undefined })
-                    }}>
-                      {rateDelivery.isPending ? 'Saving rating...' : <><Star className="mr-2 h-4 w-4" />Submit rating</>}
-                    </Button>
-                  </div>
-                </div>
-              ) : null}
-            </SectionCard>
+                      {canCancel ? (
+                        <div className="rounded-[28px] border border-lokals-purple/10 bg-white p-5 shadow-card">
+                          <p className="font-semibold text-lokals-charcoal">Cancel delivery</p>
+                          <div className="mt-3 flex flex-col gap-3">
+                            <Input value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} placeholder="Optional reason" />
+                            <Button variant="danger" disabled={cancelDelivery.isPending} onClick={() => cancelDelivery.mutate({ deliveryId: delivery.id, reason: cancelReason || undefined })}>
+                              {cancelDelivery.isPending ? 'Cancelling...' : 'Cancel delivery'}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : null}
 
-            <StatusStepper steps={deliverySteps} current={delivery.status === 'assigned' ? 'accepted' : delivery.status} updatedAt={delivery.updated_at} />
-          </div>
+                      {canRate ? (
+                        <div className="rounded-[28px] border border-lokals-purple/10 bg-white p-5 shadow-card">
+                          <p className="font-semibold text-lokals-charcoal">Rate this courier</p>
+                          <div className="mt-3 grid gap-3">
+                            <Input value={rating} onChange={(event) => setRating(event.target.value)} type="number" min="1" max="5" />
+                            <TextArea value={ratingComment} onChange={(event) => setRatingComment(event.target.value)} rows={3} placeholder="Share a short note about the delivery." />
+                            <Button disabled={rateDelivery.isPending} onClick={() => rateDelivery.mutate({ deliveryId: delivery.id, rating: Number(rating), comment: ratingComment || undefined })}>
+                              {rateDelivery.isPending ? 'Saving rating...' : <span className="inline-flex items-center gap-2"><Star className="h-4 w-4" />Submit rating</span>}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+
+                {activeTab === 'route' ? (
+                  <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+                    <div className="rounded-[28px] border border-lokals-purple/10 bg-white p-5 shadow-card">
+                      <LocationPreviewMap
+                        primary={pickupPoint}
+                        secondary={dropoffPoint}
+                        primaryLabel={delivery.pickup_address ?? delivery.pickup_location ?? 'Pickup'}
+                        secondaryLabel={delivery.dropoff_address ?? delivery.dropoff_location ?? 'Drop-off'}
+                      />
+                    </div>
+                    <TransportSummaryCard
+                      title="Route context"
+                      items={[
+                        { label: 'Pickup', value: delivery.pickup_address ?? delivery.pickup_location ?? 'Pickup' },
+                        { label: 'Drop-off', value: delivery.dropoff_address ?? delivery.dropoff_location ?? 'Drop-off' },
+                        { label: 'Estimated time', value: delivery.estimated_duration_minutes != null ? `${delivery.estimated_duration_minutes} min` : 'Pending' },
+                        { label: 'Distance', value: delivery.estimated_distance_km ? `${delivery.estimated_distance_km} km` : 'Address-based estimate' },
+                      ]}
+                    />
+                  </div>
+                ) : null}
+
+                {activeTab === 'timeline' ? (
+                  <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+                    <div className="rounded-[28px] border border-lokals-purple/10 bg-white p-5 shadow-card">
+                      <div className="space-y-3">
+                        {timeline.map((item) => (
+                          <div key={item.label} className="flex items-center justify-between gap-3 rounded-[22px] bg-slate-50 px-4 py-4">
+                            <p className="font-semibold text-lokals-charcoal">{item.label}</p>
+                            <p className="text-sm text-lokals-muted">{formatTransportTimestamp(item.timestamp) ?? 'Recently'}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <StatusStepper steps={deliverySteps} current={delivery.status === 'assigned' ? 'accepted' : delivery.status} updatedAt={delivery.updated_at} />
+                  </div>
+                ) : null}
+
+                {activeTab === 'contact' ? (
+                  <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+                    <div className="rounded-[28px] border border-lokals-purple/10 bg-white p-5 shadow-card">
+                      <p className="font-semibold text-lokals-charcoal">{delivery.driver?.name ?? 'Courier operator pending'}</p>
+                      <p className="mt-1 text-sm text-lokals-muted">{delivery.driver?.phone ?? 'A courier contact will appear here once the request is accepted.'}</p>
+                      {delivery.courier_profile?.vehicle_type ? <p className="mt-3 text-sm text-lokals-muted">Vehicle: {delivery.courier_profile.vehicle_type}</p> : null}
+                      {delivery.courier_profile?.vehicle_registration ? <p className="mt-1 text-sm text-lokals-muted">Plate: {delivery.courier_profile.vehicle_registration}</p> : null}
+                      {delivery.courier_profile?.rating != null ? <p className="mt-1 text-sm text-lokals-muted">Courier rating: {delivery.courier_profile.rating}/5</p> : null}
+                      <div className="mt-4">
+                        <ContactActions
+                          className="flex flex-wrap gap-2"
+                          name={delivery.driver?.name ?? 'Courier'}
+                          phone={delivery.driver?.phone}
+                          conversationUserId={delivery.driver?.id ?? null}
+                          conversationContext="delivery"
+                          conversationSubject={delivery.reference_code ?? `Delivery ${delivery.id}`}
+                          whatsappMessage={`Hi, I am checking on delivery ${delivery.reference_code ?? delivery.id}.`}
+                        />
+                      </div>
+                    </div>
+                    <TransportSummaryCard
+                      title="Sender context"
+                      items={[
+                        { label: 'Sender', value: delivery.user?.name ?? 'Resident' },
+                        { label: 'Parcel size', value: delivery.parcel_size ?? 'Medium' },
+                        { label: 'Current status', value: formatTransportStatus(delivery.tracking_status ?? delivery.status, delivery.status_label), accent: true },
+                      ]}
+                    />
+                  </div>
+                ) : null}
+
+                {activeTab === 'proof' ? (
+                  <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+                    <div className="rounded-[28px] border border-lokals-purple/10 bg-white p-5 shadow-card">
+                      <div className="flex items-center gap-2 text-lokals-charcoal">
+                        <ShieldCheck className="h-4 w-4 text-emerald-700" />
+                        <p className="font-semibold">Proof of delivery</p>
+                      </div>
+                      <p className="mt-3 text-sm text-lokals-muted">{delivery.proof_of_delivery?.label ?? 'Proof of delivery will appear here once the courier confirms handoff.'}</p>
+                    </div>
+                    <TransportSummaryCard
+                      title="Proof status"
+                      items={[
+                        { label: 'Delivery status', value: formatTransportStatus(delivery.tracking_status ?? delivery.status, delivery.status_label), accent: true },
+                        { label: 'Proof label', value: delivery.proof_of_delivery?.label ?? 'Pending handoff' },
+                      ]}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            )}
+          </QueryState>
         )}
-      </QueryState>
-      )}
+      </TransportPanel>
     </div>
   )
 }
