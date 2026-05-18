@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { Button, EmptyState, PageHeader, QueryState, SectionCard, TextArea } from '../../components/Ui'
 import { useApproveFeedPost, useFeatureFeedPost, usePendingFeedPosts, useRejectFeedPost } from '../../hooks/queries'
+import { useAuthStore } from '../../store/auth'
 
 export function FeedModerationPage() {
   const [reason, setReason] = useState('')
+  const user = useAuthStore((state) => state.user)
+  const isPlatformAdmin = Boolean(user?.roles?.some((role) => role === 'super_admin' || role === 'operator'))
   const pendingQuery = usePendingFeedPosts()
   const approveMutation = useApproveFeedPost()
   const rejectMutation = useRejectFeedPost()
@@ -11,7 +14,7 @@ export function FeedModerationPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader eyebrow="Town Manager" title="Pending feed approvals" description="Review local updates before they become public in the community feed." />
+      <PageHeader eyebrow={isPlatformAdmin ? 'Admin' : 'Town Manager'} title="Pending feed approvals" description="Review local updates before they become public in the community feed." />
       <TextArea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Optional moderation note or rejection reason" rows={3} />
       <QueryState isLoading={pendingQuery.isLoading} error={pendingQuery.error} empty={(pendingQuery.data?.length ?? 0) === 0}>
         {(pendingQuery.data?.length ?? 0) === 0 ? (

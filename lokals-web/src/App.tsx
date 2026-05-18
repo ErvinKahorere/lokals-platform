@@ -84,6 +84,11 @@ import { CommunityImpactRedemptionsAdminPage } from './pages/admin/CommunityImpa
 import { CommunityImpactUserProfilePage } from './pages/admin/CommunityImpactUserProfilePage'
 import { FeedModerationPage } from './pages/admin/FeedModerationPage'
 import { SupportPage } from './pages/SupportPage'
+import { AdminAuditLogsPage } from './pages/admin/AdminAuditLogsPage'
+import { AdminFeatureFlagsPage } from './pages/admin/AdminFeatureFlagsPage'
+import { AdminNotificationsPage } from './pages/admin/AdminNotificationsPage'
+import { AdminSystemHealthPage } from './pages/admin/AdminSystemHealthPage'
+import { AdminTownsPage } from './pages/admin/AdminTownsPage'
 import { getDashboardWorkspaceData } from './lib/dashboardWorkspaceData'
 import { getRoleHomePath, hasActiveRole } from './lib/roles'
 import { useAuthStore } from './store/auth'
@@ -326,17 +331,17 @@ export default function App() {
 
           <Route path="/admin" element={<AdminRoute><SuperAdminDashboardPage /></AdminRoute>} />
           <Route path="/dashboard/admin" element={<AdminRoute><SuperAdminDashboardPage /></AdminRoute>} />
-          <Route path="/dashboard/admin/towns" element={<AdminRoute><DashboardWorkspacePage mode="admin" path="/dashboard/admin/towns" title="Towns management" description="Review onboarded towns, operating status, and municipality readiness." {...getDashboardWorkspaceData('/dashboard/admin/towns')} /></AdminRoute>} />
+          <Route path="/dashboard/admin/towns" element={<AdminRoute><AdminTownsPage /></AdminRoute>} />
           <Route path="/dashboard/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
           <Route path="/dashboard/admin/role-applications" element={<AdminRoute><RoleApplicationsAdminPage /></AdminRoute>} />
-          <Route path="/dashboard/admin/roles" element={<AdminRoute><DashboardWorkspacePage mode="admin" path="/dashboard/admin/roles" title="Roles and permissions" description="Review role access, approval logic, and permission surface area." {...getDashboardWorkspaceData('/dashboard/admin/roles')} /></AdminRoute>} />
-          <Route path="/dashboard/admin/system-health" element={<AdminRoute><DashboardWorkspacePage mode="admin" path="/dashboard/admin/system-health" title="System health" description="Monitor jobs, storage, notifications, and system pressure." {...getDashboardWorkspaceData('/dashboard/admin/system-health')} /></AdminRoute>} />
-          <Route path="/dashboard/admin/feature-flags" element={<AdminRoute><DashboardWorkspacePage mode="admin" path="/dashboard/admin/feature-flags" title="Feature flags" description="Control rollout posture for practical platform features." {...getDashboardWorkspaceData('/dashboard/admin/feature-flags')} /></AdminRoute>} />
-          <Route path="/dashboard/admin/feed-engine" element={<AdminRoute><DashboardWorkspacePage mode="admin" path="/dashboard/admin/feed-engine" title="Feed engine" description="Monitor public feed pressure, moderation flow, and content quality." {...getDashboardWorkspaceData('/dashboard/admin/feed-engine')} /></AdminRoute>} />
-          <Route path="/dashboard/admin/ai-logs" element={<AdminRoute><DashboardWorkspacePage mode="admin" path="/dashboard/admin/ai-logs" title="AI assist logs" description="Review AI-assisted posting usage and fallback behavior." {...getDashboardWorkspaceData('/dashboard/admin/ai-logs')} /></AdminRoute>} />
-          <Route path="/dashboard/admin/notifications" element={<AdminRoute><DashboardWorkspacePage mode="admin" path="/dashboard/admin/notifications" title="Notifications" description="Monitor delivery volume, categories, and operational communication health." {...getDashboardWorkspaceData('/dashboard/admin/notifications')} /></AdminRoute>} />
-          <Route path="/dashboard/admin/audit-logs" element={<AdminRoute><DashboardWorkspacePage mode="admin" path="/dashboard/admin/audit-logs" title="Audit logs" description="A clean surface for high-level platform actions and admin review trails." {...getDashboardWorkspaceData('/dashboard/admin/audit-logs')} /></AdminRoute>} />
-          <Route path="/dashboard/admin/rewards" element={<AdminRoute><DashboardWorkspacePage mode="admin" path="/dashboard/admin/rewards" title="Sponsors and rewards" description="Review sponsor-linked rewards, activation status, and platform trust incentives." {...getDashboardWorkspaceData('/dashboard/admin/rewards')} /></AdminRoute>} />
+          <Route path="/dashboard/admin/roles" element={<AdminRoute><RoleApplicationsAdminPage /></AdminRoute>} />
+          <Route path="/dashboard/admin/system-health" element={<AdminRoute><AdminSystemHealthPage /></AdminRoute>} />
+          <Route path="/dashboard/admin/feature-flags" element={<AdminRoute><AdminFeatureFlagsPage /></AdminRoute>} />
+          <Route path="/dashboard/admin/feed-engine" element={<AdminRoute><FeedModerationPage /></AdminRoute>} />
+          <Route path="/dashboard/admin/ai-logs" element={<AdminRoute><AdminAuditLogsPage /></AdminRoute>} />
+          <Route path="/dashboard/admin/notifications" element={<AdminRoute><AdminNotificationsPage /></AdminRoute>} />
+          <Route path="/dashboard/admin/audit-logs" element={<AdminRoute><AdminAuditLogsPage /></AdminRoute>} />
+          <Route path="/dashboard/admin/rewards" element={<AdminRoute><CommunityImpactPendingPage /></AdminRoute>} />
           <Route path="/admin/providers" element={<AdminRoute><AdminProvidersPage /></AdminRoute>} />
           <Route path="/admin/bookings" element={<AdminRoute><AdminBookingsPage /></AdminRoute>} />
           <Route path="/admin/listings" element={<AdminRoute><AdminListingsPage /></AdminRoute>} />

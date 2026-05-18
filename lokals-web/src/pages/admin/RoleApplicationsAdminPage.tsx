@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { Button, Card, EmptyState, Input, PageHeader, QueryState, StatusBadge, TextArea } from '../../components/Ui'
 import { useAdminRoleApplicationAction, useAdminRoleApplications } from '../../hooks/queries'
+import { useAuthStore } from '../../store/auth'
 
 export function RoleApplicationsAdminPage() {
+  const user = useAuthStore((state) => state.user)
+  const isPlatformAdmin = Boolean(user?.roles?.some((role) => role === 'super_admin' || role === 'operator'))
   const query = useAdminRoleApplications({ status: 'pending_review' })
   const action = useAdminRoleApplicationAction()
   const [reasonById, setReasonById] = useState<Record<number, string>>({})
@@ -11,7 +14,7 @@ export function RoleApplicationsAdminPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Town Manager" title="Role approvals" description="Review driver, courier, provider, business, and organisation applications in one operational queue." />
+      <PageHeader eyebrow={isPlatformAdmin ? 'Admin' : 'Town Manager'} title="Role approvals" description="Review driver, courier, provider, business, and organisation applications in one operational queue." />
       <QueryState isLoading={query.isLoading} error={query.error} empty={applications.length === 0}>
         {applications.length === 0 ? (
           <EmptyState title="No approval work right now" body="New role applications will appear here as residents and businesses apply for expanded platform access." />

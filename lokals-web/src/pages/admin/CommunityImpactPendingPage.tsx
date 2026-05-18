@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { Button, EmptyState, Input, PageHeader, QueryState, SectionCard } from '../../components/Ui'
 import { useApproveCommunityImpactTransaction, useAwardCommunityImpact, usePendingCommunityImpactTransactions, useRejectCommunityImpactTransaction } from '../../hooks/queries'
+import { useAuthStore } from '../../store/auth'
 import type { CommunityImpactTransaction } from '../../types'
 
 export function CommunityImpactPendingPage() {
+  const user = useAuthStore((state) => state.user)
+  const isPlatformAdmin = Boolean(user?.roles?.some((role) => role === 'super_admin' || role === 'operator'))
   const pendingQuery = usePendingCommunityImpactTransactions()
   const award = useAwardCommunityImpact()
   const approve = useApproveCommunityImpactTransaction()
@@ -16,7 +19,7 @@ export function CommunityImpactPendingPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Town Manager" title="Pending Community Impact approvals" description="Approve only verified positive actions. No penalties, no public deed logs." />
+      <PageHeader eyebrow={isPlatformAdmin ? 'Admin' : 'Town Manager'} title="Pending Community Impact approvals" description="Approve only verified positive actions. No penalties, no public deed logs." />
       <SectionCard className="bg-white p-5">
         <h2 className="text-lg font-semibold text-lokals-charcoal">Award points manually</h2>
         <p className="mt-2 text-sm text-lokals-muted">Use this only for verified exceptional contribution or contributions that need careful manual handling.</p>
