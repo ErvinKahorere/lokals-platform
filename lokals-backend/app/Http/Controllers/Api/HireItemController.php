@@ -143,6 +143,7 @@ class HireItemController extends Controller
         $end = Carbon::parse($validated['end_at']);
         abort_if(! HireAvailability::isAvailable($hireItem, $start, $end), 422, 'This item is already booked for part of the requested time range.');
         abort_if($validated['pickup_method'] === 'delivery' && ! $hireItem->delivery_available, 422, 'This item is pickup-only right now.');
+        abort_if($validated['pickup_method'] === 'pickup' && ! $hireItem->pickup_available, 422, 'This item requires delivery for the selected rental flow.');
 
         $booking = DB::transaction(function () use ($request, $hireItem, $validated, $start, $end) {
             $days = max(1, (int) ceil($end->diffInMinutes($start) / 1440));

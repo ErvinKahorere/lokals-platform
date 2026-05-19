@@ -87,8 +87,42 @@ class HireFeatureTest extends TestCase
         $this->postJson("/api/v1/hire/bookings/{$bookingId}/accept")->assertOk()->assertJsonPath('data.status', HireBooking::STATUS_ACCEPTED);
         $this->postJson("/api/v1/hire/bookings/{$bookingId}/confirm")->assertOk()->assertJsonPath('data.status', HireBooking::STATUS_CONFIRMED);
         $this->postJson("/api/v1/hire/bookings/{$bookingId}/handed-over")->assertOk()->assertJsonPath('data.status', HireBooking::STATUS_HANDED_OVER);
+
+        Sanctum::actingAs($resident);
         $this->postJson("/api/v1/hire/bookings/{$bookingId}/returned")->assertOk()->assertJsonPath('data.status', HireBooking::STATUS_RETURNED);
+
+        Sanctum::actingAs($owner);
         $this->postJson("/api/v1/hire/bookings/{$bookingId}/complete")->assertOk()->assertJsonPath('data.status', HireBooking::STATUS_COMPLETED);
+    }
+
+    public function test_booking_respects_pickup_and_delivery_availability(): void
+    {
+        $resident = User::query()->where('email', 'resident@lokals.app')->firstOrFail();
+        $deliveryOnlyItem = $this->approvedItem();
+        $deliveryOnlyItem->update([
+            'pickup_available' => false,
+            'delivery_available' => true,
+        ]);
+
+        Sanctum::actingAs($resident);
+        $this->postJson("/api/v1/hire/items/{$deliveryOnlyItem->id}/book", [
+            'start_at' => now()->addDays(8)->toIso8601String(),
+            'end_at' => now()->addDays(9)->toIso8601String(),
+            'pickup_method' => 'pickup',
+        ])->assertStatus(422);
+
+        $pickupOnlyItem = $this->approvedItem();
+        $pickupOnlyItem->update([
+            'pickup_available' => true,
+            'delivery_available' => false,
+        ]);
+
+        $this->postJson("/api/v1/hire/items/{$pickupOnlyItem->id}/book", [
+            'start_at' => now()->addDays(10)->toIso8601String(),
+            'end_at' => now()->addDays(11)->toIso8601String(),
+            'pickup_method' => 'delivery',
+            'delivery_address' => 'House 7, Nau-Aib, Okahandja',
+        ])->assertStatus(422);
     }
 
     public function test_unauthorized_user_cannot_manage_another_owners_item(): void

@@ -656,7 +656,7 @@ class DashboardController extends Controller
                 ['label' => 'Review Reports', 'href' => '/dashboard/town-manager/reports', 'icon' => 'clipboard-list'],
                 ['label' => 'Moderate Feed', 'href' => '/dashboard/town-manager/feed/pending', 'icon' => 'shield'],
                 ['label' => 'Town Analytics', 'href' => '/dashboard/town-manager/analytics', 'icon' => 'activity'],
-                ['label' => 'Review Hire Listings', 'href' => '/dashboard/admin/hire', 'icon' => 'warehouse'],
+                ['label' => 'Review Hire Listings', 'href' => '/dashboard/town-manager/hire', 'icon' => 'warehouse'],
             ],
             'pending_tasks' => [
                 ['label' => 'Urgent reports', 'count' => (clone $reportQuery)->where('priority', 'high')->whereIn('status', $this->activeReportStatuses)->count()],

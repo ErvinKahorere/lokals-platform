@@ -122,9 +122,33 @@ class HireBookingController extends Controller
 
     public function returned(Request $request, HireBooking $hireBooking): JsonResponse
     {
-        return $this->transition($request, $hireBooking, HireBooking::STATUS_RETURNED, [
+        abort_unless(
+            (int) $hireBooking->owner_id === (int) $request->user()->id
+            || (int) $hireBooking->customer_id === (int) $request->user()->id
+            || $request->user()->hasAnyRole(['super_admin', 'operator']),
+            403
+        );
+
+        $hireBooking->update([
+            'status' => HireBooking::STATUS_RETURNED,
             'returned_at' => now(),
-        ], 'Item returned', 'The hire item has been returned.');
+        ]);
+
+        $hireBooking->customer?->notify(new SystemNotification(
+            'Item returned',
+            'The hire item has been marked as returned.',
+            $this->target($hireBooking)
+        ));
+        $hireBooking->owner?->notify(new SystemNotification(
+            'Item returned',
+            'The hire item has been marked as returned.',
+            $this->target($hireBooking)
+        ));
+
+        return response()->json([
+            'message' => 'Item returned.',
+            'data' => HireBookingResource::make($hireBooking->fresh()->load($this->relations())),
+        ]);
     }
 
     public function complete(Request $request, HireBooking $hireBooking): JsonResponse

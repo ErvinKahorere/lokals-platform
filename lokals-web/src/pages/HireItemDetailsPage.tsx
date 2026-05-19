@@ -29,6 +29,17 @@ export function HireItemDetailsPage() {
   const bookItem = useBookHireItem()
 
   const item = itemQuery.data
+  const effectivePickupMethod = useMemo(() => {
+    if (!item) return pickupMethod
+    if (pickupMethod === 'delivery' && item.delivery_available === false && item.pickup_available !== false) {
+      return 'pickup' as const
+    }
+    if (pickupMethod === 'pickup' && item.pickup_available === false && item.delivery_available) {
+      return 'delivery' as const
+    }
+    return pickupMethod
+  }, [item, pickupMethod])
+
   const durationLabel = useMemo(() => {
     const start = new Date(startAt)
     const end = new Date(endAt)
@@ -51,7 +62,7 @@ export function HireItemDetailsPage() {
     const rental = item.prices?.price_per_day
       ? Number(item.prices.price_per_day) * days
       : Number(item.prices?.price_per_hour ?? 0) * hours
-    const delivery = pickupMethod === 'delivery' ? 35 : 0
+    const delivery = effectivePickupMethod === 'delivery' ? 35 : 0
     const deposit = Number(item.deposit ?? 0)
     return {
       rental,
@@ -59,7 +70,7 @@ export function HireItemDetailsPage() {
       deposit,
       total: rental + delivery + deposit,
     }
-  }, [endAt, item, pickupMethod, startAt])
+  }, [effectivePickupMethod, endAt, item, startAt])
 
   const requestBooking = () => {
     if (!item) return
@@ -76,8 +87,8 @@ export function HireItemDetailsPage() {
         payload: {
           start_at: new Date(startAt).toISOString(),
           end_at: new Date(endAt).toISOString(),
-          pickup_method: pickupMethod,
-          delivery_address: pickupMethod === 'delivery' ? deliveryAddress : undefined,
+          pickup_method: effectivePickupMethod,
+          delivery_address: effectivePickupMethod === 'delivery' ? deliveryAddress : undefined,
           notes: notes.trim() || undefined,
         },
       },
@@ -204,8 +215,17 @@ export function HireItemDetailsPage() {
                         key={option.key}
                         type="button"
                         onClick={() => setPickupMethod(option.key as 'pickup' | 'delivery')}
+                        disabled={
+                          (option.key === 'pickup' && item.pickup_available === false)
+                          || (option.key === 'delivery' && item.delivery_available === false)
+                        }
                         className={`rounded-[24px] border p-4 text-left transition ${
-                          pickupMethod === option.key ? 'border-lokals-green bg-emerald-50 shadow-sm' : 'border-lokals-border bg-slate-50'
+                          effectivePickupMethod === option.key ? 'border-lokals-green bg-emerald-50 shadow-sm' : 'border-lokals-border bg-slate-50'
+                        } ${
+                          (option.key === 'pickup' && item.pickup_available === false)
+                          || (option.key === 'delivery' && item.delivery_available === false)
+                            ? 'cursor-not-allowed opacity-50'
+                            : ''
                         }`}
                       >
                         <p className="font-semibold text-lokals-charcoal">{option.label}</p>
@@ -213,7 +233,7 @@ export function HireItemDetailsPage() {
                       </button>
                     ))}
                   </div>
-                  {pickupMethod === 'delivery' ? (
+                  {effectivePickupMethod === 'delivery' ? (
                     <label className="space-y-2 text-sm font-medium text-lokals-charcoal">
                       <span>Delivery address</span>
                       <Input value={deliveryAddress} onChange={(event) => setDeliveryAddress(event.target.value)} placeholder="House number, street, area, and town" />
