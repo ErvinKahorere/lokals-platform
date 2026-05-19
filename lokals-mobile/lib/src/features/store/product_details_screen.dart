@@ -15,6 +15,7 @@ import '../../widgets/shell.dart';
 import '../auth/auth_controller.dart';
 import '../auth/auth_navigation.dart';
 import '../discovery/discovery_repository.dart';
+import 'order_cart_controller.dart';
 import 'product_card.dart';
 
 class ProductDetailsScreen extends ConsumerStatefulWidget {
@@ -72,13 +73,25 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final productQuery = ref.watch(productDetailsProvider(widget.productId));
-    final productsQuery = ref.watch(storeProductsProvider);
+    final productsQuery = ref.watch(storeProductsProvider(null));
     final alertsQuery = ref.watch(saleAlertsProvider);
     final followedOrganizationIds = ref.watch(followedOrganizationIdsProvider);
 
     return LokalsShell(
       title: 'Product details',
       showBack: true,
+      floatingActionButton: productQuery.asData?.value == null
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () {
+                ref.read(orderCartProvider.notifier).addProduct(productQuery.asData!.value);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('${productQuery.asData!.value.title} added to cart')),
+                );
+              },
+              label: const Text('Add to cart'),
+              icon: const Icon(Icons.add_shopping_cart_rounded),
+            ),
       child: productQuery.when(
         data: (item) {
           final imageUrl = resolveMediaUrl(item.imageUrl);

@@ -120,8 +120,9 @@ final preferencesProvider = FutureProvider<UserPreferenceModel>((ref) async {
   return ref.read(discoveryRepositoryProvider).fetchPreferences();
 });
 
-final storeProductsProvider = FutureProvider<List<ProductModel>>((ref) async {
-  return ref.read(discoveryRepositoryProvider).fetchProducts();
+final storeProductsProvider =
+    FutureProvider.family<List<ProductModel>, Map<String, dynamic>?>((ref, params) async {
+  return ref.read(discoveryRepositoryProvider).fetchProducts(params: params);
 });
 
 final saleAlertsProvider = FutureProvider<List<SaleAlertModel>>((ref) async {
@@ -133,6 +134,15 @@ final productDetailsProvider = FutureProvider.family<ProductModel, String>((
   id,
 ) async {
   return ref.read(discoveryRepositoryProvider).fetchProduct(id);
+});
+
+final commerceOrdersProvider = FutureProvider<List<CommerceOrderModel>>((ref) async {
+  return ref.read(discoveryRepositoryProvider).fetchOrders();
+});
+
+final commerceOrderDetailsProvider =
+    FutureProvider.family<CommerceOrderModel, String>((ref, id) async {
+  return ref.read(discoveryRepositoryProvider).fetchOrder(id);
 });
 
 final accommodationsProvider = FutureProvider<List<AccommodationItemModel>>((
@@ -916,10 +926,10 @@ class DiscoveryRepository {
     }
   }
 
-  Future<List<ProductModel>> fetchProducts() async {
+  Future<List<ProductModel>> fetchProducts({Map<String, dynamic>? params}) async {
     final response = await ref
         .read(dioProvider)
-        .get('/store/products', queryParameters: _pilotParams());
+        .get('/store/products', queryParameters: _pilotParams(params));
     final items = _unwrapList(response.data)
         .map((item) => ProductModel.fromJson(item as Map<String, dynamic>))
         .toList();
@@ -943,6 +953,40 @@ class DiscoveryRepository {
         ? data['data'] as Map<String, dynamic>
         : data as Map<String, dynamic>;
     return ProductModel.fromJson(item);
+  }
+
+  Future<List<CommerceOrderModel>> fetchOrders() async {
+    final response = await ref.read(dioProvider).get('/orders');
+    return _unwrapList(response.data)
+        .map((item) => CommerceOrderModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<CommerceOrderModel> fetchOrder(String id) async {
+    final response = await ref.read(dioProvider).get('/orders/$id');
+    final item = _unwrapMap(response.data);
+    return CommerceOrderModel.fromJson(item);
+  }
+
+  Future<CommerceOrderModel> createOrder({
+    required int businessId,
+    required String paymentMethod,
+    required String deliveryAddress,
+    required List<Map<String, dynamic>> items,
+    String? notes,
+  }) async {
+    final response = await ref.read(dioProvider).post(
+      '/orders',
+      data: {
+        'business_id': businessId,
+        'payment_method': paymentMethod,
+        'delivery_address': deliveryAddress,
+        'items': items,
+        if (notes != null && notes.isNotEmpty) 'notes': notes,
+      },
+    );
+    final item = _unwrapMap(response.data);
+    return CommerceOrderModel.fromJson(item);
   }
 
   Future<List<AccommodationItemModel>> fetchAccommodations() async {

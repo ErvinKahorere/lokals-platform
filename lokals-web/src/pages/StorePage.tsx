@@ -1,313 +1,276 @@
 import { useMemo, useState } from 'react'
-import type { ChangeEvent, FormEvent } from 'react'
-import { Megaphone, ShoppingBag, Store } from 'lucide-react'
-import { Link } from 'react-router-dom'
-import { Button, EmptyState, Input, PageHeader, ProductCard, QueryState, SearchBar, SectionCard, Select, StatusBadge, TextArea } from '../components/Ui'
-import { isDemoMode } from '../config/appMode'
-import { useCreateProduct, useProducts, useSaleAlerts } from '../hooks/queries'
+import { Clock3, MapPin, Star, Truck } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { Button, EmptyState, PageHeader, ProductCard, QueryState, SearchBar, SectionCard, StatusBadge } from '../components/Ui'
+import { useProducts } from '../hooks/queries'
+import { buildSellerSummaries, normalizeCommerceCategory } from '../lib/commerce'
 import { getDisplayPrice } from '../lib/display'
-import { useOrderCart } from '../lib/orderCart'
-import type { Product } from '../types'
+import { addProductToOrderCart, useOrderCart } from '../lib/orderCart'
 
-const categories = ['all', 'electronics', 'home', 'vehicles', 'clothing', 'food', 'services', 'more'] as const
-type SaleAlertCard = {
-  id: number | string
-  title?: string | null
-  body?: string | null
-  location?: string | null
-}
+const storeTabs = [
+  { key: 'products', label: 'Menu / Products' },
+  { key: 'reviews', label: 'Reviews' },
+  { key: 'about', label: 'About' },
+  { key: 'delivery', label: 'Delivery info' },
+] as const
 
 export function StorePage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [search, setSearch] = useState('')
-  const [category, setCategory] = useState<(typeof categories)[number]>('all')
-  const [town, setTown] = useState('all')
-  const [sortBy, setSortBy] = useState<'newest' | 'price_low_high' | 'price_high_low'>('newest')
-  const [saleOnly, setSaleOnly] = useState(false)
-  const [verifiedOnly, setVerifiedOnly] = useState(false)
-  const [step, setStep] = useState(0)
-  const [form, setForm] = useState({ title: '', description: '', category: 'electronics', town: 'Okahandja', area: 'Central Okahandja', price: '' })
-  const [image, setImage] = useState<File | null>(null)
-  const [successProduct, setSuccessProduct] = useState<Product | null>(null)
-
-  const productsQuery = useProducts({
-    ...(search ? { search } : {}),
-    ...(category !== 'all' && category !== 'more' ? { category } : {}),
-    ...(town !== 'all' ? { town } : {}),
-    ...(saleOnly ? { sale_items: 1 } : {}),
-    ...(verifiedOnly ? { verified_sellers: 1 } : {}),
-    sort: sortBy,
-  })
-  const saleAlertsQuery = useSaleAlerts()
-  const createProduct = useCreateProduct()
+  const [activeTab, setActiveTab] = useState<(typeof storeTabs)[number]['key']>('products')
+  const productsQuery = useProducts({ per_page: 48 })
   const cart = useOrderCart()
-  const products = useMemo(() => productsQuery.data?.data ?? [], [productsQuery.data])
-  const featured = useMemo(() => products.filter((item) => item.sale_price || item.business?.is_verified).slice(0, 4), [products])
-  const recent = useMemo(() => [...products].sort((a, b) => b.id - a.id).slice(0, 6), [products])
-  const localSellers = useMemo(() => {
-    const sellers = new Map<string, { id?: number; name: string; location: string; count: number; verified: boolean }>()
-    for (const product of products) {
-      const name = product.business?.name ?? product.user?.business_name ?? product.user?.name
-      if (!name) continue
-      const key = `${product.business?.id ?? product.user?.id ?? name}:${name}`
-      const current = sellers.get(key)
-      sellers.set(key, {
-        id: product.business?.id,
-        name,
-        location: [product.area, product.town].filter(Boolean).join(', ') || 'Okahandja',
-        count: (current?.count ?? 0) + 1,
-        verified: Boolean(product.business?.is_verified),
-      })
-    }
-    return Array.from(sellers.values()).sort((a, b) => b.count - a.count).slice(0, 4)
-  }, [products])
-
-  const submit = async (event: FormEvent) => {
-    event.preventDefault()
-    if (step < 2) {
-      setStep((current) => current + 1)
-      return
-    }
-
-    if (isDemoMode) {
-      setSuccessProduct({
-        id: -1,
-        title: form.title || 'Draft product',
-        price: form.price || '0',
-        description: form.description,
-        category: form.category,
-        town: form.town,
-        area: form.area,
-      } as Product)
-      return
-    }
-
-    const payload = new FormData()
-    Object.entries(form).forEach(([key, value]) => payload.append(key, value))
-    if (image) payload.append('image', image)
-    const response = await createProduct.mutateAsync(payload)
-    const product = (response.data ?? response) as Product
-    setSuccessProduct(product)
-  }
-
-  const resetPost = () => {
-    setForm({ title: '', description: '', category: 'electronics', town: 'Okahandja', area: 'Central Okahandja', price: '' })
-    setImage(null)
-    setStep(0)
-    setSuccessProduct(null)
-  }
+  const products = useMemo(() => productsQuery.data?.data ?? [], [productsQuery.data?.data])
+  const sellers = useMemo(() => buildSellerSummaries(products), [products])
+  const selectedSellerId = Number(searchParams.get('seller') ?? 0) || null
+  const selectedSeller = sellers.find((seller) => seller.sellerId === selectedSellerId) ?? sellers[0] ?? null
+  const sellerProducts = useMemo(() => {
+    const filtered = products.filter((product) => {
+      if (selectedSeller?.sellerId) {
+        return product.business?.id === selectedSeller.sellerId
+      }
+      return true
+    })
+    if (!search.trim()) return filtered
+    const query = search.trim().toLowerCase()
+    return filtered.filter((product) => [product.title, product.description, product.category].some((value) => String(value ?? '').toLowerCase().includes(query)))
+  }, [products, selectedSeller, search])
+  const categories = Array.from(new Set(sellerProducts.map((product) => product.category).filter(Boolean) as string[]))
+  const featuredItems = sellerProducts.filter((product) => product.is_featured || product.sale_price).slice(0, 4)
+  const popularItems = sellerProducts.filter((product) => product.is_popular || product.fast_delivery).slice(0, 6)
+  const menuSections = categories.length ? categories : ['All products']
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-28">
       <PageHeader
-        eyebrow="Store"
-        title="Marketplace"
-        description="Browse local products, promotions, and trusted sellers nearby."
+        eyebrow="Storefront"
+        title={selectedSeller?.sellerName ?? 'Local Storefront'}
+        description="A cleaner commerce flow for local food, groceries, and shop orders."
         actions={
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="w-full md:w-[320px]">
             <SearchBar
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               onValueSelect={setSearch}
-              recentKey="store"
-              suggestions={['Samsung phone', 'Food voucher', 'Home deals', 'Toyota Hilux']}
-              shortcuts={[{ label: 'Electronics', value: 'electronics' }, { label: 'Sale items', value: 'sale' }, { label: 'Home', value: 'home' }]}
-              placeholder="Search products..."
-              className="w-full md:w-80"
+              recentKey="commerce-store"
+              suggestions={['Popular items', 'Family meal', 'Fresh produce', 'Home goods']}
+              shortcuts={[{ label: 'Featured', value: 'featured' }, { label: 'Fast delivery', value: 'fast' }]}
+              placeholder="Search this store..."
             />
-            <Link to="/orders/checkout"><Button>Cart {cart.totalItems ? `(${cart.totalItems})` : ''}</Button></Link>
           </div>
         }
       />
 
-      <SectionCard className="bg-white">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-purple">Browse smarter</p>
-            <h2 className="mt-1 text-lg font-semibold text-lokals-charcoal">Filter products, sellers, and local deals without losing context</h2>
-          </div>
-          <span className="rounded-full bg-lokals-purple/10 px-3 py-1.5 text-xs font-semibold text-lokals-purple">{products.length} listings</span>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-3">
-          {categories.map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setCategory(item)}
-              className={`rounded-[18px] border px-4 py-2 text-sm font-semibold transition ${
-                category === item
-                  ? 'border-lokals-purple bg-lokals-purple text-white shadow-card'
-                  : 'border-lokals-border bg-lokals-bg text-lokals-charcoal hover:border-lokals-purple/30 hover:bg-white'
-              }`}
-            >
-              {item === 'all' ? 'All' : item === 'more' ? 'More' : item.charAt(0).toUpperCase() + item.slice(1)}
-            </button>
-          ))}
-        </div>
-        <div className="mt-4 grid gap-3 md:grid-cols-4">
-          <Select value={town} onChange={(event) => setTown(event.target.value)}>
-            <option value="all">All towns</option>
-            <option value="Okahandja">Okahandja</option>
-            <option value="Swakopmund">Swakopmund</option>
-          </Select>
-          <Select value={sortBy} onChange={(event) => setSortBy(event.target.value as typeof sortBy)}>
-            <option value="newest">Newest</option>
-            <option value="price_low_high">Price low-high</option>
-            <option value="price_high_low">Price high-low</option>
-          </Select>
-          <Button variant={saleOnly ? 'primary' : 'secondary'} onClick={() => setSaleOnly((value) => !value)}>Sale items</Button>
-          <Button variant={verifiedOnly ? 'primary' : 'secondary'} onClick={() => setVerifiedOnly((value) => !value)}>Verified sellers</Button>
-        </div>
-      </SectionCard>
-
-      <section className="grid gap-4 lg:grid-cols-[1.4fr_0.8fr]">
-        <SectionCard className="bg-white">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
-              <Megaphone className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-lokals-charcoal">Sale Alerts / Promotions</h2>
-              <p className="text-sm text-lokals-muted">Fresh discounts and local offers worth checking today.</p>
-            </div>
-          </div>
-          <QueryState isLoading={saleAlertsQuery.isLoading} error={saleAlertsQuery.error} empty={(saleAlertsQuery.data?.data ?? []).length === 0}>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {(saleAlertsQuery.data?.data ?? []).slice(0, 4).map((alert: SaleAlertCard) => (
-                <div key={alert.id} className="rounded-[22px] border border-lokals-border bg-gradient-to-br from-amber-50 via-white to-violet-50 p-4">
-                  <StatusBadge value="Promotion" tone="warning" />
-                  <p className="mt-3 text-lg font-semibold text-lokals-charcoal">{alert.title}</p>
-                  <p className="mt-2 text-sm text-lokals-muted">{alert.body}</p>
-                  <div className="mt-4 flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-lokals-charcoal">{alert.location ?? 'Okahandja'}</p>
-                    <Button variant="secondary" onClick={() => setSaleOnly(true)}>View products</Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </QueryState>
-        </SectionCard>
-
-        <SectionCard className="bg-white">
-          {successProduct ? (
-            <div className="space-y-4">
-              <p className="text-lg font-semibold text-lokals-charcoal">Product published</p>
-              <p className="text-sm text-lokals-muted">Your listing is now live in the store.</p>
-              <div className="flex gap-2">
-                <Link to={successProduct.id > 0 ? `/store/${successProduct.id}` : '/store'} className="flex-1">
-                  <Button className="w-full">View Product</Button>
-                </Link>
-                <Button variant="secondary" className="flex-1" onClick={resetPost}>Back to Store</Button>
-              </div>
-            </div>
-          ) : (
-            <form className="space-y-4" onSubmit={submit}>
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-100 text-lokals-purple">
-                  <ShoppingBag className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-lokals-charcoal">Post a product</h2>
-                  <p className="text-sm text-lokals-muted">Photo first, short details, quick preview, then publish.</p>
-                </div>
-              </div>
-              <div className="flex gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-lokals-muted">
-                <span className={step === 0 ? 'text-lokals-purple' : ''}>1. Photo</span>
-                <span className={step === 1 ? 'text-lokals-purple' : ''}>2. Details</span>
-                <span className={step === 2 ? 'text-lokals-purple' : ''}>3. Preview</span>
-              </div>
-              {step === 0 ? (
-                <div className="rounded-[22px] border border-dashed border-lokals-border bg-slate-50 p-4">
-                  <input type="file" accept="image/*" onChange={(event: ChangeEvent<HTMLInputElement>) => setImage(event.target.files?.[0] ?? null)} className="block w-full text-sm text-lokals-muted" />
-                  <p className="mt-3 text-sm text-lokals-muted">{image ? image.name : 'Add a product image or skip for now.'}</p>
-                </div>
-              ) : null}
-              {step === 1 ? (
-                <>
-                  <Input value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} placeholder="Product title" required />
-                  <Input value={form.price} onChange={(event) => setForm((current) => ({ ...current, price: event.target.value }))} placeholder="Price (optional)" />
-                  <Input value={form.category} onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))} placeholder="Category" />
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Input value={form.town} onChange={(event) => setForm((current) => ({ ...current, town: event.target.value }))} placeholder="Town" />
-                    <Input value={form.area} onChange={(event) => setForm((current) => ({ ...current, area: event.target.value }))} placeholder="Area" />
-                  </div>
-                  <TextArea value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} placeholder="Short description" rows={3} />
-                </>
-              ) : null}
-              {step === 2 ? (
-                <div className="rounded-[22px] border border-lokals-border bg-slate-50 p-4">
-                  <p className="text-lg font-semibold text-lokals-charcoal">{form.title || 'Untitled product'}</p>
-                  <p className="mt-2 text-xl font-bold text-lokals-purple">{form.price ? getDisplayPrice(form.price) : 'Price on request'}</p>
-                  <p className="mt-2 text-sm text-lokals-muted">{form.category || 'General'} • {[form.area, form.town].filter(Boolean).join(', ')}</p>
-                  <p className="mt-3 text-sm text-lokals-muted">{form.description || 'Add a short description before you publish.'}</p>
-                </div>
-              ) : null}
-              <div className="flex gap-2">
-                {step > 0 ? <Button type="button" variant="secondary" className="flex-1" onClick={() => setStep((current) => current - 1)}>Back</Button> : null}
-                <Button className="flex-1" disabled={createProduct.isPending || (step === 1 && !form.title.trim())}>
-                  {step < 2 ? (step === 0 ? 'Continue' : 'Preview') : createProduct.isPending ? 'Publishing...' : isDemoMode ? 'Preview publish' : 'Publish'}
-                </Button>
-              </div>
-            </form>
-          )}
-        </SectionCard>
-      </section>
-
-      <QueryState isLoading={productsQuery.isLoading} error={productsQuery.error} empty={products.length === 0}>
-        {products.length === 0 ? (
-          <EmptyState title="No products found in your area." body="Try another category." />
+      <QueryState isLoading={productsQuery.isLoading} error={productsQuery.error} empty={!products.length}>
+        {!selectedSeller ? (
+          <EmptyState title="No storefronts yet" body="As local sellers connect products to their businesses, storefronts will appear here." />
         ) : (
           <>
-            <section className="space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-semibold text-lokals-charcoal">Featured Listings</h2>
-                  <p className="text-sm text-lokals-muted">Highlighted products from trusted local sellers.</p>
-                </div>
-                <Link to="/store" className="text-sm font-semibold text-lokals-purple">View all</Link>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                {(featured.length ? featured : products.slice(0, 4)).map((product) => <ProductCard key={product.id} product={product} />)}
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-semibold text-lokals-charcoal">Recent Listings</h2>
-                  <p className="text-sm text-lokals-muted">Fresh items from local businesses and sellers.</p>
-                </div>
-                <Link to="/store" className="text-sm font-semibold text-lokals-purple">View all</Link>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {recent.map((product) => <ProductCard key={product.id} product={product} />)}
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-semibold text-lokals-charcoal">Local Sellers</h2>
-                  <p className="text-sm text-lokals-muted">Seller discovery with quick paths into products and business profiles.</p>
-                </div>
-                <Link to="/directory" className="text-sm font-semibold text-lokals-purple">View all</Link>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                {localSellers.map((seller) => (
-                  <SectionCard key={`${seller.name}-${seller.location}`} className="bg-white">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-lokals-purple">
-                      <Store className="h-5 w-5" />
+            <section className="overflow-hidden rounded-[32px] border border-lokals-border bg-white shadow-card">
+              <div className="relative h-56 overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(22,163,74,0.22),_transparent_35%),linear-gradient(135deg,#0f172a,#1e293b,#16a34a)]">
+                {selectedSeller.heroImageUrl ? <img src={selectedSeller.heroImageUrl} alt={selectedSeller.sellerName} className="absolute inset-0 h-full w-full object-cover opacity-35" /> : null}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <StatusBadge value={selectedSeller.availabilityStatus} tone={selectedSeller.openNow ? 'success' : 'neutral'} className="bg-white/15 text-white ring-0" />
+                      <h1 className="mt-3 text-3xl font-semibold">{selectedSeller.sellerName}</h1>
+                      <p className="mt-2 max-w-2xl text-sm text-white/80">{selectedSeller.subtitle} in {[selectedSeller.area, selectedSeller.town].filter(Boolean).join(', ') || 'Okahandja'}.</p>
                     </div>
-                    <p className="mt-4 text-base font-semibold text-lokals-charcoal">{seller.name}</p>
-                    <p className="mt-1 text-sm text-lokals-muted">{seller.location}</p>
-                    <p className="mt-2 text-sm font-medium text-lokals-charcoal">{seller.count} live listings</p>
-                    <div className="mt-4 flex gap-2">
-                      {seller.id ? <Link to={`/directory/${seller.id}`} className="flex-1"><Button variant="secondary" className="w-full">Profile</Button></Link> : null}
-                      <Button className="flex-1" onClick={() => setSearch(seller.name)}>View products</Button>
+                    <div className="grid gap-2 rounded-[24px] bg-white/12 p-4 backdrop-blur">
+                      <div className="flex items-center gap-2 text-sm"><Star className="h-4 w-4" /> {selectedSeller.rating.toFixed(1)} rating</div>
+                      <div className="flex items-center gap-2 text-sm"><Truck className="h-4 w-4" /> {getDisplayPrice(selectedSeller.deliveryFee, 'N$')} delivery</div>
+                      <div className="flex items-center gap-2 text-sm"><Clock3 className="h-4 w-4" /> {selectedSeller.etaMinutes} min estimate</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {sellers.map((seller) => (
+                <button
+                  key={seller.id}
+                  type="button"
+                  onClick={() => setSearchParams((current) => {
+                    const next = new URLSearchParams(current)
+                    if (seller.sellerId) next.set('seller', String(seller.sellerId))
+                    return next
+                  })}
+                  className={`min-w-[220px] rounded-[24px] border px-4 py-4 text-left transition ${selectedSeller.id === seller.id ? 'border-lokals-green bg-emerald-50' : 'border-lokals-border bg-white hover:border-lokals-purple/20'}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-lokals-charcoal">{seller.sellerName}</p>
+                      <p className="mt-1 text-sm text-lokals-muted">{seller.productCount} items</p>
+                    </div>
+                    {seller.fastDelivery ? <StatusBadge value="Fast" tone="success" /> : null}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="sticky top-[72px] z-10 flex flex-wrap gap-2 rounded-[24px] border border-lokals-border bg-white/90 p-3 shadow-card backdrop-blur">
+              {storeTabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${activeTab === tab.key ? 'bg-lokals-green text-white' : 'bg-slate-100 text-lokals-charcoal'}`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {activeTab === 'products' ? (
+              <div className="space-y-6">
+                <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+                  <SectionCard className="bg-white">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-purple">Featured Items</p>
+                        <h2 className="mt-1 text-xl font-semibold text-lokals-charcoal">Best conversions first</h2>
+                      </div>
+                      <StatusBadge value={`${sellerProducts.length} products`} tone="accent" />
+                    </div>
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                      {(featuredItems.length ? featuredItems : sellerProducts.slice(0, 4)).map((product) => (
+                        <div key={product.id} className="rounded-[24px] border border-lokals-border bg-slate-50 p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="font-semibold text-lokals-charcoal">{product.title}</p>
+                              <p className="mt-1 text-sm text-lokals-muted">{getDisplayPrice(product.sale_price ?? product.price, 'N$')}</p>
+                            </div>
+                            {product.fast_delivery ? <StatusBadge value="Fast" tone="success" /> : null}
+                          </div>
+                          <div className="mt-4 flex gap-2">
+                            <Button className="flex-1" onClick={() => addProductToOrderCart(product, 1)}>Quick add</Button>
+                            <Link to={`/store/${product.id}`} className="flex-1"><Button variant="secondary" className="w-full">Open</Button></Link>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </SectionCard>
-                ))}
+
+                  <SectionCard className="bg-white">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-green">Popular Items</p>
+                        <h2 className="mt-1 text-xl font-semibold text-lokals-charcoal">Quick add momentum</h2>
+                      </div>
+                    </div>
+                    <div className="mt-4 space-y-3">
+                      {(popularItems.length ? popularItems : sellerProducts.slice(0, 5)).map((product) => (
+                        <div key={product.id} className="flex items-center justify-between rounded-[20px] border border-lokals-border bg-slate-50 px-4 py-4">
+                          <div>
+                            <p className="font-semibold text-lokals-charcoal">{product.title}</p>
+                            <p className="mt-1 text-sm text-lokals-muted">{normalizeCommerceCategory(product.commerce_category ?? product.category)} | {getDisplayPrice(product.sale_price ?? product.price, 'N$')}</p>
+                          </div>
+                          <Button variant="secondary" onClick={() => addProductToOrderCart(product, 1)}>Add</Button>
+                        </div>
+                      ))}
+                    </div>
+                  </SectionCard>
+                </div>
+
+                {menuSections.map((section) => {
+                  const sectionItems = section === 'All products'
+                    ? sellerProducts
+                    : sellerProducts.filter((product) => product.category === section)
+
+                  if (!sectionItems.length) return null
+
+                  return (
+                    <SectionCard key={section} className="bg-white">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <h2 className="text-lg font-semibold text-lokals-charcoal">{section}</h2>
+                          <p className="text-sm text-lokals-muted">Sticky quick-add interactions keep the flow moving.</p>
+                        </div>
+                      </div>
+                      <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                        {sectionItems.map((product) => <ProductCard key={product.id} product={product} />)}
+                      </div>
+                    </SectionCard>
+                  )
+                })}
               </div>
-            </section>
+            ) : null}
+
+            {activeTab === 'reviews' ? (
+              <SectionCard className="bg-white">
+                <div className="grid gap-4 lg:grid-cols-[0.65fr_1.35fr]">
+                  <div className="rounded-[24px] bg-slate-50 p-5">
+                    <p className="text-sm text-lokals-muted">Average rating</p>
+                    <p className="mt-2 text-4xl font-semibold text-lokals-charcoal">{selectedSeller.rating.toFixed(1)}</p>
+                    <p className="mt-2 text-sm text-lokals-muted">{selectedSeller.reviewCount} local ratings and trust signals</p>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {['Fast handoff and reliable delivery.', 'Popular for repeat neighborhood orders.', 'Verified local seller with clear response flow.', 'Strong product mix for everyday city commerce.'].map((line) => (
+                      <div key={line} className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
+                        <p className="font-medium text-lokals-charcoal">{line}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </SectionCard>
+            ) : null}
+
+            {activeTab === 'about' ? (
+              <SectionCard className="bg-white">
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="rounded-[24px] bg-slate-50 p-5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Store summary</p>
+                    <p className="mt-3 text-base leading-7 text-lokals-muted">{selectedSeller.sellerName} serves {selectedSeller.town ?? 'Okahandja'} with a modern local-commerce flow built around compact cards, quick add, and order delivery.</p>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lokals-muted">Category</p>
+                      <p className="mt-2 font-semibold text-lokals-charcoal">{selectedSeller.subtitle}</p>
+                    </div>
+                    <div className="rounded-[20px] border border-lokals-border bg-white px-4 py-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lokals-muted">Location</p>
+                      <p className="mt-2 inline-flex items-center gap-2 font-semibold text-lokals-charcoal"><MapPin className="h-4 w-4" /> {[selectedSeller.area, selectedSeller.town].filter(Boolean).join(', ') || 'Okahandja'}</p>
+                    </div>
+                  </div>
+                </div>
+              </SectionCard>
+            ) : null}
+
+            {activeTab === 'delivery' ? (
+              <SectionCard className="bg-white">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="rounded-[24px] bg-slate-50 p-5">
+                    <p className="text-sm text-lokals-muted">Estimated delivery</p>
+                    <p className="mt-2 text-2xl font-semibold text-lokals-charcoal">{selectedSeller.etaMinutes} min</p>
+                  </div>
+                  <div className="rounded-[24px] bg-slate-50 p-5">
+                    <p className="text-sm text-lokals-muted">Delivery fee</p>
+                    <p className="mt-2 text-2xl font-semibold text-lokals-charcoal">{getDisplayPrice(selectedSeller.deliveryFee, 'N$')}</p>
+                  </div>
+                  <div className="rounded-[24px] bg-slate-50 p-5">
+                    <p className="text-sm text-lokals-muted">Availability</p>
+                    <p className="mt-2 text-2xl font-semibold text-lokals-charcoal">{selectedSeller.availabilityStatus}</p>
+                  </div>
+                </div>
+              </SectionCard>
+            ) : null}
+
+            {cart.totalItems ? (
+              <div className="fixed bottom-6 left-1/2 z-20 w-[min(680px,calc(100%-24px))] -translate-x-1/2 rounded-[24px] bg-lokals-charcoal px-5 py-4 text-white shadow-2xl">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm text-white/70">{cart.totalItems} item{cart.totalItems === 1 ? '' : 's'} in cart</p>
+                    <p className="text-lg font-semibold">{getDisplayPrice(cart.subtotal, 'N$')} subtotal</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Link to="/orders"><Button variant="secondary">Track orders</Button></Link>
+                    <Link to="/orders/checkout"><Button>Open cart</Button></Link>
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </>
         )}
       </QueryState>

@@ -184,7 +184,21 @@ export interface Provider {
   status: string
   open_now?: boolean
   availability_status?: string | null
+  availability_code?: string | null
+  availability?: {
+    code?: string | null
+    label?: string | null
+    is_open?: boolean
+    closing_soon?: boolean
+    busy?: boolean
+    paused?: boolean
+    pickup_only?: boolean
+    supports_delivery?: boolean
+  } | null
   response_time_label?: string | null
+  delivery_fee?: string | number | null
+  delivery_eta_minutes?: number | null
+  fast_delivery?: boolean
   followers_count?: number
   review_count?: number
   rating?: number
@@ -271,6 +285,21 @@ export interface Organization {
   status?: string
   open_now?: boolean
   availability_status?: string | null
+  availability_code?: string | null
+  availability?: {
+    code?: string | null
+    label?: string | null
+    is_open?: boolean
+    closing_soon?: boolean
+    busy?: boolean
+    paused?: boolean
+    pickup_only?: boolean
+    supports_delivery?: boolean
+  } | null
+  commerce_category?: string | null
+  delivery_fee?: string | number | null
+  delivery_eta_minutes?: number | null
+  fast_delivery?: boolean
   emergency_contact?: boolean
   is_public_service?: boolean
   opening_hours?: Array<{ day?: string; open?: string; close?: string }> | null
@@ -533,9 +562,11 @@ export interface OrderRecord {
   status: string
   status_label?: string | null
   tracking_status?: string | null
+  next_action_label?: string | null
+  estimated_arrival_minutes?: number | null
   customer?: Pick<User, 'id' | 'name' | 'phone' | 'avatar' | 'default_town' | 'default_area'> | null
-  seller?: Pick<Organization, 'id' | 'name' | 'category' | 'phone' | 'whatsapp' | 'logo_url' | 'town' | 'area' | 'location' | 'is_verified'> | null
-  business?: Pick<Organization, 'id' | 'name' | 'category' | 'phone' | 'whatsapp' | 'logo_url' | 'town' | 'area' | 'location' | 'is_verified'> | null
+  seller?: Pick<Organization, 'id' | 'name' | 'category' | 'phone' | 'whatsapp' | 'logo_url' | 'town' | 'area' | 'location' | 'is_verified' | 'delivery_fee' | 'delivery_eta_minutes' | 'availability_status' | 'open_now'> | null
+  business?: Pick<Organization, 'id' | 'name' | 'category' | 'phone' | 'whatsapp' | 'logo_url' | 'town' | 'area' | 'location' | 'is_verified' | 'delivery_fee' | 'delivery_eta_minutes' | 'availability_status' | 'open_now'> | null
   courier?: Pick<User, 'id' | 'name' | 'phone' | 'avatar'> | null
   items: OrderLineItem[]
   totals?: {
@@ -561,11 +592,31 @@ export interface OrderRecord {
   } | null
   customer_rating?: number | null
   customer_rating_comment?: string | null
+  support_shortcuts?: {
+    key: string
+    label: string
+  }[]
   timeline?: Array<{
     key: string
     label: string
     timestamp?: string | null
   }>
+  tracking_steps?: Array<{
+    key: string
+    label: string
+    state?: string | null
+    timestamp?: string | null
+    is_complete?: boolean
+    is_current?: boolean
+  }>
+  reorder_payload?: {
+    business_id?: number | null
+    items?: Array<{
+      product_id?: number | null
+      quantity?: number | null
+      name?: string | null
+    }>
+  } | null
   created_at?: string | null
   updated_at?: string | null
 }
@@ -644,7 +695,29 @@ export interface Product {
   area?: string | null
   stock_status?: string | null
   status?: string | null
-  business?: Pick<Organization, 'id' | 'name' | 'category' | 'phone' | 'whatsapp' | 'logo_url' | 'is_verified' | 'town' | 'area' | 'location'> | null
+  hero_image_url?: string | null
+  open_now?: boolean
+  availability_status?: string | null
+  availability_code?: string | null
+  availability?: {
+    code?: string | null
+    label?: string | null
+    is_open?: boolean
+    closing_soon?: boolean
+    busy?: boolean
+    paused?: boolean
+    pickup_only?: boolean
+    supports_delivery?: boolean
+  } | null
+  delivery_fee?: string | number | null
+  delivery_eta_minutes?: number | null
+  fast_delivery?: boolean
+  rating?: number | null
+  review_count?: number | null
+  commerce_category?: string | null
+  is_featured?: boolean
+  is_popular?: boolean
+  business?: Pick<Organization, 'id' | 'name' | 'category' | 'phone' | 'whatsapp' | 'logo_url' | 'is_verified' | 'town' | 'area' | 'location' | 'open_now' | 'availability_status' | 'availability_code' | 'delivery_fee' | 'delivery_eta_minutes' | 'fast_delivery' | 'rating' | 'review_count' | 'commerce_category' | 'opening_hours'> | null
   user?: Pick<User, 'id' | 'name' | 'phone' | 'avatar' | 'business_name' | 'whatsapp' | 'default_town' | 'default_area' | 'location'> | null
 }
 

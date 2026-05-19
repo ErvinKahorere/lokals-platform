@@ -13,6 +13,7 @@ import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../auth/auth_controller.dart';
 import '../discovery/discovery_repository.dart';
+import 'order_cart_controller.dart';
 import 'product_card.dart';
 
 class StoreScreen extends ConsumerStatefulWidget {
@@ -65,18 +66,27 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
   Widget build(BuildContext context) {
     final safeBottom = MediaQuery.viewPaddingOf(context).bottom;
     final scrollBottomPadding = safeBottom + 132;
-    final productsQuery = ref.watch(storeProductsProvider);
+    final productsQuery = ref.watch(storeProductsProvider(null));
     final alertsQuery = ref.watch(saleAlertsProvider);
+    final cart = ref.watch(orderCartProvider);
 
     return LokalsShell(
-      title: 'Marketplace',
+      title: 'Store',
       showBack: true,
       bodyBottomInset: 10,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openPostProductSheet,
-        label: const Text('Post'),
-        icon: const Icon(Icons.add_box_outlined),
-      ),
+      floatingActionButton: cart.totalItems > 0
+          ? FloatingActionButton.extended(
+              onPressed: () => context.push('/orders/checkout'),
+              backgroundColor: AppColors.primaryGreen,
+              foregroundColor: Colors.white,
+              label: Text('Cart (${cart.totalItems})'),
+              icon: const Icon(Icons.shopping_bag_outlined),
+            )
+          : FloatingActionButton.extended(
+              onPressed: _openPostProductSheet,
+              label: const Text('Post'),
+              icon: const Icon(Icons.add_box_outlined),
+            ),
       child: productsQuery.when(
         data: (items) {
           final filtered = _applyFilters(items);
@@ -339,7 +349,7 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
               action: AppButton(
                 label: 'Retry',
                 expanded: false,
-                onPressed: () => ref.invalidate(storeProductsProvider),
+                onPressed: () => ref.invalidate(storeProductsProvider(null)),
               ),
             ),
           ),
@@ -583,7 +593,7 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
                               return;
                             }
                             Navigator.pop(context);
-                            ref.invalidate(storeProductsProvider);
+                            ref.invalidate(storeProductsProvider(null));
                             _clearPostForm();
                             _showPublishSuccess(product);
                           } finally {

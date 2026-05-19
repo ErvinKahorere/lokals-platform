@@ -23,6 +23,8 @@ class OrderResource extends JsonResource
             'status' => $this->status,
             'status_label' => $this->statusLabel((string) $this->status),
             'tracking_status' => $this->trackingStatus((string) $this->status),
+            'next_action_label' => $this->nextActionLabel((string) $this->status),
+            'estimated_arrival_minutes' => $this->estimatedArrivalMinutes((string) $this->status),
             'customer' => $this->customer ? [
                 'id' => $this->customer->id,
                 'name' => $this->customer->name,
@@ -85,15 +87,29 @@ class OrderResource extends JsonResource
             ],
             'customer_rating' => $this->customer_rating,
             'customer_rating_comment' => $this->customer_rating_comment,
+            'support_shortcuts' => [
+                'call_seller' => filled($this->business?->phone),
+                'call_courier' => filled($this->courier?->phone),
+                'supports_whatsapp' => filled($this->business?->whatsapp),
+            ],
+            'reorder_payload' => [
+                'business_id' => $this->business_id,
+                'items' => $this->items->map(fn ($item) => [
+                    'product_id' => $item->product_id,
+                    'quantity' => $item->quantity,
+                ])->values(),
+            ],
             'timeline' => array_values(array_filter([
                 ['key' => Order::STATUS_PENDING, 'label' => 'Order placed', 'timestamp' => optional($this->created_at)->toIso8601String()],
                 ['key' => Order::STATUS_ACCEPTED, 'label' => 'Seller accepted', 'timestamp' => optional($this->accepted_at)->toIso8601String()],
                 ['key' => Order::STATUS_PREPARING, 'label' => 'Preparing order', 'timestamp' => optional($this->preparing_at)->toIso8601String()],
                 ['key' => Order::STATUS_READY_FOR_PICKUP, 'label' => 'Ready for pickup', 'timestamp' => optional($this->ready_at)->toIso8601String()],
+                ['key' => Order::STATUS_COURIER_ASSIGNED, 'label' => 'Courier assigned', 'timestamp' => optional($this->updated_at && $this->status === Order::STATUS_COURIER_ASSIGNED ? $this->updated_at : null)->toIso8601String()],
                 ['key' => Order::STATUS_PICKED_UP, 'label' => 'Picked up', 'timestamp' => optional($this->picked_up_at)->toIso8601String()],
                 ['key' => Order::STATUS_DELIVERED, 'label' => 'Delivered', 'timestamp' => optional($this->delivered_at)->toIso8601String()],
                 ['key' => Order::STATUS_CANCELLED, 'label' => 'Cancelled', 'timestamp' => optional($this->cancelled_at)->toIso8601String()],
             ], fn (array $item) => filled($item['timestamp']))),
+            'tracking_steps' => $this->trackingSteps((string) $this->status),
             'created_at' => optional($this->created_at)->toIso8601String(),
             'updated_at' => optional($this->updated_at)->toIso8601String(),
         ];
@@ -114,7 +130,66 @@ class OrderResource extends JsonResource
         return match ($status) {
             Order::STATUS_ACCEPTED, Order::STATUS_PREPARING => 'seller_preparing',
             Order::STATUS_READY_FOR_PICKUP => 'awaiting_courier',
+            Order::STATUS_COURIER_ASSIGNED => 'courier_heading_to_pickup',
+            Order::STATUS_PICKED_UP => 'courier_en_route',
             default => $status,
         };
+    }
+
+    private function nextActionLabel(string $status): string
+    {
+        return match ($status) {
+            Order::STATUS_PENDING => 'Waiting for seller confirmation',
+            Order::STATUS_ACCEPTED => 'Seller accepted your order',
+            Order::STATUS_PREPARING => 'Preparing your order',
+            Order::STATUS_READY_FOR_PICKUP => 'Waiting for a courier',
+            Order::STATUS_COURIER_ASSIGNED => 'Courier heading to pickup',
+            Order::STATUS_PICKED_UP => 'Courier is on the way',
+            Order::STATUS_DELIVERED => 'Delivered successfully',
+            Order::STATUS_CANCELLED => 'Order cancelled',
+            Order::STATUS_REJECTED => 'Order rejected',
+            default => ucfirst(str_replace('_', ' ', $status)),
+        };
+    }
+
+    private function estimatedArrivalMinutes(string $status): ?int
+    {
+        return match ($status) {
+            Order::STATUS_PENDING => 40,
+            Order::STATUS_ACCEPTED => 32,
+            Order::STATUS_PREPARING => 24,
+            Order::STATUS_READY_FOR_PICKUP => 18,
+            Order::STATUS_COURIER_ASSIGNED => 14,
+            Order::STATUS_PICKED_UP => 8,
+            default => null,
+        };
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function trackingSteps(string $status): array
+    {
+        $rank = match ($status) {
+            Order::STATUS_PENDING => 1,
+            Order::STATUS_ACCEPTED => 2,
+            Order::STATUS_PREPARING => 3,
+            Order::STATUS_READY_FOR_PICKUP => 4,
+            Order::STATUS_COURIER_ASSIGNED => 5,
+            Order::STATUS_PICKED_UP => 6,
+            Order::STATUS_DELIVERED => 8,
+            default => 0,
+        };
+
+        return [
+            ['key' => 'placed', 'label' => 'Order placed', 'state' => $rank >= 1 ? 'complete' : 'upcoming'],
+            ['key' => 'accepted', 'label' => 'Accepted', 'state' => $rank >= 2 ? 'complete' : 'upcoming'],
+            ['key' => 'preparing', 'label' => 'Preparing', 'state' => $rank >= 3 ? 'complete' : 'upcoming'],
+            ['key' => 'ready_for_pickup', 'label' => 'Ready', 'state' => $rank >= 4 ? 'complete' : 'upcoming'],
+            ['key' => 'courier_assigned', 'label' => 'Courier assigned', 'state' => $rank >= 5 ? 'complete' : 'upcoming'],
+            ['key' => 'picked_up', 'label' => 'Picked up', 'state' => $rank >= 6 ? 'complete' : 'upcoming'],
+            ['key' => 'nearby', 'label' => 'Nearby', 'state' => $rank >= 7 ? 'complete' : ($status === Order::STATUS_PICKED_UP ? 'active' : 'upcoming')],
+            ['key' => 'delivered', 'label' => 'Delivered', 'state' => $rank >= 8 ? 'complete' : 'upcoming'],
+        ];
     }
 }

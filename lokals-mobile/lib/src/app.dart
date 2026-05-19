@@ -62,6 +62,9 @@ import 'features/more/more_screen.dart';
 import 'features/news/news_screen.dart';
 import 'features/news/news_details_screen.dart';
 import 'features/news/article_browser_screen.dart';
+import 'features/orders/checkout_screen.dart';
+import 'features/orders/order_details_screen.dart';
+import 'features/orders/orders_screen.dart';
 import 'features/profile/profile_screen.dart';
 import 'features/profile/edit_profile_screen.dart';
 import 'features/profile/role_modes_screen.dart';
@@ -120,6 +123,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         '/report-issue',
         '/delivery',
         '/ride',
+        '/orders',
         '/sos',
         '/profile',
         '/saved-items',
@@ -373,6 +377,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/marketplace',
         builder: (context, state) => const MarketplaceScreen(),
+      ),
+      GoRoute(path: '/orders', builder: (context, state) => const OrdersScreen()),
+      GoRoute(
+        path: '/orders/checkout',
+        builder: (context, state) => const CheckoutScreen(),
+      ),
+      GoRoute(
+        path: '/orders/:id',
+        builder: (context, state) =>
+            OrderDetailsScreen(orderId: state.pathParameters['id']!),
       ),
       GoRoute(path: '/store', builder: (context, state) => const StoreScreen()),
       GoRoute(

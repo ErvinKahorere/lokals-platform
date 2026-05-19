@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\CommerceAvailability;
 use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -16,8 +17,14 @@ class OrganizationResource extends JsonResource
 
         $followersCount = (int) ($this->followers_count ?? 0);
         $serviceCount = collect($this->services ?? [])->count() + collect($this->serviceProviders ?? [])->count();
-        $reviewCount = max(8, $followersCount * 2, $serviceCount * 4);
-        $rating = min(4.9, 4.5 + ($reviewCount / 180));
+        $commerceMeta = CommerceAvailability::commerceMeta(
+            $this->category,
+            $this->status,
+            is_array($this->opening_hours) ? $this->opening_hours : null,
+            $followersCount,
+            $serviceCount,
+            (bool) $this->is_verified,
+        );
         $alerts = collect($announcements)->take(4)->map(fn ($announcement) => [
             'id' => $announcement->id,
             'title' => $announcement->title,
@@ -45,13 +52,19 @@ class OrganizationResource extends JsonResource
             'distance_km' => $this->when(isset($this->distance_km), $this->distance_km),
             'is_verified' => $this->is_verified,
             'status' => $this->status,
-            'open_now' => $this->status === 'active',
-            'availability_status' => $this->status === 'active' ? 'Open now' : 'Check opening hours',
+            'open_now' => $commerceMeta['open_now'],
+            'availability_status' => $commerceMeta['availability_status'],
+            'availability' => $commerceMeta['availability'],
+            'availability_code' => $commerceMeta['availability_code'],
+            'commerce_category' => $commerceMeta['commerce_category'],
+            'delivery_fee' => $commerceMeta['delivery_fee'],
+            'delivery_eta_minutes' => $commerceMeta['delivery_eta_minutes'],
+            'fast_delivery' => $commerceMeta['fast_delivery'],
             'emergency_contact' => $this->emergency_contact,
             'is_public_service' => $this->is_public_service,
             'followers_count' => $followersCount,
-            'review_count' => $reviewCount,
-            'rating' => round($rating, 1),
+            'review_count' => $commerceMeta['review_count'],
+            'rating' => $commerceMeta['rating'],
             'opening_hours' => $this->opening_hours,
             'rates' => $this->rates,
             'services_offered' => $this->services_offered,

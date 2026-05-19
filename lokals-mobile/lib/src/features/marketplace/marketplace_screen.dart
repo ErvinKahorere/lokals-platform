@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../config/app_config.dart';
@@ -8,6 +9,7 @@ import '../../../shared/widgets/listing_card.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../discovery/discovery_repository.dart';
+import '../store/order_cart_controller.dart';
 
 class MarketplaceScreen extends ConsumerStatefulWidget {
   const MarketplaceScreen({super.key});
@@ -23,16 +25,25 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
   @override
   Widget build(BuildContext context) {
     final listings = ref.watch(marketplaceProvider);
+    final cart = ref.watch(orderCartProvider);
 
     return LokalsShell(
-      title: 'Shop',
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openPostSheet(context),
-        backgroundColor: const Color(0xFF16A34A),
-        foregroundColor: Colors.white,
-        label: const Text('Post'),
-        icon: const Icon(Icons.add_a_photo_outlined),
-      ),
+      title: 'Marketplace',
+      floatingActionButton: cart.totalItems > 0
+          ? FloatingActionButton.extended(
+              onPressed: () => context.push('/orders/checkout'),
+              backgroundColor: const Color(0xFF16A34A),
+              foregroundColor: Colors.white,
+              label: Text('Cart (${cart.totalItems})'),
+              icon: const Icon(Icons.shopping_bag_outlined),
+            )
+          : FloatingActionButton.extended(
+              onPressed: () => _openPostSheet(context),
+              backgroundColor: const Color(0xFF16A34A),
+              foregroundColor: Colors.white,
+              label: const Text('Post'),
+              icon: const Icon(Icons.add_a_photo_outlined),
+            ),
       child: listings.when(
         data: (items) {
           final filtered = items.where((listing) {

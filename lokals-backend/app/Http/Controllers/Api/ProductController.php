@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Models\Announcement;
 use App\Models\Product;
+use App\Support\CommerceAvailability;
 use App\Support\PilotLocation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -52,6 +53,43 @@ class ProductController extends Controller
             });
         }
 
+        if ($commerceCategory = $request->string('commerce_category')->value()) {
+            $query->where(function ($builder) use ($commerceCategory): void {
+                foreach ($this->commerceCategoryKeywords($commerceCategory) as $keyword) {
+                    $builder->orWhere('category', 'like', '%'.$keyword.'%');
+                }
+            });
+        }
+
+        if ($request->boolean('open_now')) {
+            $query->whereHas('business', function ($builder): void {
+                $builder->whereNotIn('status', ['paused', 'closed']);
+            });
+        }
+
+        if ($request->boolean('fast_delivery')) {
+            $query->where(function ($builder): void {
+                $builder->whereIn('category', ['food', 'groceries'])
+                    ->orWhere('category', 'like', '%food%')
+                    ->orWhere('category', 'like', '%grocery%')
+                    ->orWhere('category', 'like', '%restaurant%');
+            });
+        }
+
+        if ($request->boolean('featured_only')) {
+            $query->where(function ($builder): void {
+                $builder->whereNotNull('sale_price')
+                    ->orWhereHas('business', fn ($businessQuery) => $businessQuery->where('is_verified', true));
+            });
+        }
+
+        if ($request->boolean('popular_only')) {
+            $query->where(function ($builder): void {
+                $builder->whereHas('business', fn ($businessQuery) => $businessQuery->where('is_verified', true))
+                    ->orWhereNotNull('sale_price');
+            });
+        }
+
         if ($priceMin = $request->input('price_min')) {
             $query->where('price', '>=', (float) $priceMin);
         }
@@ -63,6 +101,8 @@ class ProductController extends Controller
         match ($request->string('sort')->value()) {
             'recent' => $query->latest(),
             'newest' => $query->latest(),
+            'top_rated' => $query->orderByDesc('sale_price')->orderByDesc('created_at'),
+            'fast_delivery' => $query->orderByRaw("case when lower(category) like '%food%' then 0 when lower(category) like '%grocery%' then 1 else 2 end")->latest(),
             'popular' => $query->orderByDesc('sale_price')->orderByDesc('price'),
             'price_low_high' => $query->orderBy('sale_price')->orderBy('price'),
             'price_high_low' => $query->orderByDesc('sale_price')->orderByDesc('price'),
@@ -155,5 +195,18 @@ class ProductController extends Controller
             ]);
 
         return response()->json(['data' => $alerts]);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function commerceCategoryKeywords(string $category): array
+    {
+        return match (CommerceAvailability::groupFor($category)) {
+            'food' => ['food', 'restaurant', 'takeaway', 'bakery', 'cafe'],
+            'groceries' => ['grocery', 'produce', 'supermarket', 'pharmacy'],
+            'services' => ['service', 'repair', 'salon', 'clean'],
+            default => ['electronics', 'home', 'clothing', 'shop', 'hardware', 'vehicle'],
+        };
     }
 }

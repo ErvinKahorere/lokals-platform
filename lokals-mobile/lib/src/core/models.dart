@@ -1210,6 +1210,18 @@ class ProductModel {
     this.userWhatsapp,
     this.userAvatar,
     this.userBusinessName,
+    this.openNow = false,
+    this.availabilityStatus,
+    this.availabilityCode,
+    this.deliveryFee,
+    this.deliveryEtaMinutes,
+    this.fastDelivery = false,
+    this.rating,
+    this.reviewCount,
+    this.commerceCategory,
+    this.heroImageUrl,
+    this.isFeatured = false,
+    this.isPopular = false,
   });
 
   final int id;
@@ -1234,6 +1246,18 @@ class ProductModel {
   final String? userWhatsapp;
   final String? userAvatar;
   final String? userBusinessName;
+  final bool openNow;
+  final String? availabilityStatus;
+  final String? availabilityCode;
+  final String? deliveryFee;
+  final int? deliveryEtaMinutes;
+  final bool fastDelivery;
+  final double? rating;
+  final int? reviewCount;
+  final String? commerceCategory;
+  final String? heroImageUrl;
+  final bool isFeatured;
+  final bool isPopular;
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     final business = json['business'] as Map<String, dynamic>?;
@@ -1261,6 +1285,161 @@ class ProductModel {
       userWhatsapp: user?['whatsapp'] as String?,
       userAvatar: user?['avatar'] as String?,
       userBusinessName: user?['business_name'] as String?,
+      openNow: (json['open_now'] as bool?) ?? (business?['open_now'] as bool?) ?? false,
+      availabilityStatus: (json['availability_status'] ?? business?['availability_status']) as String?,
+      availabilityCode: (json['availability_code'] ?? business?['availability_code']) as String?,
+      deliveryFee: (json['delivery_fee'] ?? business?['delivery_fee'])?.toString(),
+      deliveryEtaMinutes: (json['delivery_eta_minutes'] ?? business?['delivery_eta_minutes']) as int?,
+      fastDelivery: (json['fast_delivery'] as bool?) ?? (business?['fast_delivery'] as bool?) ?? false,
+      rating: ((json['rating'] ?? business?['rating']) as num?)?.toDouble(),
+      reviewCount: (json['review_count'] ?? business?['review_count']) as int?,
+      commerceCategory: (json['commerce_category'] ?? business?['commerce_category']) as String?,
+      heroImageUrl: (json['hero_image_url'] ?? business?['logo_url'] ?? json['image_url']) as String?,
+      isFeatured: json['is_featured'] as bool? ?? false,
+      isPopular: json['is_popular'] as bool? ?? false,
+    );
+  }
+}
+
+class CommerceOrderItemModel {
+  CommerceOrderItemModel({
+    required this.id,
+    required this.name,
+    required this.quantity,
+    required this.unitPrice,
+    required this.totalPrice,
+    this.productId,
+    this.notes,
+  });
+
+  final int id;
+  final String name;
+  final int quantity;
+  final String unitPrice;
+  final String totalPrice;
+  final int? productId;
+  final String? notes;
+
+  factory CommerceOrderItemModel.fromJson(Map<String, dynamic> json) {
+    return CommerceOrderItemModel(
+      id: json['id'] as int? ?? 0,
+      name: (json['name'] ?? 'Item').toString(),
+      quantity: json['quantity'] as int? ?? 1,
+      unitPrice: (json['unit_price'] ?? 0).toString(),
+      totalPrice: (json['total_price'] ?? 0).toString(),
+      productId: json['product_id'] as int?,
+      notes: json['notes'] as String?,
+    );
+  }
+}
+
+class CommerceOrderTrackingStepModel {
+  CommerceOrderTrackingStepModel({
+    required this.key,
+    required this.label,
+    this.timestamp,
+    this.isComplete = false,
+    this.isCurrent = false,
+  });
+
+  final String key;
+  final String label;
+  final String? timestamp;
+  final bool isComplete;
+  final bool isCurrent;
+
+  factory CommerceOrderTrackingStepModel.fromJson(Map<String, dynamic> json) {
+    return CommerceOrderTrackingStepModel(
+      key: (json['key'] ?? 'status').toString(),
+      label: (json['label'] ?? 'Status').toString(),
+      timestamp: json['timestamp'] as String?,
+      isComplete: json['is_complete'] as bool? ?? false,
+      isCurrent: json['is_current'] as bool? ?? false,
+    );
+  }
+}
+
+class CommerceOrderModel {
+  CommerceOrderModel({
+    required this.id,
+    required this.status,
+    required this.items,
+    this.referenceCode,
+    this.statusLabel,
+    this.paymentStatus,
+    this.customerName,
+    this.sellerName,
+    this.courierName,
+    this.deliveryAddress,
+    this.pickupAddress,
+    this.subtotal,
+    this.deliveryFee,
+    this.serviceFee,
+    this.total,
+    this.estimatedArrivalMinutes,
+    this.createdAt,
+    this.updatedAt,
+    this.nextActionLabel,
+    this.trackingSteps = const [],
+  });
+
+  final int id;
+  final String status;
+  final List<CommerceOrderItemModel> items;
+  final String? referenceCode;
+  final String? statusLabel;
+  final String? paymentStatus;
+  final String? customerName;
+  final String? sellerName;
+  final String? courierName;
+  final String? deliveryAddress;
+  final String? pickupAddress;
+  final String? subtotal;
+  final String? deliveryFee;
+  final String? serviceFee;
+  final String? total;
+  final int? estimatedArrivalMinutes;
+  final String? createdAt;
+  final String? updatedAt;
+  final String? nextActionLabel;
+  final List<CommerceOrderTrackingStepModel> trackingSteps;
+
+  factory CommerceOrderModel.fromJson(Map<String, dynamic> json) {
+    final totals = (json['totals'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+    final customer = (json['customer'] as Map?)?.cast<String, dynamic>();
+    final seller =
+        ((json['seller'] ?? json['business']) as Map?)?.cast<String, dynamic>();
+    final courier = (json['courier'] as Map?)?.cast<String, dynamic>();
+    final deliveryLocation =
+        (json['delivery_location'] as Map?)?.cast<String, dynamic>();
+    final pickupLocation =
+        (json['pickup_location'] as Map?)?.cast<String, dynamic>();
+
+    return CommerceOrderModel(
+      id: json['id'] as int,
+      status: (json['status'] ?? 'pending').toString(),
+      referenceCode: json['reference_code'] as String?,
+      statusLabel: json['status_label'] as String?,
+      paymentStatus: json['payment_status'] as String?,
+      customerName: customer?['name'] as String?,
+      sellerName: seller?['name'] as String?,
+      courierName: courier?['name'] as String?,
+      deliveryAddress: deliveryLocation?['address'] as String? ?? json['delivery_address'] as String?,
+      pickupAddress: pickupLocation?['address'] as String? ?? json['pickup_address'] as String?,
+      subtotal: (totals['subtotal'] ?? json['subtotal'])?.toString(),
+      deliveryFee: (totals['delivery_fee'] ?? json['delivery_fee'])?.toString(),
+      serviceFee: (totals['service_fee'] ?? json['service_fee'])?.toString(),
+      total: (totals['total'] ?? json['total'])?.toString(),
+      estimatedArrivalMinutes: json['estimated_arrival_minutes'] as int?,
+      createdAt: json['created_at'] as String?,
+      updatedAt: json['updated_at'] as String?,
+      nextActionLabel: json['next_action_label'] as String?,
+      items: (json['items'] as List<dynamic>? ?? const [])
+          .map((item) => CommerceOrderItemModel.fromJson(item as Map<String, dynamic>))
+          .toList(),
+      trackingSteps: (json['tracking_steps'] as List<dynamic>? ?? const [])
+          .map((item) => CommerceOrderTrackingStepModel.fromJson(item as Map<String, dynamic>))
+          .toList(),
     );
   }
 }

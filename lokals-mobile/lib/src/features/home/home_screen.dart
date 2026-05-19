@@ -97,7 +97,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final providers = ref.watch(servicesProvider);
     final events = ref.watch(eventsProvider);
     final alertsFeed = ref.watch(alertsFeedProvider);
-    final products = ref.watch(storeProductsProvider);
+    final products = ref.watch(storeProductsProvider(null));
     final jobs = ref.watch(jobsProvider);
     final followingFeed = ref.watch(followingFeedProvider);
     final preferenceData = preferences.asData?.value;
@@ -518,7 +518,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             emptyBody: productItems.isEmpty
                 ? 'Local products and sale alerts will appear here.'
                 : null,
-            onRetry: () => ref.invalidate(storeProductsProvider),
+            onRetry: () => ref.invalidate(storeProductsProvider(null)),
             child: Column(
               children: productItems
                   .map(
