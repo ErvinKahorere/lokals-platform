@@ -1,4 +1,4 @@
-import { AlertTriangle, Award, Bell, CalendarDays, Heart, MessageSquare, Package, Search, ShieldAlert, Star } from 'lucide-react'
+import { AlertTriangle, Award, Bell, CalendarDays, Heart, MessageSquare, Package, Search, ShieldAlert, ShoppingBag, Star } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { DashboardSection } from '../../components/dashboard/DashboardSection'
@@ -7,8 +7,9 @@ import { RecentActivityList } from '../../components/dashboard/RecentActivityLis
 import { StatusBreakdownCard } from '../../components/dashboard/StatusBreakdownCard'
 import { Button } from '../../components/Ui'
 import { useResidentDashboardData } from '../../lib/dashboardDataProvider'
+import { getDisplayPrice } from '../../lib/display'
 import type { FollowingUpdateSummary, ResidentDashboardData } from '../../lib/dashboardTypes'
-import type { Booking, CommunityImpactAccount, Report, RoleDashboardPayload, SavedItemEntry } from '../../types'
+import type { Booking, CommunityImpactAccount, OrderRecord, Report, RoleDashboardPayload, SavedItemEntry } from '../../types'
 
 const unwrapRewardAccount = (
   account?: CommunityImpactAccount | { data: CommunityImpactAccount } | null,
@@ -31,10 +32,13 @@ export function CitizenDashboardPage() {
   const savedCardRows = savedItems.slice(0, 3)
   const followedRows = followedUpdates.slice(0, 3)
   const activityRows = data?.activity ?? []
+  const activeOrders = data?.activeRequests.orders ?? []
+  const recentOrders = (dashboard?.recent_orders ?? activeOrders) as OrderRecord[]
   const bookingsAndRequests = [
     { label: 'Bookings', value: upcomingBookings.length },
     { label: 'Rides', value: data?.activeRequests.rides.length ?? 0 },
     { label: 'Deliveries', value: data?.activeRequests.deliveries.length ?? 0 },
+    { label: 'Orders', value: activeOrders.length },
   ]
 
   return (
@@ -60,6 +64,7 @@ export function CitizenDashboardPage() {
             <QuickActionTile to="/services" title="Book Service" body="Find and book trusted local providers." icon={Search} />
             <QuickActionTile to="/report-issue" title="Report Issue" body="Send a city issue or public concern fast." icon={AlertTriangle} />
             <QuickActionTile to="/delivery" title="Send Parcel" body="Request a delivery with a few taps." icon={Package} />
+            <QuickActionTile to="/orders" title="Order Delivery" body="Browse local shops and track active orders." icon={ShoppingBag} />
             <QuickActionTile to="/alerts" title="View Alerts" body="Keep up with urgent and followed updates." icon={CalendarDays} />
             <QuickActionTile to="/community-impact" title="Community Impact" body="See approved points, rewards, and privacy-first visibility settings." icon={Award} />
           </div>
@@ -79,6 +84,26 @@ export function CitizenDashboardPage() {
               </div>
             ))}
             {!upcomingBookings.length ? <p className="text-sm text-lokals-muted">Your next bookings will show up here once you start booking local services.</p> : null}
+          </div>
+        </DashboardSection>
+        <DashboardSection title="Active orders" description="Food and shop deliveries currently moving for you.">
+          <div className="space-y-3">
+            {recentOrders.slice(0, 4).map((order) => (
+              <Link key={order.id} to={`/orders/${order.id}`} className="block rounded-[20px] border border-lokals-border bg-white px-4 py-4 transition hover:border-lokals-green/25 hover:bg-emerald-50/20">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-lokals-charcoal">{order.reference_code ?? `Order #${order.id}`}</p>
+                    <p className="mt-1 text-sm text-lokals-muted">{order.seller?.name ?? order.business?.name ?? 'Local seller'}</p>
+                    <p className="mt-2 text-sm text-lokals-muted">{order.delivery_location?.address ?? 'Delivery address pending'}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lokals-muted">{order.status_label ?? order.status}</p>
+                    <p className="mt-2 font-semibold text-lokals-charcoal">{getDisplayPrice(order.totals?.total ?? 0, 'N$')}</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+            {!recentOrders.length ? <p className="text-sm text-lokals-muted">Your active orders will show up here once you place a local shop or food order.</p> : null}
           </div>
         </DashboardSection>
         <DashboardSection title="My reports" description="Recent civic issues and where they stand.">

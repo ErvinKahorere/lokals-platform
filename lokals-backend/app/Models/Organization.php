@@ -75,6 +75,16 @@ class Organization extends Model
         return $this->hasMany(CommunityProject::class);
     }
 
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class, 'business_id');
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class, 'business_id');
+    }
+
     public function followers(): MorphMany
     {
         return $this->morphMany(Follow::class, 'followable');

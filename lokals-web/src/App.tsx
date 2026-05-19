@@ -38,6 +38,9 @@ import { CreateEventPage } from './pages/CreateEventPage'
 import { ManageEventPage } from './pages/ManageEventPage'
 import { EventTicketsPage } from './pages/EventTicketsPage'
 import { ProductDetailsPage } from './pages/ProductDetailsPage'
+import { OrdersPage } from './pages/OrdersPage'
+import { OrderDetailsPage } from './pages/OrderDetailsPage'
+import { CheckoutPage } from './pages/CheckoutPage'
 import { AccommodationDetailsPage } from './pages/AccommodationDetailsPage'
 import { MyBookingsPage } from './pages/dashboard/MyBookingsPage'
 import { MyTicketsPage } from './pages/dashboard/MyTicketsPage'
@@ -63,8 +66,10 @@ import { CitizenDashboardPage } from './pages/dashboard/CitizenDashboardPage'
 import { WorkerDashboardPage } from './pages/dashboard/WorkerDashboardPage'
 import { DriverDashboardPage } from './pages/dashboard/DriverDashboardPage'
 import { CourierDashboardPage } from './pages/dashboard/CourierDashboardPage'
+import { CourierOrdersPage } from './pages/dashboard/CourierOrdersPage'
 import { ServiceProviderDashboardPage } from './pages/dashboard/ServiceProviderDashboardPage'
 import { SellerDashboardPage } from './pages/dashboard/SellerDashboardPage'
+import { SellerOrdersPage } from './pages/dashboard/SellerOrdersPage'
 import { RoleApplicationsPage } from './pages/dashboard/RoleApplicationsPage'
 import { DashboardWorkspacePage } from './pages/dashboard/DashboardWorkspacePage'
 import { RoleApplicationsAdminPage } from './pages/admin/RoleApplicationsAdminPage'
@@ -89,6 +94,7 @@ import { AdminFeatureFlagsPage } from './pages/admin/AdminFeatureFlagsPage'
 import { AdminNotificationsPage } from './pages/admin/AdminNotificationsPage'
 import { AdminSystemHealthPage } from './pages/admin/AdminSystemHealthPage'
 import { AdminTownsPage } from './pages/admin/AdminTownsPage'
+import { AdminOrdersPage } from './pages/admin/AdminOrdersPage'
 import { getDashboardWorkspaceData } from './lib/dashboardWorkspaceData'
 import { getRoleHomePath, hasActiveRole } from './lib/roles'
 import { useAuthStore } from './store/auth'
@@ -196,6 +202,9 @@ export default function App() {
           <Route path="/marketplace" element={<MarketplacePage />} />
           <Route path="/store" element={<StorePage />} />
           <Route path="/store/:id" element={<ProductDetailsPage />} />
+          <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
+          <Route path="/orders/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+          <Route path="/orders/:id" element={<ProtectedRoute><OrderDetailsPage /></ProtectedRoute>} />
           <Route path="/accommodation" element={<AccommodationPage />} />
           <Route path="/accommodation/:id" element={<AccommodationDetailsPage />} />
           <Route path="/more" element={<MorePage />} />
@@ -250,6 +259,7 @@ export default function App() {
           <Route path="/dashboard/driver/ratings" element={<DriverRoute><DashboardWorkspacePage mode="driver" path="/dashboard/driver/ratings" title="Driver ratings" description="Stay close to rider sentiment, feedback patterns, and profile trust." {...getDashboardWorkspaceData('/dashboard/driver/ratings')} /></DriverRoute>} />
           <Route path="/dashboard/driver/support" element={<DriverRoute><DashboardWorkspacePage mode="driver" path="/dashboard/driver/support" title="Driver support" description="Get help with trips, verification, and driver account questions." {...getDashboardWorkspaceData('/dashboard/driver/support')} /></DriverRoute>} />
           <Route path="/dashboard/courier" element={<CourierRoute><CourierDashboardPage /></CourierRoute>} />
+          <Route path="/dashboard/courier/orders" element={<CourierRoute><CourierOrdersPage /></CourierRoute>} />
           <Route path="/dashboard/courier/requests" element={<CourierRoute><DashboardWorkspacePage mode="courier" path="/dashboard/courier/requests" title="Available deliveries" description="See open parcel requests, urgency, and pickup/drop-off readiness." {...getDashboardWorkspaceData('/dashboard/courier/requests')} /></CourierRoute>} />
           <Route path="/dashboard/courier/active-delivery" element={<CourierRoute><DashboardWorkspacePage mode="courier" path="/dashboard/courier/active-delivery" title="Active delivery" description="Track current pickup, parcel state, and next operational step." {...getDashboardWorkspaceData('/dashboard/courier/active-delivery')} /></CourierRoute>} />
           <Route path="/dashboard/courier/history" element={<CourierRoute><DashboardWorkspacePage mode="courier" path="/dashboard/courier/history" title="Delivery history" description="Review completed deliveries and recent delivery performance." {...getDashboardWorkspaceData('/dashboard/courier/history')} /></CourierRoute>} />
@@ -280,7 +290,7 @@ export default function App() {
           <Route path="/dashboard/business" element={<BusinessRoute><BusinessDashboardPage /></BusinessRoute>} />
           <Route path="/dashboard/seller" element={<BusinessRoute><BusinessDashboardPage /></BusinessRoute>} />
           <Route path="/dashboard/business/profile" element={<BusinessRoute><DashboardWorkspacePage mode="business" path="/dashboard/business/profile" title="Business profile" description="Keep storefront details, public trust, and contact info complete." {...getDashboardWorkspaceData('/dashboard/business/profile')} /></BusinessRoute>} />
-          <Route path="/dashboard/business/orders" element={<BusinessRoute><DashboardWorkspacePage mode="business" path="/dashboard/business/orders" title="Orders and requests" description="See incoming product interest, customer requests, and demand signals." {...getDashboardWorkspaceData('/dashboard/business/orders')} /></BusinessRoute>} />
+          <Route path="/dashboard/business/orders" element={<BusinessRoute><SellerOrdersPage /></BusinessRoute>} />
           <Route path="/dashboard/business/promotions" element={<BusinessRoute><DashboardWorkspacePage mode="business" path="/dashboard/business/promotions" title="Promotions" description="Plan simple promotions, offers, and boosted visibility moments." {...getDashboardWorkspaceData('/dashboard/business/promotions')} /></BusinessRoute>} />
           <Route path="/dashboard/business/reviews" element={<BusinessRoute><DashboardWorkspacePage mode="business" path="/dashboard/business/reviews" title="Reviews" description="See customer trust signals and response opportunities." {...getDashboardWorkspaceData('/dashboard/business/reviews')} /></BusinessRoute>} />
           <Route path="/dashboard/business/analytics" element={<BusinessRoute><DashboardWorkspacePage mode="business" path="/dashboard/business/analytics" title="Business analytics" description="Track listing reach, enquiries, and promotion performance." {...getDashboardWorkspaceData('/dashboard/business/analytics')} /></BusinessRoute>} />
@@ -332,6 +342,7 @@ export default function App() {
           <Route path="/admin" element={<AdminRoute><SuperAdminDashboardPage /></AdminRoute>} />
           <Route path="/dashboard/admin" element={<AdminRoute><SuperAdminDashboardPage /></AdminRoute>} />
           <Route path="/dashboard/admin/towns" element={<AdminRoute><AdminTownsPage /></AdminRoute>} />
+          <Route path="/dashboard/admin/orders" element={<AdminRoute><AdminOrdersPage /></AdminRoute>} />
           <Route path="/dashboard/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
           <Route path="/dashboard/admin/role-applications" element={<AdminRoute><RoleApplicationsAdminPage /></AdminRoute>} />
           <Route path="/dashboard/admin/roles" element={<AdminRoute><RoleApplicationsAdminPage /></AdminRoute>} />

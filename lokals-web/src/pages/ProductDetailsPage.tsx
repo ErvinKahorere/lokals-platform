@@ -6,6 +6,7 @@ import { ContactActions } from '../components/experience/ContactActions'
 import { SaveButton } from '../components/experience/SaveButton'
 import { useCreateFollow, useDeleteFollow, useFollows, useProduct, useProducts, useSaleAlerts } from '../hooks/queries'
 import { getDisplayPrice, resolveMediaUrl } from '../lib/display'
+import { addProductToOrderCart, useOrderCart } from '../lib/orderCart'
 import { navigateToLogin } from '../lib/authNavigation'
 import { useAuthStore } from '../store/auth'
 
@@ -26,6 +27,7 @@ export function ProductDetailsPage() {
   const followsQuery = useFollows(Boolean(token))
   const createFollow = useCreateFollow()
   const deleteFollow = useDeleteFollow()
+  const cart = useOrderCart()
   const product = productQuery.data
   const related = (productsQuery.data?.data ?? []).filter((item) => item.id !== product?.id && (item.category === product?.category || item.business?.id === product?.business?.id)).slice(0, 4)
   const sellerProducts = (productsQuery.data?.data ?? []).filter((item) => item.id !== product?.id && (item.business?.id === product?.business?.id || item.user?.id === product?.user?.id)).slice(0, 3)
@@ -100,6 +102,10 @@ export function ProductDetailsPage() {
                         <Button variant="secondary">View Seller Store</Button>
                       </Link>
                     ) : null}
+                    <Button onClick={() => addProductToOrderCart(product, 1)}>Add to cart</Button>
+                    <Link to="/orders/checkout">
+                      <Button variant="secondary">Order now{cart.totalItems ? ` (${cart.totalItems})` : ''}</Button>
+                    </Link>
                     {product.business?.id ? (
                       <Button
                         variant={followId ? 'primary' : 'secondary'}

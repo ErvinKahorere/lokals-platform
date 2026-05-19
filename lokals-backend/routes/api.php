@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\AdminOrderController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AlertFeedController;
 use App\Http\Controllers\Api\BookingController;
@@ -28,6 +29,7 @@ use App\Http\Controllers\Api\NewsController;
 use App\Http\Controllers\Api\NewsSourceController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrganizationController;
+use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PreferenceController;
 use App\Http\Controllers\Api\PostDraftController;
 use App\Http\Controllers\Api\ProductController;
@@ -38,6 +40,7 @@ use App\Http\Controllers\Api\SafetyController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\SavedItemController;
 use App\Http\Controllers\Api\RealtimeHealthController;
+use App\Http\Controllers\Api\SellerOrderController;
 use App\Http\Controllers\Api\ServiceProviderController;
 use App\Http\Controllers\Api\SosController;
 use App\Http\Controllers\Api\SupportController;
@@ -47,6 +50,7 @@ use App\Http\Controllers\Api\AdminRoleApplicationController;
 use App\Http\Controllers\Api\AdminCommunityProjectController;
 use App\Http\Controllers\Api\AdminCommunityImpactController;
 use App\Http\Controllers\Api\WorkerController;
+use App\Http\Controllers\Api\CourierOrderController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -246,6 +250,11 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/rides/{ride}', [RideController::class, 'show']);
         Route::patch('/rides/{ride}/cancel', [RideController::class, 'cancel']);
         Route::post('/rides/{ride}/rate', [RideController::class, 'rate']);
+        Route::get('/orders', [OrderController::class, 'index']);
+        Route::post('/orders', [OrderController::class, 'store']);
+        Route::get('/orders/{order}', [OrderController::class, 'show']);
+        Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel']);
+        Route::post('/orders/{order}/rate', [OrderController::class, 'rate']);
         Route::get('/sos', [SosController::class, 'index']);
         Route::post('/sos', [SosController::class, 'store']);
         Route::get('/my/events', [EventController::class, 'myEvents']);
@@ -277,6 +286,8 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/admin/feature-flags', [AdminController::class, 'featureFlags']);
             Route::get('/admin/towns', [AdminController::class, 'towns']);
             Route::get('/admin/users', [AdminController::class, 'users']);
+            Route::get('/admin/orders', [AdminOrderController::class, 'index']);
+            Route::get('/admin/orders/{order}', [AdminOrderController::class, 'show']);
             Route::get('/admin/reports', [CityServiceController::class, 'reports']);
             Route::get('/admin/news-sources', [NewsSourceController::class, 'index']);
             Route::post('/admin/news-sources', [NewsSourceController::class, 'store']);
@@ -345,10 +356,22 @@ Route::prefix('v1')->group(function (): void {
             Route::patch('/courier/deliveries/{delivery}/delivered', [DeliveryController::class, 'delivered']);
             Route::get('/courier/deliveries', [DeliveryController::class, 'deliveries']);
             Route::get('/courier/earnings', [DeliveryController::class, 'earnings']);
+            Route::get('/courier/orders/available', [CourierOrderController::class, 'available']);
+            Route::post('/courier/orders/{order}/accept', [CourierOrderController::class, 'accept']);
+            Route::post('/courier/orders/{order}/picked-up', [CourierOrderController::class, 'pickedUp']);
+            Route::post('/courier/orders/{order}/delivered', [CourierOrderController::class, 'delivered']);
         });
 
         Route::middleware('role:organization_admin|business_owner|super_admin')->group(function (): void {
             Route::post('/my-businesses/{organization}/news-sources', [NewsSourceController::class, 'storeForOrganization']);
+        });
+
+        Route::middleware('role:seller|business_owner|organization_admin|super_admin')->group(function (): void {
+            Route::get('/seller/orders', [SellerOrderController::class, 'index']);
+            Route::post('/seller/orders/{order}/accept', [SellerOrderController::class, 'accept']);
+            Route::post('/seller/orders/{order}/reject', [SellerOrderController::class, 'reject']);
+            Route::post('/seller/orders/{order}/preparing', [SellerOrderController::class, 'preparing']);
+            Route::post('/seller/orders/{order}/ready', [SellerOrderController::class, 'ready']);
         });
     });
 });

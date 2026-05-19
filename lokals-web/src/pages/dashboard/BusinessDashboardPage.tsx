@@ -7,9 +7,10 @@ import { RecentActivityList } from '../../components/dashboard/RecentActivityLis
 import { StatusBreakdownCard } from '../../components/dashboard/StatusBreakdownCard'
 import { Button } from '../../components/Ui'
 import { useBusinessDashboard } from '../../hooks/queries'
+import { getDashboardArray } from '../../lib/dashboardTypes'
 import { getDisplayPrice } from '../../lib/display'
-import { getDashboardActivity, getDashboardArray } from '../../lib/dashboardTypes'
-import type { AlertItem, Booking, BusinessDashboard, Product, RoleDashboardPayload, ServiceItem } from '../../types'
+import { getDashboardActivity } from '../../lib/dashboardTypes'
+import type { AlertItem, Booking, BusinessDashboard, OrderRecord, Product, RoleDashboardPayload, ServiceItem } from '../../types'
 
 export function BusinessDashboardPage({
   variant = 'business',
@@ -24,6 +25,12 @@ export function BusinessDashboardPage({
     variant === 'seller'
       ? 'Products, local enquiries, promotions, and shop activity in one focused workspace.'
       : 'Products, services, followers, promotions, and recent business activity in one place.'
+  const recentOrders = getDashboardArray(dashboard, 'recent_orders') as OrderRecord[]
+  const orderStats = [
+    { label: 'Pending orders', value: dashboard?.stats?.pending_orders ?? 0 },
+    { label: "Today's orders", value: dashboard?.stats?.today_orders ?? 0 },
+    { label: 'Order revenue', value: getDisplayPrice(dashboard?.stats?.order_revenue ?? 0, 'N$') },
+  ]
 
   return (
     <DashboardShell
@@ -85,6 +92,31 @@ export function BusinessDashboardPage({
               </div>
             ))}
             {!(getDashboardArray(dashboard, 'recent_products').length > 0 ? getDashboardArray(dashboard, 'recent_products') : (dashboard?.products ?? [])).length ? <p className="text-sm text-lokals-muted">Products you publish in the store will show up here.</p> : null}
+          </div>
+        </DashboardSection>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
+        <DashboardSection title="Order performance" description="Keep new order volume, revenue, and acceptance pressure visible.">
+          <StatusBreakdownCard items={orderStats} />
+        </DashboardSection>
+        <DashboardSection title="Recent orders" description="The newest shop and food orders waiting on action or courier handoff.">
+          <div className="space-y-3">
+            {recentOrders.slice(0, 5).map((order) => (
+              <Link key={order.id} to={`/orders/${order.id}`} className="block rounded-[20px] border border-lokals-border bg-white px-4 py-4 transition hover:border-lokals-green/25 hover:bg-emerald-50/20">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-lokals-charcoal">{order.reference_code ?? `Order #${order.id}`}</p>
+                    <p className="mt-1 text-sm text-lokals-muted">{order.customer?.name ?? 'Customer'} | {order.items.length} item{order.items.length === 1 ? '' : 's'}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-lokals-muted">{order.status_label ?? order.status}</p>
+                    <p className="mt-2 font-semibold text-lokals-charcoal">{getDisplayPrice(order.totals?.total ?? 0, 'N$')}</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+            {!recentOrders.length ? <p className="text-sm text-lokals-muted">New orders will appear here once customers start ordering products from your store.</p> : null}
           </div>
         </DashboardSection>
       </div>

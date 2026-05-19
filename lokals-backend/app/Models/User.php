@@ -164,6 +164,16 @@ class User extends Authenticatable
         return $this->hasMany(Product::class);
     }
 
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function courierOrders(): HasMany
+    {
+        return $this->hasMany(Order::class, 'courier_id');
+    }
+
     public function accommodations(): HasMany
     {
         return $this->hasMany(Accommodation::class);

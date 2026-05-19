@@ -6,6 +6,7 @@ import { Button, EmptyState, Input, PageHeader, ProductCard, QueryState, SearchB
 import { isDemoMode } from '../config/appMode'
 import { useCreateProduct, useProducts, useSaleAlerts } from '../hooks/queries'
 import { getDisplayPrice } from '../lib/display'
+import { useOrderCart } from '../lib/orderCart'
 import type { Product } from '../types'
 
 const categories = ['all', 'electronics', 'home', 'vehicles', 'clothing', 'food', 'services', 'more'] as const
@@ -38,6 +39,7 @@ export function StorePage() {
   })
   const saleAlertsQuery = useSaleAlerts()
   const createProduct = useCreateProduct()
+  const cart = useOrderCart()
   const products = useMemo(() => productsQuery.data?.data ?? [], [productsQuery.data])
   const featured = useMemo(() => products.filter((item) => item.sale_price || item.business?.is_verified).slice(0, 4), [products])
   const recent = useMemo(() => [...products].sort((a, b) => b.id - a.id).slice(0, 6), [products])
@@ -101,16 +103,19 @@ export function StorePage() {
         title="Marketplace"
         description="Browse local products, promotions, and trusted sellers nearby."
         actions={
-          <SearchBar
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            onValueSelect={setSearch}
-            recentKey="store"
-            suggestions={['Samsung phone', 'Food voucher', 'Home deals', 'Toyota Hilux']}
-            shortcuts={[{ label: 'Electronics', value: 'electronics' }, { label: 'Sale items', value: 'sale' }, { label: 'Home', value: 'home' }]}
-            placeholder="Search products..."
-            className="w-full md:w-80"
-          />
+          <div className="flex flex-wrap items-center gap-3">
+            <SearchBar
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              onValueSelect={setSearch}
+              recentKey="store"
+              suggestions={['Samsung phone', 'Food voucher', 'Home deals', 'Toyota Hilux']}
+              shortcuts={[{ label: 'Electronics', value: 'electronics' }, { label: 'Sale items', value: 'sale' }, { label: 'Home', value: 'home' }]}
+              placeholder="Search products..."
+              className="w-full md:w-80"
+            />
+            <Link to="/orders/checkout"><Button>Cart {cart.totalItems ? `(${cart.totalItems})` : ''}</Button></Link>
+          </div>
         }
       />
 

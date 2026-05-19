@@ -21,6 +21,7 @@ import type {
   Listing,
   MePayload,
   ModerationFlag,
+  OrderRecord,
   Organization,
   OverviewMetrics,
   PaginatedResult,
@@ -407,6 +408,28 @@ export const useDelivery = (id?: string) =>
     },
   })
 
+export const useOrders = (params?: Record<string, string | number | boolean | undefined>, enabled = true) =>
+  useQuery({
+    enabled,
+    queryKey: ['orders', params],
+    queryFn: async () => toPaginated<OrderRecord>((await api.get('/orders', { params })).data),
+  })
+
+export const useOrder = (id?: string) =>
+  useQuery({
+    enabled: Boolean(id),
+    queryKey: ['order', id],
+    queryFn: async () => unwrapOne<OrderRecord>((await api.get(`/orders/${id}`)).data),
+    retry: (failureCount, error) => {
+      const status = (error as AxiosError)?.response?.status
+      if (status === 401 || status === 403) {
+        return false
+      }
+
+      return failureCount < 2
+    },
+  })
+
 export const useRides = (enabled = true) => {
   const authToken = useAuthStore((state) => state.token)
 
@@ -522,6 +545,24 @@ export const useProviderBookings = () =>
   useQuery({
     queryKey: ['provider-bookings'],
     queryFn: async () => toPaginated<Booking>((await api.get('/provider/bookings')).data),
+  })
+
+export const useSellerOrders = (params?: Record<string, string | number | boolean | undefined>) =>
+  useQuery({
+    queryKey: ['seller-orders', params],
+    queryFn: async () => toPaginated<OrderRecord>((await api.get('/seller/orders', { params })).data),
+  })
+
+export const useCourierAvailableOrders = (params?: Record<string, string | number | boolean | undefined>) =>
+  useQuery({
+    queryKey: ['courier-orders-available', params],
+    queryFn: async () => toPaginated<OrderRecord>((await api.get('/courier/orders/available', { params })).data),
+  })
+
+export const useAdminOrders = (params?: Record<string, string | number | boolean | undefined>) =>
+  useQuery({
+    queryKey: ['admin-orders', params],
+    queryFn: async () => toPaginated<OrderRecord>((await api.get('/admin/orders', { params })).data),
   })
 
 export const useMyListings = () =>
@@ -1911,6 +1952,89 @@ export const useCourierDeliveryAction = () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['deliveries'] }),
         queryClient.invalidateQueries({ queryKey: ['delivery', String(variables.deliveryId)] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-courier'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-adapter', 'courier-dashboard'] }),
+      ])
+    },
+  })
+}
+
+export const useCreateOrder = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => (await api.post('/orders', payload)).data,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-citizen'] }),
+        queryClient.invalidateQueries({ queryKey: ['seller-orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-business'] }),
+      ])
+    },
+  })
+}
+
+export const useCancelOrder = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ orderId }: { orderId: number }) => (await api.post(`/orders/${orderId}/cancel`)).data,
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['order', String(variables.orderId)] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-citizen'] }),
+        queryClient.invalidateQueries({ queryKey: ['seller-orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-orders'] }),
+      ])
+    },
+  })
+}
+
+export const useRateOrder = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ orderId, rating, comment }: { orderId: number; rating: number; comment?: string }) =>
+      (await api.post(`/orders/${orderId}/rate`, { rating, comment })).data,
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['order', String(variables.orderId)] }),
+      ])
+    },
+  })
+}
+
+export const useSellerOrderAction = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ orderId, action }: { orderId: number; action: 'accept' | 'reject' | 'preparing' | 'ready' }) =>
+      (await api.post(`/seller/orders/${orderId}/${action}`)).data,
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['seller-orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['order', String(variables.orderId)] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-business'] }),
+        queryClient.invalidateQueries({ queryKey: ['orders'] }),
+      ])
+    },
+  })
+}
+
+export const useCourierOrderAction = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ orderId, action }: { orderId: number; action: 'accept' | 'picked-up' | 'delivered' }) =>
+      (await api.post(`/courier/orders/${orderId}/${action}`)).data,
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['courier-orders-available'] }),
+        queryClient.invalidateQueries({ queryKey: ['order', String(variables.orderId)] }),
+        queryClient.invalidateQueries({ queryKey: ['orders'] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard-courier'] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard-adapter', 'courier-dashboard'] }),
       ])

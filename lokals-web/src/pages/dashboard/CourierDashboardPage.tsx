@@ -38,6 +38,8 @@ export function CourierDashboardPage() {
   const unreadNotifications = data?.unread.notifications ?? 0
   const unreadMessages = data?.unread.messages ?? 0
   const recentActivity = getDashboardActivity(data?.dashboard ?? undefined)
+  const availableOrderDeliveries = data?.availableOrderDeliveries ?? []
+  const activeOrderDelivery = data?.activeOrderDelivery
 
   const handleAvailabilityToggle = () => {
     updateAvailabilityMutation.mutate(availability !== 'online')
@@ -78,6 +80,8 @@ export function CourierDashboardPage() {
         availability: availabilityLabel,
         available_deliveries: availableDeliveries.length,
         active_delivery: activeDelivery ? 1 : 0,
+        available_order_deliveries: availableOrderDeliveries.length,
+        active_order_delivery: activeOrderDelivery ? 1 : 0,
         unread_notifications: unreadNotifications,
       }}
       actions={
@@ -100,7 +104,24 @@ export function CourierDashboardPage() {
             <div className="flex flex-wrap gap-2">
               <StatusBadge value={availabilityLabel} tone={availabilityTone} />
               <StatusBadge value={`${availableDeliveries.length} open deliveries`} tone="accent" />
+              <StatusBadge value={`${availableOrderDeliveries.length} order pickups`} tone="success" />
             </div>
+          </div>
+        </div>
+
+        <div className="rounded-[24px] border border-emerald-100 bg-emerald-50/70 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Order Delivery</p>
+              <p className="mt-1 font-semibold text-lokals-charcoal">
+                {activeOrderDelivery
+                  ? `${activeOrderDelivery.reference_code ?? `Order #${activeOrderDelivery.id}`} is currently assigned to you.`
+                  : availableOrderDeliveries.length
+                    ? `${availableOrderDeliveries.length} ready seller order pickup${availableOrderDeliveries.length === 1 ? '' : 's'} available now.`
+                    : 'No seller order pickups are waiting right now.'}
+              </p>
+            </div>
+            <Link to="/dashboard/courier/orders"><Button variant="secondary">Open order deliveries</Button></Link>
           </div>
         </div>
 

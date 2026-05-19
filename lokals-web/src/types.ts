@@ -512,6 +512,64 @@ export interface DeliveryItem {
   }>
 }
 
+export interface OrderLineItem {
+  id: number
+  product_id?: number | null
+  name: string
+  quantity: number
+  unit_price: string | number
+  total_price: string | number
+  notes?: string | null
+  product?: {
+    id: number
+    title: string
+    image_url?: string | null
+  } | null
+}
+
+export interface OrderRecord {
+  id: number
+  reference_code?: string | null
+  status: string
+  status_label?: string | null
+  tracking_status?: string | null
+  customer?: Pick<User, 'id' | 'name' | 'phone' | 'avatar' | 'default_town' | 'default_area'> | null
+  seller?: Pick<Organization, 'id' | 'name' | 'category' | 'phone' | 'whatsapp' | 'logo_url' | 'town' | 'area' | 'location' | 'is_verified'> | null
+  business?: Pick<Organization, 'id' | 'name' | 'category' | 'phone' | 'whatsapp' | 'logo_url' | 'town' | 'area' | 'location' | 'is_verified'> | null
+  courier?: Pick<User, 'id' | 'name' | 'phone' | 'avatar'> | null
+  items: OrderLineItem[]
+  totals?: {
+    subtotal?: string | number | null
+    delivery_fee?: string | number | null
+    service_fee?: string | number | null
+    total?: string | number | null
+  }
+  payment_method?: string | null
+  payment_status?: string | null
+  notes?: string | null
+  delivery_location?: {
+    address?: string | null
+    latitude?: number | null
+    longitude?: number | null
+    town?: string | null
+    area?: string | null
+  } | null
+  pickup_location?: {
+    address?: string | null
+    latitude?: number | null
+    longitude?: number | null
+  } | null
+  customer_rating?: number | null
+  customer_rating_comment?: string | null
+  timeline?: Array<{
+    key: string
+    label: string
+    timestamp?: string | null
+  }>
+  created_at?: string | null
+  updated_at?: string | null
+}
+
 export interface RideItem {
   id: number
   pickup_location: string

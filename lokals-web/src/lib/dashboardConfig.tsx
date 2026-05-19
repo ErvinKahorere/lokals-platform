@@ -88,6 +88,7 @@ const residentNav: DashboardNavGroup[] = [
       { label: 'Services', to: '/services', icon: Search, description: 'Find local providers' },
       { label: 'Taxi', to: '/ride', icon: CarFront, description: 'Request a ride' },
       { label: 'Delivery', to: '/delivery', icon: Package, description: 'Send a parcel' },
+      { label: 'Orders', to: '/orders', icon: ShoppingBag, description: 'Track local food and shop orders' },
       { label: 'Marketplace', to: '/store', icon: ShoppingBag, description: 'Browse local deals' },
       { label: 'Events', to: '/events', icon: CalendarDays, description: 'See what is nearby' },
       { label: 'Jobs', to: '/jobs', icon: BriefcaseBusiness, description: 'Find nearby work' },
@@ -136,6 +137,7 @@ const courierNav: DashboardNavGroup[] = [
     items: [
       { label: 'Overview', to: '/dashboard/courier', icon: LayoutDashboard },
       { label: 'Available Deliveries', to: '/dashboard/courier/requests', icon: Package },
+      { label: 'Order Deliveries', to: '/dashboard/courier/orders', icon: ShoppingBag },
       { label: 'Active Delivery', to: '/dashboard/courier/active-delivery', icon: MapPinned },
       { label: 'Delivery History', to: '/dashboard/courier/history', icon: ScrollText },
       { label: 'Earnings', to: '/dashboard/courier/earnings', icon: Wallet },
@@ -240,6 +242,7 @@ const adminNav: DashboardNavGroup[] = [
     items: [
       { label: 'Global Overview', to: '/dashboard/admin', icon: LayoutDashboard },
       { label: 'Towns', to: '/dashboard/admin/towns', icon: Building2 },
+      { label: 'Orders', to: '/dashboard/admin/orders', icon: ShoppingBag },
       { label: 'Users', to: '/dashboard/admin/users', icon: Users },
       { label: 'Roles & Permissions', to: '/dashboard/admin/roles', icon: ShieldCheck },
       { label: 'All Approvals', to: '/dashboard/admin/role-applications', icon: ClipboardCheck },

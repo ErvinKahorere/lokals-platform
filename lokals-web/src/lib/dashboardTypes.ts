@@ -12,6 +12,7 @@ import type {
   FeedPost,
   Job,
   NotificationItem,
+  OrderRecord,
   Product,
   Provider,
   Report,
@@ -36,6 +37,7 @@ export type DashboardArrayMap = {
   sale_alerts: AlertItem
   recent_products: Product
   recent_services: ServiceItem
+  recent_orders: OrderRecord
   public_updates: AlertItem
   events: EventItem
   moderation_flags: { id: number | string; reason: string; status: string; notes?: string | null }
@@ -114,6 +116,7 @@ export type ResidentDashboardData = {
     bookings: Booking[]
     rides: RideItem[]
     deliveries: DeliveryItem[]
+    orders: OrderRecord[]
   }
   followedUpdates: FollowingUpdateSummary[]
 }
@@ -150,6 +153,9 @@ export type CourierDashboardData = {
   availableDeliveries: DeliveryItem[]
   activeDelivery: DeliveryItem | null
   deliveryHistory: DeliveryItem[]
+  availableOrderDeliveries: OrderRecord[]
+  activeOrderDelivery: OrderRecord | null
+  orderDeliveryHistory: OrderRecord[]
   earningsSummary: Record<string, number | string>
   ratingsSummary: {
     average: number | string

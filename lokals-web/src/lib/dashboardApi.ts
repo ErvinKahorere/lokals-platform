@@ -20,6 +20,7 @@ import type {
   ConversationThread,
   DashboardActivityItem,
   NotificationItem,
+  OrderRecord,
   Product,
   Provider,
   Report,
@@ -559,7 +560,7 @@ export async function fetchDashboardAdapterPayload(): Promise<DashboardAdapterPa
 }
 
 export async function fetchResidentDashboardData(): Promise<ResidentDashboardData> {
-  const [dashboard, activity, issues, savedItems, rewards, notifications, messages, followedUpdates, bookings, rides, deliveries] = await Promise.all([
+  const [dashboard, activity, issues, savedItems, rewards, notifications, messages, followedUpdates, bookings, rides, deliveries, orders] = await Promise.all([
     fetchRoleDashboard('/dashboard/citizen').catch(() => null),
     fetchResidentActivity().catch(() => []),
     fetchIssues().catch(() => []),
@@ -571,6 +572,7 @@ export async function fetchResidentDashboardData(): Promise<ResidentDashboardDat
     fetchBookings().catch(() => []),
     fetchRides().catch(() => []),
     fetchDeliveries().catch(() => []),
+    api.get('/orders').then((response) => response.data).catch(() => ({ data: [] as OrderRecord[] })),
   ])
 
   const unreadNotifications = notifications.filter((item) => item.read_at == null).length
@@ -578,6 +580,7 @@ export async function fetchResidentDashboardData(): Promise<ResidentDashboardDat
   const activeRides = rides.filter((ride) => !['completed', 'cancelled'].includes(String(ride.status ?? '').toLowerCase()))
   const activeDeliveries = deliveries.filter((delivery) => !['delivered', 'cancelled'].includes(String(delivery.status ?? '').toLowerCase()))
   const activeBookings = bookings.filter((booking) => !['completed', 'cancelled'].includes(String(booking.status ?? '').toLowerCase()))
+  const activeOrders = asArray<OrderRecord>(orders.data).filter((order) => !['delivered', 'cancelled', 'rejected'].includes(String(order.status ?? '').toLowerCase()))
 
   const normalizedSaved = [
     ...(savedItems?.products ?? []),
@@ -600,6 +603,7 @@ export async function fetchResidentDashboardData(): Promise<ResidentDashboardDat
       bookings: activeBookings.slice(0, 3),
       rides: activeRides.slice(0, 3),
       deliveries: activeDeliveries.slice(0, 3),
+      orders: activeOrders.slice(0, 3),
     },
     followedUpdates,
   }
@@ -680,6 +684,11 @@ export async function fetchCourierDashboardData(): Promise<CourierDashboardData>
   const availableDeliveries = Array.isArray(dashboard?.available_deliveries) ? (dashboard.available_deliveries as DeliveryItem[]) : []
   const deliveryHistory = Array.isArray(dashboard?.delivery_history) ? (dashboard.delivery_history as DeliveryItem[]) : []
   const activeDelivery = deliveryHistory.find((delivery) => !['delivered', 'cancelled'].includes(String(delivery.status ?? '').toLowerCase())) ?? null
+  const availableOrderDeliveries = Array.isArray(dashboard?.available_order_deliveries) ? (dashboard.available_order_deliveries as OrderRecord[]) : []
+  const orderDeliveryHistory = Array.isArray(dashboard?.order_delivery_history) ? (dashboard.order_delivery_history as OrderRecord[]) : []
+  const activeOrderDelivery = (dashboard?.active_order_delivery as OrderRecord | null | undefined)
+    ?? orderDeliveryHistory.find((order) => !['delivered', 'cancelled', 'rejected'].includes(String(order.status ?? '').toLowerCase()))
+    ?? null
 
   return {
     dashboard,
@@ -690,6 +699,9 @@ export async function fetchCourierDashboardData(): Promise<CourierDashboardData>
     availableDeliveries,
     activeDelivery,
     deliveryHistory,
+    availableOrderDeliveries,
+    activeOrderDelivery,
+    orderDeliveryHistory,
     earningsSummary: {
       today: dashboard?.stats?.todays_earnings ?? dashboard?.stats?.earnings_today ?? 0,
       total: dashboard?.stats?.total_earnings ?? dashboard?.stats?.earnings_total ?? 0,

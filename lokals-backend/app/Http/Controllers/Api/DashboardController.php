@@ -21,6 +21,7 @@ use App\Models\JobPost;
 use App\Models\Listing;
 use App\Models\ModerationFlag;
 use App\Models\Organization;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\RideRequest;
 use App\Models\RoleApplication;
@@ -74,16 +75,19 @@ class DashboardController extends Controller
                 'followed_sources' => Follow::query()->where('user_id', $user->id)->count(),
                 'tickets' => EventTicket::query()->where('user_id', $user->id)->count(),
                 'reports' => CityReport::query()->where('user_id', $user->id)->count(),
+                'orders' => Order::query()->where('user_id', $user->id)->count(),
             ],
             'quick_actions' => [
                 ['label' => 'Book Service', 'href' => '/services', 'icon' => 'calendar'],
                 ['label' => 'Report Issue', 'href' => '/report-issue', 'icon' => 'alert-circle'],
                 ['label' => 'Send Parcel', 'href' => '/delivery', 'icon' => 'package'],
+                ['label' => 'Order Delivery', 'href' => '/store', 'icon' => 'shopping-bag'],
                 ['label' => 'View Alerts', 'href' => '/alerts', 'icon' => 'bell'],
             ],
             'pending_tasks' => [
                 ['label' => 'Upcoming bookings', 'count' => Booking::query()->where('user_id', $user->id)->whereIn('status', ['pending', 'confirmed'])->count()],
                 ['label' => 'Open reports', 'count' => CityReport::query()->where('user_id', $user->id)->whereIn('status', $this->activeReportStatuses)->count()],
+                ['label' => 'Active orders', 'count' => Order::query()->where('user_id', $user->id)->whereNotIn('status', [Order::STATUS_DELIVERED, Order::STATUS_CANCELLED, Order::STATUS_REJECTED])->count()],
             ],
             'upcoming_bookings' => Booking::query()
                 ->where('user_id', $user->id)
@@ -103,6 +107,7 @@ class DashboardController extends Controller
             'recent_alerts' => Alert::query()->latest()->limit(4)->get(['id', 'title', 'body', 'priority', 'location', 'published_at']),
             'my_reports' => CityReport::query()->where('user_id', $user->id)->latest()->limit(4)->get(['id', 'title', 'category', 'location', 'status', 'priority', 'created_at']),
             'my_tickets' => EventTicket::query()->where('user_id', $user->id)->with(['event:id,title,starts_at,location'])->latest()->limit(4)->get(),
+            'recent_orders' => Order::query()->where('user_id', $user->id)->with(['business:id,name', 'courier:id,name'])->latest()->limit(4)->get(),
             'recent_activity' => $this->mergeActivity([
                 Booking::query()->where('user_id', $user->id)->latest()->limit(3)->get()->map(fn (Booking $booking) => [
                     'type' => 'booking',
@@ -121,6 +126,12 @@ class DashboardController extends Controller
                     'title' => $report->title,
                     'body' => $report->status,
                     'timestamp' => optional($report->updated_at)->toIso8601String(),
+                ]),
+                Order::query()->where('user_id', $user->id)->latest()->limit(2)->get()->map(fn (Order $order) => [
+                    'type' => 'order',
+                    'title' => sprintf('Order ORD-%05d', $order->id),
+                    'body' => $order->status,
+                    'timestamp' => optional($order->updated_at)->toIso8601String(),
                 ]),
             ]),
         ]);
@@ -231,6 +242,11 @@ class DashboardController extends Controller
             ->whereIn('status', ['accepted', 'pickup_confirmed', 'in_transit'])
             ->latest()
             ->first();
+        $activeOrderDelivery = Order::query()
+            ->where('courier_id', $user->id)
+            ->whereIn('status', [Order::STATUS_COURIER_ASSIGNED, Order::STATUS_PICKED_UP])
+            ->latest()
+            ->first();
 
         return response()->json([
             'role' => 'courier',
@@ -240,22 +256,34 @@ class DashboardController extends Controller
                 'active_deliveries' => DeliveryRequest::query()->where('driver_id', $user->id)->whereIn('status', ['accepted', 'pickup_confirmed', 'in_transit'])->count(),
                 'completed_deliveries' => DeliveryRequest::query()->where('driver_id', $user->id)->where('status', 'delivered')->count(),
                 'earnings_today' => DeliveryRequest::query()->where('driver_id', $user->id)->whereDate('delivered_at', today())->sum('estimated_price'),
+                'available_order_deliveries' => Order::query()->where('status', Order::STATUS_READY_FOR_PICKUP)->whereNull('courier_id')->count(),
+                'active_order_delivery' => $activeOrderDelivery ? 1 : 0,
             ],
             'quick_actions' => [
                 ['label' => 'Go Online', 'href' => '/dashboard/courier', 'icon' => 'power'],
                 ['label' => 'Available Deliveries', 'href' => '/delivery', 'icon' => 'package'],
+                ['label' => 'Food/Shop Orders', 'href' => '/dashboard/courier/orders', 'icon' => 'shopping-bag'],
                 ['label' => 'Delivery History', 'href' => '/dashboard/courier', 'icon' => 'history'],
                 ['label' => 'Documents', 'href' => '/dashboard/courier', 'icon' => 'file-text'],
             ],
             'pending_tasks' => [
                 ['label' => 'Approval items', 'count' => $profile?->is_verified ? 0 : 1],
                 ['label' => 'Current delivery', 'count' => $activeDelivery ? 1 : 0],
+                ['label' => 'Ready order pickups', 'count' => Order::query()->where('status', Order::STATUS_READY_FOR_PICKUP)->whereNull('courier_id')->count()],
             ],
             'courier_profile' => $profile,
             'active_delivery' => $activeDelivery?->load(['user:id,name,phone']),
+            'active_order_delivery' => $activeOrderDelivery?->load(['customer:id,name,phone', 'business:id,name,location', 'items']),
             'available_deliveries' => DeliveryRequest::query()
                 ->with(['user:id,name,phone'])
                 ->whereIn('status', ['requested', 'searching'])
+                ->latest()
+                ->limit(6)
+                ->get(),
+            'available_order_deliveries' => Order::query()
+                ->with(['customer:id,name,phone', 'business:id,name,location', 'items'])
+                ->where('status', Order::STATUS_READY_FOR_PICKUP)
+                ->whereNull('courier_id')
                 ->latest()
                 ->limit(6)
                 ->get(),
@@ -265,12 +293,24 @@ class DashboardController extends Controller
                 ->latest()
                 ->limit(6)
                 ->get(),
+            'order_delivery_history' => Order::query()
+                ->with(['customer:id,name,phone', 'business:id,name,location', 'items'])
+                ->where('courier_id', $user->id)
+                ->latest()
+                ->limit(6)
+                ->get(),
             'recent_activity' => $this->mergeActivity([
                 DeliveryRequest::query()->where('driver_id', $user->id)->latest()->limit(5)->get()->map(fn (DeliveryRequest $delivery) => [
                     'type' => 'delivery',
                     'title' => ($delivery->pickup_location ?: $delivery->pickup_address).' -> '.($delivery->dropoff_location ?: $delivery->dropoff_address),
                     'body' => $delivery->status,
                     'timestamp' => optional($delivery->updated_at)->toIso8601String(),
+                ]),
+                Order::query()->where('courier_id', $user->id)->latest()->limit(3)->get()->map(fn (Order $order) => [
+                    'type' => 'order_delivery',
+                    'title' => sprintf('Order ORD-%05d', $order->id),
+                    'body' => $order->status,
+                    'timestamp' => optional($order->updated_at)->toIso8601String(),
                 ]),
             ]),
         ]);
@@ -307,6 +347,12 @@ class DashboardController extends Controller
             ->latest()
             ->limit(5)
             ->get();
+        $recentOrders = Order::query()
+            ->whereIn('business_id', $businessIds)
+            ->with(['customer:id,name,phone', 'courier:id,name,phone', 'items'])
+            ->latest()
+            ->limit(5)
+            ->get();
         $businessRole = $user->current_role === 'seller' ? 'seller' : 'business';
         $businessDashboardHref = $businessRole === 'seller' ? '/dashboard/seller' : '/dashboard/business';
 
@@ -319,16 +365,21 @@ class DashboardController extends Controller
                 'followers' => $businesses->sum('followers_count'),
                 'alerts_promotions' => Announcement::query()->whereIn('organization_id', $businessIds)->count(),
                 'enquiries' => Product::query()->where('user_id', $user->id)->count() * 2,
+                'pending_orders' => Order::query()->whereIn('business_id', $businessIds)->where('status', Order::STATUS_PENDING)->count(),
+                'today_orders' => Order::query()->whereIn('business_id', $businessIds)->whereDate('created_at', today())->count(),
+                'order_revenue' => number_format((float) Order::query()->whereIn('business_id', $businessIds)->where('status', Order::STATUS_DELIVERED)->sum('total'), 2, '.', ''),
             ],
             'quick_actions' => [
                 ['label' => 'Add Product', 'href' => '/store', 'icon' => 'package'],
                 ['label' => 'Add Service', 'href' => '/services', 'icon' => 'hammer'],
+                ['label' => 'Open Orders', 'href' => '/dashboard/business/orders', 'icon' => 'clipboard-list'],
                 ['label' => 'Post Promotion', 'href' => $businessDashboardHref, 'icon' => 'megaphone'],
                 ['label' => 'View Store', 'href' => '/store', 'icon' => 'store'],
             ],
             'pending_tasks' => [
                 ['label' => 'Products without recent activity', 'count' => max(0, 3 - Product::query()->where('user_id', $user->id)->count())],
                 ['label' => 'Promotions to refresh', 'count' => Announcement::query()->whereIn('organization_id', $businessIds)->whereDate('published_at', '<', now()->subDays(14))->count()],
+                ['label' => 'Orders waiting review', 'count' => Order::query()->whereIn('business_id', $businessIds)->where('status', Order::STATUS_PENDING)->count()],
             ],
             'businesses' => $businesses,
             'sale_alerts' => $recentPromotions,
@@ -337,6 +388,7 @@ class DashboardController extends Controller
             'products' => $recentProducts,
             'recent_services' => $recentServices,
             'recent_bookings' => $recentBookings,
+            'recent_orders' => $recentOrders,
             'recent_activity' => $this->mergeActivity([
                 Product::query()->where('user_id', $user->id)->latest()->limit(3)->get()->map(fn (Product $product) => [
                     'type' => 'product',
@@ -349,6 +401,12 @@ class DashboardController extends Controller
                     'title' => $alert->title,
                     'body' => Str::limit($alert->body, 72),
                     'timestamp' => optional($alert->published_at)->toIso8601String(),
+                ]),
+                Order::query()->whereIn('business_id', $businessIds)->latest()->limit(2)->get()->map(fn (Order $order) => [
+                    'type' => 'order',
+                    'title' => sprintf('Order ORD-%05d', $order->id),
+                    'body' => $order->status,
+                    'timestamp' => optional($order->updated_at)->toIso8601String(),
                 ]),
             ]),
         ]);
@@ -520,6 +578,7 @@ class DashboardController extends Controller
             ->when(! $user->hasRole('super_admin'), fn ($query) => $query->whereHas('user', fn ($userQuery) => $userQuery->where('default_town', PilotLocation::profileTown($user->default_town))));
         $rideQuery = RideRequest::query()->whereIn('status', ['requested', 'searching', 'accepted', 'arrived', 'in_progress']);
         $deliveryQuery = DeliveryRequest::query()->whereIn('status', ['requested', 'searching', 'accepted', 'pickup_confirmed', 'in_transit']);
+        $orderQuery = Order::query()->whereNotIn('status', [Order::STATUS_DELIVERED, Order::STATUS_CANCELLED, Order::STATUS_REJECTED]);
         $residentQuery = User::query()
             ->where('default_town', PilotLocation::profileTown($user->default_town))
             ->where(function ($query): void {
@@ -561,6 +620,7 @@ class DashboardController extends Controller
                 'registered_businesses' => (clone $businessQuery)->count(),
                 'service_providers' => (clone $providerQuery)->count(),
                 'active_emergency_alerts' => (clone $alertQuery)->where('type', 'emergency_alert')->count(),
+                'active_orders' => (clone $orderQuery)->count(),
             ],
             'quick_actions' => [
                 ['label' => 'Send Announcement', 'href' => '/dashboard/town-manager', 'icon' => 'megaphone'],
@@ -593,6 +653,7 @@ class DashboardController extends Controller
             'transport_activity' => [
                 'active_rides' => (clone $rideQuery)->count(),
                 'active_deliveries' => (clone $deliveryQuery)->count(),
+                'active_orders' => (clone $orderQuery)->count(),
                 'drivers_online' => (clone $driverProfiles)->where('is_online', true)->count(),
                 'couriers_online' => (clone $courierProfiles)->where('is_online', true)->count(),
                 'verified_drivers' => (clone $driverProfiles)->where('is_verified', true)->count(),
@@ -624,6 +685,12 @@ class DashboardController extends Controller
                     'title' => $project->title,
                     'body' => $project->verification_status ?? 'pending',
                     'timestamp' => optional($project->updated_at)->toIso8601String(),
+                ]),
+                (clone $orderQuery)->latest()->limit(2)->get()->map(fn (Order $order) => [
+                    'type' => 'order',
+                    'title' => sprintf('Order ORD-%05d', $order->id),
+                    'body' => $order->status,
+                    'timestamp' => optional($order->updated_at)->toIso8601String(),
                 ]),
             ]),
         ]);
@@ -661,6 +728,7 @@ class DashboardController extends Controller
                 'active_reports' => CityReport::query()->whereIn('status', $this->activeReportStatuses)->count(),
                 'active_rides' => RideRequest::query()->whereIn('status', ['requested', 'searching', 'accepted', 'arrived', 'in_progress'])->count(),
                 'active_deliveries' => DeliveryRequest::query()->whereIn('status', ['requested', 'searching', 'accepted', 'pickup_confirmed', 'in_transit'])->count(),
+                'active_orders' => Order::query()->whereNotIn('status', [Order::STATUS_DELIVERED, Order::STATUS_CANCELLED, Order::STATUS_REJECTED])->count(),
                 'notification_volume' => $this->notificationCount(),
             ],
             'system_overview' => [
@@ -676,16 +744,19 @@ class DashboardController extends Controller
                 ['label' => 'View audit logs', 'href' => '/dashboard/admin/audit-logs', 'icon' => 'scroll-text'],
                 ['label' => 'View system health', 'href' => '/dashboard/admin/system-health', 'icon' => 'activity'],
                 ['label' => 'View feature flags', 'href' => '/dashboard/admin/feature-flags', 'icon' => 'sparkles'],
+                ['label' => 'View orders', 'href' => '/dashboard/admin/orders', 'icon' => 'shopping-bag'],
             ],
             'pending_tasks' => [
                 ['label' => 'Open flags', 'count' => ModerationFlag::query()->where('status', 'open')->count()],
                 ['label' => 'Open reports', 'count' => CityReport::query()->whereIn('status', $this->activeReportStatuses)->count()],
                 ['label' => 'Pending role approvals', 'count' => RoleApplication::query()->whereIn('status', ['submitted', 'pending_review'])->count()],
                 ['label' => 'Pending community projects', 'count' => CommunityProject::query()->where('verification_status', 'pending')->count()],
+                ['label' => 'Open orders', 'count' => Order::query()->whereNotIn('status', [Order::STATUS_DELIVERED, Order::STATUS_CANCELLED, Order::STATUS_REJECTED])->count()],
             ],
             'pending_approvals' => RoleApplication::query()->latest()->limit(6)->get(['id', 'requested_role', 'status', 'full_name', 'phone', 'created_at']),
             'moderation_flags' => ModerationFlag::query()->latest()->limit(6)->get(['id', 'reason', 'status', 'notes', 'created_at']),
             'recent_reports' => CityReport::query()->latest()->limit(5)->get(['id', 'title', 'category', 'status', 'priority', 'created_at']),
+            'recent_orders' => Order::query()->with(['customer:id,name,phone', 'business:id,name'])->latest()->limit(6)->get(),
             'user_mix' => [
                 'residents' => $this->residentCount(),
                 'business_owners' => User::role('business_owner')->count() + User::role('seller')->count(),
@@ -704,6 +775,7 @@ class DashboardController extends Controller
                 'reports' => CityReport::query()->whereIn('status', $this->activeReportStatuses)->count(),
                 'rides' => RideRequest::query()->whereIn('status', ['requested', 'searching', 'accepted', 'arrived', 'in_progress'])->count(),
                 'deliveries' => DeliveryRequest::query()->whereIn('status', ['requested', 'searching', 'accepted', 'pickup_confirmed', 'in_transit'])->count(),
+                'orders' => Order::query()->whereNotIn('status', [Order::STATUS_DELIVERED, Order::STATUS_CANCELLED, Order::STATUS_REJECTED])->count(),
                 'flags' => ModerationFlag::query()->where('status', 'open')->count(),
             ],
             'notification_volume' => [
@@ -766,6 +838,12 @@ class DashboardController extends Controller
                     'title' => $application->full_name,
                     'body' => $application->requested_role.' '.$application->status,
                     'timestamp' => optional($application->updated_at)->toIso8601String(),
+                ]),
+                Order::query()->latest()->limit(2)->get()->map(fn (Order $order) => [
+                    'type' => 'order',
+                    'title' => sprintf('Order ORD-%05d', $order->id),
+                    'body' => $order->status,
+                    'timestamp' => optional($order->updated_at)->toIso8601String(),
                 ]),
             ]),
         ]);
