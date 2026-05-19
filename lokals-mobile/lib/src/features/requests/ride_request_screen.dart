@@ -233,6 +233,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
               390.0,
               470.0,
             );
+        final optionRowHeight = isCompactHeight ? 140.0 : 144.0;
 
         return Stack(
           children: [
@@ -395,7 +396,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                               ),
                               const SizedBox(height: 12),
                               SizedBox(
-                                height: 132,
+                                height: optionRowHeight,
                                 child: ListView.separated(
                                   scrollDirection: Axis.horizontal,
                                   physics: const BouncingScrollPhysics(),
@@ -417,14 +418,24 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                                   },
                                 ),
                               ),
-                              const SizedBox(height: 14),
-                              TransportSummaryRow(
-                                primaryLabel: 'ETA',
-                                primaryValue: '$_estimatedMinutes min',
-                                secondaryLabel: 'Estimated fare',
-                                secondaryValue: 'N\$ $_estimatedFare',
+                              const SizedBox(height: 12),
+                              Wrap(
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: [
+                                  TransportCompactStatChip(
+                                    label: 'ETA',
+                                    value: '$_estimatedMinutes min',
+                                    accentColor: AppColors.primaryPurple,
+                                  ),
+                                  TransportCompactStatChip(
+                                    label: 'Fare',
+                                    value: 'N\$ $_estimatedFare',
+                                    accentColor: AppColors.primaryPurple,
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 14),
+                              const SizedBox(height: 12),
                               const Text(
                                 'Trip purpose',
                                 style: TextStyle(fontWeight: FontWeight.w800),

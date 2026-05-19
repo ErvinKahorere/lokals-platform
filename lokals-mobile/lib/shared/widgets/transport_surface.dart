@@ -478,14 +478,13 @@ class TransportBottomSheetCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          18,
-          12,
-          18,
-          MediaQuery.of(context).padding.bottom + 12,
+      child: SafeArea(
+        top: false,
+        bottom: true,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 12, 18, 12),
+          child: child,
         ),
-        child: child,
       ),
     );
   }
@@ -519,9 +518,9 @@ class TransportOptionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         onTap: onTap,
         child: Ink(
-          width: 112,
-          height: 132,
-          padding: const EdgeInsets.all(12),
+          width: 108,
+          height: 140,
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: isSelected
                 ? accentColor.withValues(alpha: 0.1)
@@ -553,6 +552,7 @@ class TransportOptionCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
+                  fontSize: 13,
                   color: AppColors.deepCharcoal,
                 ),
               ),
@@ -562,7 +562,7 @@ class TransportOptionCard extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   color: AppColors.mutedText,
                   fontWeight: FontWeight.w600,
                 ),
@@ -576,12 +576,61 @@ class TransportOptionCard extends StatelessWidget {
                 style: TextStyle(
                   color: accentColor,
                   fontWeight: FontWeight.w800,
-                  fontSize: 15,
+                  fontSize: 14,
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class TransportCompactStatChip extends StatelessWidget {
+  const TransportCompactStatChip({
+    super.key,
+    required this.label,
+    required this.value,
+    this.accentColor = AppColors.primaryPurple,
+  });
+
+  final String label;
+  final String value;
+  final Color accentColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: accentColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$label: ',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.mutedText,
+            ),
+          ),
+          Flexible(
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: accentColor,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

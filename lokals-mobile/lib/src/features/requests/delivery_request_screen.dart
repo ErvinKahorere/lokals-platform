@@ -193,6 +193,7 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
               400.0,
               485.0,
             );
+        final optionRowHeight = isCompactHeight ? 140.0 : 144.0;
 
         return Stack(
           children: [
@@ -353,7 +354,7 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                               ),
                               const SizedBox(height: 12),
                               SizedBox(
-                                height: 132,
+                                height: optionRowHeight,
                                 child: ListView.separated(
                                   scrollDirection: Axis.horizontal,
                                   physics: const BouncingScrollPhysics(),
@@ -376,15 +377,25 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                                   },
                                 ),
                               ),
-                              const SizedBox(height: 14),
-                              TransportSummaryRow(
-                                primaryLabel: 'Urgency',
-                                primaryValue: _urgency.replaceAll('_', ' '),
-                                secondaryLabel: 'Weight',
-                                secondaryValue:
-                                    '${_weightController.text.trim().isEmpty ? '0' : _weightController.text.trim()} kg',
+                              const SizedBox(height: 12),
+                              Wrap(
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: [
+                                  TransportCompactStatChip(
+                                    label: 'Urgency',
+                                    value: _urgency.replaceAll('_', ' '),
+                                    accentColor: AppColors.lokalsGreen,
+                                  ),
+                                  TransportCompactStatChip(
+                                    label: 'Weight',
+                                    value:
+                                        '${_weightController.text.trim().isEmpty ? '0' : _weightController.text.trim()} kg',
+                                    accentColor: AppColors.lokalsGreen,
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 14),
+                              const SizedBox(height: 12),
                               DropdownButtonFormField<String>(
                                 initialValue: _urgency,
                                 decoration: const InputDecoration(
