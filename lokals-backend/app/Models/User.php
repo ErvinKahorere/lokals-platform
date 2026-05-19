@@ -174,6 +174,21 @@ class User extends Authenticatable
         return $this->hasMany(Order::class, 'courier_id');
     }
 
+    public function hireItems(): HasMany
+    {
+        return $this->hasMany(HireItem::class, 'owner_id');
+    }
+
+    public function hireBookings(): HasMany
+    {
+        return $this->hasMany(HireBooking::class, 'customer_id');
+    }
+
+    public function ownedHireBookings(): HasMany
+    {
+        return $this->hasMany(HireBooking::class, 'owner_id');
+    }
+
     public function accommodations(): HasMany
     {
         return $this->hasMany(Accommodation::class);

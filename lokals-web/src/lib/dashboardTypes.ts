@@ -38,6 +38,8 @@ export type DashboardArrayMap = {
   recent_products: Product
   recent_services: ServiceItem
   recent_orders: OrderRecord
+  recent_hire_items: import('../types').HireItemRecord
+  recent_hire_bookings: import('../types').HireBookingRecord
   public_updates: AlertItem
   events: EventItem
   moderation_flags: { id: number | string; reason: string; status: string; notes?: string | null }

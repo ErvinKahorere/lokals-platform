@@ -1,6 +1,6 @@
 import type { FormEvent } from 'react'
 import { useMemo, useState } from 'react'
-import { Clock3, Sparkles, Store, TrendingUp } from 'lucide-react'
+import { Clock3, Sparkles, Store, TrendingUp, Warehouse } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button, EmptyState, Input, ListingCard, PageHeader, QueryState, SearchBar, SectionCard, StatusBadge, TextArea } from '../components/Ui'
 import { useCreateListing, useListings, useProducts } from '../hooks/queries'
@@ -261,6 +261,21 @@ export function MarketplacePage() {
           </QueryState>
         </SectionCard>
       </div>
+
+      <SectionCard className="bg-white">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-lokals-green">
+              <Warehouse className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-lokals-charcoal">Need rentals instead of purchases?</h2>
+              <p className="text-sm text-lokals-muted">Hire event gear, tools, and practical equipment through the separate rental flow.</p>
+            </div>
+          </div>
+          <Link to="/hire"><Button>Open hire & rentals</Button></Link>
+        </div>
+      </SectionCard>
 
       <SectionCard className="bg-white">
         <div className="flex items-center gap-3">

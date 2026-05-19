@@ -41,6 +41,11 @@ import { ProductDetailsPage } from './pages/ProductDetailsPage'
 import { OrdersPage } from './pages/OrdersPage'
 import { OrderDetailsPage } from './pages/OrderDetailsPage'
 import { CheckoutPage } from './pages/CheckoutPage'
+import { HirePage } from './pages/HirePage'
+import { HireItemDetailsPage } from './pages/HireItemDetailsPage'
+import { MyHireBookingsPage } from './pages/MyHireBookingsPage'
+import { HireBookingPage } from './pages/HireBookingPage'
+import { MyHireItemsPage } from './pages/MyHireItemsPage'
 import { AccommodationDetailsPage } from './pages/AccommodationDetailsPage'
 import { MyBookingsPage } from './pages/dashboard/MyBookingsPage'
 import { MyTicketsPage } from './pages/dashboard/MyTicketsPage'
@@ -95,6 +100,8 @@ import { AdminNotificationsPage } from './pages/admin/AdminNotificationsPage'
 import { AdminSystemHealthPage } from './pages/admin/AdminSystemHealthPage'
 import { AdminTownsPage } from './pages/admin/AdminTownsPage'
 import { AdminOrdersPage } from './pages/admin/AdminOrdersPage'
+import { AdminHirePage } from './pages/admin/AdminHirePage'
+import { HireOwnerBookingsPage } from './pages/dashboard/HireOwnerBookingsPage'
 import { getDashboardWorkspaceData } from './lib/dashboardWorkspaceData'
 import { getRoleHomePath, hasActiveRole } from './lib/roles'
 import { useAuthStore } from './store/auth'
@@ -202,6 +209,12 @@ export default function App() {
           <Route path="/marketplace" element={<MarketplacePage />} />
           <Route path="/store" element={<StorePage />} />
           <Route path="/store/:id" element={<ProductDetailsPage />} />
+          <Route path="/hire" element={<HirePage />} />
+          <Route path="/hire/bookings" element={<ProtectedRoute><MyHireBookingsPage /></ProtectedRoute>} />
+          <Route path="/hire/bookings/:id" element={<ProtectedRoute><HireBookingPage /></ProtectedRoute>} />
+          <Route path="/hire/my-items" element={<ProtectedRoute><MyHireItemsPage /></ProtectedRoute>} />
+          <Route path="/hire/owner/bookings" element={<ProtectedRoute><HireOwnerBookingsPage /></ProtectedRoute>} />
+          <Route path="/hire/:id" element={<HireItemDetailsPage />} />
           <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
           <Route path="/orders/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
           <Route path="/orders/:id" element={<ProtectedRoute><OrderDetailsPage /></ProtectedRoute>} />
@@ -291,6 +304,8 @@ export default function App() {
           <Route path="/dashboard/seller" element={<BusinessRoute><BusinessDashboardPage /></BusinessRoute>} />
           <Route path="/dashboard/business/profile" element={<BusinessRoute><DashboardWorkspacePage mode="business" path="/dashboard/business/profile" title="Business profile" description="Keep storefront details, public trust, and contact info complete." {...getDashboardWorkspaceData('/dashboard/business/profile')} /></BusinessRoute>} />
           <Route path="/dashboard/business/orders" element={<BusinessRoute><SellerOrdersPage /></BusinessRoute>} />
+          <Route path="/dashboard/business/hire-items" element={<BusinessRoute><MyHireItemsPage /></BusinessRoute>} />
+          <Route path="/dashboard/business/hire-bookings" element={<BusinessRoute><HireOwnerBookingsPage /></BusinessRoute>} />
           <Route path="/dashboard/business/promotions" element={<BusinessRoute><DashboardWorkspacePage mode="business" path="/dashboard/business/promotions" title="Promotions" description="Plan simple promotions, offers, and boosted visibility moments." {...getDashboardWorkspaceData('/dashboard/business/promotions')} /></BusinessRoute>} />
           <Route path="/dashboard/business/reviews" element={<BusinessRoute><DashboardWorkspacePage mode="business" path="/dashboard/business/reviews" title="Reviews" description="See customer trust signals and response opportunities." {...getDashboardWorkspaceData('/dashboard/business/reviews')} /></BusinessRoute>} />
           <Route path="/dashboard/business/analytics" element={<BusinessRoute><DashboardWorkspacePage mode="business" path="/dashboard/business/analytics" title="Business analytics" description="Track listing reach, enquiries, and promotion performance." {...getDashboardWorkspaceData('/dashboard/business/analytics')} /></BusinessRoute>} />
@@ -324,6 +339,7 @@ export default function App() {
           <Route path="/dashboard/town-manager/analytics" element={<MunicipalityRoute><DashboardWorkspacePage mode="town_manager" path="/dashboard/town-manager/analytics" title="Town analytics" description="Track workload, response time, issue pressure, and town engagement patterns." {...getDashboardWorkspaceData('/dashboard/town-manager/analytics')} /></MunicipalityRoute>} />
           <Route path="/dashboard/town-manager/reports" element={<MunicipalityRoute><AdminReportsPage /></MunicipalityRoute>} />
           <Route path="/dashboard/town-manager/reports/:id" element={<MunicipalityRoute><ReportDetailsPage /></MunicipalityRoute>} />
+          <Route path="/dashboard/town-manager/hire" element={<MunicipalityRoute><AdminHirePage variant="town" /></MunicipalityRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
@@ -343,6 +359,7 @@ export default function App() {
           <Route path="/dashboard/admin" element={<AdminRoute><SuperAdminDashboardPage /></AdminRoute>} />
           <Route path="/dashboard/admin/towns" element={<AdminRoute><AdminTownsPage /></AdminRoute>} />
           <Route path="/dashboard/admin/orders" element={<AdminRoute><AdminOrdersPage /></AdminRoute>} />
+          <Route path="/dashboard/admin/hire" element={<AdminRoute><AdminHirePage /></AdminRoute>} />
           <Route path="/dashboard/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
           <Route path="/dashboard/admin/role-applications" element={<AdminRoute><RoleApplicationsAdminPage /></AdminRoute>} />
           <Route path="/dashboard/admin/roles" element={<AdminRoute><RoleApplicationsAdminPage /></AdminRoute>} />

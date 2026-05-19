@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\AdminHireController;
 use App\Http\Controllers\Api\AdminOrderController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AlertFeedController;
@@ -18,6 +19,8 @@ use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\FollowFeedController;
+use App\Http\Controllers\Api\HireBookingController;
+use App\Http\Controllers\Api\HireItemController;
 use App\Http\Controllers\Api\JobController;
 use App\Http\Controllers\Api\AccommodationController;
 use App\Http\Controllers\Api\AdminFeedController;
@@ -81,6 +84,8 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/store/products', [ProductController::class, 'index']);
     Route::get('/store/products/{product}', [ProductController::class, 'show']);
     Route::get('/store/sale-alerts', [ProductController::class, 'saleAlerts']);
+    Route::get('/hire/items', [HireItemController::class, 'index']);
+    Route::get('/hire/items/{hireItem}', [HireItemController::class, 'show']);
     Route::get('/accommodations', [AccommodationController::class, 'index']);
     Route::get('/accommodations/{accommodation}', [AccommodationController::class, 'show']);
     Route::get('/announcements', [CityServiceController::class, 'announcements']);
@@ -194,6 +199,22 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/my-listings', [ListingController::class, 'mine']);
         Route::post('/store/products', [ProductController::class, 'store']);
         Route::put('/store/products/{product}', [ProductController::class, 'update']);
+        Route::get('/hire/bookings', [HireBookingController::class, 'index']);
+        Route::get('/hire/bookings/{hireBooking}', [HireBookingController::class, 'show']);
+        Route::post('/hire/items/{hireItem}/book', [HireItemController::class, 'book']);
+        Route::post('/hire/bookings/{hireBooking}/cancel', [HireBookingController::class, 'cancel']);
+        Route::post('/hire/bookings/{hireBooking}/rate', [HireBookingController::class, 'rate']);
+        Route::get('/hire/my-items', [HireItemController::class, 'myItems']);
+        Route::post('/hire/items', [HireItemController::class, 'store']);
+        Route::patch('/hire/items/{hireItem}', [HireItemController::class, 'update']);
+        Route::delete('/hire/items/{hireItem}', [HireItemController::class, 'destroy']);
+        Route::get('/hire/owner/bookings', [HireBookingController::class, 'ownerBookings']);
+        Route::post('/hire/bookings/{hireBooking}/accept', [HireBookingController::class, 'accept']);
+        Route::post('/hire/bookings/{hireBooking}/reject', [HireBookingController::class, 'reject']);
+        Route::post('/hire/bookings/{hireBooking}/confirm', [HireBookingController::class, 'confirm']);
+        Route::post('/hire/bookings/{hireBooking}/handed-over', [HireBookingController::class, 'handedOver']);
+        Route::post('/hire/bookings/{hireBooking}/returned', [HireBookingController::class, 'returned']);
+        Route::post('/hire/bookings/{hireBooking}/complete', [HireBookingController::class, 'complete']);
         Route::post('/accommodations', [AccommodationController::class, 'store']);
         Route::put('/accommodations/{accommodation}', [AccommodationController::class, 'update']);
         Route::middleware('role:seller|service_provider|business_owner|organization_admin|municipality_admin|town_manager|super_admin')->group(function (): void {
@@ -288,6 +309,11 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/admin/users', [AdminController::class, 'users']);
             Route::get('/admin/orders', [AdminOrderController::class, 'index']);
             Route::get('/admin/orders/{order}', [AdminOrderController::class, 'show']);
+            Route::get('/admin/hire/items', [AdminHireController::class, 'items']);
+            Route::get('/admin/hire/bookings', [AdminHireController::class, 'bookings']);
+            Route::post('/admin/hire/items/{hireItem}/approve', [AdminHireController::class, 'approve']);
+            Route::post('/admin/hire/items/{hireItem}/reject', [AdminHireController::class, 'reject']);
+            Route::post('/admin/hire/bookings/{hireBooking}/resolve-dispute', [AdminHireController::class, 'resolveDispute']);
             Route::get('/admin/reports', [CityServiceController::class, 'reports']);
             Route::get('/admin/news-sources', [NewsSourceController::class, 'index']);
             Route::post('/admin/news-sources', [NewsSourceController::class, 'store']);

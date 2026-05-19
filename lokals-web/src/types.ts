@@ -621,6 +621,83 @@ export interface OrderRecord {
   updated_at?: string | null
 }
 
+export interface HireItemRecord {
+  id: number
+  title: string
+  description?: string | null
+  category: string
+  owner?: Pick<User, 'id' | 'name' | 'phone' | 'avatar' | 'default_town' | 'default_area'> | null
+  business?: Pick<Organization, 'id' | 'name' | 'category' | 'phone' | 'whatsapp' | 'logo_url' | 'town' | 'area' | 'location' | 'is_verified'> | null
+  town?: string | null
+  area?: string | null
+  address?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  prices?: {
+    price_per_hour?: string | number | null
+    price_per_day?: string | number | null
+  }
+  deposit?: string | number | null
+  replacement_value?: string | number | null
+  delivery_available?: boolean
+  pickup_available?: boolean
+  condition?: string | null
+  status?: string | null
+  verification_status?: string | null
+  images?: string[]
+  rules?: string[]
+  included_items?: string[]
+  rating?: number | null
+  bookings_count?: number | null
+  availability_summary?: {
+    available?: boolean
+    requested_window_available?: boolean
+    next_available_at?: string | null
+    status?: string | null
+    verification_status?: string | null
+  } | null
+  created_at?: string | null
+}
+
+export interface HireBookingRecord {
+  id: number
+  reference_code?: string | null
+  item?: HireItemRecord | null
+  customer?: Pick<User, 'id' | 'name' | 'phone' | 'avatar' | 'default_town' | 'default_area'> | null
+  owner?: Pick<User, 'id' | 'name' | 'phone' | 'avatar' | 'default_town' | 'default_area'> | null
+  courier?: Pick<User, 'id' | 'name' | 'phone' | 'avatar'> | null
+  status: string
+  status_label?: string | null
+  start_at?: string | null
+  end_at?: string | null
+  quantity?: number
+  totals?: {
+    rental_fee?: string | number | null
+    deposit_amount?: string | number | null
+    delivery_fee?: string | number | null
+    total?: string | number | null
+  }
+  payment_status?: string | null
+  pickup_method?: string | null
+  delivery_info?: {
+    address?: string | null
+    latitude?: number | null
+    longitude?: number | null
+  } | null
+  timeline?: Array<{
+    key: string
+    label: string
+    timestamp?: string | null
+  }>
+  next_action?: string | null
+  notes?: string | null
+  owner_notes?: string | null
+  customer_rating?: number | null
+  customer_rating_comment?: string | null
+  created_at?: string | null
+  updated_at?: string | null
+}
+
 export interface RideItem {
   id: number
   pickup_location: string

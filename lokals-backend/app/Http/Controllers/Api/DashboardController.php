@@ -16,6 +16,8 @@ use App\Models\EventSave;
 use App\Models\EventTicket;
 use App\Models\FeedPost;
 use App\Models\Follow;
+use App\Models\HireBooking;
+use App\Models\HireItem;
 use App\Models\JobApplication;
 use App\Models\JobPost;
 use App\Models\Listing;
@@ -76,18 +78,21 @@ class DashboardController extends Controller
                 'tickets' => EventTicket::query()->where('user_id', $user->id)->count(),
                 'reports' => CityReport::query()->where('user_id', $user->id)->count(),
                 'orders' => Order::query()->where('user_id', $user->id)->count(),
+                'hire_bookings' => HireBooking::query()->where('customer_id', $user->id)->count(),
             ],
             'quick_actions' => [
                 ['label' => 'Book Service', 'href' => '/services', 'icon' => 'calendar'],
                 ['label' => 'Report Issue', 'href' => '/report-issue', 'icon' => 'alert-circle'],
                 ['label' => 'Send Parcel', 'href' => '/delivery', 'icon' => 'package'],
                 ['label' => 'Order Delivery', 'href' => '/store', 'icon' => 'shopping-bag'],
+                ['label' => 'Hire Items', 'href' => '/hire', 'icon' => 'warehouse'],
                 ['label' => 'View Alerts', 'href' => '/alerts', 'icon' => 'bell'],
             ],
             'pending_tasks' => [
                 ['label' => 'Upcoming bookings', 'count' => Booking::query()->where('user_id', $user->id)->whereIn('status', ['pending', 'confirmed'])->count()],
                 ['label' => 'Open reports', 'count' => CityReport::query()->where('user_id', $user->id)->whereIn('status', $this->activeReportStatuses)->count()],
                 ['label' => 'Active orders', 'count' => Order::query()->where('user_id', $user->id)->whereNotIn('status', [Order::STATUS_DELIVERED, Order::STATUS_CANCELLED, Order::STATUS_REJECTED])->count()],
+                ['label' => 'Active hire bookings', 'count' => HireBooking::query()->where('customer_id', $user->id)->whereNotIn('status', [HireBooking::STATUS_COMPLETED, HireBooking::STATUS_CANCELLED])->count()],
             ],
             'upcoming_bookings' => Booking::query()
                 ->where('user_id', $user->id)
@@ -108,6 +113,7 @@ class DashboardController extends Controller
             'my_reports' => CityReport::query()->where('user_id', $user->id)->latest()->limit(4)->get(['id', 'title', 'category', 'location', 'status', 'priority', 'created_at']),
             'my_tickets' => EventTicket::query()->where('user_id', $user->id)->with(['event:id,title,starts_at,location'])->latest()->limit(4)->get(),
             'recent_orders' => Order::query()->where('user_id', $user->id)->with(['business:id,name', 'courier:id,name'])->latest()->limit(4)->get(),
+            'recent_hire_bookings' => HireBooking::query()->where('customer_id', $user->id)->with(['item:id,title,category', 'owner:id,name,phone'])->latest()->limit(4)->get(),
             'recent_activity' => $this->mergeActivity([
                 Booking::query()->where('user_id', $user->id)->latest()->limit(3)->get()->map(fn (Booking $booking) => [
                     'type' => 'booking',
@@ -132,6 +138,12 @@ class DashboardController extends Controller
                     'title' => sprintf('Order ORD-%05d', $order->id),
                     'body' => $order->status,
                     'timestamp' => optional($order->updated_at)->toIso8601String(),
+                ]),
+                HireBooking::query()->where('customer_id', $user->id)->latest()->limit(2)->get()->map(fn (HireBooking $booking) => [
+                    'type' => 'hire',
+                    'title' => sprintf('Hire HIRE-%05d', $booking->id),
+                    'body' => $booking->status,
+                    'timestamp' => optional($booking->updated_at)->toIso8601String(),
                 ]),
             ]),
         ]);
@@ -368,9 +380,13 @@ class DashboardController extends Controller
                 'pending_orders' => Order::query()->whereIn('business_id', $businessIds)->where('status', Order::STATUS_PENDING)->count(),
                 'today_orders' => Order::query()->whereIn('business_id', $businessIds)->whereDate('created_at', today())->count(),
                 'order_revenue' => number_format((float) Order::query()->whereIn('business_id', $businessIds)->where('status', Order::STATUS_DELIVERED)->sum('total'), 2, '.', ''),
+                'hire_items' => HireItem::query()->where('owner_id', $user->id)->count(),
+                'pending_hire_bookings' => HireBooking::query()->where('owner_id', $user->id)->where('status', HireBooking::STATUS_PENDING)->count(),
+                'hire_revenue' => number_format((float) HireBooking::query()->where('owner_id', $user->id)->where('status', HireBooking::STATUS_COMPLETED)->sum('total'), 2, '.', ''),
             ],
             'quick_actions' => [
                 ['label' => 'Add Product', 'href' => '/store', 'icon' => 'package'],
+                ['label' => 'List Hire Item', 'href' => '/dashboard/business/hire-items', 'icon' => 'warehouse'],
                 ['label' => 'Add Service', 'href' => '/services', 'icon' => 'hammer'],
                 ['label' => 'Open Orders', 'href' => '/dashboard/business/orders', 'icon' => 'clipboard-list'],
                 ['label' => 'Post Promotion', 'href' => $businessDashboardHref, 'icon' => 'megaphone'],
@@ -380,6 +396,7 @@ class DashboardController extends Controller
                 ['label' => 'Products without recent activity', 'count' => max(0, 3 - Product::query()->where('user_id', $user->id)->count())],
                 ['label' => 'Promotions to refresh', 'count' => Announcement::query()->whereIn('organization_id', $businessIds)->whereDate('published_at', '<', now()->subDays(14))->count()],
                 ['label' => 'Orders waiting review', 'count' => Order::query()->whereIn('business_id', $businessIds)->where('status', Order::STATUS_PENDING)->count()],
+                ['label' => 'Hire requests waiting review', 'count' => HireBooking::query()->where('owner_id', $user->id)->where('status', HireBooking::STATUS_PENDING)->count()],
             ],
             'businesses' => $businesses,
             'sale_alerts' => $recentPromotions,
@@ -389,6 +406,8 @@ class DashboardController extends Controller
             'recent_services' => $recentServices,
             'recent_bookings' => $recentBookings,
             'recent_orders' => $recentOrders,
+            'recent_hire_items' => HireItem::query()->where('owner_id', $user->id)->latest()->limit(5)->get(['id', 'title', 'category', 'town', 'area', 'verification_status', 'status', 'price_per_day', 'price_per_hour', 'created_at']),
+            'recent_hire_bookings' => HireBooking::query()->where('owner_id', $user->id)->with(['item:id,title,category', 'customer:id,name,phone'])->latest()->limit(5)->get(),
             'recent_activity' => $this->mergeActivity([
                 Product::query()->where('user_id', $user->id)->latest()->limit(3)->get()->map(fn (Product $product) => [
                     'type' => 'product',
@@ -407,6 +426,12 @@ class DashboardController extends Controller
                     'title' => sprintf('Order ORD-%05d', $order->id),
                     'body' => $order->status,
                     'timestamp' => optional($order->updated_at)->toIso8601String(),
+                ]),
+                HireBooking::query()->where('owner_id', $user->id)->latest()->limit(2)->get()->map(fn (HireBooking $booking) => [
+                    'type' => 'hire',
+                    'title' => sprintf('Hire HIRE-%05d', $booking->id),
+                    'body' => $booking->status,
+                    'timestamp' => optional($booking->updated_at)->toIso8601String(),
                 ]),
             ]),
         ]);
@@ -621,6 +646,8 @@ class DashboardController extends Controller
                 'service_providers' => (clone $providerQuery)->count(),
                 'active_emergency_alerts' => (clone $alertQuery)->where('type', 'emergency_alert')->count(),
                 'active_orders' => (clone $orderQuery)->count(),
+                'pending_hire_listings' => HireItem::query()->where('verification_status', HireItem::VERIFICATION_PENDING)->count(),
+                'active_hire_bookings' => HireBooking::query()->whereIn('status', HireBooking::ACTIVE_AVAILABILITY_STATUSES)->count(),
             ],
             'quick_actions' => [
                 ['label' => 'Send Announcement', 'href' => '/dashboard/town-manager', 'icon' => 'megaphone'],
@@ -629,6 +656,7 @@ class DashboardController extends Controller
                 ['label' => 'Review Reports', 'href' => '/dashboard/town-manager/reports', 'icon' => 'clipboard-list'],
                 ['label' => 'Moderate Feed', 'href' => '/dashboard/town-manager/feed/pending', 'icon' => 'shield'],
                 ['label' => 'Town Analytics', 'href' => '/dashboard/town-manager/analytics', 'icon' => 'activity'],
+                ['label' => 'Review Hire Listings', 'href' => '/dashboard/admin/hire', 'icon' => 'warehouse'],
             ],
             'pending_tasks' => [
                 ['label' => 'Urgent reports', 'count' => (clone $reportQuery)->where('priority', 'high')->whereIn('status', $this->activeReportStatuses)->count()],
@@ -658,6 +686,7 @@ class DashboardController extends Controller
                 'couriers_online' => (clone $courierProfiles)->where('is_online', true)->count(),
                 'verified_drivers' => (clone $driverProfiles)->where('is_verified', true)->count(),
                 'verified_couriers' => (clone $courierProfiles)->where('is_verified', true)->count(),
+                'active_hire_bookings' => HireBooking::query()->whereIn('status', HireBooking::ACTIVE_AVAILABILITY_STATUSES)->count(),
             ],
             'resident_engagement' => [
                 'residents' => (clone $residentQuery)->count(),
@@ -667,6 +696,10 @@ class DashboardController extends Controller
             ],
             'communication_stats' => $communicationStats,
             'town_activity_overview' => $areaBreakdown,
+            'hire_overview' => [
+                'pending_listings' => HireItem::query()->where('verification_status', HireItem::VERIFICATION_PENDING)->latest()->limit(5)->get(['id', 'title', 'category', 'town', 'area', 'verification_status', 'created_at']),
+                'active_bookings' => HireBooking::query()->with(['item:id,title', 'customer:id,name'])->whereIn('status', HireBooking::ACTIVE_AVAILABILITY_STATUSES)->latest()->limit(5)->get(),
+            ],
             'recent_activity' => $this->mergeActivity([
                 (clone $reportQuery)->latest()->limit(4)->get()->map(fn (CityReport $report) => [
                     'type' => 'report',
@@ -691,6 +724,12 @@ class DashboardController extends Controller
                     'title' => sprintf('Order ORD-%05d', $order->id),
                     'body' => $order->status,
                     'timestamp' => optional($order->updated_at)->toIso8601String(),
+                ]),
+                HireBooking::query()->latest()->limit(2)->get()->map(fn (HireBooking $booking) => [
+                    'type' => 'hire',
+                    'title' => sprintf('Hire HIRE-%05d', $booking->id),
+                    'body' => $booking->status,
+                    'timestamp' => optional($booking->updated_at)->toIso8601String(),
                 ]),
             ]),
         ]);
@@ -730,6 +769,8 @@ class DashboardController extends Controller
                 'active_deliveries' => DeliveryRequest::query()->whereIn('status', ['requested', 'searching', 'accepted', 'pickup_confirmed', 'in_transit'])->count(),
                 'active_orders' => Order::query()->whereNotIn('status', [Order::STATUS_DELIVERED, Order::STATUS_CANCELLED, Order::STATUS_REJECTED])->count(),
                 'notification_volume' => $this->notificationCount(),
+                'hire_items' => HireItem::count(),
+                'active_hire_bookings' => HireBooking::query()->whereIn('status', HireBooking::ACTIVE_AVAILABILITY_STATUSES)->count(),
             ],
             'system_overview' => [
                 'total_listings' => Listing::count(),
@@ -745,6 +786,7 @@ class DashboardController extends Controller
                 ['label' => 'View system health', 'href' => '/dashboard/admin/system-health', 'icon' => 'activity'],
                 ['label' => 'View feature flags', 'href' => '/dashboard/admin/feature-flags', 'icon' => 'sparkles'],
                 ['label' => 'View orders', 'href' => '/dashboard/admin/orders', 'icon' => 'shopping-bag'],
+                ['label' => 'Review hire', 'href' => '/dashboard/admin/hire', 'icon' => 'warehouse'],
             ],
             'pending_tasks' => [
                 ['label' => 'Open flags', 'count' => ModerationFlag::query()->where('status', 'open')->count()],
@@ -752,11 +794,14 @@ class DashboardController extends Controller
                 ['label' => 'Pending role approvals', 'count' => RoleApplication::query()->whereIn('status', ['submitted', 'pending_review'])->count()],
                 ['label' => 'Pending community projects', 'count' => CommunityProject::query()->where('verification_status', 'pending')->count()],
                 ['label' => 'Open orders', 'count' => Order::query()->whereNotIn('status', [Order::STATUS_DELIVERED, Order::STATUS_CANCELLED, Order::STATUS_REJECTED])->count()],
+                ['label' => 'Pending hire approvals', 'count' => HireItem::query()->where('verification_status', HireItem::VERIFICATION_PENDING)->count()],
             ],
             'pending_approvals' => RoleApplication::query()->latest()->limit(6)->get(['id', 'requested_role', 'status', 'full_name', 'phone', 'created_at']),
             'moderation_flags' => ModerationFlag::query()->latest()->limit(6)->get(['id', 'reason', 'status', 'notes', 'created_at']),
             'recent_reports' => CityReport::query()->latest()->limit(5)->get(['id', 'title', 'category', 'status', 'priority', 'created_at']),
             'recent_orders' => Order::query()->with(['customer:id,name,phone', 'business:id,name'])->latest()->limit(6)->get(),
+            'recent_hire_items' => HireItem::query()->with(['owner:id,name,phone', 'business:id,name'])->latest()->limit(6)->get(),
+            'recent_hire_bookings' => HireBooking::query()->with(['item:id,title', 'customer:id,name,phone', 'owner:id,name,phone'])->latest()->limit(6)->get(),
             'user_mix' => [
                 'residents' => $this->residentCount(),
                 'business_owners' => User::role('business_owner')->count() + User::role('seller')->count(),
@@ -777,6 +822,7 @@ class DashboardController extends Controller
                 'deliveries' => DeliveryRequest::query()->whereIn('status', ['requested', 'searching', 'accepted', 'pickup_confirmed', 'in_transit'])->count(),
                 'orders' => Order::query()->whereNotIn('status', [Order::STATUS_DELIVERED, Order::STATUS_CANCELLED, Order::STATUS_REJECTED])->count(),
                 'flags' => ModerationFlag::query()->where('status', 'open')->count(),
+                'hire_bookings' => HireBooking::query()->whereIn('status', HireBooking::ACTIVE_AVAILABILITY_STATUSES)->count(),
             ],
             'notification_volume' => [
                 'total_notifications' => $this->notificationCount(),
@@ -819,6 +865,7 @@ class DashboardController extends Controller
                 'open_reports' => CityReport::query()->where('town', PilotLocation::town())->whereIn('status', $this->activeReportStatuses)->count(),
                 'businesses' => Organization::query()->where('town', PilotLocation::town())->count(),
                 'providers' => ServiceProvider::query()->where('town', PilotLocation::town())->count(),
+                'hire_items' => HireItem::query()->where('town', PilotLocation::town())->count(),
             ]],
             'recent_activity' => $this->mergeActivity([
                 ModerationFlag::query()->latest()->limit(3)->get()->map(fn (ModerationFlag $flag) => [
@@ -844,6 +891,12 @@ class DashboardController extends Controller
                     'title' => sprintf('Order ORD-%05d', $order->id),
                     'body' => $order->status,
                     'timestamp' => optional($order->updated_at)->toIso8601String(),
+                ]),
+                HireBooking::query()->latest()->limit(2)->get()->map(fn (HireBooking $booking) => [
+                    'type' => 'hire',
+                    'title' => sprintf('Hire HIRE-%05d', $booking->id),
+                    'body' => $booking->status,
+                    'timestamp' => optional($booking->updated_at)->toIso8601String(),
                 ]),
             ]),
         ]);

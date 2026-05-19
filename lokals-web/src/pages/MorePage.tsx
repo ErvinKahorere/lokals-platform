@@ -1,4 +1,4 @@
-import { Award, Bell, BriefcaseBusiness, Building2, CalendarDays, CircleHelp, Home, Newspaper, ShieldAlert, ShoppingBag, Store, UserRound, Verified } from 'lucide-react'
+import { Award, Bell, BriefcaseBusiness, Building2, CalendarDays, CircleHelp, Home, Newspaper, ShieldAlert, ShoppingBag, Store, UserRound, Verified, Warehouse } from 'lucide-react'
 import { useMemo } from 'react'
 import { ActionTile, PageHeader, SectionCard } from '../components/Ui'
 import { getRoleHomePath } from '../lib/roles'
@@ -21,6 +21,7 @@ export function MorePage() {
       return [
         { to: '/dashboard/business', label: 'Business Dashboard', subtitle: 'Listings, products, and service traction', icon: Store },
         { to: '/dashboard/bookings', label: 'Service Requests', subtitle: 'Bookings and customer demand in one place', icon: Bell },
+        { to: '/dashboard/business/hire-items', label: 'Hire Items', subtitle: 'Manage rentals and local equipment listings', icon: Warehouse },
       ]
     }
 
@@ -56,6 +57,7 @@ export function MorePage() {
     { to: '/ride', label: 'Taxi', subtitle: 'Ride requests', icon: ShoppingBag },
     { to: '/delivery', label: 'Delivery', subtitle: 'Parcel requests', icon: ShoppingBag },
     { to: '/store', label: 'Marketplace', subtitle: 'Products and local deals', icon: Store },
+    { to: '/hire', label: 'Hire / Rentals', subtitle: 'Equipment, event gear, and practical rentals', icon: Warehouse },
     { to: '/report-issue', label: 'Report Issue', subtitle: 'Town issue reporting', icon: Bell },
     { to: '/alerts', label: 'Announcements', subtitle: 'Town alerts and notices', icon: Bell },
     { to: '/directory', label: 'Directory', subtitle: 'Businesses and local services', icon: Building2 },

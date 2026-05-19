@@ -85,6 +85,11 @@ class Organization extends Model
         return $this->hasMany(Order::class, 'business_id');
     }
 
+    public function hireItems(): HasMany
+    {
+        return $this->hasMany(HireItem::class, 'business_id');
+    }
+
     public function followers(): MorphMany
     {
         return $this->morphMany(Follow::class, 'followable');

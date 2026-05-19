@@ -17,6 +17,8 @@ import type {
   EventTicket,
   EventTicketType,
   FollowItem,
+  HireBookingRecord,
+  HireItemRecord,
   Job,
   Listing,
   MePayload,
@@ -413,6 +415,69 @@ export const useOrders = (params?: Record<string, string | number | boolean | un
     enabled,
     queryKey: ['orders', params],
     queryFn: async () => toPaginated<OrderRecord>((await api.get('/orders', { params })).data),
+  })
+
+export const useHireItems = (params?: Record<string, string | number | boolean | undefined>) =>
+  useQuery({
+    queryKey: ['hire-items', params],
+    queryFn: async () => toPaginated<HireItemRecord>((await api.get('/hire/items', { params: applyPilotLocation(params) })).data),
+  })
+
+export const useHireItem = (id?: string, params?: Record<string, string | number | boolean | undefined>) =>
+  useQuery({
+    enabled: Boolean(id),
+    queryKey: ['hire-item', id, params],
+    queryFn: async () => unwrapOne<HireItemRecord>((await api.get(`/hire/items/${id}`, { params })).data),
+  })
+
+export const useHireBookings = (params?: Record<string, string | number | boolean | undefined>, enabled = true) =>
+  useQuery({
+    enabled,
+    queryKey: ['hire-bookings', params],
+    queryFn: async () => toPaginated<HireBookingRecord>((await api.get('/hire/bookings', { params })).data),
+  })
+
+export const useHireBooking = (id?: string) =>
+  useQuery({
+    enabled: Boolean(id),
+    queryKey: ['hire-booking', id],
+    queryFn: async () => unwrapOne<HireBookingRecord>((await api.get(`/hire/bookings/${id}`)).data),
+    retry: (failureCount, error) => {
+      const status = (error as AxiosError)?.response?.status
+      if (status === 401 || status === 403) {
+        return false
+      }
+
+      return failureCount < 2
+    },
+  })
+
+export const useMyHireItems = (params?: Record<string, string | number | boolean | undefined>, enabled = true) =>
+  useQuery({
+    enabled,
+    queryKey: ['my-hire-items', params],
+    queryFn: async () => toPaginated<HireItemRecord>((await api.get('/hire/my-items', { params })).data),
+  })
+
+export const useOwnerHireBookings = (params?: Record<string, string | number | boolean | undefined>, enabled = true) =>
+  useQuery({
+    enabled,
+    queryKey: ['owner-hire-bookings', params],
+    queryFn: async () => toPaginated<HireBookingRecord>((await api.get('/hire/owner/bookings', { params })).data),
+  })
+
+export const useAdminHireItems = (params?: Record<string, string | number | boolean | undefined>, enabled = true) =>
+  useQuery({
+    enabled,
+    queryKey: ['admin-hire-items', params],
+    queryFn: async () => toPaginated<HireItemRecord>((await api.get('/admin/hire/items', { params })).data),
+  })
+
+export const useAdminHireBookings = (params?: Record<string, string | number | boolean | undefined>, enabled = true) =>
+  useQuery({
+    enabled,
+    queryKey: ['admin-hire-bookings', params],
+    queryFn: async () => toPaginated<HireBookingRecord>((await api.get('/admin/hire/bookings', { params })).data),
   })
 
 export const useOrder = (id?: string) =>
@@ -1970,6 +2035,166 @@ export const useCreateOrder = () => {
         queryClient.invalidateQueries({ queryKey: ['dashboard-citizen'] }),
         queryClient.invalidateQueries({ queryKey: ['seller-orders'] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard-business'] }),
+      ])
+    },
+  })
+}
+
+export const useCreateHireItem = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => (await api.post('/hire/items', payload)).data,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['my-hire-items'] }),
+        queryClient.invalidateQueries({ queryKey: ['hire-items'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-business'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-citizen'] }),
+      ])
+    },
+  })
+}
+
+export const useUpdateHireItem = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ itemId, payload }: { itemId: number; payload: Record<string, unknown> }) =>
+      (await api.patch(`/hire/items/${itemId}`, payload)).data,
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['my-hire-items'] }),
+        queryClient.invalidateQueries({ queryKey: ['hire-items'] }),
+        queryClient.invalidateQueries({ queryKey: ['hire-item', String(variables.itemId)] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-business'] }),
+      ])
+    },
+  })
+}
+
+export const useDeleteHireItem = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ itemId }: { itemId: number }) => (await api.delete(`/hire/items/${itemId}`)).data,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['my-hire-items'] }),
+        queryClient.invalidateQueries({ queryKey: ['hire-items'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-business'] }),
+      ])
+    },
+  })
+}
+
+export const useBookHireItem = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ itemId, payload }: { itemId: number; payload: Record<string, unknown> }) =>
+      (await api.post(`/hire/items/${itemId}/book`, payload)).data,
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['hire-bookings'] }),
+        queryClient.invalidateQueries({ queryKey: ['hire-item', String(variables.itemId)] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-citizen'] }),
+      ])
+    },
+  })
+}
+
+export const useCancelHireBooking = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ bookingId }: { bookingId: number }) => (await api.post(`/hire/bookings/${bookingId}/cancel`)).data,
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['hire-bookings'] }),
+        queryClient.invalidateQueries({ queryKey: ['hire-booking', String(variables.bookingId)] }),
+        queryClient.invalidateQueries({ queryKey: ['owner-hire-bookings'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-citizen'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-business'] }),
+      ])
+    },
+  })
+}
+
+export const useRateHireBooking = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ bookingId, rating, comment }: { bookingId: number; rating: number; comment?: string }) =>
+      (await api.post(`/hire/bookings/${bookingId}/rate`, { rating, comment })).data,
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['hire-bookings'] }),
+        queryClient.invalidateQueries({ queryKey: ['hire-booking', String(variables.bookingId)] }),
+      ])
+    },
+  })
+}
+
+export const useHireBookingAction = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      bookingId,
+      action,
+    }: {
+      bookingId: number
+      action: 'accept' | 'reject' | 'confirm' | 'handed-over' | 'returned' | 'complete'
+    }) => (await api.post(`/hire/bookings/${bookingId}/${action}`)).data,
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['owner-hire-bookings'] }),
+        queryClient.invalidateQueries({ queryKey: ['hire-bookings'] }),
+        queryClient.invalidateQueries({ queryKey: ['hire-booking', String(variables.bookingId)] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-business'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-citizen'] }),
+      ])
+    },
+  })
+}
+
+export const useAdminHireItemModeration = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ itemId, action }: { itemId: number; action: 'approve' | 'reject' }) =>
+      (await api.post(`/admin/hire/items/${itemId}/${action}`)).data,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-hire-items'] }),
+        queryClient.invalidateQueries({ queryKey: ['hire-items'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-admin'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-municipality'] }),
+      ])
+    },
+  })
+}
+
+export const useResolveHireDispute = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      bookingId,
+      payload,
+    }: {
+      bookingId: number
+      payload: { status?: 'returned' | 'completed' | 'cancelled'; owner_notes?: string }
+    }) => (await api.post(`/admin/hire/bookings/${bookingId}/resolve-dispute`, payload)).data,
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-hire-bookings'] }),
+        queryClient.invalidateQueries({ queryKey: ['hire-booking', String(variables.bookingId)] }),
+        queryClient.invalidateQueries({ queryKey: ['owner-hire-bookings'] }),
+        queryClient.invalidateQueries({ queryKey: ['hire-bookings'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-admin'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard-municipality'] }),
       ])
     },
   })
