@@ -50,11 +50,18 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
             final query = _searchController.text.toLowerCase();
             return query.isEmpty || listing.title.toLowerCase().contains(query) || listing.description.toLowerCase().contains(query);
           }).toList();
+          final recommended = filtered.take(4).toList();
 
           return filtered.isEmpty
-              ? const EmptyStateView(
+              ? EmptyStateView(
                   title: 'No items found nearby',
-                  body: 'Try changing category or location.',
+                  body: 'Try another search, browse Hire for rentals, or post what your area needs.',
+                  action: AppButton(
+                    label: 'Clear search',
+                    expanded: false,
+                    variant: AppButtonVariant.secondary,
+                    onPressed: () => setState(_searchController.clear),
+                  ),
                 )
               : ListView(
                   padding: const EdgeInsets.all(20),
@@ -81,6 +88,32 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
                       badge: 'Marketplace',
                     ),
                     const SizedBox(height: 12),
+                    SizedBox(
+                      height: 128,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          _DiscoveryPrompt(
+                            title: 'Recommended near you',
+                            body: recommended.isEmpty
+                                ? 'Fresh local picks will appear here.'
+                                : '${recommended.length} local picks ready to browse.',
+                            icon: Icons.near_me_outlined,
+                          ),
+                          const _DiscoveryPrompt(
+                            title: 'Fast delivery nearby',
+                            body: 'Courier-ready sellers and easy pickup options stay surfaced.',
+                            icon: Icons.delivery_dining_outlined,
+                          ),
+                          const _DiscoveryPrompt(
+                            title: 'Recently viewed',
+                            body: 'Keep momentum with stores and items you checked before.',
+                            icon: Icons.history_rounded,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     ...filtered.map(
                       (item) => Padding(
                         padding: const EdgeInsets.only(bottom: 12),
@@ -90,8 +123,19 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
                   ],
                 );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('Something went wrong. Try again. $error')),
+        loading: () => const Padding(
+          padding: EdgeInsets.all(20),
+          child: LoadingSkeleton(height: 220),
+        ),
+        error: (error, _) => EmptyStateView(
+          title: 'Marketplace could not refresh.',
+          body: 'Your saved navigation still works. Retry when the connection settles.',
+          action: AppButton(
+            label: 'Retry',
+            expanded: false,
+            onPressed: () => ref.invalidate(marketplaceProvider),
+          ),
+        ),
       ),
     );
   }
@@ -319,5 +363,57 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
     }
 
     return ImagePicker().pickImage(source: source, imageQuality: 82);
+  }
+}
+
+class _DiscoveryPrompt extends StatelessWidget {
+  const _DiscoveryPrompt({
+    required this.title,
+    required this.body,
+    required this.icon,
+  });
+
+  final String title;
+  final String body;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 214,
+      margin: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x140F172A),
+            blurRadius: 24,
+            offset: Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: const Color(0xFF16A34A)),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            body,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+          ),
+        ],
+      ),
+    );
   }
 }

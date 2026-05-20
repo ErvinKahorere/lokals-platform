@@ -951,6 +951,10 @@ export interface UnifiedSearchResult {
   status?: string | null
   price?: string | number | null
   sale_price?: string | number | null
+  price_per_hour?: string | number | null
+  price_per_day?: string | number | null
+  deposit_amount?: string | number | null
+  verification_status?: string | null
   starts_at?: string | null
   published_at?: string | null
   source_name?: string | null
@@ -961,6 +965,7 @@ export interface UnifiedSearchResponse {
   providers: UnifiedSearchResult[]
   directory: UnifiedSearchResult[]
   products: UnifiedSearchResult[]
+  hire_items: UnifiedSearchResult[]
   jobs: UnifiedSearchResult[]
   events: UnifiedSearchResult[]
   news: UnifiedSearchResult[]

@@ -7,6 +7,7 @@ use App\Models\Alert;
 use App\Models\Announcement;
 use App\Models\Accommodation;
 use App\Models\Event;
+use App\Models\HireItem;
 use App\Models\JobPost;
 use App\Models\Listing;
 use App\Models\NewsItem;
@@ -36,6 +37,7 @@ class SearchController extends Controller
                 'directory' => [],
                 'alerts' => [],
                 'products' => [],
+                'hire_items' => [],
                 'accommodations' => [],
                 'events' => [],
                 'news' => [],
@@ -49,7 +51,7 @@ class SearchController extends Controller
                 $query->where('town', $town);
             }
 
-            if ($area !== '' && in_array($query->getModel()->getTable(), ['products', 'accommodations', 'organizations', 'events', 'service_providers', 'news_items'], true)) {
+            if ($area !== '' && in_array($query->getModel()->getTable(), ['products', 'hire_items', 'accommodations', 'organizations', 'events', 'service_providers', 'news_items'], true)) {
                 $query->where('area', $area);
             }
 
@@ -84,6 +86,13 @@ class SearchController extends Controller
                 : [],
             'products' => $matchesType('products')
                 ? $applyPlace(Product::query()->where(fn ($query) => $query->where('title', 'like', $like)->orWhere('description', 'like', $like)))->limit(5)->get(['id', 'title', 'town', 'area', 'status', 'price', 'sale_price'])
+                : [],
+            'hire_items' => $matchesType('hire_items')
+                ? $applyPlace(HireItem::query()
+                    ->where(fn ($query) => $query->where('title', 'like', $like)->orWhere('description', 'like', $like)->orWhere('category', 'like', $like)))
+                    ->where('status', HireItem::STATUS_ACTIVE)
+                    ->limit(5)
+                    ->get(['id', 'title', 'category', 'town', 'area', 'status', 'verification_status', 'price_per_hour', 'price_per_day', 'deposit_amount'])
                 : [],
             'accommodations' => $matchesType('accommodations')
                 ? $applyPlace(Accommodation::query()->where(fn ($query) => $query->where('title', 'like', $like)->orWhere('description', 'like', $like)))->limit(5)->get(['id', 'title', 'town', 'area', 'status', 'price', 'price_period'])

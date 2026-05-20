@@ -3,14 +3,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../core/models.dart';
 import 'notification_item.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../discovery/discovery_repository.dart';
 import '../notifications/notification_routing.dart';
 
-class NotificationsScreen extends ConsumerWidget {
+class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
+
+  @override
+  ConsumerState<NotificationsScreen> createState() =>
+      _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
+  String _activeFilter = 'all';
+
+  static const _filters = [
+    ('all', 'All'),
+    ('orders', 'Orders'),
+    ('rides', 'Rides'),
+    ('hire', 'Hire'),
+    ('marketplace', 'Market'),
+    ('reports', 'Reports'),
+    ('announcements', 'Alerts'),
+  ];
 
   String _groupLabel(String? createdAt) {
     if (createdAt == null || createdAt.isEmpty) return 'Earlier';
@@ -20,9 +39,29 @@ class NotificationsScreen extends ConsumerWidget {
     return created.year == now.year && created.month == now.month && created.day == now.day ? 'Today' : 'Earlier';
   }
 
+  String _categoryFor(NotificationItemModel item) {
+    final haystack = [
+      item.type,
+      item.targetType,
+      item.title,
+      item.body,
+      item.target?.type,
+    ].whereType<String>().join(' ').toLowerCase();
+
+    if (haystack.contains('order')) return 'orders';
+    if (haystack.contains('ride') || haystack.contains('driver')) return 'rides';
+    if (haystack.contains('hire') || haystack.contains('rental')) return 'hire';
+    if (haystack.contains('market') || haystack.contains('product') || haystack.contains('store')) return 'marketplace';
+    if (haystack.contains('report') || haystack.contains('issue')) return 'reports';
+    if (haystack.contains('announcement') || haystack.contains('alert') || haystack.contains('news')) return 'announcements';
+    return 'all';
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final notifications = ref.watch(notificationsProvider);
+    final allItems = notifications.asData?.value ?? const <NotificationItemModel>[];
+    final unreadCount = allItems.where((item) => item.readAt == null).length;
 
     return LokalsShell(
       title: 'Notifications',
@@ -61,16 +100,39 @@ class NotificationsScreen extends ConsumerWidget {
                   ),
                 ),
                 AppBadge(
-                  label:
-                      '${notifications.asData?.value.where((item) => item.readAt == null).length ?? 0} unread',
+                  label: '$unreadCount unread',
                   tone: AppBadgeTone.brand,
                 ),
               ],
             ),
           ),
           const SizedBox(height: 16),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (final filter in _filters) ...[
+                  ChoiceChip(
+                    label: Text(
+                      filter.$1 == 'all'
+                          ? '${filter.$2} ${allItems.length}'
+                          : '${filter.$2} ${allItems.where((item) => _categoryFor(item) == filter.$1).length}',
+                    ),
+                    selected: _activeFilter == filter.$1,
+                    onSelected: (_) => setState(() => _activeFilter = filter.$1),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
           notifications.when(
             data: (items) {
+              final visibleItems = _activeFilter == 'all'
+                  ? items
+                  : items.where((item) => _categoryFor(item) == _activeFilter).toList();
+
               if (items.isEmpty) {
                 return const EmptyStateView(
                   title: 'No notifications yet.',
@@ -78,11 +140,18 @@ class NotificationsScreen extends ConsumerWidget {
                 );
               }
 
+              if (visibleItems.isEmpty) {
+                return const EmptyStateView(
+                  title: 'Nothing in this category yet.',
+                  body: 'Switch filters or check back when this workflow has activity.',
+                );
+              }
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   for (final group in ['Today', 'Earlier'])
-                    if (items.where((item) => _groupLabel(item.createdAt) == group).isNotEmpty) ...[
+                    if (visibleItems.where((item) => _groupLabel(item.createdAt) == group).isNotEmpty) ...[
                       Padding(
                         padding: const EdgeInsets.only(bottom: 10),
                         child: Text(
@@ -90,7 +159,7 @@ class NotificationsScreen extends ConsumerWidget {
                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.mutedText),
                         ),
                       ),
-                      ...items.where((item) => _groupLabel(item.createdAt) == group).map(
+                      ...visibleItems.where((item) => _groupLabel(item.createdAt) == group).map(
                         (item) => Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: NotificationItemCard(

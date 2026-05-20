@@ -26,6 +26,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
     ('alerts', 'Alerts', '/alerts', 'title'),
     ('listings', 'Listings', '/marketplace', 'title'),
     ('products', 'Products', '/store', 'title'),
+    ('hire_items', 'Hire / Rentals', '/hire', 'title'),
     ('jobs', 'Jobs', '/jobs', 'title'),
     ('events', 'Events', '/events', 'title'),
     ('news', 'News', '/news', 'title'),
@@ -61,6 +62,8 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
         return '/marketplace';
       case 'products':
         return '/store/$id';
+      case 'hire_items':
+        return '/hire/$id';
       case 'jobs':
         return '/jobs/$id';
       case 'events':
@@ -92,7 +95,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
         children: [
           AppSearchBar(
             controller: _controller,
-            hintText: 'Search services, jobs, products...',
+            hintText: 'Search services, shops, rentals...',
             recentKey: 'global-results',
             onChanged: (_) => setState(() {}),
             onValueSelected: (_) => setState(() {}),
@@ -100,16 +103,17 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
               'Barber nearby',
               'Jobs in Okahandja',
               'Events this weekend',
+              'Chairs for hire',
               'Local news',
             ],
-            shortcuts: const ['Services', 'Jobs', 'Products', 'Events'],
+            shortcuts: const ['Services', 'Products', 'Hire', 'Jobs', 'Events'],
           ),
           const SizedBox(height: 16),
           if (query.isEmpty)
             const EmptyStateView(
               title: 'Search across LOKALS',
               body:
-                  'Services, providers, products, jobs, events, news, and accommodation will appear here.',
+                  'Services, providers, products, rentals, jobs, events, news, and accommodation will appear here.',
             )
           else
             results.when(
@@ -131,7 +135,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                   return const EmptyStateView(
                     title: 'No matches found',
                     body:
-                        'No services, jobs, products, or local updates matched that search yet. Try another word or browse by section.',
+                        'No services, rentals, jobs, products, or local updates matched that search yet. Try another word or browse by section.',
                   );
                 }
 
@@ -182,6 +186,12 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                                   item['priority']?.toString(),
                                   item['price']?.toString(),
                                   item['sale_price']?.toString(),
+                                  item['price_per_day'] == null
+                                      ? null
+                                      : 'N\$ ${item['price_per_day']}/day',
+                                  item['price_per_hour'] == null
+                                      ? null
+                                      : 'N\$ ${item['price_per_hour']}/hr',
                                 ]
                                     .whereType<String>()
                                     .where((value) => value.isNotEmpty)

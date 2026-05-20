@@ -213,6 +213,26 @@ export function AppShell() {
       return
     }
 
+    if (query.toLowerCase().includes('hire') || query.toLowerCase().includes('rental') || query.toLowerCase().includes('rent') || query.toLowerCase().includes('equipment')) {
+      navigate(`/hire?search=${encodeURIComponent(query)}`)
+      return
+    }
+
+    if (query.toLowerCase().includes('ride') || query.toLowerCase().includes('taxi') || query.toLowerCase().includes('transport')) {
+      navigate('/ride')
+      return
+    }
+
+    if (query.toLowerCase().includes('parcel')) {
+      navigate('/delivery')
+      return
+    }
+
+    if (query.toLowerCase().includes('order') || query.toLowerCase().includes('food')) {
+      navigate(`/orders?search=${encodeURIComponent(query)}`)
+      return
+    }
+
     if (query.toLowerCase().includes('product') || query.toLowerCase().includes('shop') || query.toLowerCase().includes('store')) {
       navigate(`/store?search=${encodeURIComponent(query)}`)
       return
@@ -283,11 +303,15 @@ export function AppShell() {
                       'Events this weekend',
                       'Breaking local news',
                       'Shops near me',
+                      'Chairs for hire',
+                      'Order food nearby',
                     ]}
                     shortcuts={[
                       { label: 'Services', value: 'services near me' },
                       { label: 'Directory', value: 'directory nearby' },
                       { label: 'Store', value: 'shop local products' },
+                      { label: 'Hire', value: 'equipment rentals' },
+                      { label: 'Orders', value: 'order food nearby' },
                       { label: 'Events', value: 'events this weekend' },
                       { label: 'News', value: 'latest local news' },
                     ]}
