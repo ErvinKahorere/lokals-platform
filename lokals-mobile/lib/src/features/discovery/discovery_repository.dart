@@ -153,13 +153,13 @@ final commerceOrderDetailsProvider =
     });
 
 final hireItemsProvider =
-    FutureProvider.family<List<HireItemModel>, Map<String, dynamic>?>((
+    FutureProvider.family<List<HireItemModel>, HireItemsRequest>((
       ref,
-      params,
+      request,
     ) async {
       return ref
           .read(discoveryRepositoryProvider)
-          .fetchHireItems(params: params);
+          .fetchHireItems(params: request.params);
     });
 
 final hireItemDetailsProvider =
@@ -316,6 +316,44 @@ class MobileAccessException implements Exception {
 
   @override
   String toString() => message;
+}
+
+class HireItemsRequest {
+  const HireItemsRequest({
+    this.search,
+    this.category,
+    this.deliveryOnly = false,
+  });
+
+  final String? search;
+  final String? category;
+  final bool deliveryOnly;
+
+  Map<String, dynamic>? get params {
+    final payload = <String, dynamic>{};
+    final normalizedSearch = search?.trim();
+    if (normalizedSearch != null && normalizedSearch.isNotEmpty) {
+      payload['q'] = normalizedSearch;
+    }
+    if (category != null && category != 'all') {
+      payload['category'] = category;
+    }
+    if (deliveryOnly) {
+      payload['delivery_available'] = 1;
+    }
+    return payload.isEmpty ? null : payload;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is HireItemsRequest &&
+        other.search == search &&
+        other.category == category &&
+        other.deliveryOnly == deliveryOnly;
+  }
+
+  @override
+  int get hashCode => Object.hash(search, category, deliveryOnly);
 }
 
 class HireItemRequest {

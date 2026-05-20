@@ -2,122 +2,122 @@ import { lazy, Suspense, type ReactElement } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AppShell } from './components/ui/AppShell'
 import { LoadingScreen } from './components/ui/LoadingSkeleton'
-import { HomePage } from './pages/HomePage'
-import { LandingPage } from './pages/LandingPage'
-import { LoginPage } from './pages/LoginPage'
-import { OnboardingPage } from './pages/OnboardingPage'
-import { RegisterPage } from './pages/RegisterPage'
-import { DeliveryPage } from './pages/DeliveryPage'
-import { DeliveryDetailsPage } from './pages/DeliveryDetailsPage'
-import { DirectoryPage } from './pages/DirectoryPage'
-import { MorePage } from './pages/MorePage'
-import { ReportIssuePage } from './pages/ReportIssuePage'
-import { RidePage } from './pages/RidePage'
-import { RideDetailsPage } from './pages/RideDetailsPage'
-import { SosPage } from './pages/SosPage'
-import { SettingsPage } from './pages/SettingsPage'
-import { AlertsPage } from './pages/AlertsPage'
-import { NotificationsPage } from './pages/NotificationsPage'
-import { NewsPage } from './pages/NewsPage'
-import { NewsDetailsPage } from './pages/NewsDetailsPage'
-import { ArticleBrowserPage } from './pages/ArticleBrowserPage'
-import { CommunityProjectsPage } from './pages/CommunityProjectsPage'
-import { CommunityProjectDetailsPage } from './pages/CommunityProjectDetailsPage'
-import { SubmitCommunityProjectPage } from './pages/SubmitCommunityProjectPage'
-import { MyCommunityProjectsPage } from './pages/MyCommunityProjectsPage'
-import { MyCommunityPledgesPage } from './pages/MyCommunityPledgesPage'
-import { TownManagerCommunityProjectsPage } from './pages/TownManagerCommunityProjectsPage'
-import { TownManagerCommunityProjectReviewPage } from './pages/TownManagerCommunityProjectReviewPage'
-import { FeedPage } from './pages/FeedPage'
-import { InboxPage } from './pages/InboxPage'
-import { ConversationPage } from './pages/ConversationPage'
-import { EventsPage } from './pages/EventsPage'
-import { EventDetailsPage } from './pages/EventDetailsPage'
-import { EventCalendarPage } from './pages/EventCalendarPage'
-import { CreateEventPage } from './pages/CreateEventPage'
-import { ManageEventPage } from './pages/ManageEventPage'
-import { EventTicketsPage } from './pages/EventTicketsPage'
-import { ProductDetailsPage } from './pages/ProductDetailsPage'
-import { OrdersPage } from './pages/OrdersPage'
-import { OrderDetailsPage } from './pages/OrderDetailsPage'
-import { CheckoutPage } from './pages/CheckoutPage'
-import { HirePage } from './pages/HirePage'
-import { HireItemDetailsPage } from './pages/HireItemDetailsPage'
-import { MyHireBookingsPage } from './pages/MyHireBookingsPage'
-import { HireBookingPage } from './pages/HireBookingPage'
-import { MyHireItemsPage } from './pages/MyHireItemsPage'
-import { AccommodationDetailsPage } from './pages/AccommodationDetailsPage'
-import { MyBookingsPage } from './pages/dashboard/MyBookingsPage'
-import { MyTicketsPage } from './pages/dashboard/MyTicketsPage'
-import { MyListingsPage } from './pages/dashboard/MyListingsPage'
-import { MyJobsPage } from './pages/dashboard/MyJobsPage'
-import { MyReportsPage } from './pages/dashboard/MyReportsPage'
-import { ProfilePage } from './pages/dashboard/ProfilePage'
-import { EditProfilePage } from './pages/dashboard/EditProfilePage'
-import { AdminProvidersPage } from './pages/admin/AdminProvidersPage'
-import { AdminBookingsPage } from './pages/admin/AdminBookingsPage'
-import { AdminListingsPage } from './pages/admin/AdminListingsPage'
-import { AdminUsersPage } from './pages/admin/AdminUsersPage'
-import { MunicipalityDashboardPage } from './pages/admin/MunicipalityDashboardPage'
-import { SuperAdminDashboardPage } from './pages/admin/SuperAdminDashboardPage'
-import { FollowingFeedPage } from './pages/dashboard/FollowingFeedPage'
-import { AdminOverviewPage } from './pages/admin/AdminOverviewPage'
-import { AdminReportsPage } from './pages/admin/AdminReportsPage'
-import { ReportDetailsPage } from './pages/dashboard/ReportDetailsPage'
-import { BusinessDashboardPage } from './pages/dashboard/BusinessDashboardPage'
-import { OrganizationDashboardPage } from './pages/dashboard/OrganizationDashboardPage'
-import { DashboardPage } from './pages/dashboard/DashboardPage'
-import { CitizenDashboardPage } from './pages/dashboard/CitizenDashboardPage'
-import { WorkerDashboardPage } from './pages/dashboard/WorkerDashboardPage'
-import { DriverDashboardPage } from './pages/dashboard/DriverDashboardPage'
-import { CourierDashboardPage } from './pages/dashboard/CourierDashboardPage'
-import { CourierOrdersPage } from './pages/dashboard/CourierOrdersPage'
-import { ServiceProviderDashboardPage } from './pages/dashboard/ServiceProviderDashboardPage'
-import { SellerDashboardPage } from './pages/dashboard/SellerDashboardPage'
-import { SellerOrdersPage } from './pages/dashboard/SellerOrdersPage'
-import { RoleApplicationsPage } from './pages/dashboard/RoleApplicationsPage'
-import { DashboardWorkspacePage } from './pages/dashboard/DashboardWorkspacePage'
-import { RoleApplicationsAdminPage } from './pages/admin/RoleApplicationsAdminPage'
-import { SearchResultsPage } from './pages/SearchResultsPage'
-import { ActivityPage } from './pages/ActivityPage'
-import { SavedItemsPage } from './pages/dashboard/SavedItemsPage'
-import { TownPortalPage } from './pages/TownPortalPage'
-import { CommunityImpactDashboardPage } from './pages/community/CommunityImpactDashboardPage'
-import { CommunityImpactHistoryPage } from './pages/community/CommunityImpactHistoryPage'
-import { CommunityImpactLeaderboardPage } from './pages/community/CommunityImpactLeaderboardPage'
-import { CommunityImpactPrivacyPage } from './pages/community/CommunityImpactPrivacyPage'
-import { CommunityImpactRedemptionsPage } from './pages/community/CommunityImpactRedemptionsPage'
-import { CommunityImpactRewardsPage } from './pages/community/CommunityImpactRewardsPage'
-import { CommunityImpactPendingPage } from './pages/admin/CommunityImpactPendingPage'
-import { CommunityImpactRewardsManagePage } from './pages/admin/CommunityImpactRewardsManagePage'
-import { CommunityImpactRedemptionsAdminPage } from './pages/admin/CommunityImpactRedemptionsPage'
-import { CommunityImpactUserProfilePage } from './pages/admin/CommunityImpactUserProfilePage'
-import { FeedModerationPage } from './pages/admin/FeedModerationPage'
-import { SupportPage } from './pages/SupportPage'
-import { AdminAuditLogsPage } from './pages/admin/AdminAuditLogsPage'
-import { AdminFeatureFlagsPage } from './pages/admin/AdminFeatureFlagsPage'
-import { AdminNotificationsPage } from './pages/admin/AdminNotificationsPage'
-import { AdminSystemHealthPage } from './pages/admin/AdminSystemHealthPage'
-import { AdminTownsPage } from './pages/admin/AdminTownsPage'
-import { AdminOrdersPage } from './pages/admin/AdminOrdersPage'
-import { AdminHirePage } from './pages/admin/AdminHirePage'
-import { HireOwnerBookingsPage } from './pages/dashboard/HireOwnerBookingsPage'
 import { getDashboardWorkspaceData } from './lib/dashboardWorkspaceData'
 import { getRoleHomePath, hasActiveRole } from './lib/roles'
 import { useAuthStore } from './store/auth'
 
+const HomePage = lazy(async () => ({ default: (await import('./pages/HomePage')).HomePage }))
+const LandingPage = lazy(async () => ({ default: (await import('./pages/LandingPage')).LandingPage }))
+const LoginPage = lazy(async () => ({ default: (await import('./pages/LoginPage')).LoginPage }))
+const OnboardingPage = lazy(async () => ({ default: (await import('./pages/OnboardingPage')).OnboardingPage }))
+const RegisterPage = lazy(async () => ({ default: (await import('./pages/RegisterPage')).RegisterPage }))
+const DirectoryPage = lazy(async () => ({ default: (await import('./pages/DirectoryPage')).DirectoryPage }))
+const MorePage = lazy(async () => ({ default: (await import('./pages/MorePage')).MorePage }))
+const ReportIssuePage = lazy(async () => ({ default: (await import('./pages/ReportIssuePage')).ReportIssuePage }))
+const SosPage = lazy(async () => ({ default: (await import('./pages/SosPage')).SosPage }))
+const SettingsPage = lazy(async () => ({ default: (await import('./pages/SettingsPage')).SettingsPage }))
+const AlertsPage = lazy(async () => ({ default: (await import('./pages/AlertsPage')).AlertsPage }))
+const NotificationsPage = lazy(async () => ({ default: (await import('./pages/NotificationsPage')).NotificationsPage }))
+const NewsPage = lazy(async () => ({ default: (await import('./pages/NewsPage')).NewsPage }))
+const NewsDetailsPage = lazy(async () => ({ default: (await import('./pages/NewsDetailsPage')).NewsDetailsPage }))
+const ArticleBrowserPage = lazy(async () => ({ default: (await import('./pages/ArticleBrowserPage')).ArticleBrowserPage }))
+const CommunityProjectsPage = lazy(async () => ({ default: (await import('./pages/CommunityProjectsPage')).CommunityProjectsPage }))
+const CommunityProjectDetailsPage = lazy(async () => ({ default: (await import('./pages/CommunityProjectDetailsPage')).CommunityProjectDetailsPage }))
+const SubmitCommunityProjectPage = lazy(async () => ({ default: (await import('./pages/SubmitCommunityProjectPage')).SubmitCommunityProjectPage }))
+const MyCommunityProjectsPage = lazy(async () => ({ default: (await import('./pages/MyCommunityProjectsPage')).MyCommunityProjectsPage }))
+const MyCommunityPledgesPage = lazy(async () => ({ default: (await import('./pages/MyCommunityPledgesPage')).MyCommunityPledgesPage }))
+const TownManagerCommunityProjectsPage = lazy(async () => ({ default: (await import('./pages/TownManagerCommunityProjectsPage')).TownManagerCommunityProjectsPage }))
+const TownManagerCommunityProjectReviewPage = lazy(async () => ({ default: (await import('./pages/TownManagerCommunityProjectReviewPage')).TownManagerCommunityProjectReviewPage }))
+const FeedPage = lazy(async () => ({ default: (await import('./pages/FeedPage')).FeedPage }))
+const InboxPage = lazy(async () => ({ default: (await import('./pages/InboxPage')).InboxPage }))
+const ConversationPage = lazy(async () => ({ default: (await import('./pages/ConversationPage')).ConversationPage }))
+const EventsPage = lazy(async () => ({ default: (await import('./pages/EventsPage')).EventsPage }))
+const EventDetailsPage = lazy(async () => ({ default: (await import('./pages/EventDetailsPage')).EventDetailsPage }))
+const EventCalendarPage = lazy(async () => ({ default: (await import('./pages/EventCalendarPage')).EventCalendarPage }))
+const CreateEventPage = lazy(async () => ({ default: (await import('./pages/CreateEventPage')).CreateEventPage }))
+const ManageEventPage = lazy(async () => ({ default: (await import('./pages/ManageEventPage')).ManageEventPage }))
+const EventTicketsPage = lazy(async () => ({ default: (await import('./pages/EventTicketsPage')).EventTicketsPage }))
 const MarketplacePage = lazy(async () => ({ default: (await import('./pages/MarketplacePage')).MarketplacePage }))
 const StorePage = lazy(async () => ({ default: (await import('./pages/StorePage')).StorePage }))
+const ProductDetailsPage = lazy(async () => ({ default: (await import('./pages/ProductDetailsPage')).ProductDetailsPage }))
+const OrdersPage = lazy(async () => ({ default: (await import('./pages/OrdersPage')).OrdersPage }))
+const OrderDetailsPage = lazy(async () => ({ default: (await import('./pages/OrderDetailsPage')).OrderDetailsPage }))
+const CheckoutPage = lazy(async () => ({ default: (await import('./pages/CheckoutPage')).CheckoutPage }))
+const HirePage = lazy(async () => ({ default: (await import('./pages/HirePage')).HirePage }))
+const HireItemDetailsPage = lazy(async () => ({ default: (await import('./pages/HireItemDetailsPage')).HireItemDetailsPage }))
+const MyHireBookingsPage = lazy(async () => ({ default: (await import('./pages/MyHireBookingsPage')).MyHireBookingsPage }))
+const HireBookingPage = lazy(async () => ({ default: (await import('./pages/HireBookingPage')).HireBookingPage }))
+const MyHireItemsPage = lazy(async () => ({ default: (await import('./pages/MyHireItemsPage')).MyHireItemsPage }))
 const AccommodationPage = lazy(async () => ({ default: (await import('./pages/AccommodationPage')).AccommodationPage }))
+const AccommodationDetailsPage = lazy(async () => ({ default: (await import('./pages/AccommodationDetailsPage')).AccommodationDetailsPage }))
 const ServicesPage = lazy(async () => ({ default: (await import('./pages/ServicesPage')).ServicesPage }))
 const ServiceProviderDetailsPage = lazy(async () => ({ default: (await import('./pages/ServiceProviderDetailsPage')).ServiceProviderDetailsPage }))
 const BookingPage = lazy(async () => ({ default: (await import('./pages/BookingPage')).BookingPage }))
+const DeliveryPage = lazy(async () => ({ default: (await import('./pages/DeliveryPage')).DeliveryPage }))
+const DeliveryDetailsPage = lazy(async () => ({ default: (await import('./pages/DeliveryDetailsPage')).DeliveryDetailsPage }))
+const RidePage = lazy(async () => ({ default: (await import('./pages/RidePage')).RidePage }))
+const RideDetailsPage = lazy(async () => ({ default: (await import('./pages/RideDetailsPage')).RideDetailsPage }))
 const WorkersPage = lazy(async () => ({ default: (await import('./pages/WorkersPage')).WorkersPage }))
 const WorkerProfilePage = lazy(async () => ({ default: (await import('./pages/WorkerProfilePage')).WorkerProfilePage }))
 const JobsPage = lazy(async () => ({ default: (await import('./pages/JobsPage')).JobsPage }))
 const ListingDetailsPage = lazy(async () => ({ default: (await import('./pages/ListingDetailsPage')).ListingDetailsPage }))
 const JobDetailsPage = lazy(async () => ({ default: (await import('./pages/JobDetailsPage')).JobDetailsPage }))
 const DirectoryDetailsPage = lazy(async () => ({ default: (await import('./pages/DirectoryDetailsPage')).DirectoryDetailsPage }))
+const SearchResultsPage = lazy(async () => ({ default: (await import('./pages/SearchResultsPage')).SearchResultsPage }))
+const ActivityPage = lazy(async () => ({ default: (await import('./pages/ActivityPage')).ActivityPage }))
+const SavedItemsPage = lazy(async () => ({ default: (await import('./pages/dashboard/SavedItemsPage')).SavedItemsPage }))
+const TownPortalPage = lazy(async () => ({ default: (await import('./pages/TownPortalPage')).TownPortalPage }))
+const CommunityImpactDashboardPage = lazy(async () => ({ default: (await import('./pages/community/CommunityImpactDashboardPage')).CommunityImpactDashboardPage }))
+const CommunityImpactHistoryPage = lazy(async () => ({ default: (await import('./pages/community/CommunityImpactHistoryPage')).CommunityImpactHistoryPage }))
+const CommunityImpactLeaderboardPage = lazy(async () => ({ default: (await import('./pages/community/CommunityImpactLeaderboardPage')).CommunityImpactLeaderboardPage }))
+const CommunityImpactPrivacyPage = lazy(async () => ({ default: (await import('./pages/community/CommunityImpactPrivacyPage')).CommunityImpactPrivacyPage }))
+const CommunityImpactRedemptionsPage = lazy(async () => ({ default: (await import('./pages/community/CommunityImpactRedemptionsPage')).CommunityImpactRedemptionsPage }))
+const CommunityImpactRewardsPage = lazy(async () => ({ default: (await import('./pages/community/CommunityImpactRewardsPage')).CommunityImpactRewardsPage }))
+const SupportPage = lazy(async () => ({ default: (await import('./pages/SupportPage')).SupportPage }))
+const DashboardPage = lazy(async () => ({ default: (await import('./pages/dashboard/DashboardPage')).DashboardPage }))
+const CitizenDashboardPage = lazy(async () => ({ default: (await import('./pages/dashboard/CitizenDashboardPage')).CitizenDashboardPage }))
+const WorkerDashboardPage = lazy(async () => ({ default: (await import('./pages/dashboard/WorkerDashboardPage')).WorkerDashboardPage }))
+const DriverDashboardPage = lazy(async () => ({ default: (await import('./pages/dashboard/DriverDashboardPage')).DriverDashboardPage }))
+const CourierDashboardPage = lazy(async () => ({ default: (await import('./pages/dashboard/CourierDashboardPage')).CourierDashboardPage }))
+const CourierOrdersPage = lazy(async () => ({ default: (await import('./pages/dashboard/CourierOrdersPage')).CourierOrdersPage }))
+const DashboardWorkspacePage = lazy(async () => ({ default: (await import('./pages/dashboard/DashboardWorkspacePage')).DashboardWorkspacePage }))
+const MyBookingsPage = lazy(async () => ({ default: (await import('./pages/dashboard/MyBookingsPage')).MyBookingsPage }))
+const MyTicketsPage = lazy(async () => ({ default: (await import('./pages/dashboard/MyTicketsPage')).MyTicketsPage }))
+const MyListingsPage = lazy(async () => ({ default: (await import('./pages/dashboard/MyListingsPage')).MyListingsPage }))
+const MyJobsPage = lazy(async () => ({ default: (await import('./pages/dashboard/MyJobsPage')).MyJobsPage }))
+const MyReportsPage = lazy(async () => ({ default: (await import('./pages/dashboard/MyReportsPage')).MyReportsPage }))
+const ReportDetailsPage = lazy(async () => ({ default: (await import('./pages/dashboard/ReportDetailsPage')).ReportDetailsPage }))
+const ProfilePage = lazy(async () => ({ default: (await import('./pages/dashboard/ProfilePage')).ProfilePage }))
+const EditProfilePage = lazy(async () => ({ default: (await import('./pages/dashboard/EditProfilePage')).EditProfilePage }))
+const RoleApplicationsPage = lazy(async () => ({ default: (await import('./pages/dashboard/RoleApplicationsPage')).RoleApplicationsPage }))
+const BusinessDashboardPage = lazy(async () => ({ default: (await import('./pages/dashboard/BusinessDashboardPage')).BusinessDashboardPage }))
+const SellerDashboardPage = lazy(async () => ({ default: (await import('./pages/dashboard/SellerDashboardPage')).SellerDashboardPage }))
+const SellerOrdersPage = lazy(async () => ({ default: (await import('./pages/dashboard/SellerOrdersPage')).SellerOrdersPage }))
+const HireOwnerBookingsPage = lazy(async () => ({ default: (await import('./pages/dashboard/HireOwnerBookingsPage')).HireOwnerBookingsPage }))
+const ServiceProviderDashboardPage = lazy(async () => ({ default: (await import('./pages/dashboard/ServiceProviderDashboardPage')).ServiceProviderDashboardPage }))
+const OrganizationDashboardPage = lazy(async () => ({ default: (await import('./pages/dashboard/OrganizationDashboardPage')).OrganizationDashboardPage }))
+const FollowingFeedPage = lazy(async () => ({ default: (await import('./pages/dashboard/FollowingFeedPage')).FollowingFeedPage }))
+const AdminProvidersPage = lazy(async () => ({ default: (await import('./pages/admin/AdminProvidersPage')).AdminProvidersPage }))
+const AdminBookingsPage = lazy(async () => ({ default: (await import('./pages/admin/AdminBookingsPage')).AdminBookingsPage }))
+const AdminListingsPage = lazy(async () => ({ default: (await import('./pages/admin/AdminListingsPage')).AdminListingsPage }))
+const AdminUsersPage = lazy(async () => ({ default: (await import('./pages/admin/AdminUsersPage')).AdminUsersPage }))
+const MunicipalityDashboardPage = lazy(async () => ({ default: (await import('./pages/admin/MunicipalityDashboardPage')).MunicipalityDashboardPage }))
+const SuperAdminDashboardPage = lazy(async () => ({ default: (await import('./pages/admin/SuperAdminDashboardPage')).SuperAdminDashboardPage }))
+const AdminOverviewPage = lazy(async () => ({ default: (await import('./pages/admin/AdminOverviewPage')).AdminOverviewPage }))
+const AdminReportsPage = lazy(async () => ({ default: (await import('./pages/admin/AdminReportsPage')).AdminReportsPage }))
+const RoleApplicationsAdminPage = lazy(async () => ({ default: (await import('./pages/admin/RoleApplicationsAdminPage')).RoleApplicationsAdminPage }))
+const CommunityImpactPendingPage = lazy(async () => ({ default: (await import('./pages/admin/CommunityImpactPendingPage')).CommunityImpactPendingPage }))
+const CommunityImpactRewardsManagePage = lazy(async () => ({ default: (await import('./pages/admin/CommunityImpactRewardsManagePage')).CommunityImpactRewardsManagePage }))
+const CommunityImpactRedemptionsAdminPage = lazy(async () => ({ default: (await import('./pages/admin/CommunityImpactRedemptionsPage')).CommunityImpactRedemptionsAdminPage }))
+const CommunityImpactUserProfilePage = lazy(async () => ({ default: (await import('./pages/admin/CommunityImpactUserProfilePage')).CommunityImpactUserProfilePage }))
+const FeedModerationPage = lazy(async () => ({ default: (await import('./pages/admin/FeedModerationPage')).FeedModerationPage }))
+const AdminAuditLogsPage = lazy(async () => ({ default: (await import('./pages/admin/AdminAuditLogsPage')).AdminAuditLogsPage }))
+const AdminFeatureFlagsPage = lazy(async () => ({ default: (await import('./pages/admin/AdminFeatureFlagsPage')).AdminFeatureFlagsPage }))
+const AdminNotificationsPage = lazy(async () => ({ default: (await import('./pages/admin/AdminNotificationsPage')).AdminNotificationsPage }))
+const AdminSystemHealthPage = lazy(async () => ({ default: (await import('./pages/admin/AdminSystemHealthPage')).AdminSystemHealthPage }))
+const AdminTownsPage = lazy(async () => ({ default: (await import('./pages/admin/AdminTownsPage')).AdminTownsPage }))
+const AdminOrdersPage = lazy(async () => ({ default: (await import('./pages/admin/AdminOrdersPage')).AdminOrdersPage }))
+const AdminHirePage = lazy(async () => ({ default: (await import('./pages/admin/AdminHirePage')).AdminHirePage }))
 
 function ProtectedRoute({ children }: { children: ReactElement }) {
   const token = useAuthStore((state) => state.token)

@@ -139,6 +139,9 @@ class LokalsShell extends ConsumerWidget {
       isScrollControlled: true,
       builder: (context) {
         return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
+          ),
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -146,196 +149,207 @@ class LokalsShell extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
           child: SafeArea(
             top: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 48,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.border,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 24,
-                      backgroundColor: AppColors.purpleSoft,
-                      child: Text(
-                        user?.name.characters.first.toUpperCase() ?? 'L',
-                        style: AppTextStyles.h4.copyWith(
-                          color: AppColors.primaryPurple,
-                        ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 48,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.border,
+                        borderRadius: BorderRadius.circular(999),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            user?.name ?? 'LOKALS',
-                            style: AppTextStyles.h3.copyWith(fontSize: 18),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${user?.defaultArea ?? user?.location ?? AppConfig.pilotTown}, ${user?.defaultTown ?? 'Namibia'}',
-                            style: AppTextStyles.bodyMuted,
-                          ),
-                          const SizedBox(height: 8),
-                          _buildRoleChip(
-                            _formatRole(
-                              user?.currentRole ??
-                                  ((user?.roles.isNotEmpty ?? false)
-                                      ? user!.roles.first
-                                      : 'citizen'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (unread > 0)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFEF2F2),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          '$unread unread',
-                          style: const TextStyle(
-                            color: AppColors.danger,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                if ((user?.roles.length ?? 0) > 1) ...[
-                  const Text(
-                    'Switch role',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.mutedText,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: user!.roles
-                        .map(
-                          (role) => ActionChip(
-                            label: Text(_formatRole(role)),
-                            backgroundColor: role == user.currentRole
-                                ? AppColors.primaryPurple
-                                : AppColors.softBackground,
-                            labelStyle: TextStyle(
-                              color: role == user.currentRole
-                                  ? Colors.white
-                                  : AppColors.deepCharcoal,
-                              fontWeight: FontWeight.w700,
-                            ),
-                            onPressed: auth.isLoading
-                                ? null
-                                : () async {
-                                    final nextUser = await ref
-                                        .read(authControllerProvider.notifier)
-                                        .switchRole(role);
-                                    if (!context.mounted) return;
-                                    Navigator.of(context).pop();
-                                    context.go(
-                                      nextUser == null
-                                          ? '/dashboard'
-                                          : roleHomePath(
-                                              nextUser.currentRole ?? role,
-                                            ),
-                                    );
-                                  },
-                          ),
-                        )
-                        .toList(),
                   ),
                   const SizedBox(height: 18),
-                ],
-                ...[
-                  ('/profile', 'Profile', Icons.person_outline_rounded),
-                  (
-                    '/notifications',
-                    'Notifications',
-                    Icons.notifications_none_rounded,
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 24,
+                        backgroundColor: AppColors.purpleSoft,
+                        child: Text(
+                          user?.name.characters.first.toUpperCase() ?? 'L',
+                          style: AppTextStyles.h4.copyWith(
+                            color: AppColors.primaryPurple,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              user?.name ?? 'LOKALS',
+                              style: AppTextStyles.h3.copyWith(fontSize: 18),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${user?.defaultArea ?? user?.location ?? AppConfig.pilotTown}, ${user?.defaultTown ?? 'Namibia'}',
+                              style: AppTextStyles.bodyMuted,
+                            ),
+                            const SizedBox(height: 8),
+                            _buildRoleChip(
+                              _formatRole(
+                                user?.currentRole ??
+                                    ((user?.roles.isNotEmpty ?? false)
+                                        ? user!.roles.first
+                                        : 'citizen'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (unread > 0)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF2F2),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            '$unread unread',
+                            style: const TextStyle(
+                              color: AppColors.danger,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                  (
-                    '/saved-items',
-                    'Saved Items',
-                    Icons.bookmark_outline_rounded,
-                  ),
-                  (
-                    '/following-organizations',
-                    'Followed Organizations',
-                    Icons.groups_2_outlined,
-                  ),
-                  (
-                    '/activity',
-                    'Activity',
-                    Icons.notifications_active_outlined,
-                  ),
-                  ('/my-bookings', 'My Bookings', Icons.book_online_outlined),
-                  ('/hire/bookings', 'Hire Bookings', Icons.warehouse_outlined),
-                  (
-                    '/my-tickets',
-                    'My Tickets',
-                    Icons.confirmation_number_outlined,
-                  ),
-                  (
-                    roleHomePath(
-                      user?.currentRole ??
-                          ((user?.roles.isNotEmpty ?? false)
-                              ? user!.roles.first
-                              : null),
+                  const SizedBox(height: 18),
+                  if ((user?.roles.length ?? 0) > 1) ...[
+                    const Text(
+                      'Switch role',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.mutedText,
+                      ),
                     ),
-                    'Dashboard',
-                    Icons.dashboard_customize_outlined,
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: user!.roles
+                          .map(
+                            (role) => ActionChip(
+                              label: Text(_formatRole(role)),
+                              backgroundColor: role == user.currentRole
+                                  ? AppColors.primaryPurple
+                                  : AppColors.softBackground,
+                              labelStyle: TextStyle(
+                                color: role == user.currentRole
+                                    ? Colors.white
+                                    : AppColors.deepCharcoal,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              onPressed: auth.isLoading
+                                  ? null
+                                  : () async {
+                                      final nextUser = await ref
+                                          .read(authControllerProvider.notifier)
+                                          .switchRole(role);
+                                      if (!context.mounted) return;
+                                      Navigator.of(context).pop();
+                                      context.go(
+                                        nextUser == null
+                                            ? '/dashboard'
+                                            : roleHomePath(
+                                                nextUser.currentRole ?? role,
+                                              ),
+                                      );
+                                    },
+                            ),
+                          )
+                          .toList(),
+                    ),
+                    const SizedBox(height: 18),
+                  ],
+                  ...[
+                    ('/profile', 'Profile', Icons.person_outline_rounded),
+                    (
+                      '/notifications',
+                      'Notifications',
+                      Icons.notifications_none_rounded,
+                    ),
+                    (
+                      '/saved-items',
+                      'Saved Items',
+                      Icons.bookmark_outline_rounded,
+                    ),
+                    (
+                      '/following-organizations',
+                      'Followed Organizations',
+                      Icons.groups_2_outlined,
+                    ),
+                    (
+                      '/activity',
+                      'Activity',
+                      Icons.notifications_active_outlined,
+                    ),
+                    ('/my-bookings', 'My Bookings', Icons.book_online_outlined),
+                    (
+                      '/hire/bookings',
+                      'Hire Bookings',
+                      Icons.warehouse_outlined,
+                    ),
+                    ('/orders', 'My Orders', Icons.receipt_long_outlined),
+                    (
+                      '/my-tickets',
+                      'My Tickets',
+                      Icons.confirmation_number_outlined,
+                    ),
+                    (
+                      roleHomePath(
+                        user?.currentRole ??
+                            ((user?.roles.isNotEmpty ?? false)
+                                ? user!.roles.first
+                                : null),
+                      ),
+                      'Dashboard',
+                      Icons.dashboard_customize_outlined,
+                    ),
+                    ('/settings', 'Settings', Icons.settings_outlined),
+                    (
+                      '/support',
+                      'Help & Support',
+                      Icons.support_agent_outlined,
+                    ),
+                  ].map(
+                    (item) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(item.$3, color: AppColors.primaryPurple),
+                      title: Text(item.$2),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.go(item.$1);
+                      },
+                    ),
                   ),
-                  ('/settings', 'Settings', Icons.settings_outlined),
-                  ('/support', 'Help & Support', Icons.support_agent_outlined),
-                ].map(
-                  (item) => ListTile(
+                  ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: Icon(item.$3, color: AppColors.primaryPurple),
-                    title: Text(item.$2),
-                    onTap: () {
+                    leading: const Icon(
+                      Icons.logout_rounded,
+                      color: AppColors.danger,
+                    ),
+                    title: const Text('Logout'),
+                    onTap: () async {
                       Navigator.of(context).pop();
-                      context.go(item.$1);
+                      await ref.read(authControllerProvider.notifier).logout();
+                      if (!context.mounted) return;
+                      context.go('/login');
                     },
                   ),
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(
-                    Icons.logout_rounded,
-                    color: AppColors.danger,
-                  ),
-                  title: const Text('Logout'),
-                  onTap: () async {
-                    Navigator.of(context).pop();
-                    await ref.read(authControllerProvider.notifier).logout();
-                    if (!context.mounted) return;
-                    context.go('/login');
-                  },
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );

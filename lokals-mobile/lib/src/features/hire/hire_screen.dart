@@ -42,12 +42,13 @@ class _HireScreenState extends ConsumerState<HireScreen> {
   @override
   Widget build(BuildContext context) {
     final query = ref.watch(
-      hireItemsProvider({
-        if (_searchController.text.trim().isNotEmpty)
-          'q': _searchController.text.trim(),
-        if (_activeCategory != 'all') 'category': _activeCategory,
-        if (_deliveryOnly) 'delivery_available': 1,
-      }),
+      hireItemsProvider(
+        HireItemsRequest(
+          search: _searchController.text,
+          category: _activeCategory,
+          deliveryOnly: _deliveryOnly,
+        ),
+      ),
     );
     final user = ref.watch(authControllerProvider).user;
 
