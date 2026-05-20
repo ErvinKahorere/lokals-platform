@@ -51,6 +51,11 @@ import 'features/events/events_screen.dart';
 import 'features/events/my_tickets_screen.dart';
 import 'features/events/ticket_details_screen.dart';
 import 'features/feed/feed_screen.dart';
+import 'features/hire/hire_booking_details_screen.dart';
+import 'features/hire/hire_bookings_screen.dart';
+import 'features/hire/hire_item_details_screen.dart';
+import 'features/hire/hire_owner_bookings_screen.dart';
+import 'features/hire/hire_screen.dart';
 import 'features/home/home_screen.dart';
 import 'features/home/onboarding_screen.dart';
 import 'features/jobs/job_details_screen.dart';
@@ -123,6 +128,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         '/report-issue',
         '/delivery',
         '/ride',
+        '/hire/bookings',
+        '/hire/owner',
         '/orders',
         '/sos',
         '/profile',
@@ -146,16 +153,24 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (isLoggedIn && (isLoggingIn || isRegistering || isOnboarding)) {
         return roleHomePath(
           auth.user?.currentRole ??
-              (auth.user?.roles.isNotEmpty == true ? auth.user!.roles.first : null),
+              (auth.user?.roles.isNotEmpty == true
+                  ? auth.user!.roles.first
+                  : null),
         );
       }
 
       return null;
     },
     routes: [
-      GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
-      GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingScreen(),
+      ),
       GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
       GoRoute(
         path: '/get-involved',
@@ -179,15 +194,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/get-involved/:slug/updates',
-        builder: (context, state) => CommunityProjectUpdatesScreen(
-          slug: state.pathParameters['slug']!,
-        ),
+        builder: (context, state) =>
+            CommunityProjectUpdatesScreen(slug: state.pathParameters['slug']!),
       ),
       GoRoute(
         path: '/get-involved/:slug',
-        builder: (context, state) => CommunityProjectDetailsScreen(
-          slug: state.pathParameters['slug']!,
-        ),
+        builder: (context, state) =>
+            CommunityProjectDetailsScreen(slug: state.pathParameters['slug']!),
       ),
       GoRoute(
         path: '/community-impact',
@@ -279,19 +292,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/dashboard/admin',
         builder: (context, state) => const SuperAdminDashboardScreen(),
       ),
-      GoRoute(
-        path: '/feed',
-        builder: (context, state) => const FeedScreen(),
-      ),
-      GoRoute(
-        path: '/inbox',
-        builder: (context, state) => const InboxScreen(),
-      ),
+      GoRoute(path: '/feed', builder: (context, state) => const FeedScreen()),
+      GoRoute(path: '/inbox', builder: (context, state) => const InboxScreen()),
       GoRoute(
         path: '/conversations/:id',
-        builder: (context, state) => ConversationScreen(
-          id: state.pathParameters['id']!,
-        ),
+        builder: (context, state) =>
+            ConversationScreen(id: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/activity',
@@ -311,10 +317,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/notifications',
         builder: (context, state) => const NotificationsScreen(),
       ),
-      GoRoute(
-        path: '/news',
-        builder: (context, state) => const NewsScreen(),
-      ),
+      GoRoute(path: '/news', builder: (context, state) => const NewsScreen()),
       GoRoute(
         path: '/news/:id',
         builder: (context, state) =>
@@ -351,7 +354,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             TicketDetailsScreen(ticketId: state.pathParameters['id']!),
       ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-      GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const RegisterScreen(),
+      ),
       GoRoute(
         path: '/services',
         builder: (context, state) => const ServicesScreen(),
@@ -378,7 +384,29 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/marketplace',
         builder: (context, state) => const MarketplaceScreen(),
       ),
-      GoRoute(path: '/orders', builder: (context, state) => const OrdersScreen()),
+      GoRoute(path: '/hire', builder: (context, state) => const HireScreen()),
+      GoRoute(
+        path: '/hire/bookings',
+        builder: (context, state) => const HireBookingsScreen(),
+      ),
+      GoRoute(
+        path: '/hire/bookings/:id',
+        builder: (context, state) =>
+            HireBookingDetailsScreen(bookingId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/hire/owner/bookings',
+        builder: (context, state) => const HireOwnerBookingsScreen(),
+      ),
+      GoRoute(
+        path: '/hire/:id',
+        builder: (context, state) =>
+            HireItemDetailsScreen(itemId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/orders',
+        builder: (context, state) => const OrdersScreen(),
+      ),
       GoRoute(
         path: '/orders/checkout',
         builder: (context, state) => const CheckoutScreen(),
@@ -415,9 +443,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/directory/:id',
-        builder: (context, state) => DirectoryDetailsScreen(
-          directoryId: state.pathParameters['id']!,
-        ),
+        builder: (context, state) =>
+            DirectoryDetailsScreen(directoryId: state.pathParameters['id']!),
       ),
       GoRoute(path: '/jobs', builder: (context, state) => const JobsScreen()),
       GoRoute(
@@ -454,9 +481,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/delivery/:id',
-        builder: (context, state) => DeliveryDetailsScreen(
-          deliveryId: state.pathParameters['id']!,
-        ),
+        builder: (context, state) =>
+            DeliveryDetailsScreen(deliveryId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/ride',
@@ -464,9 +490,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/ride/:id',
-        builder: (context, state) => RideDetailsScreen(
-          rideId: state.pathParameters['id']!,
-        ),
+        builder: (context, state) =>
+            RideDetailsScreen(rideId: state.pathParameters['id']!),
       ),
       GoRoute(path: '/sos', builder: (context, state) => const SosScreen()),
       GoRoute(

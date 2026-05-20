@@ -1444,6 +1444,408 @@ class CommerceOrderModel {
   }
 }
 
+class HirePartyModel {
+  HirePartyModel({
+    required this.id,
+    required this.name,
+    this.phone,
+    this.avatar,
+    this.defaultTown,
+    this.defaultArea,
+  });
+
+  final int id;
+  final String name;
+  final String? phone;
+  final String? avatar;
+  final String? defaultTown;
+  final String? defaultArea;
+
+  factory HirePartyModel.fromJson(Map<String, dynamic> json) {
+    return HirePartyModel(
+      id: json['id'] as int? ?? 0,
+      name: (json['name'] ?? 'Local owner').toString(),
+      phone: json['phone'] as String?,
+      avatar: json['avatar'] as String?,
+      defaultTown: json['default_town'] as String?,
+      defaultArea: json['default_area'] as String?,
+    );
+  }
+}
+
+class HireBusinessModel {
+  HireBusinessModel({
+    required this.id,
+    required this.name,
+    this.category,
+    this.phone,
+    this.whatsapp,
+    this.logoUrl,
+    this.town,
+    this.area,
+    this.location,
+    this.isVerified = false,
+  });
+
+  final int id;
+  final String name;
+  final String? category;
+  final String? phone;
+  final String? whatsapp;
+  final String? logoUrl;
+  final String? town;
+  final String? area;
+  final String? location;
+  final bool isVerified;
+
+  factory HireBusinessModel.fromJson(Map<String, dynamic> json) {
+    return HireBusinessModel(
+      id: json['id'] as int? ?? 0,
+      name: (json['name'] ?? 'Local business').toString(),
+      category: json['category'] as String?,
+      phone: json['phone'] as String?,
+      whatsapp: json['whatsapp'] as String?,
+      logoUrl: json['logo_url'] as String?,
+      town: json['town'] as String?,
+      area: json['area'] as String?,
+      location: json['location'] as String?,
+      isVerified: json['is_verified'] as bool? ?? false,
+    );
+  }
+}
+
+class HirePricingModel {
+  HirePricingModel({
+    this.pricePerHour,
+    this.pricePerDay,
+  });
+
+  final String? pricePerHour;
+  final String? pricePerDay;
+
+  factory HirePricingModel.fromJson(Map<String, dynamic> json) {
+    return HirePricingModel(
+      pricePerHour: json['price_per_hour']?.toString(),
+      pricePerDay: json['price_per_day']?.toString(),
+    );
+  }
+}
+
+class HireAvailabilitySummaryModel {
+  HireAvailabilitySummaryModel({
+    this.available = true,
+    this.requestedWindowAvailable = true,
+    this.nextAvailableAt,
+    this.status,
+    this.verificationStatus,
+  });
+
+  final bool available;
+  final bool requestedWindowAvailable;
+  final String? nextAvailableAt;
+  final String? status;
+  final String? verificationStatus;
+
+  factory HireAvailabilitySummaryModel.fromJson(Map<String, dynamic> json) {
+    return HireAvailabilitySummaryModel(
+      available: json['available'] as bool? ?? true,
+      requestedWindowAvailable:
+          json['requested_window_available'] as bool? ?? true,
+      nextAvailableAt: json['next_available_at'] as String?,
+      status: json['status'] as String?,
+      verificationStatus: json['verification_status'] as String?,
+    );
+  }
+}
+
+class HireItemModel {
+  HireItemModel({
+    required this.id,
+    required this.title,
+    required this.category,
+    this.description,
+    this.owner,
+    this.business,
+    this.town,
+    this.area,
+    this.address,
+    this.latitude,
+    this.longitude,
+    this.prices,
+    this.deposit,
+    this.replacementValue,
+    this.deliveryAvailable = false,
+    this.pickupAvailable = true,
+    this.condition,
+    this.status,
+    this.verificationStatus,
+    this.images = const [],
+    this.rules = const [],
+    this.includedItems = const [],
+    this.rating,
+    this.bookingsCount,
+    this.availabilitySummary,
+    this.createdAt,
+  });
+
+  final int id;
+  final String title;
+  final String category;
+  final String? description;
+  final HirePartyModel? owner;
+  final HireBusinessModel? business;
+  final String? town;
+  final String? area;
+  final String? address;
+  final double? latitude;
+  final double? longitude;
+  final HirePricingModel? prices;
+  final String? deposit;
+  final String? replacementValue;
+  final bool deliveryAvailable;
+  final bool pickupAvailable;
+  final String? condition;
+  final String? status;
+  final String? verificationStatus;
+  final List<String> images;
+  final List<String> rules;
+  final List<String> includedItems;
+  final double? rating;
+  final int? bookingsCount;
+  final HireAvailabilitySummaryModel? availabilitySummary;
+  final String? createdAt;
+
+  bool get isAvailable => availabilitySummary?.available ?? true;
+  bool get isRequestedWindowAvailable =>
+      availabilitySummary?.requestedWindowAvailable ?? true;
+
+  factory HireItemModel.fromJson(Map<String, dynamic> json) {
+    return HireItemModel(
+      id: json['id'] as int,
+      title: (json['title'] ?? 'Hire item').toString(),
+      category: (json['category'] ?? 'general').toString(),
+      description: json['description'] as String?,
+      owner: (json['owner'] as Map<String, dynamic>?) == null
+          ? null
+          : HirePartyModel.fromJson(json['owner'] as Map<String, dynamic>),
+      business: (json['business'] as Map<String, dynamic>?) == null
+          ? null
+          : HireBusinessModel.fromJson(
+              json['business'] as Map<String, dynamic>,
+            ),
+      town: json['town'] as String?,
+      area: json['area'] as String?,
+      address: json['address'] as String?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      prices: (json['prices'] as Map<String, dynamic>?) == null
+          ? null
+          : HirePricingModel.fromJson(json['prices'] as Map<String, dynamic>),
+      deposit: json['deposit']?.toString(),
+      replacementValue: json['replacement_value']?.toString(),
+      deliveryAvailable: json['delivery_available'] as bool? ?? false,
+      pickupAvailable: json['pickup_available'] as bool? ?? true,
+      condition: json['condition'] as String?,
+      status: json['status'] as String?,
+      verificationStatus: json['verification_status'] as String?,
+      images: (json['images'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .toList(),
+      rules: (json['rules'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .toList(),
+      includedItems: (json['included_items'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .toList(),
+      rating: (json['rating'] as num?)?.toDouble(),
+      bookingsCount: (json['bookings_count'] as num?)?.toInt(),
+      availabilitySummary:
+          (json['availability_summary'] as Map<String, dynamic>?) == null
+          ? null
+          : HireAvailabilitySummaryModel.fromJson(
+              json['availability_summary'] as Map<String, dynamic>,
+            ),
+      createdAt: json['created_at'] as String?,
+    );
+  }
+}
+
+class HireBookingTotalsModel {
+  HireBookingTotalsModel({
+    this.rentalFee,
+    this.depositAmount,
+    this.deliveryFee,
+    this.total,
+  });
+
+  final String? rentalFee;
+  final String? depositAmount;
+  final String? deliveryFee;
+  final String? total;
+
+  factory HireBookingTotalsModel.fromJson(Map<String, dynamic> json) {
+    return HireBookingTotalsModel(
+      rentalFee: json['rental_fee']?.toString(),
+      depositAmount: json['deposit_amount']?.toString(),
+      deliveryFee: json['delivery_fee']?.toString(),
+      total: json['total']?.toString(),
+    );
+  }
+}
+
+class HireDeliveryInfoModel {
+  HireDeliveryInfoModel({
+    this.address,
+    this.latitude,
+    this.longitude,
+  });
+
+  final String? address;
+  final double? latitude;
+  final double? longitude;
+
+  factory HireDeliveryInfoModel.fromJson(Map<String, dynamic> json) {
+    return HireDeliveryInfoModel(
+      address: json['address'] as String?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+    );
+  }
+}
+
+class HireTimelineStepModel {
+  HireTimelineStepModel({
+    required this.key,
+    required this.label,
+    this.timestamp,
+    this.isComplete = false,
+    this.isCurrent = false,
+  });
+
+  final String key;
+  final String label;
+  final String? timestamp;
+  final bool isComplete;
+  final bool isCurrent;
+
+  factory HireTimelineStepModel.fromJson(Map<String, dynamic> json) {
+    return HireTimelineStepModel(
+      key: (json['key'] ?? 'status').toString(),
+      label: (json['label'] ?? 'Status').toString(),
+      timestamp: json['timestamp'] as String?,
+      isComplete: json['is_complete'] as bool? ?? false,
+      isCurrent: json['is_current'] as bool? ?? false,
+    );
+  }
+}
+
+class HireBookingModel {
+  HireBookingModel({
+    required this.id,
+    required this.status,
+    this.referenceCode,
+    this.item,
+    this.customer,
+    this.owner,
+    this.courier,
+    this.statusLabel,
+    this.startAt,
+    this.endAt,
+    this.quantity = 1,
+    this.totals,
+    this.paymentStatus,
+    this.pickupMethod,
+    this.deliveryInfo,
+    this.timeline = const [],
+    this.nextAction,
+    this.notes,
+    this.ownerNotes,
+    this.customerRating,
+    this.customerRatingComment,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  final int id;
+  final String status;
+  final String? referenceCode;
+  final HireItemModel? item;
+  final HirePartyModel? customer;
+  final HirePartyModel? owner;
+  final HirePartyModel? courier;
+  final String? statusLabel;
+  final String? startAt;
+  final String? endAt;
+  final int quantity;
+  final HireBookingTotalsModel? totals;
+  final String? paymentStatus;
+  final String? pickupMethod;
+  final HireDeliveryInfoModel? deliveryInfo;
+  final List<HireTimelineStepModel> timeline;
+  final String? nextAction;
+  final String? notes;
+  final String? ownerNotes;
+  final int? customerRating;
+  final String? customerRatingComment;
+  final String? createdAt;
+  final String? updatedAt;
+
+  bool get canCancel =>
+      status == 'pending' || status == 'accepted' || status == 'confirmed';
+  bool get canMarkReturned =>
+      status == 'handed_over' || status == 'in_use' || status == 'return_due';
+
+  factory HireBookingModel.fromJson(Map<String, dynamic> json) {
+    return HireBookingModel(
+      id: json['id'] as int,
+      status: (json['status'] ?? 'pending').toString(),
+      referenceCode: json['reference_code'] as String?,
+      item: (json['item'] as Map<String, dynamic>?) == null
+          ? null
+          : HireItemModel.fromJson(json['item'] as Map<String, dynamic>),
+      customer: (json['customer'] as Map<String, dynamic>?) == null
+          ? null
+          : HirePartyModel.fromJson(json['customer'] as Map<String, dynamic>),
+      owner: (json['owner'] as Map<String, dynamic>?) == null
+          ? null
+          : HirePartyModel.fromJson(json['owner'] as Map<String, dynamic>),
+      courier: (json['courier'] as Map<String, dynamic>?) == null
+          ? null
+          : HirePartyModel.fromJson(json['courier'] as Map<String, dynamic>),
+      statusLabel: json['status_label'] as String?,
+      startAt: json['start_at'] as String?,
+      endAt: json['end_at'] as String?,
+      quantity: (json['quantity'] as num?)?.toInt() ?? 1,
+      totals: (json['totals'] as Map<String, dynamic>?) == null
+          ? null
+          : HireBookingTotalsModel.fromJson(
+              json['totals'] as Map<String, dynamic>,
+            ),
+      paymentStatus: json['payment_status'] as String?,
+      pickupMethod: json['pickup_method'] as String?,
+      deliveryInfo: (json['delivery_info'] as Map<String, dynamic>?) == null
+          ? null
+          : HireDeliveryInfoModel.fromJson(
+              json['delivery_info'] as Map<String, dynamic>,
+            ),
+      timeline: (json['timeline'] as List<dynamic>? ?? const [])
+          .map(
+            (item) => HireTimelineStepModel.fromJson(
+              item as Map<String, dynamic>,
+            ),
+          )
+          .toList(),
+      nextAction: json['next_action'] as String?,
+      notes: json['notes'] as String?,
+      ownerNotes: json['owner_notes'] as String?,
+      customerRating: (json['customer_rating'] as num?)?.toInt(),
+      customerRatingComment: json['customer_rating_comment'] as String?,
+      createdAt: json['created_at'] as String?,
+      updatedAt: json['updated_at'] as String?,
+    );
+  }
+}
+
 class SaleAlertModel {
   SaleAlertModel({
     required this.id,

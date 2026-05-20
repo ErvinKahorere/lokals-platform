@@ -54,6 +54,7 @@ class LokalsShell extends ConsumerWidget {
     }
     if (path.startsWith('/store') ||
         path.startsWith('/marketplace') ||
+        path.startsWith('/hire') ||
         path.startsWith('/accommodation')) {
       return 2;
     }
@@ -291,6 +292,7 @@ class LokalsShell extends ConsumerWidget {
                     Icons.notifications_active_outlined,
                   ),
                   ('/my-bookings', 'My Bookings', Icons.book_online_outlined),
+                  ('/hire/bookings', 'Hire Bookings', Icons.warehouse_outlined),
                   (
                     '/my-tickets',
                     'My Tickets',

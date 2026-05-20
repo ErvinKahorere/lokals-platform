@@ -121,9 +121,14 @@ final preferencesProvider = FutureProvider<UserPreferenceModel>((ref) async {
 });
 
 final storeProductsProvider =
-    FutureProvider.family<List<ProductModel>, Map<String, dynamic>?>((ref, params) async {
-  return ref.read(discoveryRepositoryProvider).fetchProducts(params: params);
-});
+    FutureProvider.family<List<ProductModel>, Map<String, dynamic>?>((
+      ref,
+      params,
+    ) async {
+      return ref
+          .read(discoveryRepositoryProvider)
+          .fetchProducts(params: params);
+    });
 
 final saleAlertsProvider = FutureProvider<List<SaleAlertModel>>((ref) async {
   return ref.read(discoveryRepositoryProvider).fetchSaleAlerts();
@@ -136,13 +141,49 @@ final productDetailsProvider = FutureProvider.family<ProductModel, String>((
   return ref.read(discoveryRepositoryProvider).fetchProduct(id);
 });
 
-final commerceOrdersProvider = FutureProvider<List<CommerceOrderModel>>((ref) async {
+final commerceOrdersProvider = FutureProvider<List<CommerceOrderModel>>((
+  ref,
+) async {
   return ref.read(discoveryRepositoryProvider).fetchOrders();
 });
 
 final commerceOrderDetailsProvider =
     FutureProvider.family<CommerceOrderModel, String>((ref, id) async {
-  return ref.read(discoveryRepositoryProvider).fetchOrder(id);
+      return ref.read(discoveryRepositoryProvider).fetchOrder(id);
+    });
+
+final hireItemsProvider =
+    FutureProvider.family<List<HireItemModel>, Map<String, dynamic>?>((
+      ref,
+      params,
+    ) async {
+      return ref
+          .read(discoveryRepositoryProvider)
+          .fetchHireItems(params: params);
+    });
+
+final hireItemDetailsProvider =
+    FutureProvider.family<HireItemModel, HireItemRequest>((ref, request) async {
+      return ref
+          .read(discoveryRepositoryProvider)
+          .fetchHireItem(request.id, params: request.params);
+    });
+
+final myHireBookingsProvider = FutureProvider<List<HireBookingModel>>((
+  ref,
+) async {
+  return ref.read(discoveryRepositoryProvider).fetchHireBookings();
+});
+
+final hireBookingDetailsProvider =
+    FutureProvider.family<HireBookingModel, String>((ref, id) async {
+      return ref.read(discoveryRepositoryProvider).fetchHireBooking(id);
+    });
+
+final ownerHireBookingsProvider = FutureProvider<List<HireBookingModel>>((
+  ref,
+) async {
+  return ref.read(discoveryRepositoryProvider).fetchOwnerHireBookings();
 });
 
 final accommodationsProvider = FutureProvider<List<AccommodationItemModel>>((
@@ -275,6 +316,36 @@ class MobileAccessException implements Exception {
 
   @override
   String toString() => message;
+}
+
+class HireItemRequest {
+  const HireItemRequest({required this.id, this.startAt, this.endAt});
+
+  final String id;
+  final String? startAt;
+  final String? endAt;
+
+  Map<String, dynamic>? get params {
+    final payload = <String, dynamic>{};
+    if (startAt != null && startAt!.isNotEmpty) {
+      payload['start_at'] = startAt;
+    }
+    if (endAt != null && endAt!.isNotEmpty) {
+      payload['end_at'] = endAt;
+    }
+    return payload.isEmpty ? null : payload;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is HireItemRequest &&
+        other.id == id &&
+        other.startAt == startAt &&
+        other.endAt == endAt;
+  }
+
+  @override
+  int get hashCode => Object.hash(id, startAt, endAt);
 }
 
 class DiscoveryRepository {
@@ -524,6 +595,126 @@ class DiscoveryRepository {
           'Save on water drums, cleaning stock, and refill containers this weekend.',
       location: 'Central Okahandja',
       publishedAt: DateTime.now().subtract(const Duration(hours: 6)),
+    ),
+  ];
+
+  static final List<HireItemModel> _demoHireItems = [
+    HireItemModel(
+      id: 9001,
+      title: 'Event chair set',
+      category: 'events',
+      description:
+          'Stackable event chairs for weddings, church gatherings, and local functions.',
+      owner: HirePartyModel(
+        id: 401,
+        name: 'Selma Uiras',
+        phone: '+264810003001',
+        defaultTown: AppConfig.pilotTown,
+        defaultArea: 'Nau-Aib',
+      ),
+      business: HireBusinessModel(
+        id: 501,
+        name: 'Selma Events Hire',
+        category: 'Events',
+        phone: '+264810003001',
+        town: AppConfig.pilotTown,
+        area: 'Nau-Aib',
+        location: 'Nau-Aib, Okahandja',
+        isVerified: true,
+      ),
+      town: AppConfig.pilotTown,
+      area: 'Nau-Aib',
+      prices: HirePricingModel(pricePerDay: '45'),
+      deposit: '300',
+      deliveryAvailable: true,
+      pickupAvailable: true,
+      condition: 'good',
+      status: 'active',
+      verificationStatus: 'approved',
+      rules: const [
+        'Keep chairs dry and stacked after use.',
+        'Broken items may affect the deposit refund.',
+      ],
+      includedItems: const ['10 chairs', 'Stack straps'],
+      bookingsCount: 6,
+      availabilitySummary: HireAvailabilitySummaryModel(available: true),
+    ),
+    HireItemModel(
+      id: 9002,
+      title: '2kVA generator',
+      category: 'equipment',
+      description:
+          'Reliable backup generator for food stalls, households, and small events.',
+      owner: HirePartyModel(
+        id: 402,
+        name: 'Paulus Kambinda',
+        phone: '+264810003002',
+        defaultTown: AppConfig.pilotTown,
+        defaultArea: 'Town Centre',
+      ),
+      town: AppConfig.pilotTown,
+      area: 'Town Centre',
+      prices: HirePricingModel(pricePerDay: '260'),
+      deposit: '800',
+      replacementValue: '4200',
+      deliveryAvailable: false,
+      pickupAvailable: true,
+      condition: 'very good',
+      status: 'active',
+      verificationStatus: 'approved',
+      rules: const ['Return with the fuel level discussed at pickup.'],
+      includedItems: const ['Power cable', 'Instruction sheet'],
+      bookingsCount: 3,
+      availabilitySummary: HireAvailabilitySummaryModel(
+        available: true,
+        nextAvailableAt: null,
+      ),
+    ),
+  ];
+
+  static final List<HireBookingModel> _demoHireBookings = [
+    HireBookingModel(
+      id: 9101,
+      status: 'accepted',
+      referenceCode: 'HIRE-00001',
+      item: _demoHireItems.first,
+      customer: HirePartyModel(
+        id: 1,
+        name: 'Demo Resident',
+        phone: '+264810000001',
+        defaultTown: AppConfig.pilotTown,
+        defaultArea: 'Nau-Aib',
+      ),
+      owner: _demoHireItems.first.owner,
+      statusLabel: 'Accepted',
+      startAt: DateTime.now().add(const Duration(days: 1)).toIso8601String(),
+      endAt: DateTime.now().add(const Duration(days: 2)).toIso8601String(),
+      quantity: 1,
+      totals: HireBookingTotalsModel(
+        rentalFee: '45',
+        depositAmount: '300',
+        deliveryFee: '35',
+        total: '380',
+      ),
+      paymentStatus: 'pending',
+      pickupMethod: 'delivery',
+      deliveryInfo: HireDeliveryInfoModel(
+        address: 'House 24, Nau-Aib, Okahandja',
+      ),
+      nextAction:
+          'Owner accepted. Confirm handover details before the rental starts.',
+      timeline: [
+        HireTimelineStepModel(
+          key: 'pending',
+          label: 'Booking requested',
+          isComplete: true,
+        ),
+        HireTimelineStepModel(
+          key: 'accepted',
+          label: 'Accepted by owner',
+          isCurrent: true,
+        ),
+      ],
     ),
   ];
 
@@ -926,7 +1117,9 @@ class DiscoveryRepository {
     }
   }
 
-  Future<List<ProductModel>> fetchProducts({Map<String, dynamic>? params}) async {
+  Future<List<ProductModel>> fetchProducts({
+    Map<String, dynamic>? params,
+  }) async {
     final response = await ref
         .read(dioProvider)
         .get('/store/products', queryParameters: _pilotParams(params));
@@ -958,7 +1151,9 @@ class DiscoveryRepository {
   Future<List<CommerceOrderModel>> fetchOrders() async {
     final response = await ref.read(dioProvider).get('/orders');
     return _unwrapList(response.data)
-        .map((item) => CommerceOrderModel.fromJson(item as Map<String, dynamic>))
+        .map(
+          (item) => CommerceOrderModel.fromJson(item as Map<String, dynamic>),
+        )
         .toList();
   }
 
@@ -975,18 +1170,132 @@ class DiscoveryRepository {
     required List<Map<String, dynamic>> items,
     String? notes,
   }) async {
-    final response = await ref.read(dioProvider).post(
-      '/orders',
-      data: {
-        'business_id': businessId,
-        'payment_method': paymentMethod,
-        'delivery_address': deliveryAddress,
-        'items': items,
-        if (notes != null && notes.isNotEmpty) 'notes': notes,
-      },
-    );
+    final response = await ref
+        .read(dioProvider)
+        .post(
+          '/orders',
+          data: {
+            'business_id': businessId,
+            'payment_method': paymentMethod,
+            'delivery_address': deliveryAddress,
+            'items': items,
+            if (notes != null && notes.isNotEmpty) 'notes': notes,
+          },
+        );
     final item = _unwrapMap(response.data);
     return CommerceOrderModel.fromJson(item);
+  }
+
+  Future<List<HireItemModel>> fetchHireItems({
+    Map<String, dynamic>? params,
+  }) async {
+    final response = await ref
+        .read(dioProvider)
+        .get('/hire/items', queryParameters: _pilotParams(params));
+    final items = _unwrapList(response.data)
+        .map(
+          (item) =>
+              HireItemModel.fromJson(Map<String, dynamic>.from(item as Map)),
+        )
+        .toList();
+    return _withDemoFallback(items, _demoHireItems);
+  }
+
+  Future<HireItemModel> fetchHireItem(
+    String id, {
+    Map<String, dynamic>? params,
+  }) async {
+    final response = await ref
+        .read(dioProvider)
+        .get('/hire/items/$id', queryParameters: params);
+    return HireItemModel.fromJson(_unwrapMap(response.data));
+  }
+
+  Future<HireBookingModel> createHireBooking({
+    required int itemId,
+    required DateTime startAt,
+    required DateTime endAt,
+    int quantity = 1,
+    required String pickupMethod,
+    String? deliveryAddress,
+    String? notes,
+  }) async {
+    final response = await ref
+        .read(dioProvider)
+        .post(
+          '/hire/items/$itemId/book',
+          data: {
+            'start_at': startAt.toIso8601String(),
+            'end_at': endAt.toIso8601String(),
+            'quantity': quantity,
+            'pickup_method': pickupMethod,
+            if (deliveryAddress != null && deliveryAddress.isNotEmpty)
+              'delivery_address': deliveryAddress,
+            if (notes != null && notes.isNotEmpty) 'notes': notes,
+          },
+        );
+    return HireBookingModel.fromJson(_unwrapMap(response.data));
+  }
+
+  Future<List<HireBookingModel>> fetchHireBookings() async {
+    try {
+      final response = await ref.read(dioProvider).get('/hire/bookings');
+      final items = _unwrapList(response.data)
+          .map(
+            (item) => HireBookingModel.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            ),
+          )
+          .toList();
+      return _withDemoFallback(items, _demoHireBookings);
+    } on DioException catch (error) {
+      throw _accessException(error, 'hire bookings');
+    }
+  }
+
+  Future<HireBookingModel> fetchHireBooking(String id) async {
+    try {
+      final response = await ref.read(dioProvider).get('/hire/bookings/$id');
+      return HireBookingModel.fromJson(_unwrapMap(response.data));
+    } on DioException catch (error) {
+      throw _accessException(error, 'hire booking');
+    }
+  }
+
+  Future<void> cancelHireBooking(int bookingId) async {
+    await ref.read(dioProvider).post('/hire/bookings/$bookingId/cancel');
+  }
+
+  Future<HireBookingModel> markHireReturned(int bookingId) async {
+    final response = await ref
+        .read(dioProvider)
+        .post('/hire/bookings/$bookingId/returned');
+    return HireBookingModel.fromJson(_unwrapMap(response.data));
+  }
+
+  Future<List<HireBookingModel>> fetchOwnerHireBookings() async {
+    try {
+      final response = await ref.read(dioProvider).get('/hire/owner/bookings');
+      return _unwrapList(response.data)
+          .map(
+            (item) => HireBookingModel.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            ),
+          )
+          .toList();
+    } on DioException catch (error) {
+      throw _accessException(error, 'owner hire bookings');
+    }
+  }
+
+  Future<HireBookingModel> runHireOwnerAction({
+    required int bookingId,
+    required String action,
+  }) async {
+    final response = await ref
+        .read(dioProvider)
+        .post('/hire/bookings/$bookingId/$action');
+    return HireBookingModel.fromJson(_unwrapMap(response.data));
   }
 
   Future<List<AccommodationItemModel>> fetchAccommodations() async {
