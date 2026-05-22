@@ -81,23 +81,54 @@ class TransportSegmentTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: items.map((item) {
-        final isSelected = item.value == value;
-        return ChoiceChip(
-          label: Text(item.label),
-          selected: isSelected,
-          onSelected: (_) => onChanged(item.value),
-          selectedColor: AppColors.primaryPurple,
-          backgroundColor: AppColors.neutralSoftAlt,
-          labelStyle: TextStyle(
-            color: isSelected ? Colors.white : AppColors.deepCharcoal,
-            fontWeight: FontWeight.w700,
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.neutralSoftAlt,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        children: items.map((item) {
+          final isSelected = item.value == value;
+          return Expanded(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            decoration: BoxDecoration(
+              color: isSelected ? AppColors.primaryPurple : Colors.transparent,
+              borderRadius: BorderRadius.circular(999),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: AppColors.primaryPurple.withValues(alpha: 0.24),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(999),
+              onTap: () => onChanged(item.value),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Text(
+                  item.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : AppColors.deepCharcoal,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
           ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 }
@@ -223,20 +254,21 @@ class TransportFloatingIconButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             onTap: onPressed,
             child: Ink(
-              width: 40,
-              height: 40,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
-                color: backgroundColor,
+                color: backgroundColor.withValues(alpha: 0.92),
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.72)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 22,
+                    offset: const Offset(0, 12),
                   ),
                 ],
               ),
-              child: Icon(icon, color: foregroundColor, size: 20),
+              child: Icon(icon, color: foregroundColor, size: 19),
             ),
           ),
         ),
@@ -287,16 +319,17 @@ class TransportProfileShortcut extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: onPressed,
         child: Ink(
-          width: 40,
-          height: 40,
+          width: 38,
+          height: 38,
           decoration: BoxDecoration(
-            color: backgroundColor,
+            color: backgroundColor.withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.72)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 22,
+                offset: const Offset(0, 12),
               ),
             ],
           ),
@@ -339,16 +372,19 @@ class TransportFloatingHeader extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.92),
-              borderRadius: BorderRadius.circular(20),
+              color: Colors.white.withValues(alpha: 0.78),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.7)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 24,
-                  offset: const Offset(0, 12),
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 26,
+                  offset: const Offset(0, 14),
                 ),
               ],
             ),
@@ -358,7 +394,7 @@ class TransportFloatingHeader extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: AppColors.deepCharcoal,
                   ),
@@ -368,11 +404,12 @@ class TransportFloatingHeader extends StatelessWidget {
                   subtitle,
                   style: const TextStyle(
                     color: AppColors.mutedText,
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
+            ),
             ),
           ),
         ),
@@ -403,15 +440,16 @@ class TransportRouteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(24),
+        color: Colors.white.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.72)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 24,
-            offset: const Offset(0, 14),
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 28,
+            offset: const Offset(0, 16),
           ),
         ],
       ),
@@ -423,7 +461,7 @@ class TransportRouteCard extends StatelessWidget {
             iconColor: AppColors.lokalsGreen,
             icon: Icons.circle,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           _TransportFieldRow(
             label: destinationLabel,
             controller: destinationController,
@@ -439,13 +477,72 @@ class TransportRouteCard extends StatelessWidget {
                   ),
           ),
           if (quickChips.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Wrap(spacing: 8, runSpacing: 8, children: quickChips),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 34,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemBuilder: (context, index) => quickChips[index],
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
+                itemCount: quickChips.length,
+              ),
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class TransportDraggableBottomSheet extends StatelessWidget {
+  const TransportDraggableBottomSheet({
+    super.key,
+    required this.childBuilder,
+    this.initialChildSize = 0.54,
+    this.minChildSize = 0.42,
+    this.maxChildSize = 0.86,
+  });
+
+  final Widget Function(BuildContext context, ScrollController scrollController)
+  childBuilder;
+  final double initialChildSize;
+  final double minChildSize;
+  final double maxChildSize;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: DraggableScrollableSheet(
+        expand: false,
+        snap: true,
+        minChildSize: minChildSize,
+        initialChildSize: initialChildSize,
+        maxChildSize: maxChildSize,
+        builder: (context, scrollController) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(34)),
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0x22000000),
+                  blurRadius: 34,
+                  offset: Offset(0, -12),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              top: false,
+              bottom: true,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(18, 10, 18, 12),
+                child: childBuilder(context, scrollController),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -518,9 +615,9 @@ class TransportOptionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         onTap: onTap,
         child: Ink(
-          width: 108,
-          height: 140,
-          padding: const EdgeInsets.all(10),
+          width: 104,
+          height: 104,
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: isSelected
                 ? accentColor.withValues(alpha: 0.1)
@@ -530,45 +627,67 @@ class TransportOptionCard extends StatelessWidget {
               color: isSelected ? accentColor : Colors.transparent,
               width: 1.4,
             ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: accentColor.withValues(alpha: 0.18),
+                      blurRadius: 18,
+                      offset: const Offset(0, 10),
+                    ),
+                  ]
+                : null,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? Colors.white
-                      : Colors.white.withValues(alpha: 0.82),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(icon, size: 20, color: accentColor),
+              Row(
+                children: [
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? Colors.white
+                          : Colors.white.withValues(alpha: 0.82),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(icon, size: 17, color: accentColor),
+                  ),
+                  const Spacer(),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: isSelected ? accentColor : Colors.transparent,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 5),
               Text(
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
-                  fontSize: 13,
+                  fontSize: 12,
                   color: AppColors.deepCharcoal,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 1),
               Text(
                 subtitle,
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 10,
+                  fontSize: 9,
                   color: AppColors.mutedText,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const Spacer(),
-              const SizedBox(height: 8),
+              const SizedBox(height: 3),
               Text(
                 price,
                 maxLines: 1,
@@ -576,7 +695,7 @@ class TransportOptionCard extends StatelessWidget {
                 style: TextStyle(
                   color: accentColor,
                   fontWeight: FontWeight.w800,
-                  fontSize: 14,
+                  fontSize: 12,
                 ),
               ),
             ],

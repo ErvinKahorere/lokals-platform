@@ -374,8 +374,12 @@ class LokalsShell extends ConsumerWidget {
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) {
         return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.84,
+          ),
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -383,8 +387,9 @@ class LokalsShell extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
           child: SafeArea(
             top: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Center(
@@ -493,6 +498,7 @@ class LokalsShell extends ConsumerWidget {
                   );
                 }),
               ],
+              ),
             ),
           ),
         );

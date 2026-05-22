@@ -228,12 +228,8 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
       key: const ValueKey('ride-request'),
       builder: (context, constraints) {
         final isCompactHeight = constraints.maxHeight < 760;
-        final sheetHeight =
-            (constraints.maxHeight * (isCompactHeight ? 0.61 : 0.57)).clamp(
-              390.0,
-              470.0,
-            );
-        final optionRowHeight = isCompactHeight ? 140.0 : 144.0;
+        final optionRowHeight = isCompactHeight ? 108.0 : 112.0;
+        final initialSheetSize = isCompactHeight ? 0.52 : 0.48;
 
         return Stack(
           children: [
@@ -338,15 +334,11 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                 ],
               ),
             ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: TransportBottomSheetCard(
-                maxHeight: sheetHeight,
-                child: SizedBox(
-                  height: sheetHeight,
-                  child: Column(
+            TransportDraggableBottomSheet(
+              initialChildSize: initialSheetSize,
+              minChildSize: isCompactHeight ? 0.46 : 0.4,
+              maxChildSize: 0.86,
+              childBuilder: (context, sheetController) => Column(
                     children: [
                       Container(
                         width: 42,
@@ -370,7 +362,8 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                       const SizedBox(height: 12),
                       Expanded(
                         child: SingleChildScrollView(
-                          padding: const EdgeInsets.only(bottom: 12),
+                          controller: sheetController,
+                          padding: const EdgeInsets.only(bottom: 16),
                           physics: const BouncingScrollPhysics(),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -394,7 +387,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 10),
                               SizedBox(
                                 height: optionRowHeight,
                                 child: ListView.separated(
@@ -418,7 +411,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                                   },
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 10),
                               Wrap(
                                 spacing: 10,
                                 runSpacing: 10,
@@ -435,7 +428,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 10),
                               const Text(
                                 'Trip purpose',
                                 style: TextStyle(fontWeight: FontWeight.w800),
@@ -462,7 +455,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                                   );
                                 }).toList(),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 10),
                               ExpansionTile(
                                 tilePadding: EdgeInsets.zero,
                                 childrenPadding: EdgeInsets.zero,
@@ -522,7 +515,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 4),
                               ExpansionTile(
                                 tilePadding: EdgeInsets.zero,
                                 childrenPadding: EdgeInsets.zero,
@@ -556,15 +549,25 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                                   ),
                                 ),
                               ],
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 8),
                             ],
                           ),
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.only(top: 12),
-                        decoration: const BoxDecoration(
-                          border: Border(
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        curve: Curves.easeOut,
+                        padding: const EdgeInsets.fromLTRB(0, 12, 0, 2),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.06),
+                              blurRadius: 18,
+                              offset: const Offset(0, -8),
+                            ),
+                          ],
+                          border: const Border(
                             top: BorderSide(color: AppColors.border),
                           ),
                         ),
@@ -577,6 +580,8 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                                     ? 'Requesting taxi...'
                                     : 'Request taxi',
                                 isLoading: _isBusy,
+                                variant: AppButtonVariant.accent,
+                                icon: Icons.local_taxi_rounded,
                                 onPressed: _submitRideRequest,
                               ),
                             ),
@@ -610,8 +615,6 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                       ),
                     ],
                   ),
-                ),
-              ),
             ),
           ],
         );

@@ -14,7 +14,7 @@ export function TransportTabs({
   onChange: (value: string) => void
 }) {
   return (
-    <div className="overflow-x-auto pb-1">
+    <div className="overflow-x-auto rounded-full bg-white/80 p-1 shadow-soft backdrop-blur pb-1">
       <Tabs items={items} value={value} onChange={onChange} />
     </div>
   )
@@ -40,10 +40,10 @@ export function TransportMapHero({
   meta?: ReactNode
 }) {
   return (
-    <div className="relative overflow-hidden rounded-[32px] border border-lokals-purple/10 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.14),transparent_34%),linear-gradient(180deg,#ffffff,#f8faff)] p-4 shadow-card md:p-5">
-      <div className="absolute inset-x-0 top-0 h-28 bg-[linear-gradient(135deg,rgba(124,58,237,0.12),rgba(22,163,74,0.08),transparent)]" />
-      <div className="relative grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_360px]">
-        <div className="min-w-0 overflow-hidden rounded-[28px] border border-white/70 bg-white/90 shadow-soft">
+    <div className="relative overflow-hidden rounded-[36px] border border-white/70 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.18),transparent_34%),linear-gradient(180deg,#f8fafc,#eef6ff)] p-3 shadow-[0_30px_80px_rgba(15,23,42,0.14)] md:p-4">
+      <div className="absolute inset-x-0 top-0 h-32 bg-[linear-gradient(135deg,rgba(124,58,237,0.16),rgba(22,163,74,0.1),transparent)]" />
+      <div className="relative grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_330px]">
+        <div className="min-h-[420px] min-w-0 overflow-hidden rounded-[32px] border border-white/80 bg-white/70 shadow-soft">
           <LocationPreviewMap
             primary={primary}
             secondary={secondary}
@@ -51,17 +51,17 @@ export function TransportMapHero({
             secondaryLabel={secondaryLabel}
           />
         </div>
-        <div className="relative flex flex-col justify-between gap-4 rounded-[28px] border border-white/70 bg-white/92 p-5 shadow-soft">
+        <div className="relative flex flex-col justify-between gap-4 rounded-[30px] border border-white/80 bg-white/82 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.12)] backdrop-blur">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-lokals-purple">{eyebrow}</p>
-            <h2 className="mt-2 text-2xl font-semibold text-lokals-charcoal">{title}</h2>
+            <h2 className="mt-2 text-3xl font-semibold leading-tight text-lokals-charcoal">{title}</h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-lokals-muted">{description}</p>
           </div>
           <div className="space-y-3">
             <TransportRouteMarker tone="pickup" label="Pickup" value={primaryLabel} coordinates={formatCoordinates(primary ?? null)} />
             {secondaryLabel ? <TransportRouteMarker tone="dropoff" label="Drop-off" value={secondaryLabel} coordinates={formatCoordinates(secondary ?? null)} /> : null}
           </div>
-          {meta ? <div className="rounded-[22px] bg-slate-50 p-4">{meta}</div> : null}
+          {meta ? <div className="rounded-[24px] bg-slate-50/90 p-4 shadow-inner">{meta}</div> : null}
         </div>
       </div>
     </div>
@@ -80,7 +80,7 @@ export function TransportSummaryCard({
   sticky?: boolean
 }) {
   return (
-    <div className={`rounded-[28px] border border-lokals-purple/10 bg-[linear-gradient(180deg,#ffffff,#f9faff)] p-5 shadow-card ${sticky ? 'lg:sticky lg:top-24' : ''}`}>
+    <div className={`rounded-[30px] border border-white/80 bg-white/92 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.12)] backdrop-blur ${sticky ? 'lg:sticky lg:top-24' : ''}`}>
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-lokals-purple">{title}</p>
       <div className="mt-4 space-y-3">
         {items.map((item) => (
@@ -90,7 +90,7 @@ export function TransportSummaryCard({
           </div>
         ))}
       </div>
-      {cta ? <div className="mt-5">{cta}</div> : null}
+      {cta ? <div className="sticky bottom-4 mt-5 rounded-[24px] bg-white/90 p-2 shadow-[0_18px_40px_rgba(15,23,42,0.12)] backdrop-blur">{cta}</div> : null}
     </div>
   )
 }
@@ -107,7 +107,7 @@ export function TransportPanel({
   aside?: ReactNode
 }) {
   return (
-    <div className="rounded-[28px] border border-lokals-purple/10 bg-[linear-gradient(180deg,#ffffff,#fbfcff)] p-5 shadow-card">
+    <div className="rounded-[30px] border border-white/80 bg-[linear-gradient(180deg,#ffffff,#fbfcff)] p-5 shadow-card">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="text-lg font-semibold text-lokals-charcoal">{title}</h3>

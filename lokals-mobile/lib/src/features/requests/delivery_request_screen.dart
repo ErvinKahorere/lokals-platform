@@ -188,12 +188,8 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
       key: const ValueKey('delivery-request'),
       builder: (context, constraints) {
         final isCompactHeight = constraints.maxHeight < 760;
-        final sheetHeight =
-            (constraints.maxHeight * (isCompactHeight ? 0.63 : 0.59)).clamp(
-              400.0,
-              485.0,
-            );
-        final optionRowHeight = isCompactHeight ? 140.0 : 144.0;
+        final optionRowHeight = isCompactHeight ? 108.0 : 112.0;
+        final initialSheetSize = isCompactHeight ? 0.54 : 0.5;
 
         return Stack(
           children: [
@@ -298,15 +294,11 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                 ],
               ),
             ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: TransportBottomSheetCard(
-                maxHeight: sheetHeight,
-                child: SizedBox(
-                  height: sheetHeight,
-                  child: Column(
+            TransportDraggableBottomSheet(
+              initialChildSize: initialSheetSize,
+              minChildSize: isCompactHeight ? 0.48 : 0.42,
+              maxChildSize: 0.88,
+              childBuilder: (context, sheetController) => Column(
                     children: [
                       Container(
                         width: 42,
@@ -330,7 +322,8 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                       const SizedBox(height: 12),
                       Expanded(
                         child: SingleChildScrollView(
-                          padding: const EdgeInsets.only(bottom: 12),
+                          controller: sheetController,
+                          padding: const EdgeInsets.only(bottom: 16),
                           physics: const BouncingScrollPhysics(),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,7 +345,7 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 10),
                               SizedBox(
                                 height: optionRowHeight,
                                 child: ListView.separated(
@@ -377,7 +370,7 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                                   },
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 10),
                               Wrap(
                                 spacing: 10,
                                 runSpacing: 10,
@@ -395,7 +388,7 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 10),
                               DropdownButtonFormField<String>(
                                 initialValue: _urgency,
                                 decoration: const InputDecoration(
@@ -419,7 +412,7 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                                   () => _urgency = value ?? _urgency,
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 10),
                               LokalsTextField(
                                 controller: _weightController,
                                 label: 'Weight (kg)',
@@ -429,14 +422,14 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                                       decimal: true,
                                     ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 10),
                               LokalsTextField(
                                 controller: _itemController,
                                 label: 'Parcel description',
                                 hint: 'What are you sending?',
                                 maxLines: 2,
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 10),
                               ExpansionTile(
                                 tilePadding: EdgeInsets.zero,
                                 childrenPadding: EdgeInsets.zero,
@@ -496,7 +489,7 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 4),
                               ExpansionTile(
                                 tilePadding: EdgeInsets.zero,
                                 childrenPadding: EdgeInsets.zero,
@@ -546,15 +539,25 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                                   ),
                                 ),
                               ],
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 8),
                             ],
                           ),
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.only(top: 12),
-                        decoration: const BoxDecoration(
-                          border: Border(
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        curve: Curves.easeOut,
+                        padding: const EdgeInsets.fromLTRB(0, 12, 0, 2),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.06),
+                              blurRadius: 18,
+                              offset: const Offset(0, -8),
+                            ),
+                          ],
+                          border: const Border(
                             top: BorderSide(color: AppColors.border),
                           ),
                         ),
@@ -569,6 +572,7 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                                     ? 'Simulate delivery'
                                     : 'Request delivery',
                                 isLoading: _isBusy,
+                                icon: Icons.delivery_dining_rounded,
                                 onPressed: _submitDeliveryRequest,
                               ),
                             ),
@@ -602,8 +606,6 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                       ),
                     ],
                   ),
-                ),
-              ),
             ),
           ],
         );
