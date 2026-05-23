@@ -228,7 +228,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
       key: const ValueKey('ride-request'),
       builder: (context, constraints) {
         final isCompactHeight = constraints.maxHeight < 760;
-        final optionRowHeight = isCompactHeight ? 108.0 : 112.0;
+        final optionRowHeight = isCompactHeight ? 100.0 : 104.0;
         final initialSheetSize = isCompactHeight ? 0.52 : 0.48;
 
         return Stack(
@@ -363,7 +363,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                       Expanded(
                         child: SingleChildScrollView(
                           controller: sheetController,
-                          padding: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.only(bottom: 22),
                           physics: const BouncingScrollPhysics(),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -557,18 +557,20 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 180),
                         curve: Curves.easeOut,
-                        padding: const EdgeInsets.fromLTRB(0, 12, 0, 2),
+                        padding: const EdgeInsets.fromLTRB(0, 10, 0, 2),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Colors.white.withValues(alpha: 0.9),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.06),
-                              blurRadius: 18,
-                              offset: const Offset(0, -8),
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 16,
+                              offset: const Offset(0, -6),
                             ),
                           ],
-                          border: const Border(
-                            top: BorderSide(color: AppColors.border),
+                          border: Border(
+                            top: BorderSide(
+                              color: AppColors.border.withValues(alpha: 0.68),
+                            ),
                           ),
                         ),
                         child: Row(

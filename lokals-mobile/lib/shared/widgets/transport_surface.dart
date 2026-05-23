@@ -615,8 +615,8 @@ class TransportOptionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         onTap: onTap,
         child: Ink(
-          width: 104,
-          height: 104,
+          width: 112,
+          height: 96,
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: isSelected
@@ -653,14 +653,18 @@ class TransportOptionCard extends StatelessWidget {
                     ),
                     child: Icon(icon, size: 17, color: accentColor),
                   ),
-                  const Spacer(),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: isSelected ? accentColor : Colors.transparent,
-                      borderRadius: BorderRadius.circular(999),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      price,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        color: accentColor,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                 ],
@@ -685,17 +689,6 @@ class TransportOptionCard extends StatelessWidget {
                   fontSize: 9,
                   color: AppColors.mutedText,
                   fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                price,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: accentColor,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12,
                 ),
               ),
             ],
