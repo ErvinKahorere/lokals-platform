@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react'
-import { CarFront, ChevronDown, LocateFixed, MapPinned, ShieldCheck, UserRound } from 'lucide-react'
+import { AlertTriangle, CarFront, ChevronDown, LocateFixed, MapPinned, Phone, ShieldCheck, UserRound } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button, EmptyState, Input, PageHeader, QueryState, Select, StatusBadge } from '../components/Ui'
@@ -33,6 +33,17 @@ const savedStops = [
 ]
 
 const tripPurposes = ['Daily commute', 'Clinic visit', 'School pickup', 'Airport trip', 'Late shift ride']
+const popularRoutes = [
+  { pickup: 'Okahandja taxi rank', dropoff: 'Okahandja Town Council', label: 'Taxi rank to Town Council' },
+  { pickup: 'Nau-Aib Community Hall', dropoff: 'Okahandja State Clinic', label: 'Nau-Aib to State Clinic' },
+  { pickup: 'Okahandja Police Station', dropoff: 'Okahandja Town Council', label: 'Police Station to Town Council' },
+  { pickup: 'Home', dropoff: 'Okahandja taxi rank', label: 'Home to Taxi rank' },
+]
+const requestSteps = [
+  { key: 'route', label: 'Route' },
+  { key: 'options', label: 'Ride options' },
+  { key: 'review', label: 'Review' },
+] as const
 
 const rideTabs = [
   { label: 'Request', value: 'request' },
@@ -43,6 +54,7 @@ const rideTabs = [
 
 export function RidePage() {
   const [activeTab, setActiveTab] = useState('request')
+  const [requestStep, setRequestStep] = useState<(typeof requestSteps)[number]['key']>('route')
   const [pickupLocation, setPickupLocation] = useState(savedStops[0])
   const [dropoffLocation, setDropoffLocation] = useState('Okahandja Town Council')
   const [pickupPoint, setPickupPoint] = useState<LocationPoint | null>(null)
@@ -79,6 +91,7 @@ export function RidePage() {
     () => Array.from(new Map((ridesQuery.data?.data ?? []).filter((ride) => ride.driver?.id != null).map((ride) => [ride.driver?.id, ride])).values()).slice(0, 5),
     [ridesQuery.data?.data],
   )
+  const operatorPreview = useMemo(() => savedDrivers.slice(0, 3), [savedDrivers])
 
   const submit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -116,6 +129,7 @@ export function RidePage() {
       setSuccessItem(created)
       setNotes('')
       setActiveTab('active')
+      setRequestStep('review')
     } catch (caught) {
       setError(getApiErrorMessage(caught, 'Unable to request a ride right now.'))
     }
@@ -147,145 +161,210 @@ export function RidePage() {
       {activeTab === 'request' ? (
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
           <TransportPanel
-            title="Request a ride"
-            description="Move through the route, ride type, and confirmation steps without the extra admin-style clutter."
+            title="Request local transport"
+            description="A calmer local booking flow with route setup, ride choices, and one final review before you send the request."
             aside={<StatusBadge value={`${selectedRide.eta} pickup`} tone="accent" />}
           >
             <form className="space-y-5" onSubmit={submit}>
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-lokals-charcoal">1. Pickup</span>
-                  <Input value={pickupLocation} onChange={(event) => setPickupLocation(event.target.value)} placeholder="Enter pickup address or landmark" />
-                </label>
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-lokals-charcoal">2. Destination</span>
-                  <Input value={dropoffLocation} onChange={(event) => setDropoffLocation(event.target.value)} placeholder="Enter destination address or landmark" />
-                </label>
-              </div>
-
               <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={setCurrentLocation}
-                  className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
-                >
-                  <LocateFixed className="h-4 w-4" />
-                  Use current location
-                </button>
-                {['Home', 'Work', 'Taxi rank', 'Clinic'].map((label) => (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => {
-                      const nextValue = label === 'Taxi rank' ? 'Okahandja taxi rank' : label === 'Clinic' ? 'Okahandja State Clinic' : label
-                      setDropoffLocation(nextValue)
-                    }}
-                    className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-lokals-charcoal transition hover:bg-slate-200"
-                  >
-                    {label}
-                  </button>
-                ))}
+                {requestSteps.map((step, index) => {
+                  const active = requestStep === step.key
+                  return (
+                    <button
+                      key={step.key}
+                      type="button"
+                      onClick={() => setRequestStep(step.key)}
+                      className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                        active ? 'bg-lokals-purple text-white shadow-card' : 'bg-slate-100 text-lokals-charcoal hover:bg-slate-200'
+                      }`}
+                    >
+                      <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs ${active ? 'bg-white/20 text-white' : 'bg-white text-lokals-purple'}`}>{index + 1}</span>
+                      {step.label}
+                    </button>
+                  )
+                })}
               </div>
 
-              <details className="group rounded-[24px] border border-lokals-border bg-slate-50 px-4 py-4">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-lokals-charcoal">Advanced map options</p>
-                    <p className="mt-1 text-sm text-lokals-muted">Use a single map surface to fine-tune pickup or destination pins when needed.</p>
+              {(requestStep === 'route' || requestStep === 'review') ? (
+                <div className="space-y-5 rounded-[24px] border border-lokals-border bg-[linear-gradient(180deg,#ffffff,#fbfcff)] p-5">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <label className="space-y-2">
+                      <span className="text-sm font-medium text-lokals-charcoal">Pickup</span>
+                      <Input value={pickupLocation} onChange={(event) => setPickupLocation(event.target.value)} placeholder="Enter pickup address or landmark" />
+                    </label>
+                    <label className="space-y-2">
+                      <span className="text-sm font-medium text-lokals-charcoal">Destination</span>
+                      <Input value={dropoffLocation} onChange={(event) => setDropoffLocation(event.target.value)} placeholder="Enter destination address or landmark" />
+                    </label>
                   </div>
-                  <ChevronDown className="h-4 w-4 text-lokals-muted transition group-open:rotate-180" />
-                </summary>
-                <div className="mt-4 space-y-4">
+
                   <div className="flex flex-wrap gap-2">
-                    {[
-                      { label: 'Edit pickup pin', value: 'pickup' as const },
-                      { label: 'Edit destination pin', value: 'dropoff' as const },
-                    ].map((item) => (
+                    <button
+                      type="button"
+                      onClick={setCurrentLocation}
+                      className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                    >
+                      <LocateFixed className="h-4 w-4" />
+                      Use current location
+                    </button>
+                    {popularRoutes.map((route) => (
                       <button
-                        key={item.value}
+                        key={route.label}
                         type="button"
-                        onClick={() => setPinTarget(item.value)}
-                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${pinTarget === item.value ? 'bg-lokals-purple text-white' : 'bg-white text-lokals-charcoal shadow-soft'}`}
+                        onClick={() => {
+                          setPickupLocation(route.pickup)
+                          setDropoffLocation(route.dropoff)
+                        }}
+                        className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-lokals-charcoal transition hover:bg-slate-200"
                       >
-                        {item.label}
+                        {route.label}
                       </button>
                     ))}
                   </div>
-                  <LocationPickerMap
-                    label={pinTarget === 'pickup' ? 'Pickup pin' : 'Destination pin'}
-                    value={pinTarget === 'pickup' ? pickupPoint : dropoffPoint}
-                    onChange={(value) => {
-                      if (pinTarget === 'pickup') {
-                        setPickupPoint(value)
-                        return
-                      }
-                      setDropoffPoint(value)
-                    }}
-                    helpText={pinTarget === 'pickup' ? 'Tap to place a more precise pickup pin. Manual address entry above still works.' : 'Tap to place a more precise destination pin. Manual address entry above still works.'}
-                  />
-                </div>
-              </details>
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium text-lokals-charcoal">3. Ride type</p>
-                    <p className="text-sm text-lokals-muted">Compact options with pricing and pickup timing up front.</p>
-                  </div>
-                  <StatusBadge value={`N$ ${selectedRide.baseFare}+`} tone="accent" />
-                </div>
-                <div className="grid gap-3 md:grid-cols-3">
-                  {rideOptions.map((option) => (
-                    <button
-                      key={option.name}
-                      type="button"
-                      onClick={() => setRideType(option.name)}
-                      className={`rounded-[24px] border p-4 text-left transition ${rideType === option.name ? 'border-lokals-purple bg-violet-50 shadow-card' : 'border-lokals-border bg-white hover:border-violet-200'}`}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${rideType === option.name ? 'bg-white text-lokals-purple' : 'bg-slate-50 text-lokals-charcoal'}`}>
-                          <CarFront className="h-5 w-5" />
-                        </div>
-                        <StatusBadge value={option.eta} tone={rideType === option.name ? 'accent' : 'neutral'} />
+                  <details className="group rounded-[24px] border border-lokals-border bg-slate-50 px-4 py-4">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-lokals-charcoal">Advanced map options</p>
+                        <p className="mt-1 text-sm text-lokals-muted">Use one map surface to refine pickup or destination pins only when needed.</p>
                       </div>
-                      <p className="mt-4 font-semibold text-lokals-charcoal">{option.name}</p>
-                      <p className="mt-1 text-sm text-lokals-muted">{option.detail}</p>
-                    </button>
-                  ))}
+                      <ChevronDown className="h-4 w-4 text-lokals-muted transition group-open:rotate-180" />
+                    </summary>
+                    <div className="mt-4 space-y-4">
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { label: 'Edit pickup pin', value: 'pickup' as const },
+                          { label: 'Edit destination pin', value: 'dropoff' as const },
+                        ].map((item) => (
+                          <button
+                            key={item.value}
+                            type="button"
+                            onClick={() => setPinTarget(item.value)}
+                            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${pinTarget === item.value ? 'bg-lokals-purple text-white' : 'bg-white text-lokals-charcoal shadow-soft'}`}
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
+                      <LocationPickerMap
+                        label={pinTarget === 'pickup' ? 'Pickup pin' : 'Destination pin'}
+                        value={pinTarget === 'pickup' ? pickupPoint : dropoffPoint}
+                        onChange={(value) => {
+                          if (pinTarget === 'pickup') {
+                            setPickupPoint(value)
+                            return
+                          }
+                          setDropoffPoint(value)
+                        }}
+                        helpText={pinTarget === 'pickup' ? 'Tap to place a more precise pickup pin. Manual address entry above still works.' : 'Tap to place a more precise destination pin. Manual address entry above still works.'}
+                      />
+                    </div>
+                  </details>
+
+                  {requestStep === 'route' ? (
+                    <div className="flex justify-end">
+                      <Button type="button" onClick={() => setRequestStep('options')}>Continue to ride options</Button>
+                    </div>
+                  ) : null}
                 </div>
-              </div>
+              ) : null}
 
-              <div className="grid gap-4 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-lokals-charcoal">4. Trip purpose</span>
-                  <Select value={tripPurpose} onChange={(event) => setTripPurpose(event.target.value)}>
-                    {tripPurposes.map((option) => <option key={option} value={option}>{option}</option>)}
-                  </Select>
-                </label>
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-lokals-charcoal">Notes</span>
-                  <Input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Gate number, landmark, or timing note" />
-                </label>
-              </div>
-
-              {error ? <p className="text-sm font-medium text-lokals-danger">{error}</p> : null}
-              <div className="rounded-[24px] bg-lokals-charcoal p-4 text-white shadow-card">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">5. Confirm</p>
-                    <p className="mt-1 text-xl font-semibold">Request {selectedRide.name.toLowerCase()} ride</p>
-                    <p className="mt-1 text-sm text-white/70">The route stays editable until you submit. Maps never block the request.</p>
+              {(requestStep === 'options' || requestStep === 'review') ? (
+                <div className="space-y-5 rounded-[24px] border border-lokals-border bg-white p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-lokals-charcoal">Ride choice</p>
+                      <p className="text-sm text-lokals-muted">Compare fare, pickup speed, and space before confirming.</p>
+                    </div>
+                    <StatusBadge value={`N$ ${selectedRide.baseFare}+`} tone="accent" />
                   </div>
-                  <Button className="min-w-[220px]" disabled={createRide.isPending}>
-                    {createRide.isPending ? 'Requesting ride...' : isDemoMode ? 'Simulate taxi request' : 'Confirm ride request'}
-                  </Button>
+                  <div className="grid gap-3 md:grid-cols-3">
+                    {rideOptions.map((option) => (
+                      <button
+                        key={option.name}
+                        type="button"
+                        onClick={() => setRideType(option.name)}
+                        className={`rounded-[24px] border p-4 text-left transition ${rideType === option.name ? 'border-lokals-purple bg-violet-50 shadow-card' : 'border-lokals-border bg-white hover:border-violet-200'}`}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${rideType === option.name ? 'bg-white text-lokals-purple' : 'bg-slate-50 text-lokals-charcoal'}`}>
+                            <CarFront className="h-5 w-5" />
+                          </div>
+                          <StatusBadge value={option.eta} tone={rideType === option.name ? 'accent' : 'neutral'} />
+                        </div>
+                        <p className="mt-4 font-semibold text-lokals-charcoal">{option.name}</p>
+                        <p className="mt-1 text-sm text-lokals-muted">{option.detail}</p>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                    <label className="space-y-2">
+                      <span className="text-sm font-medium text-lokals-charcoal">Trip purpose</span>
+                      <Select value={tripPurpose} onChange={(event) => setTripPurpose(event.target.value)}>
+                        {tripPurposes.map((option) => <option key={option} value={option}>{option}</option>)}
+                      </Select>
+                    </label>
+                    <label className="space-y-2">
+                      <span className="text-sm font-medium text-lokals-charcoal">Notes</span>
+                      <Input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Gate number, landmark, or timing note" />
+                    </label>
+                  </div>
+                  {requestStep === 'options' ? (
+                    <div className="flex justify-between gap-3">
+                      <Button type="button" variant="secondary" onClick={() => setRequestStep('route')}>Back to route</Button>
+                      <Button type="button" onClick={() => setRequestStep('review')}>Review request</Button>
+                    </div>
+                  ) : null}
                 </div>
-              </div>
+              ) : null}
+
+              {requestStep === 'review' ? (
+                <div className="space-y-4 rounded-[24px] bg-lokals-charcoal p-5 text-white shadow-card">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">Review and confirm</p>
+                      <p className="mt-1 text-xl font-semibold">Request {selectedRide.name.toLowerCase()} ride</p>
+                      <p className="mt-1 text-sm text-white/70">Sent to nearby operators with your route, trip purpose, and any access notes.</p>
+                    </div>
+                    <StatusBadge value={`${selectedRide.eta} pickup`} tone="success" />
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="rounded-[20px] bg-white/10 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Pickup</p>
+                      <p className="mt-2 font-semibold">{pickupLocation}</p>
+                    </div>
+                    <div className="rounded-[20px] bg-white/10 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Destination</p>
+                      <p className="mt-2 font-semibold">{dropoffLocation}</p>
+                    </div>
+                    <div className="rounded-[20px] bg-white/10 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Fare and timing</p>
+                      <p className="mt-2 font-semibold">N$ {estimatedFare} | {estimatedDurationMinutes} min</p>
+                    </div>
+                    <div className="rounded-[20px] bg-white/10 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Ride type</p>
+                      <p className="mt-2 font-semibold">{selectedRide.name} | {tripPurpose}</p>
+                    </div>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <div className="rounded-[20px] bg-white/10 p-4 text-sm text-white/80">Verified driver details appear once a nearby operator accepts.</div>
+                    <div className="rounded-[20px] bg-white/10 p-4 text-sm text-white/80">Call or WhatsApp actions show up in your live ride workspace.</div>
+                    <div className="rounded-[20px] bg-white/10 p-4 text-sm text-white/80">Use SOS if the trip feels unsafe or the situation changes urgently.</div>
+                  </div>
+                  {error ? <p className="text-sm font-medium text-rose-200">{error}</p> : null}
+                  <div className="flex flex-wrap gap-3">
+                    <Button type="button" variant="secondary" onClick={() => setRequestStep('options')}>Edit request</Button>
+                    <Button className="min-w-[220px]" disabled={createRide.isPending}>
+                      {createRide.isPending ? 'Requesting ride...' : isDemoMode ? 'Simulate taxi request' : 'Confirm ride request'}
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
             </form>
           </TransportPanel>
 
           <TransportSummaryCard
-            title="Trip summary"
+            title="Transport snapshot"
             sticky
             items={[
               { label: 'Route', value: pickupLocation === dropoffLocation ? pickupLocation : `${pickupLocation} -> ${dropoffLocation}` },
@@ -297,7 +376,47 @@ export function RidePage() {
               <div className="grid gap-3">
                 <TransportMiniMetric label="Distance" value={distanceKm != null ? `${distanceKm.toFixed(1)} km` : 'Address-based estimate'} />
                 <div className="rounded-[22px] bg-slate-50 px-4 py-4 text-sm text-lokals-muted">
-                  Pickup and drop-off can be typed manually first, then refined with advanced map options only if needed.
+                  Pickup and destination can be typed manually first, then refined with map pins only if needed.
+                </div>
+                <div className="rounded-[22px] border border-lokals-border bg-white p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+                      <AlertTriangle className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-lokals-charcoal">Safety note</p>
+                      <p className="mt-1 text-sm text-lokals-muted">Confirm your route before boarding and use SOS if the driver, vehicle, or pickup feels wrong.</p>
+                    </div>
+                  </div>
+                  <Link to="/sos" className="mt-3 inline-flex">
+                    <Button variant="danger">Emergency shortcut</Button>
+                  </Link>
+                </div>
+                <div className="rounded-[22px] border border-lokals-border bg-white p-4">
+                  <p className="font-semibold text-lokals-charcoal">Nearby trusted operators</p>
+                  <p className="mt-1 text-sm text-lokals-muted">Local drivers from recent accepted or completed trips, if available.</p>
+                  <div className="mt-3 space-y-3">
+                    {operatorPreview.length > 0 ? operatorPreview.map((ride) => (
+                      <div key={ride.id} className="rounded-[18px] bg-slate-50 p-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-semibold text-lokals-charcoal">{ride.driver?.name ?? 'Local operator'}</p>
+                            <p className="mt-1 text-sm text-lokals-muted">{ride.vehicle_label ?? ride.driver_profile?.vehicle_registration ?? 'Vehicle details appear when assigned'}</p>
+                          </div>
+                          <StatusBadge value={ride.driver_profile?.is_verified ? 'Verified' : 'Recent operator'} tone={ride.driver_profile?.is_verified ? 'success' : 'neutral'} />
+                        </div>
+                        {ride.driver?.phone ? (
+                          <a href={`tel:${ride.driver.phone}`} className="mt-3 inline-flex">
+                            <Button variant="secondary"><Phone className="h-4 w-4" />Call operator</Button>
+                          </a>
+                        ) : null}
+                      </div>
+                    )) : (
+                      <div className="rounded-[18px] bg-slate-50 p-3 text-sm text-lokals-muted">
+                        Operator previews will appear here after you complete or accept local rides with trusted drivers.
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             }
@@ -361,8 +480,8 @@ export function RidePage() {
         <TransportPanel title="Active ride" description="The ride that currently needs attention, with the next action kept obvious.">
           {successItem ? (
             <RequestSuccessState
-              title="Ride requested"
-              body="Your taxi request is now live. A nearby driver can accept and update the trip shortly."
+              title="Transport request sent"
+              body="Your local transport request is live. A nearby driver can accept, share operator details, and update the trip status shortly."
               meta={
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
@@ -372,6 +491,14 @@ export function RidePage() {
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Estimate</p>
                     <p className="mt-1 font-semibold text-lokals-charcoal">N$ {successItem.fare_estimate ?? estimatedFare}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Reference</p>
+                    <p className="mt-1 font-semibold text-lokals-charcoal">{successItem.reference_code ?? `Ride ${successItem.id}`}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Status</p>
+                    <p className="mt-1 font-semibold text-lokals-charcoal">{formatTransportStatus(successItem.tracking_status ?? successItem.status, successItem.status_label)}</p>
                   </div>
                 </div>
               }
@@ -457,9 +584,9 @@ export function RidePage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         {[
-          { title: 'One route surface', body: 'The route preview now does the orientation work first, before you ever open advanced controls.', icon: MapPinned },
-          { title: 'Fewer repeated controls', body: 'Current location stays visible once, while pin placement lives in an optional advanced drawer.', icon: LocateFixed },
-          { title: 'Clear confirm step', body: 'Pricing, timing, and the primary CTA stay grouped so the request flow feels guided instead of stacked.', icon: ShieldCheck },
+          { title: 'Guided local booking', body: 'Move from route to ride choice to review without losing the transport context or route estimate.', icon: MapPinned },
+          { title: 'Safer pickup flow', body: 'Current location, trusted operator cues, and SOS stay visible so the request feels safer and more official.', icon: LocateFixed },
+          { title: 'Clear review step', body: 'Fare, ETA, route, and trip purpose stay together before you confirm, which reduces rushed mistakes.', icon: ShieldCheck },
         ].map((item) => (
           <div key={item.title} className="rounded-[24px] border border-lokals-purple/10 bg-[linear-gradient(180deg,#ffffff,#fbfcff)] p-5 shadow-soft">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple">

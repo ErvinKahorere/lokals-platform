@@ -23,7 +23,7 @@ class OrdersScreen extends ConsumerWidget {
       showBack: true,
       child: orders.when(
         data: (items) => ListView(
-          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.viewPaddingOf(context).bottom + 100),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
           children: [
             SectionTitle(
               eyebrow: 'Order delivery',

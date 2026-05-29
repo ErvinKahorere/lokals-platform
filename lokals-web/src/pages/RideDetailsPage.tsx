@@ -1,4 +1,4 @@
-import { AlertCircle, CarFront, Clock3, Star } from 'lucide-react'
+import { AlertCircle, AlertTriangle, CarFront, Clock3, ShieldCheck, Star } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ContactActions } from '../components/experience/ContactActions'
@@ -258,11 +258,23 @@ export function RideDetailsPage() {
                 {activeTab === 'contact' ? (
                   <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
                     <div className="rounded-[28px] border border-lokals-purple/10 bg-white p-5 shadow-card">
-                      <p className="font-semibold text-lokals-charcoal">{ride.driver?.name ?? 'Verified taxi operator pending'}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-semibold text-lokals-charcoal">{ride.driver?.name ?? 'Verified taxi operator pending'}</p>
+                        {ride.driver_profile?.is_verified ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-lokals-green-soft px-2.5 py-1 text-[11px] font-semibold text-lokals-green">
+                            <ShieldCheck className="h-3.5 w-3.5" />
+                            Verified
+                          </span>
+                        ) : null}
+                      </div>
                       <p className="mt-1 text-sm text-lokals-muted">{ride.driver?.phone ?? 'A driver contact will appear after a nearby taxi accepts your request.'}</p>
                       {ride.vehicle_label ? <p className="mt-3 text-sm text-lokals-muted">Vehicle: {ride.vehicle_label}</p> : null}
                       {ride.driver_profile?.vehicle_registration ? <p className="mt-1 text-sm text-lokals-muted">Plate: {ride.driver_profile.vehicle_registration}</p> : null}
                       {ride.driver_profile?.rating != null ? <p className="mt-1 text-sm text-lokals-muted">Driver rating: {ride.driver_profile.rating}/5</p> : null}
+                      <div className="mt-4 rounded-[22px] bg-slate-50 p-4">
+                        <p className="font-semibold text-lokals-charcoal">Safety note</p>
+                        <p className="mt-1 text-sm text-lokals-muted">Match the driver, vehicle, and plate before boarding. If anything feels wrong, use SOS immediately.</p>
+                      </div>
                       <div className="mt-4">
                         <ContactActions
                           className="flex flex-wrap gap-2"
@@ -274,13 +286,17 @@ export function RideDetailsPage() {
                           whatsappMessage={`Hi, I am checking on ride ${ride.reference_code ?? ride.id}.`}
                         />
                       </div>
+                      <div className="mt-3">
+                        <Link to="/sos"><Button variant="danger"><AlertTriangle className="h-4 w-4" />Emergency shortcut</Button></Link>
+                      </div>
                     </div>
                     <TransportSummaryCard
-                      title="Rider context"
+                      title="Ride trust"
                       items={[
                         { label: 'Passenger', value: ride.user?.name ?? 'Resident' },
                         { label: 'Trip purpose', value: ride.trip_purpose ?? 'General trip' },
                         { label: 'Current status', value: formatTransportStatus(ride.tracking_status ?? ride.status, ride.status_label), accent: true },
+                        { label: 'Operator check', value: ride.driver_profile?.is_verified ? 'Verified operator' : 'Verification shown when available' },
                       ]}
                     />
                   </div>

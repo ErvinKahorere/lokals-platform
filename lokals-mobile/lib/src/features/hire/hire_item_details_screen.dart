@@ -75,7 +75,7 @@ class _HireItemDetailsScreenState extends ConsumerState<HireItemDetailsScreen> {
                   20,
                   20,
                   20,
-                  MediaQuery.viewPaddingOf(context).bottom + 176,
+                  132,
                 ),
                 children: [
                   AppCard(
@@ -285,7 +285,7 @@ class _HireItemDetailsScreenState extends ConsumerState<HireItemDetailsScreen> {
               Positioned(
                 left: 16,
                 right: 16,
-                bottom: MediaQuery.viewPaddingOf(context).bottom + 92,
+                bottom: 16,
                 child: AppCard(
                   padding: const EdgeInsets.all(14),
                   child: Row(

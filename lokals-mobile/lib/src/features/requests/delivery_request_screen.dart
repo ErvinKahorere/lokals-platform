@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../config/app_config.dart';
 import '../../core/models.dart';
 import '../../features/auth/auth_controller.dart';
+import '../../services/contact_action_service.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../discovery/discovery_repository.dart';
@@ -50,6 +51,7 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
   final _notesController = TextEditingController();
   String _parcelSize = 'medium';
   String _activeTab = 'request';
+  String _requestStep = 'route';
   String _mapTarget = 'pickup';
   XFile? _photo;
   bool _isBusy = false;
@@ -118,6 +120,15 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
         )
         .cast<DeliveryModel?>()
         .firstWhere((item) => item != null, orElse: () => null);
+    final recentCouriers =
+        (deliveries.asData?.value ?? const <DeliveryModel>[])
+            .where(
+              (item) =>
+                  (item.driverName ?? '').trim().isNotEmpty ||
+                  (item.driverPhone ?? '').trim().isNotEmpty,
+            )
+            .take(3)
+            .toList();
     final area = auth.user?.defaultArea ?? 'Nau-Aib';
     final town = auth.user?.defaultTown ?? AppConfig.pilotTown;
 
@@ -135,6 +146,7 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                 town: town,
                 unreadCount: unreadCount,
                 profileInitial: auth.user?.name.characters.first.toUpperCase(),
+                recentCouriers: recentCouriers,
               )
             : _buildLibraryView(
                 context,
@@ -166,6 +178,11 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                 'Estimate: N\$ ${_successItem!.price ?? _estimatedTotal}',
                 style: const TextStyle(color: AppColors.mutedText),
               ),
+              const SizedBox(height: 6),
+              Text(
+                'Reference: ${_successItem!.referenceCode ?? 'Delivery ${_successItem!.id}'}',
+                style: const TextStyle(color: AppColors.mutedText),
+              ),
             ],
           ),
           primaryLabel: 'View status',
@@ -183,6 +200,7 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
     required String town,
     required int unreadCount,
     required String? profileInitial,
+    required List<DeliveryModel> recentCouriers,
   }) {
     return LayoutBuilder(
       key: const ValueKey('delivery-request'),
@@ -233,7 +251,7 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
               child: Column(
                 children: [
                   TransportFloatingHeader(
-                    title: 'Delivery',
+                    title: 'Send local parcel',
                     subtitle: '$area, $town',
                     onBack: () => context.pop(),
                     trailing: Row(
@@ -291,6 +309,33 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _StepChip(
+                          label: '1. Route',
+                          selected: _requestStep == 'route',
+                          onTap: () => setState(() => _requestStep = 'route'),
+                        ),
+                        _StepChip(
+                          label: '2. Parcel',
+                          selected: _requestStep == 'parcel',
+                          onTap: () =>
+                              setState(() => _requestStep = 'parcel'),
+                        ),
+                        _StepChip(
+                          label: '3. Review',
+                          selected: _requestStep == 'review',
+                          onTap: () =>
+                              setState(() => _requestStep = 'review'),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -328,107 +373,174 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  const Expanded(
-                                    child: Text(
-                                      'Parcel details',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w800,
+                              if (_requestStep == 'route' ||
+                                  _requestStep == 'review') ...[
+                                Row(
+                                  children: [
+                                    const Expanded(
+                                      child: Text(
+                                        'Popular routes',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w800,
+                                        ),
                                       ),
                                     ),
+                                    AppBadge(
+                                      label: '$_estimatedTotal estimate',
+                                      tone: AppBadgeTone.success,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    _QuickDropChip(
+                                      label: 'Home to Taxi rank',
+                                      onTap: () => setState(() {
+                                        _pickupController.text = 'Home';
+                                        _dropoffController.text =
+                                            'Okahandja taxi rank';
+                                      }),
+                                    ),
+                                    _QuickDropChip(
+                                      label: 'Council to Clinic',
+                                      onTap: () => setState(() {
+                                        _pickupController.text =
+                                            'Okahandja Town Council';
+                                        _dropoffController.text =
+                                            'Okahandja State Clinic';
+                                      }),
+                                    ),
+                                    _QuickDropChip(
+                                      label: 'Work to Hall',
+                                      onTap: () => setState(() {
+                                        _pickupController.text = 'Work';
+                                        _dropoffController.text =
+                                            'Nau-Aib community hall';
+                                      }),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 14),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: AppButton(
+                                    label: 'Continue to parcel details',
+                                    expanded: false,
+                                    variant: AppButtonVariant.secondary,
+                                    onPressed: () => setState(
+                                      () => _requestStep = 'parcel',
+                                    ),
                                   ),
-                                  AppBadge(
-                                    label: 'N\$ $_estimatedTotal',
-                                    tone: AppBadgeTone.success,
+                                ),
+                              ],
+                              if (_requestStep == 'parcel' ||
+                                  _requestStep == 'review') ...[
+                                Row(
+                                  children: [
+                                    const Expanded(
+                                      child: Text(
+                                        'Parcel details',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ),
+                                    AppBadge(
+                                      label: 'N\$ $_estimatedTotal',
+                                      tone: AppBadgeTone.success,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                SizedBox(
+                                  height: optionRowHeight,
+                                  child: ListView.separated(
+                                    scrollDirection: Axis.horizontal,
+                                    physics: const BouncingScrollPhysics(),
+                                    itemCount: _parcelSizes.length,
+                                    separatorBuilder: (_, _) =>
+                                        const SizedBox(width: 10),
+                                    itemBuilder: (context, index) {
+                                      final item = _parcelSizes[index];
+                                      return TransportOptionCard(
+                                        title: item.label,
+                                        subtitle: item.detail,
+                                        price: 'N\$ ${item.estimate}',
+                                        icon: Icons.inventory_2_outlined,
+                                        accentColor: AppColors.lokalsGreen,
+                                        isSelected: _parcelSize == item.value,
+                                        onTap: () => setState(
+                                          () => _parcelSize = item.value,
+                                        ),
+                                      );
+                                    },
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              SizedBox(
-                                height: optionRowHeight,
-                                child: ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  physics: const BouncingScrollPhysics(),
-                                  itemCount: _parcelSizes.length,
-                                  separatorBuilder: (_, _) =>
-                                      const SizedBox(width: 10),
-                                  itemBuilder: (context, index) {
-                                    final item = _parcelSizes[index];
-                                    return TransportOptionCard(
-                                      title: item.label,
-                                      subtitle: item.detail,
-                                      price: 'N\$ ${item.estimate}',
-                                      icon: Icons.inventory_2_outlined,
+                                ),
+                                const SizedBox(height: 10),
+                                Wrap(
+                                  spacing: 10,
+                                  runSpacing: 10,
+                                  children: [
+                                    TransportCompactStatChip(
+                                      label: 'Urgency',
+                                      value: _urgency.replaceAll('_', ' '),
                                       accentColor: AppColors.lokalsGreen,
-                                      isSelected: _parcelSize == item.value,
-                                      onTap: () => setState(
-                                        () => _parcelSize = item.value,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Wrap(
-                                spacing: 10,
-                                runSpacing: 10,
-                                children: [
-                                  TransportCompactStatChip(
-                                    label: 'Urgency',
-                                    value: _urgency.replaceAll('_', ' '),
-                                    accentColor: AppColors.lokalsGreen,
-                                  ),
-                                  TransportCompactStatChip(
-                                    label: 'Weight',
-                                    value:
-                                        '${_weightController.text.trim().isEmpty ? '0' : _weightController.text.trim()} kg',
-                                    accentColor: AppColors.lokalsGreen,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              DropdownButtonFormField<String>(
-                                initialValue: _urgency,
-                                decoration: const InputDecoration(
-                                  labelText: 'Urgency',
-                                ),
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: 'standard',
-                                    child: Text('Standard'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'express',
-                                    child: Text('Express'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'priority',
-                                    child: Text('Priority'),
-                                  ),
-                                ],
-                                onChanged: (value) => setState(
-                                  () => _urgency = value ?? _urgency,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              LokalsTextField(
-                                controller: _weightController,
-                                label: 'Weight (kg)',
-                                hint: 'Approximate parcel weight',
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                      decimal: true,
                                     ),
-                              ),
-                              const SizedBox(height: 10),
-                              LokalsTextField(
-                                controller: _itemController,
-                                label: 'Parcel description',
-                                hint: 'What are you sending?',
-                                maxLines: 2,
-                              ),
+                                    TransportCompactStatChip(
+                                      label: 'Weight',
+                                      value:
+                                          '${_weightController.text.trim().isEmpty ? '0' : _weightController.text.trim()} kg',
+                                      accentColor: AppColors.lokalsGreen,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                DropdownButtonFormField<String>(
+                                  initialValue: _urgency,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Urgency',
+                                  ),
+                                  items: const [
+                                    DropdownMenuItem(
+                                      value: 'standard',
+                                      child: Text('Standard'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'express',
+                                      child: Text('Express'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'priority',
+                                      child: Text('Priority'),
+                                    ),
+                                  ],
+                                  onChanged: (value) => setState(
+                                    () => _urgency = value ?? _urgency,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                LokalsTextField(
+                                  controller: _weightController,
+                                  label: 'Weight (kg)',
+                                  hint: 'Approximate parcel weight',
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                ),
+                                const SizedBox(height: 10),
+                                LokalsTextField(
+                                  controller: _itemController,
+                                  label: 'Parcel description',
+                                  hint: 'What are you sending?',
+                                  maxLines: 2,
+                                ),
+                              ],
                               const SizedBox(height: 10),
                               ExpansionTile(
                                 tilePadding: EdgeInsets.zero,
@@ -539,6 +651,124 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                                   ),
                                 ),
                               ],
+                              if (_requestStep == 'review') ...[
+                                const SizedBox(height: 10),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.deepCharcoal,
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Review and confirm',
+                                        style: TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      const Text(
+                                        'Send local parcel',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      _ReviewRow(
+                                        label: 'Route',
+                                        value:
+                                            '${_pickupController.text.trim()} -> ${_dropoffController.text.trim()}',
+                                      ),
+                                      _ReviewRow(
+                                        label: 'Parcel',
+                                        value:
+                                            '$_parcelSize | ${_weightController.text.trim().isEmpty ? '0' : _weightController.text.trim()} kg',
+                                      ),
+                                      _ReviewRow(
+                                        label: 'Estimate',
+                                        value:
+                                            'N\$ $_estimatedTotal | ${_urgency.replaceAll('_', ' ')}',
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: const [
+                                          _TrustPill(
+                                            text:
+                                                'Track parcel status after booking',
+                                          ),
+                                          _TrustPill(
+                                            text:
+                                                'Verified courier details show after assignment',
+                                          ),
+                                          _TrustPill(
+                                            text:
+                                                'Safe handling notes help with fragile items',
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(24),
+                                    border: Border.all(color: AppColors.border),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Recent courier operators',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      const Text(
+                                        'Local courier contacts from recent deliveries, if available.',
+                                        style: TextStyle(
+                                          color: AppColors.mutedText,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      if (recentCouriers.isEmpty)
+                                        const Text(
+                                          'Courier previews will appear here after accepted or completed deliveries.',
+                                          style: TextStyle(
+                                            color: AppColors.mutedText,
+                                          ),
+                                        )
+                                      else
+                                        ...recentCouriers.map(
+                                          (item) => Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 10,
+                                            ),
+                                            child: _CourierPreviewCard(
+                                              item: item,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                               const SizedBox(height: 8),
                             ],
                           ),
@@ -570,12 +800,20 @@ class _DeliveryRequestScreenState extends ConsumerState<DeliveryRequestScreen> {
                               child: AppButton(
                                 label: _isBusy
                                     ? 'Requesting delivery...'
-                                    : AppConfig.isDemoMode
-                                    ? 'Simulate delivery'
-                                    : 'Request delivery',
+                                    : _requestStep == 'review'
+                                    ? (AppConfig.isDemoMode
+                                          ? 'Simulate delivery'
+                                          : 'Confirm delivery request')
+                                    : 'Continue',
                                 isLoading: _isBusy,
                                 icon: Icons.delivery_dining_rounded,
-                                onPressed: _submitDeliveryRequest,
+                                onPressed: _requestStep == 'review'
+                                    ? _submitDeliveryRequest
+                                    : () => setState(() {
+                                        _requestStep = _requestStep == 'route'
+                                            ? 'parcel'
+                                            : 'review';
+                                      }),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -814,6 +1052,163 @@ class _QuickDropChip extends StatelessWidget {
         fontWeight: FontWeight.w700,
       ),
       onPressed: onTap,
+    );
+  }
+}
+
+class _StepChip extends StatelessWidget {
+  const _StepChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ActionChip(
+      label: Text(label),
+      backgroundColor:
+          selected ? AppColors.purpleSoftAlt : AppColors.neutralSoftAlt,
+      labelStyle: TextStyle(
+        color: selected ? AppColors.primaryPurple : AppColors.deepCharcoal,
+        fontWeight: FontWeight.w800,
+      ),
+      onPressed: onTap,
+    );
+  }
+}
+
+class _ReviewRow extends StatelessWidget {
+  const _ReviewRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white60,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrustPill extends StatelessWidget {
+  const _TrustPill({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white70,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _CourierPreviewCard extends StatelessWidget {
+  const _CourierPreviewCard({required this.item});
+
+  final DeliveryModel item;
+
+  @override
+  Widget build(BuildContext context) {
+    final phone = item.driverPhone;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.neutralSoftAlt,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppBadge(
+            label: (item.driverName ?? '').trim().isNotEmpty
+                ? 'Recent courier'
+                : 'Courier',
+            tone: AppBadgeTone.info,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            (item.driverName ?? '').trim().isNotEmpty
+                ? item.driverName!
+                : 'Local courier',
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            item.driverVehicleType ??
+                item.driverVehicleRegistration ??
+                'Vehicle details appear when available',
+            style: const TextStyle(color: AppColors.mutedText),
+          ),
+          if (phone != null && phone.trim().isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                AppButton(
+                  label: 'Call',
+                  expanded: false,
+                  variant: AppButtonVariant.secondary,
+                  onPressed: () =>
+                      const ContactActionService().call(context, phone),
+                ),
+                AppButton(
+                  label: 'WhatsApp',
+                  expanded: false,
+                  onPressed: () => const ContactActionService().openWhatsApp(
+                    context,
+                    phone: phone,
+                    name: item.driverName,
+                    message:
+                        'Hi, I am checking local parcel delivery options on LOKALS.',
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

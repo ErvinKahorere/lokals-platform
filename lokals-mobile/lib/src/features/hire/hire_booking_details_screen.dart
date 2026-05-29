@@ -39,7 +39,7 @@ class _HireBookingDetailsScreenState
             20,
             20,
             20,
-            MediaQuery.viewPaddingOf(context).bottom + 104,
+            24,
           ),
           children: [
             AppCard(

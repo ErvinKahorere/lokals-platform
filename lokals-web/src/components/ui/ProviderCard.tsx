@@ -1,11 +1,10 @@
 import { Link } from 'react-router-dom'
-import { MapPin, Phone, Star } from 'lucide-react'
+import { ExternalLink, MapPin, MessageCircle, Phone, ShieldCheck, Star } from 'lucide-react'
 import { Avatar } from './Avatar'
 import { Button } from './Button'
 import { Card } from './Card'
 import type { Provider } from '../../types'
-import { getCompletedLabel, getDisplayDistance, getDisplayPrice, getDisplayRating, getProviderPhone, getResponseTimeLabel } from '../../lib/display'
-import { QuickCallButton } from '../experience/QuickCallButton'
+import { getCompletedLabel, getDisplayDistance, getDisplayPrice, getDisplayRating, getProviderPhone, getResponseTimeLabel, getWhatsAppHref } from '../../lib/display'
 import { TrustRow } from '../experience/TrustRow'
 
 export function ProviderCard({ provider }: { provider: Provider }) {
@@ -22,28 +21,41 @@ export function ProviderCard({ provider }: { provider: Provider }) {
     return lowest
   }, null)
   const phone = getProviderPhone(provider)
+  const whatsappHref = getWhatsAppHref(provider.whatsapp ?? phone, provider.name, `Hello ${provider.name}, I found your service on LOKALS and would like more details.`)
   const reviewLabel = provider.review_count ? `${provider.review_count} reviews` : 'Trusted local provider'
   const availabilityLabel = provider.open_now ? 'Open now' : provider.availability_status ?? getResponseTimeLabel(provider)
+  const locationLabel = provider.area ?? provider.town ?? getDisplayDistance(provider.distance_km, provider.location)
+  const directionsHref = provider.location
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(provider.location)}`
+    : null
 
   return (
-    <Card interactive variant="service">
+    <Card interactive variant="service" className="h-full">
       <div className="flex items-start gap-4">
         <Avatar name={provider.name} className="h-14 w-14 border border-violet-100 bg-violet-50 text-lokals-purple" />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="inline-flex rounded-full bg-violet-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-lokals-purple">{provider.subcategory ?? provider.category}</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="inline-flex rounded-full bg-violet-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-lokals-purple">{provider.subcategory ?? provider.category}</p>
+                {provider.is_verified ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-lokals-green-soft px-2.5 py-1 text-[11px] font-semibold text-lokals-green">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    Verified
+                  </span>
+                ) : null}
+              </div>
               <h3 className="mt-2 text-lg font-semibold text-lokals-charcoal">{provider.name}</h3>
             </div>
             <div className="rounded-2xl bg-lokals-gold-soft px-3 py-2 text-right">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-lokals-green">Starting</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-lokals-green">From</p>
               <p className="mt-1 text-sm font-bold text-lokals-charcoal">{fromPrice ? getDisplayPrice(fromPrice) : 'Book now'}</p>
             </div>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-3 text-xs font-medium text-lokals-muted">
             <span className="inline-flex items-center gap-1.5"><Star className="h-3.5 w-3.5 fill-current text-lokals-gold" />{getDisplayRating(provider)}</span>
             <span>{reviewLabel}</span>
-            <span className="inline-flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-lokals-green" />{provider.area ?? provider.town ?? getDisplayDistance(provider.distance_km, provider.location)}</span>
+            <span className="inline-flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-lokals-green" />{locationLabel}</span>
             <span className="rounded-full bg-lokals-green-soft px-2.5 py-1 text-lokals-green">{availabilityLabel}</span>
           </div>
           <p className="mt-3 line-clamp-2 text-sm text-lokals-muted">{provider.description ?? 'Trusted local provider ready to book.'}</p>
@@ -65,8 +77,36 @@ export function ProviderCard({ provider }: { provider: Provider }) {
             />
           </div>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            <Link to={`/services/${provider.id}/book`}><Button className="w-full">Book</Button></Link>
-            {phone ? <QuickCallButton phone={phone} /> : <Button variant="secondary" className="w-full" disabled><Phone className="h-4 w-4" />Call</Button>}
+            <Link to={`/services/${provider.id}`}>
+              <Button className="w-full">
+                <ExternalLink className="h-4 w-4" />
+                View details
+              </Button>
+            </Link>
+            {phone ? (
+              <a href={`tel:${phone}`}>
+                <Button variant="secondary" className="w-full">
+                  <Phone className="h-4 w-4" />
+                  Call
+                </Button>
+              </a>
+            ) : <Button variant="secondary" className="w-full" disabled><Phone className="h-4 w-4" />Call</Button>}
+            {whatsappHref ? (
+              <a href={whatsappHref} target="_blank" rel="noreferrer">
+                <Button variant="secondary" className="w-full">
+                  <MessageCircle className="h-4 w-4" />
+                  WhatsApp
+                </Button>
+              </a>
+            ) : <Button variant="secondary" className="w-full" disabled><MessageCircle className="h-4 w-4" />WhatsApp</Button>}
+            {directionsHref ? (
+              <a href={directionsHref} target="_blank" rel="noreferrer">
+                <Button variant="secondary" className="w-full">
+                  <MapPin className="h-4 w-4" />
+                  Directions
+                </Button>
+              </a>
+            ) : <Button variant="secondary" className="w-full" disabled><MapPin className="h-4 w-4" />Directions</Button>}
           </div>
         </div>
       </div>

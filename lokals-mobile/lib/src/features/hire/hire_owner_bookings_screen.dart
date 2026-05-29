@@ -52,7 +52,7 @@ class _HireOwnerBookingsScreenState
               20,
               20,
               20,
-              MediaQuery.viewPaddingOf(context).bottom + 104,
+              24,
             ),
             children: [
               SectionTitle(

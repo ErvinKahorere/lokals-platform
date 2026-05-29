@@ -8,6 +8,7 @@ import '../../../shared/widgets/app_badge.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_network_image.dart';
+import '../../../shared/widgets/experience/contact_actions.dart';
 import '../../../shared/widgets/experience/save_button.dart';
 import '../../config/app_config.dart';
 import '../../core/experience_helpers.dart';
@@ -29,6 +30,8 @@ class ProductCard extends ConsumerWidget {
         product.businessName ?? product.userBusinessName ?? product.userName ?? 'Local seller';
     final locationLabel =
         [product.area, product.town].whereType<String>().where((value) => value.isNotEmpty).join(', ');
+    final sellerPhone = product.businessPhone ?? product.userPhone;
+    final sellerWhatsapp = product.businessWhatsapp ?? product.userWhatsapp ?? product.userPhone;
     return InkWell(
       borderRadius: BorderRadius.circular(22),
       onTap: () => context.push('/store/${product.id}'),
@@ -86,6 +89,8 @@ class ProductCard extends ConsumerWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
+                      if (product.businessVerified)
+                        const AppBadge(label: 'Verified seller', tone: AppBadgeTone.success),
                       if ((product.availabilityStatus?.isNotEmpty ?? false))
                         AppBadge(
                           label: product.availabilityStatus!,
@@ -156,6 +161,13 @@ class ProductCard extends ConsumerWidget {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Confirm the item and meet safely before payment.',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: AppColors.mutedText, fontSize: 12),
+                  ),
                   const SizedBox(height: 10),
                   LayoutBuilder(
                     builder: (context, constraints) {
@@ -213,6 +225,13 @@ class ProductCard extends ConsumerWidget {
                         ],
                       );
                     },
+                  ),
+                  const SizedBox(height: 10),
+                  ContactActions(
+                    name: sellerName,
+                    phone: sellerPhone,
+                    whatsapp: sellerWhatsapp,
+                    compact: true,
                   ),
                 ],
               ),

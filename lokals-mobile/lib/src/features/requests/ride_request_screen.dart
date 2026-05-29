@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../config/app_config.dart';
 import '../../core/models.dart';
 import '../../features/auth/auth_controller.dart';
+import '../../services/contact_action_service.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../discovery/discovery_repository.dart';
@@ -69,6 +70,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
   String _tripPurpose = _tripPurposes.first;
   String _rideType = _rideChoices.first.title;
   String _activeTab = 'request';
+  String _requestStep = 'route';
   String _mapTarget = 'pickup';
   final _notesController = TextEditingController();
   final _pickupController = TextEditingController(text: _stops.first);
@@ -162,6 +164,15 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
         )
         .cast<RideModel?>()
         .firstWhere((item) => item != null, orElse: () => null);
+    final recentOperators =
+        (rides.asData?.value ?? const <RideModel>[])
+            .where(
+              (item) =>
+                  (item.driverName ?? '').trim().isNotEmpty ||
+                  (item.driverPhone ?? '').trim().isNotEmpty,
+            )
+            .take(3)
+            .toList();
     final area = auth.user?.defaultArea ?? 'Nau-Aib';
     final town = auth.user?.defaultTown ?? AppConfig.pilotTown;
 
@@ -179,6 +190,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                 town: town,
                 unreadCount: unreadCount,
                 profileInitial: auth.user?.name.characters.first.toUpperCase(),
+                recentOperators: recentOperators,
               )
             : _buildLibraryView(context, rides: rides, activeRide: activeRide),
       ),
@@ -206,6 +218,11 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                 'Estimate: N\$ ${_successItem!.fareEstimate ?? _estimatedFare}',
                 style: const TextStyle(color: AppColors.mutedText),
               ),
+              const SizedBox(height: 6),
+              Text(
+                'Reference: ${_successItem!.referenceCode ?? 'Ride ${_successItem!.id}'}',
+                style: const TextStyle(color: AppColors.mutedText),
+              ),
             ],
           ),
           primaryLabel: 'View ride status',
@@ -223,6 +240,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
     required String town,
     required int unreadCount,
     required String? profileInitial,
+    required List<RideModel> recentOperators,
   }) {
     return LayoutBuilder(
       key: const ValueKey('ride-request'),
@@ -273,7 +291,7 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
               child: Column(
                 children: [
                   TransportFloatingHeader(
-                    title: 'Ride',
+                    title: 'Request local transport',
                     subtitle: '$area, $town',
                     onBack: () => context.pop(),
                     trailing: Row(
@@ -331,6 +349,31 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _StepChip(
+                          label: '1. Route',
+                          selected: _requestStep == 'route',
+                          onTap: () => setState(() => _requestStep = 'route'),
+                        ),
+                        _StepChip(
+                          label: '2. Ride',
+                          selected: _requestStep == 'options',
+                          onTap: () => setState(() => _requestStep = 'options'),
+                        ),
+                        _StepChip(
+                          label: '3. Review',
+                          selected: _requestStep == 'review',
+                          onTap: () => setState(() => _requestStep = 'review'),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -368,93 +411,179 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  const Expanded(
-                                    child: Text(
-                                      'Choose a ride',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w800,
+                              if (_requestStep == 'route' ||
+                                  _requestStep == 'review') ...[
+                                Row(
+                                  children: [
+                                    const Expanded(
+                                      child: Text(
+                                        'Popular routes',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w800,
+                                        ),
                                       ),
                                     ),
+                                    AppBadge(
+                                      label: _distanceKm == null
+                                          ? 'Estimate pending'
+                                          : '${_distanceKm!.toStringAsFixed(1)} km',
+                                      tone: AppBadgeTone.info,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    _QuickStopChip(
+                                      label: 'Taxi rank to Council',
+                                      onTap: () => setState(() {
+                                        _pickupController.text = 'Okahandja taxi rank';
+                                        _dropoffController.text = 'Okahandja Town Council';
+                                      }),
+                                    ),
+                                    _QuickStopChip(
+                                      label: 'Nau-Aib to Clinic',
+                                      onTap: () => setState(() {
+                                        _pickupController.text = 'Nau-Aib Community Hall';
+                                        _dropoffController.text = 'Okahandja State Clinic';
+                                      }),
+                                    ),
+                                    _QuickStopChip(
+                                      label: 'Police to Council',
+                                      onTap: () => setState(() {
+                                        _pickupController.text = 'Okahandja Police Station';
+                                        _dropoffController.text = 'Okahandja Town Council';
+                                      }),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 14),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: AppButton(
+                                    label: 'Continue to ride options',
+                                    expanded: false,
+                                    variant: AppButtonVariant.secondary,
+                                    onPressed: () => setState(
+                                      () => _requestStep = 'options',
+                                    ),
                                   ),
-                                  AppBadge(
-                                    label: _distanceKm == null
-                                        ? 'Estimate pending'
-                                        : '${_distanceKm!.toStringAsFixed(1)} km',
-                                    tone: AppBadgeTone.info,
+                                ),
+                              ],
+                              if (_requestStep == 'options' ||
+                                  _requestStep == 'review') ...[
+                                Row(
+                                  children: [
+                                    const Expanded(
+                                      child: Text(
+                                        'Choose a ride',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ),
+                                    AppBadge(
+                                      label: '$_estimatedMinutes min ETA',
+                                      tone: AppBadgeTone.info,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                SizedBox(
+                                  height: optionRowHeight,
+                                  child: ListView.separated(
+                                    scrollDirection: Axis.horizontal,
+                                    physics: const BouncingScrollPhysics(),
+                                    itemCount: _rideChoices.length,
+                                    separatorBuilder: (_, _) =>
+                                        const SizedBox(width: 10),
+                                    itemBuilder: (context, index) {
+                                      final choice = _rideChoices[index];
+                                      return TransportOptionCard(
+                                        title: choice.title,
+                                        subtitle: choice.eta,
+                                        price: 'N\$ ${choice.baseFare}+',
+                                        icon: choice.icon,
+                                        isSelected: _rideType == choice.title,
+                                        onTap: () => setState(
+                                          () => _rideType = choice.title,
+                                        ),
+                                      );
+                                    },
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              SizedBox(
-                                height: optionRowHeight,
-                                child: ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  physics: const BouncingScrollPhysics(),
-                                  itemCount: _rideChoices.length,
-                                  separatorBuilder: (_, _) =>
-                                      const SizedBox(width: 10),
-                                  itemBuilder: (context, index) {
-                                    final choice = _rideChoices[index];
-                                    return TransportOptionCard(
-                                      title: choice.title,
-                                      subtitle: choice.eta,
-                                      price: 'N\$ ${choice.baseFare}+',
-                                      icon: choice.icon,
-                                      isSelected: _rideType == choice.title,
-                                      onTap: () => setState(
-                                        () => _rideType = choice.title,
+                                ),
+                                const SizedBox(height: 10),
+                                Wrap(
+                                  spacing: 10,
+                                  runSpacing: 10,
+                                  children: [
+                                    TransportCompactStatChip(
+                                      label: 'ETA',
+                                      value: '$_estimatedMinutes min',
+                                      accentColor: AppColors.primaryPurple,
+                                    ),
+                                    TransportCompactStatChip(
+                                      label: 'Fare',
+                                      value: 'N\$ $_estimatedFare',
+                                      accentColor: AppColors.primaryPurple,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                const Text(
+                                  'Trip purpose',
+                                  style: TextStyle(fontWeight: FontWeight.w800),
+                                ),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: _tripPurposes.map((purpose) {
+                                    final selected = _tripPurpose == purpose;
+                                    return ChoiceChip(
+                                      label: Text(purpose),
+                                      selected: selected,
+                                      onSelected: (_) =>
+                                          setState(() => _tripPurpose = purpose),
+                                      backgroundColor: AppColors.neutralSoftAlt,
+                                      selectedColor: AppColors.purpleSoftAlt,
+                                      labelStyle: TextStyle(
+                                        color: selected
+                                            ? AppColors.primaryPurple
+                                            : AppColors.deepCharcoal,
+                                        fontWeight: FontWeight.w700,
                                       ),
                                     );
-                                  },
+                                  }).toList(),
                                 ),
-                              ),
-                              const SizedBox(height: 10),
-                              Wrap(
-                                spacing: 10,
-                                runSpacing: 10,
-                                children: [
-                                  TransportCompactStatChip(
-                                    label: 'ETA',
-                                    value: '$_estimatedMinutes min',
-                                    accentColor: AppColors.primaryPurple,
+                                const SizedBox(height: 14),
+                                if (_requestStep == 'options')
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      AppButton(
+                                        label: 'Back',
+                                        expanded: false,
+                                        variant: AppButtonVariant.secondary,
+                                        onPressed: () => setState(
+                                          () => _requestStep = 'route',
+                                        ),
+                                      ),
+                                      AppButton(
+                                        label: 'Review request',
+                                        expanded: false,
+                                        onPressed: () => setState(
+                                          () => _requestStep = 'review',
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  TransportCompactStatChip(
-                                    label: 'Fare',
-                                    value: 'N\$ $_estimatedFare',
-                                    accentColor: AppColors.primaryPurple,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              const Text(
-                                'Trip purpose',
-                                style: TextStyle(fontWeight: FontWeight.w800),
-                              ),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: _tripPurposes.map((purpose) {
-                                  final selected = _tripPurpose == purpose;
-                                  return ChoiceChip(
-                                    label: Text(purpose),
-                                    selected: selected,
-                                    onSelected: (_) =>
-                                        setState(() => _tripPurpose = purpose),
-                                    backgroundColor: AppColors.neutralSoftAlt,
-                                    selectedColor: AppColors.purpleSoftAlt,
-                                    labelStyle: TextStyle(
-                                      color: selected
-                                          ? AppColors.primaryPurple
-                                          : AppColors.deepCharcoal,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
+                              ],
                               const SizedBox(height: 10),
                               ExpansionTile(
                                 tilePadding: EdgeInsets.zero,
@@ -549,6 +678,164 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                                   ),
                                 ),
                               ],
+                              if (_requestStep == 'review') ...[
+                                const SizedBox(height: 10),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.deepCharcoal,
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Review and confirm',
+                                        style: TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      const Text(
+                                        'Request local transport',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      _ReviewRow(
+                                        label: 'Route',
+                                        value:
+                                            '${_pickupController.text.trim()} -> ${_dropoffController.text.trim()}',
+                                      ),
+                                      _ReviewRow(
+                                        label: 'Ride',
+                                        value: '$_rideType | $_tripPurpose',
+                                      ),
+                                      _ReviewRow(
+                                        label: 'Estimate',
+                                        value:
+                                            'N\$ $_estimatedFare | $_estimatedMinutes min',
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: const [
+                                          _TrustPill(
+                                            text:
+                                                'Verified driver details appear after acceptance',
+                                          ),
+                                          _TrustPill(
+                                            text:
+                                                'Call and WhatsApp actions show in the ride workspace',
+                                          ),
+                                          _TrustPill(
+                                            text:
+                                                'Use SOS if the pickup feels unsafe',
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(24),
+                                    border: Border.all(color: AppColors.border),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Recent trusted operators',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      const Text(
+                                        'Local driver contacts from recent rides, if available.',
+                                        style: TextStyle(
+                                          color: AppColors.mutedText,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      if (recentOperators.isEmpty)
+                                        const Text(
+                                          'Operator previews will appear here after completed or accepted rides.',
+                                          style: TextStyle(
+                                            color: AppColors.mutedText,
+                                          ),
+                                        )
+                                      else
+                                        ...recentOperators.map(
+                                          (item) => Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 10,
+                                            ),
+                                            child: _OperatorPreviewCard(
+                                              item: item,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.warningSoft,
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Safety note',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                            SizedBox(height: 4),
+                                            Text(
+                                              'Match the driver, vehicle, and route before boarding.',
+                                              style: TextStyle(
+                                                color: AppColors.mutedText,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      AppButton(
+                                        label: 'SOS',
+                                        expanded: false,
+                                        variant: AppButtonVariant.danger,
+                                        onPressed: () => context.push('/sos'),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                               const SizedBox(height: 8),
                             ],
                           ),
@@ -580,11 +867,19 @@ class _RideRequestScreenState extends ConsumerState<RideRequestScreen> {
                               child: AppButton(
                                 label: _isBusy
                                     ? 'Requesting taxi...'
-                                    : 'Request taxi',
+                                    : _requestStep == 'review'
+                                    ? 'Confirm request'
+                                    : 'Continue',
                                 isLoading: _isBusy,
                                 variant: AppButtonVariant.accent,
                                 icon: Icons.local_taxi_rounded,
-                                onPressed: _submitRideRequest,
+                                onPressed: _requestStep == 'review'
+                                    ? _submitRideRequest
+                                    : () => setState(() {
+                                        _requestStep = _requestStep == 'route'
+                                            ? 'options'
+                                            : 'review';
+                                      }),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -798,6 +1093,170 @@ class _QuickStopChip extends StatelessWidget {
         fontWeight: FontWeight.w700,
       ),
       onPressed: onTap,
+    );
+  }
+}
+
+class _StepChip extends StatelessWidget {
+  const _StepChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ActionChip(
+      label: Text(label),
+      backgroundColor:
+          selected ? AppColors.purpleSoftAlt : AppColors.neutralSoftAlt,
+      labelStyle: TextStyle(
+        color: selected ? AppColors.primaryPurple : AppColors.deepCharcoal,
+        fontWeight: FontWeight.w800,
+      ),
+      onPressed: onTap,
+    );
+  }
+}
+
+class _ReviewRow extends StatelessWidget {
+  const _ReviewRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white60,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrustPill extends StatelessWidget {
+  const _TrustPill({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white70,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _OperatorPreviewCard extends StatelessWidget {
+  const _OperatorPreviewCard({required this.item});
+
+  final RideModel item;
+
+  @override
+  Widget build(BuildContext context) {
+    final phone = item.driverPhone;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.neutralSoftAlt,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: SizedBox.shrink(),
+              ),
+              AppBadge(
+                label: (item.driverName ?? '').trim().isNotEmpty
+                    ? 'Recent operator'
+                    : 'Operator',
+                tone: AppBadgeTone.info,
+              ),
+            ],
+          ),
+          Text(
+            (item.driverName ?? '').trim().isNotEmpty
+                ? item.driverName!
+                : 'Local operator',
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            item.vehicleLabel ??
+                item.driverVehicleRegistration ??
+                item.driverVehicleType ??
+                'Vehicle details appear when available',
+            style: const TextStyle(color: AppColors.mutedText),
+          ),
+          if (phone != null && phone.trim().isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                AppButton(
+                  label: 'Call',
+                  expanded: false,
+                  variant: AppButtonVariant.secondary,
+                  onPressed: () =>
+                      const ContactActionService().call(context, phone),
+                ),
+                AppButton(
+                  label: 'WhatsApp',
+                  expanded: false,
+                  onPressed: () => const ContactActionService().openWhatsApp(
+                    context,
+                    phone: phone,
+                    name: item.driverName,
+                    message:
+                        'Hi, I am checking local transport options on LOKALS.',
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

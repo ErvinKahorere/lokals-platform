@@ -29,7 +29,7 @@ class _OrderDetailsScreenState extends ConsumerState<OrderDetailsScreen> {
       showBack: true,
       child: order.when(
         data: (item) => ListView(
-          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.viewPaddingOf(context).bottom + 90),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
           children: [
             AppCard(
               padding: EdgeInsets.zero,

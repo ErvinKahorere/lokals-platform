@@ -69,7 +69,7 @@ class _HireScreenState extends ConsumerState<HireScreen> {
               20,
               20,
               20,
-              MediaQuery.viewPaddingOf(context).bottom + 104,
+              24,
             ),
             children: [
               SectionTitle(

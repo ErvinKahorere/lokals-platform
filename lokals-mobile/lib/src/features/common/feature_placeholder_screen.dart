@@ -31,7 +31,7 @@ class FeaturePlaceholderScreen extends StatelessWidget {
           20,
           20,
           20,
-          MediaQuery.viewPaddingOf(context).bottom + 88,
+          24,
         ),
         children: [
           AppCard(

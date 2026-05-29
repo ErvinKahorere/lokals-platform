@@ -60,7 +60,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               icon: const Icon(Icons.local_shipping_outlined),
             ),
       child: ListView(
-        padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.viewPaddingOf(context).bottom + 100),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
         children: [
           SectionTitle(
             eyebrow: 'Orders',

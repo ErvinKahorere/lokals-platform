@@ -531,12 +531,7 @@ class LokalsShell extends ConsumerWidget {
         ((user?.roles.isNotEmpty ?? false) ? user!.roles.first : 'citizen');
     final greetingName = user?.name.split(' ').first ?? 'there';
     final headerHeight = isHome ? 86.0 : 74.0;
-    final bottomNavInset =
-        bodyBottomInset ??
-        (MediaQuery.of(context).padding.bottom +
-            kMobileBottomNavHeight +
-            kMobileBottomNavBottomSpacing +
-            kMobileBottomNavExtraClearance);
+    final bottomNavInset = bodyBottomInset ?? 0;
     final canPop = Navigator.of(context).canPop();
     final titleWidget = isHome
         ? (isGuest
@@ -589,7 +584,7 @@ class LokalsShell extends ConsumerWidget {
           );
 
     return Scaffold(
-      extendBody: true,
+      extendBody: false,
       appBar: showAppBar
           ? AppBar(
               toolbarHeight: headerHeight,

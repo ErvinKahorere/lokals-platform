@@ -18,7 +18,7 @@ class InboxScreen extends ConsumerWidget {
       title: 'Inbox',
       showBack: true,
       child: ListView(
-        padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.viewPaddingOf(context).bottom + 96),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
         children: [
           const SectionTitle(
             eyebrow: 'Messages',

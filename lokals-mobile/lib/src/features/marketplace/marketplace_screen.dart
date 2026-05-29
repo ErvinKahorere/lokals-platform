@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../config/app_config.dart';
 import '../../../shared/widgets/experience/smart_suggestion_card.dart';
 import '../../../shared/widgets/listing_card.dart';
@@ -20,7 +22,15 @@ class MarketplaceScreen extends ConsumerStatefulWidget {
 
 class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
   final _searchController = TextEditingController();
+  String _selectedType = 'all';
   int _postStep = 1;
+
+  static const _typeChips = [
+    ('all', 'All'),
+    ('product', 'Products'),
+    ('service', 'Services'),
+    ('delivery', 'Delivery'),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -48,41 +58,94 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
         data: (items) {
           final filtered = items.where((listing) {
             final query = _searchController.text.toLowerCase();
-            return query.isEmpty || listing.title.toLowerCase().contains(query) || listing.description.toLowerCase().contains(query);
+            final matchesType = _selectedType == 'all' || listing.type == _selectedType;
+            final matchesQuery = query.isEmpty || listing.title.toLowerCase().contains(query) || listing.description.toLowerCase().contains(query);
+            return matchesType && matchesQuery;
           }).toList();
-          final recommended = filtered.take(4).toList();
+          final featured = filtered.where((listing) => listing.status == 'published').take(4).toList();
+          final recent = [...filtered]..sort((a, b) => b.id.compareTo(a.id));
+          final sellerCounts = <String, int>{};
+          for (final listing in filtered) {
+            final name = listing.businessName ?? listing.userName;
+            if (name == null || name.isEmpty) continue;
+            sellerCounts[name] = (sellerCounts[name] ?? 0) + 1;
+          }
+          final topSeller = sellerCounts.entries.isEmpty
+              ? null
+              : (sellerCounts.entries.toList()..sort((a, b) => b.value.compareTo(a.value))).first;
 
           return filtered.isEmpty
               ? EmptyStateView(
-                  title: 'No items found nearby',
-                  body: 'Try another search, browse Hire for rentals, or post what your area needs.',
+                  title: 'No local listings found',
+                  body: 'Try another search, switch category, or post what your area needs.',
                   action: AppButton(
-                    label: 'Clear search',
+                    label: 'Clear filters',
                     expanded: false,
                     variant: AppButtonVariant.secondary,
-                    onPressed: () => setState(_searchController.clear),
+                    onPressed: () => setState(() {
+                      _searchController.clear();
+                      _selectedType = 'all';
+                    }),
                   ),
                 )
               : ListView(
                   padding: const EdgeInsets.all(20),
                   children: [
-                    const SectionTitle(
-                      title: 'Shop local with confidence',
-                      subtitle: 'Featured listings, recent items, and clear prices.',
+                    AppCard(
+                      variant: AppCardVariant.marketplace,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Local Marketplace', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800)),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Browse nearby listings, trusted local sellers, and quick discoveries around ${AppConfig.pilotTown}.',
+                            style: AppTextStyles.bodyMuted,
+                          ),
+                          const SizedBox(height: 14),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: const [
+                              _MarketplaceFact(icon: Icons.place_outlined, label: 'Okahandja context'),
+                              _MarketplaceFact(icon: Icons.verified_outlined, label: 'Trust cues first'),
+                              _MarketplaceFact(icon: Icons.shield_outlined, label: 'Safe local buying'),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 16),
                     AppSearchBar(
                       controller: _searchController,
-                      hintText: 'Find a barber, job, product...',
+                      hintText: 'Search products, services, and local deals...',
                       recentKey: 'market',
                       suggestions: const ['Affordable phones', 'Popular listings', 'Laptops nearby', 'Furniture for sale'],
-                      shortcuts: const ['Popular near you', 'Affordable', 'Available now'],
+                      shortcuts: const ['Verified sellers', 'Affordable', 'Available now'],
                       onChanged: (_) => setState(() {}),
                     ),
                     const SizedBox(height: 16),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: _typeChips
+                            .map(
+                              (chip) => Padding(
+                                padding: const EdgeInsets.only(right: 10),
+                                child: ChoiceChip(
+                                  label: Text(chip.$2),
+                                  selected: _selectedType == chip.$1,
+                                  onSelected: (_) => setState(() => _selectedType = chip.$1),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     const SmartSuggestionCard(
-                      title: 'Shop nearby with confidence',
-                      body: 'Price, save, and contact actions should always feel one tap away.',
+                      title: 'Buy local with confidence',
+                      body: 'Photos, price, seller details, and safe local meeting guidance stay easy to scan.',
                       icon: Icons.storefront_outlined,
                       route: '/marketplace',
                       badge: 'Marketplace',
@@ -94,27 +157,59 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
                         scrollDirection: Axis.horizontal,
                         children: [
                           _DiscoveryPrompt(
-                            title: 'Recommended near you',
-                            body: recommended.isEmpty
+                            title: 'Featured nearby',
+                            body: featured.isEmpty
                                 ? 'Fresh local picks will appear here.'
-                                : '${recommended.length} local picks ready to browse.',
+                                : '${featured.length} featured local picks ready to browse.',
                             icon: Icons.near_me_outlined,
                           ),
                           const _DiscoveryPrompt(
-                            title: 'Fast delivery nearby',
-                            body: 'Courier-ready sellers and easy pickup options stay surfaced.',
-                            icon: Icons.delivery_dining_outlined,
+                            title: 'Safe local buying',
+                            body: 'Meet in public places and confirm items before handing over cash.',
+                            icon: Icons.shield_outlined,
                           ),
-                          const _DiscoveryPrompt(
-                            title: 'Recently viewed',
-                            body: 'Keep momentum with stores and items you checked before.',
-                            icon: Icons.history_rounded,
+                          _DiscoveryPrompt(
+                            title: 'Active sellers',
+                            body: topSeller == null
+                                ? 'Seller highlights will appear here.'
+                                : '${topSeller.value} listings from ${topSeller.key}.',
+                            icon: Icons.store_mall_directory_outlined,
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 12),
-                    ...filtered.map(
+                    SectionTitle(
+                      title: 'Featured listings',
+                      subtitle: 'Fresh local discoveries with clear price and status.',
+                      action: TextButton(
+                        onPressed: () => setState(() => _selectedType = 'all'),
+                        child: const Text('View all'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ...featured.map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: ListingCard(listing: item),
+                      ),
+                    ),
+                    if (featured.isEmpty)
+                      const EmptyStateView(
+                        title: 'No featured listings yet',
+                        body: 'New local listings will appear here first.',
+                      ),
+                    const SizedBox(height: 12),
+                    SectionTitle(
+                      title: 'Recent listings',
+                      subtitle: 'Latest marketplace activity around your town.',
+                      action: TextButton(
+                        onPressed: () => _openPostSheet(context),
+                        child: const Text('Post listing'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ...recent.take(8).map(
                       (item) => Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: ListingCard(listing: item),
@@ -125,7 +220,15 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
         },
         loading: () => const Padding(
           padding: EdgeInsets.all(20),
-          child: LoadingSkeleton(height: 220),
+          child: Column(
+            children: [
+              LoadingSkeleton(height: 180),
+              SizedBox(height: 16),
+              LoadingSkeleton(height: 52),
+              SizedBox(height: 16),
+              LoadingSkeleton(height: 200),
+            ],
+          ),
         ),
         error: (error, _) => EmptyStateView(
           title: 'Marketplace could not refresh.',
@@ -412,6 +515,36 @@ class _DiscoveryPrompt extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MarketplaceFact extends StatelessWidget {
+  const _MarketplaceFact({
+    required this.icon,
+    required this.label,
+  });
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: AppColors.primaryGreen),
+          const SizedBox(width: 8),
+          Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.deepCharcoal)),
         ],
       ),
     );

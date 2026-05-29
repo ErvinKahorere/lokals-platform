@@ -43,9 +43,9 @@ export function StorePage() {
   return (
     <div className="space-y-6 pb-28">
       <PageHeader
-        eyebrow="Storefront"
-        title={selectedSeller?.sellerName ?? 'Local Storefront'}
-        description="A cleaner commerce flow for local food, groceries, and shop orders."
+        eyebrow="Local Marketplace"
+        title={selectedSeller?.sellerName ?? 'Find Local Products'}
+        description="A premium local shopping feed for trusted sellers, clear prices, and nearby product discovery."
         actions={
           <div className="w-full md:w-[320px]">
             <SearchBar
@@ -53,9 +53,9 @@ export function StorePage() {
               onChange={(event) => setSearch(event.target.value)}
               onValueSelect={setSearch}
               recentKey="commerce-store"
-              suggestions={['Popular items', 'Family meal', 'Fresh produce', 'Home goods']}
+              suggestions={['Phones nearby', 'Home goods', 'Sale items', 'Fast delivery']}
               shortcuts={[{ label: 'Featured', value: 'featured' }, { label: 'Fast delivery', value: 'fast' }]}
-              placeholder="Search this store..."
+              placeholder="Search products and sellers..."
             />
           </div>
         }
@@ -76,6 +76,7 @@ export function StorePage() {
                       <StatusBadge value={selectedSeller.availabilityStatus} tone={selectedSeller.openNow ? 'success' : 'neutral'} className="bg-white/15 text-white ring-0" />
                       <h1 className="mt-3 text-3xl font-semibold">{selectedSeller.sellerName}</h1>
                       <p className="mt-2 max-w-2xl text-sm text-white/80">{selectedSeller.subtitle} in {[selectedSeller.area, selectedSeller.town].filter(Boolean).join(', ') || 'Okahandja'}.</p>
+                      <p className="mt-3 text-sm text-white/75">Verified sellers, direct contact actions, and safe local buying notes stay visible throughout the feed.</p>
                     </div>
                     <div className="grid gap-2 rounded-[24px] bg-white/12 p-4 backdrop-blur">
                       <div className="flex items-center gap-2 text-sm"><Star className="h-4 w-4" /> {selectedSeller.rating.toFixed(1)} rating</div>

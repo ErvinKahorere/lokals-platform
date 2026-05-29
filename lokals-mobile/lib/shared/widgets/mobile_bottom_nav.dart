@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_radius.dart';
 
 const double kMobileBottomNavHeight = 68;
-const double kMobileBottomNavBottomSpacing = 8;
-const double kMobileBottomNavExtraClearance = 16;
 
 class MobileBottomNav extends StatelessWidget {
   const MobileBottomNav({super.key, required this.currentIndex});
@@ -15,32 +12,23 @@ class MobileBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        14,
-        0,
-        14,
-        kMobileBottomNavBottomSpacing,
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surfaceWhite,
-          borderRadius: BorderRadius.circular(AppRadius.hero),
-          border: Border.all(color: AppColors.border),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 32,
-              offset: const Offset(0, 14),
+    return ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: SafeArea(
+        top: false,
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surfaceWhite,
+            border: Border(
+              top: BorderSide(color: AppColors.border),
             ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.hero),
+          ),
           child: NavigationBarTheme(
             data: NavigationBarThemeData(
               backgroundColor: Colors.transparent,
-              indicatorColor: AppColors.primaryPurple.withValues(alpha: 0.14),
+              indicatorColor: AppColors.primaryPurple.withValues(
+                alpha: 0.14,
+              ),
               surfaceTintColor: Colors.transparent,
               iconTheme: WidgetStateProperty.resolveWith((states) {
                 final selected = states.contains(WidgetState.selected);

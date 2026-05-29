@@ -46,7 +46,7 @@ class HireBookingsScreen extends ConsumerWidget {
               20,
               20,
               20,
-              MediaQuery.viewPaddingOf(context).bottom + 104,
+              24,
             ),
             children: [
               SectionTitle(

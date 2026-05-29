@@ -28,7 +28,7 @@ class _SupportScreenState extends ConsumerState<SupportScreen> {
       title: 'Help and support',
       showBack: true,
       child: ListView(
-        padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.viewPaddingOf(context).bottom + 96),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
         children: [
           const SectionTitle(
             eyebrow: 'Support',

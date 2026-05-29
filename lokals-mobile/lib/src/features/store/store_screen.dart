@@ -102,10 +102,13 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text('Marketplace', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800)),
+                      children: [
+                        const Text('Local Marketplace', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800)),
                         SizedBox(height: 6),
-                        Text('Shop local deals around Okahandja and discover trusted nearby sellers.', style: AppTextStyles.bodyMuted),
+                        Text(
+                          'Shop trusted nearby products around ${AppConfig.pilotTown} with clearer prices, seller trust cues, and faster discovery.',
+                          style: AppTextStyles.bodyMuted,
+                        ),
                       ],
                     ),
                   ),
@@ -118,12 +121,36 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
                 ],
               ),
               const SizedBox(height: 16),
+              AppCard(
+                color: AppColors.successSoft,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.shield_outlined, color: AppColors.primaryGreen),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text('Safe local buying', style: TextStyle(fontWeight: FontWeight.w700)),
+                          SizedBox(height: 4),
+                          Text(
+                            'Use verified sellers where possible, confirm item condition, and meet in a safe public place before payment.',
+                            style: AppTextStyles.bodyMuted,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
               AppSearchBar(
                 controller: _searchController,
-                hintText: 'Search products in Okahandja...',
+                hintText: 'Search products, sellers, and local deals...',
                 recentKey: 'store',
                 suggestions: const ['Samsung phone', 'Couch deal', 'Food voucher', 'Toyota Hilux'],
-                shortcuts: const ['Electronics', 'Sale items', 'Home', 'Building'],
+                shortcuts: const ['Verified sellers', 'Sale items', 'Home', 'Building'],
                 onChanged: (_) => setState(() {}),
               ),
               const SizedBox(height: 12),
@@ -260,7 +287,7 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
               const SizedBox(height: 20),
               SectionTitle(
                 title: 'Featured listings',
-                subtitle: 'Popular local products and current deals.',
+                subtitle: 'Verified sellers, sale items, and current local deals.',
                 action: TextButton(onPressed: () => setState(() => _saleOnly = false), child: const Text('View all')),
               ),
               const SizedBox(height: 12),
@@ -268,7 +295,7 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
               const SizedBox(height: 20),
               SectionTitle(
                 title: 'Recent listings',
-                subtitle: 'Fresh items added by nearby sellers.',
+                subtitle: 'Fresh items added by nearby sellers around your town.',
                 action: TextButton(onPressed: () => context.push('/store'), child: const Text('View all')),
               ),
               const SizedBox(height: 12),

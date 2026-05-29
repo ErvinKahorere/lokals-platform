@@ -17,6 +17,7 @@ class ListingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final sellerName = listing.businessName ?? listing.userName ?? 'Local seller';
     return AppCard(
       variant: AppCardVariant.marketplace,
       padding: EdgeInsets.zero,
@@ -64,11 +65,23 @@ class ListingCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(listing.title, style: AppTextStyles.h3),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    AppBadge(
+                      label: listing.status == 'published' ? 'Published' : listing.status,
+                      tone: listing.status == 'published' ? AppBadgeTone.success : AppBadgeTone.neutral,
+                    ),
+                    const AppBadge(label: 'Meet safely', tone: AppBadgeTone.info),
+                  ],
+                ),
                 const SizedBox(height: 8),
                 Text(listing.description, style: AppTextStyles.bodyMuted, maxLines: 2, overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 8),
                 Text(
-                  listing.businessName ?? listing.userName ?? 'Local seller',
+                  sellerName,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     color: AppColors.deepCharcoal,
@@ -85,8 +98,13 @@ class ListingCard extends StatelessWidget {
                     style: const TextStyle(color: AppColors.mutedText, fontSize: 12),
                   ),
                 ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Inspect the item and confirm pickup before payment.',
+                  style: TextStyle(color: AppColors.mutedText, fontSize: 12),
+                ),
                 const SizedBox(height: 12),
-                ContactActions(name: listing.title),
+                ContactActions(name: sellerName),
               ],
             ),
           ),

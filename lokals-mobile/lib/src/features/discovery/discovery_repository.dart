@@ -1730,7 +1730,7 @@ class DiscoveryRepository {
     return WorkerModel.fromJson(item);
   }
 
-  Future<void> createReport({
+  Future<Map<String, dynamic>> createReport({
     required String title,
     required String category,
     required String description,
@@ -1763,7 +1763,10 @@ class DiscoveryRepository {
       );
     }
 
-    await ref.read(dioProvider).post('/reports', data: FormData.fromMap(data));
+    final response = await ref
+        .read(dioProvider)
+        .post('/reports', data: FormData.fromMap(data));
+    return Map<String, dynamic>.from(response.data as Map);
   }
 
   Future<List<ReportModel>> fetchMyReports() async {

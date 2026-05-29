@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../features/discovery/discovery_repository.dart';
 import '../../core/models.dart';
@@ -235,6 +236,22 @@ class _DeliveryDetailsScreenState extends ConsumerState<DeliveryDetailsScreen> {
                                     if (_activeTab == 'contact')
                                       _SheetInfoCard(
                                         children: [
+                                          Wrap(
+                                            spacing: 8,
+                                            runSpacing: 8,
+                                            children: const [
+                                              AppBadge(
+                                                label:
+                                                    'Verified courier when available',
+                                                tone: AppBadgeTone.success,
+                                              ),
+                                              AppBadge(
+                                                label: 'Track parcel status',
+                                                tone: AppBadgeTone.info,
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 10),
                                           Text(
                                             item.driverName
                                                         ?.trim()
@@ -309,6 +326,46 @@ class _DeliveryDetailsScreenState extends ConsumerState<DeliveryDetailsScreen> {
                                               ],
                                             ),
                                           ],
+                                          const SizedBox(height: 12),
+                                          Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.all(14),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.warningSoft,
+                                              borderRadius:
+                                                  BorderRadius.circular(18),
+                                            ),
+                                            child: const Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Safe handling note',
+                                                  style: TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.w800,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 4),
+                                                Text(
+                                                  'Confirm the courier, vehicle, and handoff before releasing the parcel.',
+                                                  style: TextStyle(
+                                                    color:
+                                                        AppColors.mutedText,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          AppButton(
+                                            label: 'Emergency shortcut',
+                                            expanded: false,
+                                            variant:
+                                                AppButtonVariant.danger,
+                                            onPressed: () =>
+                                                context.push('/sos'),
+                                          ),
                                         ],
                                       ),
                                     if (_activeTab == 'proof')

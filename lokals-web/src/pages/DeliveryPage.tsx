@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react'
-import { ChevronDown, LocateFixed, MapPinned, Package, ShieldCheck, Truck, UserRound } from 'lucide-react'
+import { AlertTriangle, ChevronDown, LocateFixed, MapPinned, Package, Phone, ShieldCheck, Truck, UserRound } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button, EmptyState, Input, PageHeader, QueryState, Select, StatusBadge, TextArea } from '../components/Ui'
@@ -24,6 +24,16 @@ const parcelSizes = [
 
 const quickLocations = ['Home', 'Work', 'Okahandja taxi rank', 'Okahandja State Clinic', 'Okahandja Town Council', 'Five Rand']
 const urgencyOptions = ['standard', 'express', 'priority']
+const popularParcelRoutes = [
+  { pickup: 'Home', dropoff: 'Okahandja taxi rank', label: 'Home to Taxi rank' },
+  { pickup: 'Okahandja Town Council', dropoff: 'Okahandja State Clinic', label: 'Town Council to Clinic' },
+  { pickup: 'Work', dropoff: 'Five Rand', label: 'Work to Five Rand' },
+]
+const deliverySteps = [
+  { key: 'route', label: 'Route' },
+  { key: 'parcel', label: 'Parcel' },
+  { key: 'review', label: 'Review' },
+] as const
 
 const deliveryTabs = [
   { label: 'New Delivery', value: 'request' },
@@ -34,6 +44,7 @@ const deliveryTabs = [
 
 export function DeliveryPage() {
   const [activeTab, setActiveTab] = useState('request')
+  const [requestStep, setRequestStep] = useState<(typeof deliverySteps)[number]['key']>('route')
   const [pickupLocation, setPickupLocation] = useState(quickLocations[0])
   const [dropoffLocation, setDropoffLocation] = useState(quickLocations[5])
   const [pickupPoint, setPickupPoint] = useState<LocationPoint | null>(null)
@@ -70,6 +81,10 @@ export function DeliveryPage() {
   )
   const savedRoutes = useMemo(
     () => Array.from(new Map((deliveriesQuery.data?.data ?? []).map((delivery) => [`${delivery.pickup_address ?? delivery.pickup_location}|${delivery.dropoff_address ?? delivery.dropoff_location}`, delivery])).values()).slice(0, 5),
+    [deliveriesQuery.data?.data],
+  )
+  const courierPreview = useMemo(
+    () => (deliveriesQuery.data?.data ?? []).filter((delivery) => delivery.driver?.id != null).slice(0, 3),
     [deliveriesQuery.data?.data],
   )
 
@@ -132,6 +147,7 @@ export function DeliveryPage() {
       setNotes('')
       setPreview('')
       setActiveTab('active')
+      setRequestStep('review')
       event.currentTarget.reset()
     } catch (caught) {
       setError(getApiErrorMessage(caught, 'Unable to request delivery right now.'))
@@ -164,163 +180,231 @@ export function DeliveryPage() {
       {activeTab === 'request' ? (
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
           <TransportPanel
-            title="New delivery"
-            description="Keep pickup, parcel details, estimate, and confirmation in one guided flow instead of a long stacked request form."
+            title="Send local parcel"
+            description="A calmer local parcel flow with route, parcel details, and one clear review step before you confirm pickup."
             aside={<StatusBadge value={`${selectedParcel.label} selected`} tone="accent" />}
           >
             <form className="space-y-5" onSubmit={submit}>
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-lokals-charcoal">1. Pickup</span>
-                  <Input value={pickupLocation} onChange={(event) => setPickupLocation(event.target.value)} placeholder="Enter pickup address or landmark" />
-                </label>
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-lokals-charcoal">Drop-off</span>
-                  <Input value={dropoffLocation} onChange={(event) => setDropoffLocation(event.target.value)} placeholder="Enter drop-off address or landmark" />
-                </label>
-              </div>
-
               <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={setCurrentPickup}
-                  className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
-                >
-                  <LocateFixed className="h-4 w-4" />
-                  Use current location
-                </button>
-                {quickLocations.slice(0, 4).map((location) => (
-                  <button
-                    key={location}
-                    type="button"
-                    onClick={() => setDropoffLocation(location)}
-                    className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-lokals-charcoal transition hover:bg-slate-200"
-                  >
-                    {location}
-                  </button>
-                ))}
+                {deliverySteps.map((step, index) => {
+                  const active = requestStep === step.key
+                  return (
+                    <button
+                      key={step.key}
+                      type="button"
+                      onClick={() => setRequestStep(step.key)}
+                      className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                        active ? 'bg-lokals-purple text-white shadow-card' : 'bg-slate-100 text-lokals-charcoal hover:bg-slate-200'
+                      }`}
+                    >
+                      <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs ${active ? 'bg-white/20 text-white' : 'bg-white text-lokals-purple'}`}>{index + 1}</span>
+                      {step.label}
+                    </button>
+                  )
+                })}
               </div>
 
-              <details className="group rounded-[24px] border border-lokals-border bg-slate-50 px-4 py-4">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-lokals-charcoal">Advanced map options</p>
-                    <p className="mt-1 text-sm text-lokals-muted">One optional pin-placement surface for pickup or drop-off, without duplicating route maps.</p>
+              {(requestStep === 'route' || requestStep === 'review') ? (
+                <div className="space-y-5 rounded-[24px] border border-lokals-border bg-[linear-gradient(180deg,#ffffff,#fbfcff)] p-5">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <label className="space-y-2">
+                      <span className="text-sm font-medium text-lokals-charcoal">Pickup</span>
+                      <Input value={pickupLocation} onChange={(event) => setPickupLocation(event.target.value)} placeholder="Enter pickup address or landmark" />
+                    </label>
+                    <label className="space-y-2">
+                      <span className="text-sm font-medium text-lokals-charcoal">Drop-off</span>
+                      <Input value={dropoffLocation} onChange={(event) => setDropoffLocation(event.target.value)} placeholder="Enter drop-off address or landmark" />
+                    </label>
                   </div>
-                  <ChevronDown className="h-4 w-4 text-lokals-muted transition group-open:rotate-180" />
-                </summary>
-                <div className="mt-4 space-y-4">
+
                   <div className="flex flex-wrap gap-2">
-                    {[
-                      { label: 'Edit pickup pin', value: 'pickup' as const },
-                      { label: 'Edit drop-off pin', value: 'dropoff' as const },
-                    ].map((item) => (
+                    <button
+                      type="button"
+                      onClick={setCurrentPickup}
+                      className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                    >
+                      <LocateFixed className="h-4 w-4" />
+                      Use current location
+                    </button>
+                    {popularParcelRoutes.map((route) => (
                       <button
-                        key={item.value}
+                        key={route.label}
                         type="button"
-                        onClick={() => setPinTarget(item.value)}
-                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${pinTarget === item.value ? 'bg-lokals-purple text-white' : 'bg-white text-lokals-charcoal shadow-soft'}`}
+                        onClick={() => {
+                          setPickupLocation(route.pickup)
+                          setDropoffLocation(route.dropoff)
+                        }}
+                        className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-lokals-charcoal transition hover:bg-slate-200"
                       >
-                        {item.label}
+                        {route.label}
                       </button>
                     ))}
                   </div>
-                  <LocationPickerMap
-                    label={pinTarget === 'pickup' ? 'Pickup pin' : 'Drop-off pin'}
-                    value={pinTarget === 'pickup' ? pickupPoint : dropoffPoint}
-                    onChange={(value) => {
-                      if (pinTarget === 'pickup') {
-                        setPickupPoint(value)
-                        return
-                      }
-                      setDropoffPoint(value)
-                    }}
-                    helpText={pinTarget === 'pickup' ? 'Tap to place a more precise pickup pin. Manual address entry above still works.' : 'Tap to place a more precise drop-off pin. Manual address entry above still works.'}
-                  />
-                </div>
-              </details>
 
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm font-medium text-lokals-charcoal">2. Parcel details</p>
-                  <p className="text-sm text-lokals-muted">Cleaner parcel sizing, urgency, and notes with less visual noise.</p>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-3">
-                  {parcelSizes.map((size) => (
-                    <button
-                      key={size.value}
-                      type="button"
-                      onClick={() => setParcelSize(size.value)}
-                      className={`rounded-[24px] border p-4 text-left transition ${parcelSize === size.value ? 'border-lokals-purple bg-violet-50 shadow-card' : 'border-lokals-border bg-white hover:border-violet-200'}`}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${parcelSize === size.value ? 'bg-white text-lokals-purple' : 'bg-slate-50 text-lokals-charcoal'}`}>
-                          <Package className="h-5 w-5" />
-                        </div>
-                        <StatusBadge value={`N$ ${size.estimate}`} tone={parcelSize === size.value ? 'accent' : 'neutral'} />
+                  <details className="group rounded-[24px] border border-lokals-border bg-slate-50 px-4 py-4">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-lokals-charcoal">Advanced map options</p>
+                        <p className="mt-1 text-sm text-lokals-muted">One optional pin surface for pickup or drop-off, without crowding the booking flow.</p>
                       </div>
-                      <p className="mt-4 font-semibold text-lokals-charcoal">{size.label}</p>
-                      <p className="mt-1 text-sm text-lokals-muted">{size.detail}</p>
-                    </button>
-                  ))}
-                </div>
-                <TextArea name="parcel_description" placeholder="What are you sending?" rows={3} required />
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className="space-y-2">
-                    <span className="text-sm font-medium text-lokals-charcoal">Urgency</span>
-                    <Select value={urgency} onChange={(event) => setUrgency(event.target.value)}>
-                      {urgencyOptions.map((option) => <option key={option} value={option}>{option.replaceAll('_', ' ')}</option>)}
-                    </Select>
-                  </label>
-                  <label className="space-y-2">
-                    <span className="text-sm font-medium text-lokals-charcoal">Weight (kg)</span>
-                    <Input value={weightKg} onChange={(event) => setWeightKg(event.target.value)} type="number" min="0.1" step="0.1" />
-                  </label>
-                </div>
-                <TextArea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Optional handoff notes or landmarks" rows={3} />
-              </div>
+                      <ChevronDown className="h-4 w-4 text-lokals-muted transition group-open:rotate-180" />
+                    </summary>
+                    <div className="mt-4 space-y-4">
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { label: 'Edit pickup pin', value: 'pickup' as const },
+                          { label: 'Edit drop-off pin', value: 'dropoff' as const },
+                        ].map((item) => (
+                          <button
+                            key={item.value}
+                            type="button"
+                            onClick={() => setPinTarget(item.value)}
+                            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${pinTarget === item.value ? 'bg-lokals-purple text-white' : 'bg-white text-lokals-charcoal shadow-soft'}`}
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
+                      <LocationPickerMap
+                        label={pinTarget === 'pickup' ? 'Pickup pin' : 'Drop-off pin'}
+                        value={pinTarget === 'pickup' ? pickupPoint : dropoffPoint}
+                        onChange={(value) => {
+                          if (pinTarget === 'pickup') {
+                            setPickupPoint(value)
+                            return
+                          }
+                          setDropoffPoint(value)
+                        }}
+                        helpText={pinTarget === 'pickup' ? 'Tap to place a more precise pickup pin. Manual address entry above still works.' : 'Tap to place a more precise drop-off pin. Manual address entry above still works.'}
+                      />
+                    </div>
+                  </details>
 
-              <div className="rounded-[24px] border border-dashed border-lokals-border bg-slate-50 px-4 py-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-lokals-charcoal">Parcel photo</p>
-                    <p className="mt-1 text-sm text-lokals-muted">Optional proof or recognition aid for fragile or high-value items.</p>
-                  </div>
-                  <label className="cursor-pointer rounded-full bg-white px-4 py-2 text-sm font-semibold text-lokals-charcoal shadow-soft">
-                    {preview ? 'Change photo' : 'Add photo'}
-                    <input
-                      type="file"
-                      name="photo"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(event) => {
-                        const file = event.target.files?.[0]
-                        setPreview(file ? URL.createObjectURL(file) : '')
-                      }}
-                    />
-                  </label>
+                  {requestStep === 'route' ? (
+                    <div className="flex justify-end">
+                      <Button type="button" onClick={() => setRequestStep('parcel')}>Continue to parcel details</Button>
+                    </div>
+                  ) : null}
                 </div>
-                {preview ? <img src={preview} alt="Parcel preview" className="mt-4 h-48 w-full rounded-[20px] object-cover" /> : null}
-              </div>
+              ) : null}
 
-              {error ? <p className="text-sm font-medium text-lokals-danger">{error}</p> : null}
-              <div className="rounded-[24px] bg-lokals-charcoal p-4 text-white shadow-card">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+              {(requestStep === 'parcel' || requestStep === 'review') ? (
+                <div className="space-y-5 rounded-[24px] border border-lokals-border bg-white p-5">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">3. Confirm</p>
-                    <p className="mt-1 text-xl font-semibold">Request courier pickup</p>
-                    <p className="mt-1 text-sm text-white/70">The estimate stays visible, while maps remain optional and non-blocking.</p>
+                    <p className="text-sm font-medium text-lokals-charcoal">Parcel details</p>
+                    <p className="text-sm text-lokals-muted">Choose parcel size, urgency, handling notes, and photo support in one place.</p>
                   </div>
-                  <Button className="min-w-[220px]" disabled={createDelivery.isPending}>
-                    {createDelivery.isPending ? 'Requesting delivery...' : isDemoMode ? 'Simulate delivery request' : 'Confirm delivery request'}
-                  </Button>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    {parcelSizes.map((size) => (
+                      <button
+                        key={size.value}
+                        type="button"
+                        onClick={() => setParcelSize(size.value)}
+                        className={`rounded-[24px] border p-4 text-left transition ${parcelSize === size.value ? 'border-lokals-purple bg-violet-50 shadow-card' : 'border-lokals-border bg-white hover:border-violet-200'}`}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${parcelSize === size.value ? 'bg-white text-lokals-purple' : 'bg-slate-50 text-lokals-charcoal'}`}>
+                            <Package className="h-5 w-5" />
+                          </div>
+                          <StatusBadge value={`N$ ${size.estimate}`} tone={parcelSize === size.value ? 'accent' : 'neutral'} />
+                        </div>
+                        <p className="mt-4 font-semibold text-lokals-charcoal">{size.label}</p>
+                        <p className="mt-1 text-sm text-lokals-muted">{size.detail}</p>
+                      </button>
+                    ))}
+                  </div>
+                  <TextArea name="parcel_description" placeholder="What are you sending?" rows={3} required />
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <label className="space-y-2">
+                      <span className="text-sm font-medium text-lokals-charcoal">Urgency</span>
+                      <Select value={urgency} onChange={(event) => setUrgency(event.target.value)}>
+                        {urgencyOptions.map((option) => <option key={option} value={option}>{option.replaceAll('_', ' ')}</option>)}
+                      </Select>
+                    </label>
+                    <label className="space-y-2">
+                      <span className="text-sm font-medium text-lokals-charcoal">Weight (kg)</span>
+                      <Input value={weightKg} onChange={(event) => setWeightKg(event.target.value)} type="number" min="0.1" step="0.1" />
+                    </label>
+                  </div>
+                  <TextArea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Optional handoff notes or safe handling instructions" rows={3} />
+                  <div className="rounded-[24px] border border-dashed border-lokals-border bg-slate-50 px-4 py-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-lokals-charcoal">Parcel photo</p>
+                        <p className="mt-1 text-sm text-lokals-muted">Optional proof or recognition aid for fragile or high-value items.</p>
+                      </div>
+                      <label className="cursor-pointer rounded-full bg-white px-4 py-2 text-sm font-semibold text-lokals-charcoal shadow-soft">
+                        {preview ? 'Change photo' : 'Add photo'}
+                        <input
+                          type="file"
+                          name="photo"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(event) => {
+                            const file = event.target.files?.[0]
+                            setPreview(file ? URL.createObjectURL(file) : '')
+                          }}
+                        />
+                      </label>
+                    </div>
+                    {preview ? <img src={preview} alt="Parcel preview" className="mt-4 h-48 w-full rounded-[20px] object-cover" /> : null}
+                  </div>
+                  {requestStep === 'parcel' ? (
+                    <div className="flex justify-between gap-3">
+                      <Button type="button" variant="secondary" onClick={() => setRequestStep('route')}>Back to route</Button>
+                      <Button type="button" onClick={() => setRequestStep('review')}>Review parcel request</Button>
+                    </div>
+                  ) : null}
                 </div>
-              </div>
+              ) : null}
+
+              {requestStep === 'review' ? (
+                <div className="space-y-4 rounded-[24px] bg-lokals-charcoal p-5 text-white shadow-card">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">Review and confirm</p>
+                      <p className="mt-1 text-xl font-semibold">Send local parcel</p>
+                      <p className="mt-1 text-sm text-white/70">Nearby couriers receive the route, parcel type, urgency, and any handling notes you provide.</p>
+                    </div>
+                    <StatusBadge value={urgency.replaceAll('_', ' ')} tone="success" />
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="rounded-[20px] bg-white/10 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Route</p>
+                      <p className="mt-2 font-semibold">{pickupLocation} to {dropoffLocation}</p>
+                    </div>
+                    <div className="rounded-[20px] bg-white/10 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Parcel</p>
+                      <p className="mt-2 font-semibold">{selectedParcel.label} | {weightKg} kg</p>
+                    </div>
+                    <div className="rounded-[20px] bg-white/10 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Estimate</p>
+                      <p className="mt-2 font-semibold">N$ {estimate} | {estimatedDurationMinutes} min</p>
+                    </div>
+                    <div className="rounded-[20px] bg-white/10 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Tracking</p>
+                      <p className="mt-2 font-semibold">Track parcel status in your active delivery workspace</p>
+                    </div>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <div className="rounded-[20px] bg-white/10 p-4 text-sm text-white/80">Verified courier details appear after assignment when available.</div>
+                    <div className="rounded-[20px] bg-white/10 p-4 text-sm text-white/80">Call or WhatsApp actions show up once a courier accepts the parcel.</div>
+                    <div className="rounded-[20px] bg-white/10 p-4 text-sm text-white/80">Add safe handling notes for fragile or time-sensitive items.</div>
+                  </div>
+                  {error ? <p className="text-sm font-medium text-rose-200">{error}</p> : null}
+                  <div className="flex flex-wrap gap-3">
+                    <Button type="button" variant="secondary" onClick={() => setRequestStep('parcel')}>Edit parcel</Button>
+                    <Button className="min-w-[220px]" disabled={createDelivery.isPending}>
+                      {createDelivery.isPending ? 'Requesting delivery...' : isDemoMode ? 'Simulate delivery request' : 'Confirm delivery request'}
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
             </form>
           </TransportPanel>
 
           <TransportSummaryCard
-            title="Delivery summary"
+            title="Parcel snapshot"
             sticky
             items={[
               { label: 'Route', value: pickupLocation === dropoffLocation ? pickupLocation : `${pickupLocation} -> ${dropoffLocation}` },
@@ -333,6 +417,43 @@ export function DeliveryPage() {
                 <TransportMiniMetric label="Estimated time" value={`${estimatedDurationMinutes} min`} />
                 <div className="rounded-[22px] bg-slate-50 px-4 py-4 text-sm text-lokals-muted">
                   Add map pins only if the route needs more precision. Manual addresses remain the primary flow.
+                </div>
+                <div className="rounded-[22px] border border-lokals-border bg-white p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
+                      <AlertTriangle className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-lokals-charcoal">Safe handling note</p>
+                      <p className="mt-1 text-sm text-lokals-muted">Share fragile-item notes clearly and track parcel status once a courier accepts.</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="rounded-[22px] border border-lokals-border bg-white p-4">
+                  <p className="font-semibold text-lokals-charcoal">Available courier operators</p>
+                  <p className="mt-1 text-sm text-lokals-muted">Recent local courier contacts, if we already have them from past deliveries.</p>
+                  <div className="mt-3 space-y-3">
+                    {courierPreview.length > 0 ? courierPreview.map((delivery) => (
+                      <div key={delivery.id} className="rounded-[18px] bg-slate-50 p-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-semibold text-lokals-charcoal">{delivery.driver?.name ?? 'Local courier'}</p>
+                            <p className="mt-1 text-sm text-lokals-muted">{delivery.courier_profile?.vehicle_type ?? delivery.courier_profile?.vehicle_registration ?? 'Courier details appear when assigned'}</p>
+                          </div>
+                          <StatusBadge value={delivery.courier_profile?.is_verified ? 'Verified' : 'Recent courier'} tone={delivery.courier_profile?.is_verified ? 'success' : 'neutral'} />
+                        </div>
+                        {delivery.driver?.phone ? (
+                          <a href={`tel:${delivery.driver.phone}`} className="mt-3 inline-flex">
+                            <Button variant="secondary"><Phone className="h-4 w-4" />Call courier</Button>
+                          </a>
+                        ) : null}
+                      </div>
+                    )) : (
+                      <div className="rounded-[18px] bg-slate-50 p-3 text-sm text-lokals-muted">
+                        Courier previews will appear here after accepted or completed local parcel requests.
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             }
@@ -401,8 +522,8 @@ export function DeliveryPage() {
         <TransportPanel title="Active delivery" description="The delivery that currently needs attention, with the next action kept obvious.">
           {successItem ? (
             <RequestSuccessState
-              title="Delivery requested"
-              body="Your parcel request is in the queue. A nearby driver can confirm shortly."
+              title="Parcel request sent"
+              body="Your local parcel request is in the queue. A nearby courier can confirm, share operator details, and update the tracking status shortly."
               meta={
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
@@ -412,6 +533,14 @@ export function DeliveryPage() {
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Estimate</p>
                     <p className="mt-1 font-semibold text-lokals-charcoal">N$ {successItem.estimated_price ?? estimate}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Reference</p>
+                    <p className="mt-1 font-semibold text-lokals-charcoal">{successItem.reference_code ?? `Delivery ${successItem.id}`}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-lokals-muted">Status</p>
+                    <p className="mt-1 font-semibold text-lokals-charcoal">{formatTransportStatus(successItem.tracking_status ?? successItem.status, successItem.status_label)}</p>
                   </div>
                 </div>
               }
@@ -497,9 +626,9 @@ export function DeliveryPage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         {[
-          { title: 'Single route preview', body: 'Pickup and drop-off stay visible on one dominant map surface instead of separate stacked panels.', icon: MapPinned },
-          { title: 'Cleaner parcel choices', body: 'Parcel size, urgency, and notes are grouped into a calmer, guided request flow.', icon: Truck },
-          { title: 'Estimate first', body: 'Delivery amount and timing stay visible next to the main CTA so the request feels operational and clear.', icon: ShieldCheck },
+          { title: 'Guided parcel flow', body: 'Move from route to parcel details to review without losing the delivery estimate or tracking context.', icon: MapPinned },
+          { title: 'Local courier trust', body: 'Operator previews, safe handling cues, and clearer status messaging make delivery feel more dependable.', icon: Truck },
+          { title: 'Clear tracking path', body: 'Estimate, urgency, and tracking cues stay visible before and after confirmation so the flow feels traceable.', icon: ShieldCheck },
         ].map((item) => (
           <div key={item.title} className="rounded-[24px] border border-lokals-purple/10 bg-[linear-gradient(180deg,#ffffff,#fbfcff)] p-5 shadow-soft">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lokals-purple/10 text-lokals-purple">

@@ -13,14 +13,9 @@ import '../../widgets/cards.dart';
 import '../../widgets/shell.dart';
 import '../auth/auth_controller.dart';
 import '../discovery/discovery_repository.dart';
-import '../events/event_card.dart';
-import '../news/news_feed_section.dart';
 import '../services/services_repository.dart';
-import 'widgets/home_hero_card.dart';
-import 'widgets/home_quick_actions.dart';
 import 'widgets/home_section.dart';
 import 'widgets/local_update_card.dart';
-import 'widgets/role_home_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -31,12 +26,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _searchController = TextEditingController();
-  String _homeEventFilter = 'this_week';
-
-  @override
-  void initState() {
-    super.initState();
-  }
 
   @override
   void dispose() {
@@ -50,59 +39,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     context.go('/search?q=${Uri.encodeComponent(query)}');
   }
 
-  bool _matchesHomeEventFilter(EventModel event) {
-    if (_homeEventFilter == 'all' || event.startsAt == null) {
-      return true;
-    }
-
-    final startsAt = DateTime.tryParse(event.startsAt!);
-    if (startsAt == null) {
-      return true;
-    }
-
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final eventDay = DateTime(startsAt.year, startsAt.month, startsAt.day);
-    final currentWeekStart = today.subtract(Duration(days: today.weekday - 1));
-    final nextWeekStart = currentWeekStart.add(const Duration(days: 7));
-    final nextWeekEnd = nextWeekStart.add(const Duration(days: 7));
-    final monthEnd = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
-    final yearEnd = DateTime(now.year, 12, 31, 23, 59, 59);
-
-    switch (_homeEventFilter) {
-      case 'today':
-        return eventDay == today;
-      case 'this_week':
-        return !startsAt.isBefore(currentWeekStart) &&
-            startsAt.isBefore(nextWeekStart);
-      case 'next_week':
-        return !startsAt.isBefore(nextWeekStart) &&
-            startsAt.isBefore(nextWeekEnd);
-      case 'this_month':
-        return !startsAt.isBefore(today) && startsAt.isBefore(monthEnd);
-      case 'this_year':
-        return !startsAt.isBefore(today) && startsAt.isBefore(yearEnd);
-      default:
-        return true;
-    }
+  String _greetingLabel() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
   }
 
   @override
   Widget build(BuildContext context) {
-    final safeBottom = MediaQuery.viewPaddingOf(context).bottom;
-    final homeScrollBottomPadding = safeBottom + 88;
     final auth = ref.watch(authControllerProvider);
     final user = auth.user;
     final preferences = ref.watch(preferencesProvider);
     final providers = ref.watch(servicesProvider);
-    final events = ref.watch(eventsProvider);
     final alertsFeed = ref.watch(alertsFeedProvider);
     final products = ref.watch(storeProductsProvider(null));
-    final jobs = ref.watch(jobsProvider);
     final followingFeed = ref.watch(followingFeedProvider);
     final preferenceData = preferences.asData?.value;
     final town = AppConfig.pilotTown;
     final area = preferenceData?.defaultArea ?? user?.defaultArea;
+    final locationLabel = [if (area != null && area.isNotEmpty) area, town].join(', ');
     final localNewsParams = {
       'town': town,
       ...?(area == null ? null : {'area': area}),
@@ -116,15 +72,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final localNews =
         newsFeed.asData?.value.take(3).toList() ?? const <NewsItemModel>[];
     final providerItems =
-        providers.asData?.value.toList() ?? const <ProviderModel>[];
-    final allEventItems = events.asData?.value ?? const <EventModel>[];
-    final eventItems = allEventItems
-        .where(_matchesHomeEventFilter)
-        .take(5)
-        .toList();
+        providers.asData?.value.take(4).toList() ?? const <ProviderModel>[];
     final productItems =
         products.asData?.value.take(3).toList() ?? const <ProductModel>[];
-    final jobItems = jobs.asData?.value.take(3).toList() ?? const <JobModel>[];
     final sortedAlertItems =
         [...(alertsFeed.asData?.value ?? const <AlertFeedModel>[])]
           ..sort((a, b) {
@@ -152,11 +102,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 DateTime.fromMillisecondsSinceEpoch(0);
             return rightTime.compareTo(leftTime);
           });
+    final followedItems =
+        (followingFeed.asData?.value ?? const <dynamic>[])
+            .map((item) => Map<String, dynamic>.from(item as Map))
+            .take(3)
+            .toList();
 
-    final baseUpdates = [
-      ...sortedAlertItems
-          .take(2)
-          .map(
+    final localUpdates = [
+      ...sortedAlertItems.take(2).map(
             (item) => (
               title: item.title,
               source: item.location ?? 'Local alert',
@@ -167,9 +120,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               weight: 3,
             ),
           ),
-      ...localNews
-          .take(2)
-          .map(
+      ...localNews.take(2).map(
             (item) => (
               title: item.title,
               source: item.sourceName,
@@ -180,103 +131,59 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               weight: 2,
             ),
           ),
-      ...(followingFeed.asData?.value
-              .take(2)
-              .map(
-                (item) => (
-                  title:
-                      item['title']?.toString() ??
-                      item['name']?.toString() ??
-                      item['body']?.toString() ??
-                      'Followed organization update',
-                  source:
-                      item['category']?.toString() ??
-                      item['location']?.toString() ??
-                      'Followed update',
-                  type: 'followed',
-                  route: '/activity',
-                  time:
-                      item['timestamp']?.toString() ??
-                      item['created_at']?.toString(),
-                  status: item['status']?.toString() ?? 'following',
-                  weight: 1,
-                ),
-              ) ??
-          const []),
-    ];
-    final remainingUpdateSlots = baseUpdates.length >= 4
-        ? 0
-        : 4 - baseUpdates.length;
-    final localUpdates = [
-      ...baseUpdates,
-      ...eventItems
-          .take(baseUpdates.length >= 4 ? 0 : 1)
-          .map(
+      ...followedItems.map(
             (item) => (
-              title: item.title,
+              title:
+                  item['title']?.toString() ??
+                  item['name']?.toString() ??
+                  item['body']?.toString() ??
+                  'Followed organization update',
               source:
-                  item.venueName ??
-                  item.locationLabel ??
-                  item.location ??
-                  'Local event',
-              type: 'event',
-              route: '/events/${item.id}',
-              time: item.startsAt,
-              status: item.category,
-              weight: 1,
-            ),
-          ),
-      ...localNews
-          .skip(2)
-          .take(remainingUpdateSlots)
-          .map(
-            (item) => (
-              title: item.title,
-              source: item.sourceName,
-              type: 'news',
-              route: '/news/${item.id}',
-              time: item.publishedAt,
-              status: item.category,
+                  item['category']?.toString() ??
+                  item['location']?.toString() ??
+                  'Followed update',
+              type: 'followed',
+              route: '/activity',
+              time:
+                  item['timestamp']?.toString() ??
+                  item['created_at']?.toString(),
+              status: item['status']?.toString() ?? 'following',
               weight: 1,
             ),
           ),
     ]..sort((a, b) => b.weight.compareTo(a.weight));
 
+    final firstName = user?.name.split(' ').first ?? 'there';
+
     return LokalsShell(
       title: 'LOKALS',
       bodyBottomInset: 10,
       child: ListView(
-        padding: EdgeInsets.fromLTRB(20, 12, 20, homeScrollBottomPadding),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
         children: [
           AppCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 10),
-                          Text(
-                            'What do you need in Okahandja today?',
-                            style: const TextStyle(
-                              fontSize: 30,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.deepCharcoal,
-                              height: 1.04,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
                 Text(
-                  'Search trusted local services, daily essentials, events, jobs, and civic updates without leaving one clean flow.',
+                  '${_greetingLabel()}, $firstName',
+                  style: AppTextStyles.bodyMuted.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Your City Command Center',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.deepCharcoal,
+                    height: 1.05,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'City alerts, trusted services, marketplace highlights, and useful local updates for $locationLabel.',
                   style: AppTextStyles.bodyMuted,
                 ),
                 const SizedBox(height: 14),
@@ -288,236 +195,280 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       label: AppConfig.pilotLocationMessage,
                       tone: AppBadgeTone.success,
                     ),
+                    AppBadge(
+                      label: _formatRoleLabel(role),
+                      tone: AppBadgeTone.brand,
+                    ),
+                    AppBadge(
+                      label: locationLabel,
+                      tone: AppBadgeTone.neutral,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                AppSearchBar(
+                  controller: _searchController,
+                  hintText: 'Search services, products, and city updates...',
+                  recentKey: 'home',
+                  onValueSelected: _routeSearch,
+                  suggestions: const [
+                    'Services near me',
+                    'Taxi in Okahandja',
+                    'Parcel delivery',
+                    'Town updates',
+                    'Products nearby',
+                  ],
+                  shortcuts: const [
+                    'Services',
+                    'Taxi',
+                    'Delivery',
+                    'Store',
+                    'Alerts',
+                  ],
+                ),
+                if (user == null) ...[
+                  const SizedBox(height: 14),
+                  LokalsSurfaceTile(
+                    onTap: () => context.go('/login'),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: AppColors.purpleSoftAlt,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Icon(
+                            Icons.login_rounded,
+                            color: AppColors.primaryPurple,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Sign in for a more personal city feed',
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Keep follows, area preferences, and local activity in sync.',
+                                style: AppTextStyles.bodyMuted,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const AppBadge(
+                          label: 'Sign in',
+                          tone: AppBadgeTone.brand,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 18),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _PulseStat(
+                      label: 'Active alerts',
+                      value: '${sortedAlertItems.length}',
+                      detail: sortedAlertItems.isEmpty
+                          ? 'No urgent alert right now'
+                          : sortedAlertItems.first.title,
+                      icon: Icons.notifications_active_outlined,
+                      iconBackground: AppColors.dangerSoft,
+                      iconColor: AppColors.danger,
+                    ),
+                    _PulseStat(
+                      label: 'Nearby services',
+                      value: '${providerItems.length}',
+                      detail: providerItems.isEmpty
+                          ? 'Providers will appear here'
+                          : providerItems.first.name,
+                      icon: Icons.home_repair_service_outlined,
+                      iconBackground: AppColors.successSoft,
+                      iconColor: AppColors.primaryGreen,
+                    ),
+                    _PulseStat(
+                      label: 'Market picks',
+                      value: '${productItems.length}',
+                      detail: productItems.isEmpty
+                          ? 'Fresh offers will show here'
+                          : productItems.first.title,
+                      icon: Icons.storefront_outlined,
+                      iconBackground: AppColors.warningSoft,
+                      iconColor: AppColors.warning,
+                    ),
                   ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 14),
-          AppSearchBar(
-            controller: _searchController,
-            hintText: 'Search services, jobs, products...',
-            recentKey: 'home',
-            onValueSelected: _routeSearch,
-            suggestions: const [
-              'Services near me',
-              'Jobs in Okahandja',
-              'Products nearby',
-              'Events this weekend',
-              'Local news',
-            ],
-            shortcuts: const ['Services', 'Jobs', 'Market', 'Events', 'News'],
-          ),
-          if (user == null) ...[
-            const SizedBox(height: 12),
-            LokalsSurfaceTile(
-              onTap: () => context.go('/login'),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: AppColors.purpleSoftAlt,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(
-                      Icons.login_rounded,
-                      color: AppColors.primaryPurple,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Sign in for a more personal feed',
-                          style: TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Keep your area, activity, and local updates synced across the app.',
-                          style: AppTextStyles.bodyMuted,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const AppBadge(label: 'Sign in', tone: AppBadgeTone.brand),
-                ],
-              ),
-            ),
-          ],
-          const SizedBox(height: 20),
-          const HomeHeroCard(),
-          const SizedBox(height: 20),
-          HomeQuickActions(role: role, isGuest: user == null),
-          const SizedBox(height: 20),
-          RoleHomeCard(role: role, isGuest: user == null),
           const SizedBox(height: 20),
           HomeSection(
-            eyebrow: 'Local updates',
-            title: 'What is happening near you',
-            actionLabel: 'View All',
+            eyebrow: 'Priority actions',
+            title: 'Move fast on the essentials',
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: const [
+                _CommandActionTile(
+                  label: 'Report Issue',
+                  detail: 'Roads, water, waste, and public concerns',
+                  route: '/report-issue',
+                  icon: Icons.report_problem_outlined,
+                  iconBackground: AppColors.warningSoft,
+                  iconColor: Color(0xFFD97706),
+                ),
+                _CommandActionTile(
+                  label: 'Request Taxi',
+                  detail: 'Book a ride around town in a few taps',
+                  route: '/ride',
+                  icon: Icons.local_taxi_outlined,
+                  iconBackground: AppColors.infoSoft,
+                  iconColor: AppColors.softBlue,
+                ),
+                _CommandActionTile(
+                  label: 'Send Parcel',
+                  detail: 'Arrange quick local delivery',
+                  route: '/delivery',
+                  icon: Icons.local_shipping_outlined,
+                  iconBackground: AppColors.successSoft,
+                  iconColor: AppColors.primaryGreen,
+                ),
+                _CommandActionTile(
+                  label: 'SOS',
+                  detail: 'Reach emergency help immediately',
+                  route: '/sos',
+                  icon: Icons.shield_outlined,
+                  iconBackground: AppColors.dangerSoft,
+                  iconColor: AppColors.danger,
+                ),
+                _CommandActionTile(
+                  label: 'Browse Services',
+                  detail: 'Trusted local providers near you',
+                  route: '/services',
+                  icon: Icons.auto_awesome_outlined,
+                  iconBackground: AppColors.purpleSoftAlt,
+                  iconColor: AppColors.primaryPurple,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          HomeSection(
+            eyebrow: 'City alerts',
+            title: 'Smart city alerts and announcements',
+            actionLabel: 'View all',
             onAction: () => context.go('/alerts'),
-            isLoading:
-                alertsFeed.isLoading ||
-                newsFeed.isLoading ||
-                followingFeed.isLoading,
-            errorText:
-                (alertsFeed.hasError ||
-                    newsFeed.hasError ||
-                    followingFeed.hasError)
+            isLoading: alertsFeed.isLoading || newsFeed.isLoading,
+            errorText: (alertsFeed.hasError || newsFeed.hasError)
                 ? 'Please try again in a moment.'
                 : null,
-            emptyTitle: localUpdates.isEmpty
-                ? 'No alerts right now. You are all caught up.'
+            emptyTitle: sortedAlertItems.isEmpty && localNews.isEmpty
+                ? 'No active alerts right now'
                 : null,
-            emptyBody: localUpdates.isEmpty
-                ? 'Local alerts, followed updates, and news will appear here.'
+            emptyBody: sortedAlertItems.isEmpty && localNews.isEmpty
+                ? 'Official notices and local announcements will appear here as soon as they are published.'
                 : null,
+            emptyAction: AppButton(
+              label: 'Open local news',
+              expanded: false,
+              variant: AppButtonVariant.secondary,
+              onPressed: () => context.go('/news'),
+            ),
             onRetry: () {
               ref.invalidate(alertsFeedProvider);
-              ref.invalidate(newsFeedProvider);
-              ref.invalidate(followingFeedProvider);
+              ref.invalidate(localNewsSource);
             },
             child: Column(
-              children: localUpdates
-                  .take(5)
-                  .map(
+              children: [
+                ...sortedAlertItems.take(3).map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _AlertAnnouncementTile(
+                      title: item.title,
+                      body: item.body,
+                      location: item.location ?? locationLabel,
+                      severity: item.severity ?? 'notice',
+                    ),
+                  ),
+                ),
+                if (sortedAlertItems.isEmpty)
+                  ...localNews.take(2).map(
                     (item) => Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: LocalUpdateCard(
+                      child: _AlertAnnouncementTile(
                         title: item.title,
-                        source: item.source,
-                        type: item.type,
-                        route: item.route,
-                        time: item.time,
-                        status: item.status,
+                        body: item.sourceName,
+                        location: locationLabel,
+                        severity: item.category,
+                        route: '/news/${item.id}',
                       ),
                     ),
-                  )
-                  .toList(),
+                  ),
+              ],
             ),
           ),
           const SizedBox(height: 20),
           HomeSection(
             eyebrow: 'Nearby services',
             title: 'Trusted providers around you',
-            actionLabel: 'View All',
+            actionLabel: 'Browse all',
             onAction: () => context.go('/services'),
             isLoading: providers.isLoading,
             errorText: providers.hasError
                 ? 'Services unavailable right now.'
                 : null,
-            emptyTitle: providerItems.isEmpty
-                ? 'No nearby services yet.'
-                : null,
+            emptyTitle: providerItems.isEmpty ? 'No nearby services yet.' : null,
             emptyBody: providerItems.isEmpty
-                ? 'Trusted local providers will appear here.'
+                ? 'Trusted providers will appear here as soon as they are available in your area.'
                 : null,
+            emptyAction: AppButton(
+              label: 'Browse services',
+              expanded: false,
+              variant: AppButtonVariant.secondary,
+              onPressed: () => context.go('/services'),
+            ),
             onRetry: () => ref.invalidate(servicesProvider),
             child: providerItems.isEmpty
                 ? const SizedBox.shrink()
-                : SizedBox(
-                    height: 328,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: providerItems.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(width: 12),
-                      itemBuilder: (context, index) => SizedBox(
-                        width: 320,
-                        child: NearbyServiceCard(
-                          provider: providerItems[index],
-                        ),
-                      ),
-                    ),
-                  ),
-          ),
-          const SizedBox(height: 20),
-          HomeSection(
-            eyebrow: 'Events near you',
-            title: 'Upcoming events nearby',
-            actionLabel: 'View All',
-            onAction: () => context.go('/events'),
-            isLoading: events.isLoading,
-            errorText: events.hasError ? 'Events unavailable right now.' : null,
-            emptyTitle: eventItems.isEmpty ? 'No events nearby yet.' : null,
-            emptyBody: eventItems.isEmpty
-                ? 'Upcoming local events will show up here.'
-                : null,
-            onRetry: () => ref.invalidate(eventsProvider),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      for (final item in const [
-                        ('today', 'Today'),
-                        ('this_week', 'This week'),
-                        ('next_week', 'Next week'),
-                        ('this_month', 'This month'),
-                        ('this_year', 'This year'),
-                        ('all', 'All'),
-                      ])
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: ChoiceChip(
-                            label: Text(item.$2),
-                            selected: _homeEventFilter == item.$1,
-                            onSelected: (_) => setState(() => _homeEventFilter = item.$1),
-                            selectedColor: AppColors.primaryPurple,
-                            labelStyle: TextStyle(
-                              color: _homeEventFilter == item.$1
-                                  ? Colors.white
-                                  : AppColors.deepCharcoal,
-                              fontWeight: FontWeight.w700,
-                            ),
-                            backgroundColor: AppColors.softBackground,
-                            side: const BorderSide(color: AppColors.border),
+                : Column(
+                    children: providerItems
+                        .map(
+                          (item) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: NearbyServiceCard(provider: item),
                           ),
-                        ),
-                    ],
+                        )
+                        .toList(),
                   ),
-                ),
-                if (eventItems.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 586,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: eventItems.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(width: 12),
-                      itemBuilder: (context, index) => SizedBox(
-                        width: 320,
-                        child: EventCard(event: eventItems[index]),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
           ),
           const SizedBox(height: 20),
           HomeSection(
-            eyebrow: 'Store deals',
-            title: 'Local products and offers',
-            actionLabel: 'View All',
+            eyebrow: 'Market picks',
+            title: 'Marketplace highlights',
+            actionLabel: 'Open store',
             onAction: () => context.go('/store'),
             isLoading: products.isLoading,
             errorText: products.hasError
-                ? 'Store deals unavailable right now.'
+                ? 'Marketplace unavailable right now.'
                 : null,
-            emptyTitle: productItems.isEmpty
-                ? 'No store deals in your area today.'
-                : null,
+            emptyTitle: productItems.isEmpty ? 'No local offers yet.' : null,
             emptyBody: productItems.isEmpty
-                ? 'Local products and sale alerts will appear here.'
+                ? 'Fresh products and popular offers will appear here when sellers publish them.'
                 : null,
+            emptyAction: AppButton(
+              label: 'Browse marketplace',
+              expanded: false,
+              variant: AppButtonVariant.secondary,
+              onPressed: () => context.go('/store'),
+            ),
             onRetry: () => ref.invalidate(storeProductsProvider(null)),
             child: Column(
               children: productItems
@@ -535,7 +486,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               AppNetworkImage(
                                 imageUrl: resolveMediaUrl(item.imageUrl),
                                 fallbackIcon: Icons.shopping_bag_outlined,
-                                height: 148,
+                                height: 160,
                                 width: double.infinity,
                                 borderRadius: const BorderRadius.vertical(
                                   top: Radius.circular(20),
@@ -547,15 +498,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      item.title,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 18,
-                                        height: 1.25,
-                                      ),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            item.title,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 18,
+                                              height: 1.25,
+                                            ),
+                                          ),
+                                        ),
+                                        const AppBadge(
+                                          label: 'Popular',
+                                          tone: AppBadgeTone.accent,
+                                        ),
+                                      ],
                                     ),
                                     const SizedBox(height: 6),
                                     Text(
@@ -591,77 +552,44 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SizedBox(height: 20),
           HomeSection(
-            eyebrow: role == 'worker' ? 'Work first' : 'Work opportunities',
-            title: 'Jobs near you',
-            actionLabel: 'View All',
-            onAction: () => context.go('/jobs'),
-            isLoading: jobs.isLoading,
-            errorText: jobs.hasError ? 'Jobs unavailable right now.' : null,
-            emptyTitle: jobItems.isEmpty
-                ? 'No nearby work opportunities right now.'
+            eyebrow: 'Recent activity',
+            title: 'Status updates that matter',
+            actionLabel: 'Open activity',
+            onAction: () => context.go('/activity'),
+            isLoading:
+                alertsFeed.isLoading || newsFeed.isLoading || followingFeed.isLoading,
+            errorText:
+                (alertsFeed.hasError || newsFeed.hasError || followingFeed.hasError)
+                ? 'Please try again in a moment.'
                 : null,
-            emptyBody: jobItems.isEmpty
-                ? 'Fresh local jobs will appear here.'
+            emptyTitle: localUpdates.isEmpty ? 'No recent movement yet.' : null,
+            emptyBody: localUpdates.isEmpty
+                ? 'Your city feed will collect alerts, followed updates, and useful notices here.'
                 : null,
-            onRetry: () => ref.invalidate(jobsProvider),
+            emptyAction: AppButton(
+              label: 'Check alerts',
+              expanded: false,
+              variant: AppButtonVariant.secondary,
+              onPressed: () => context.go('/alerts'),
+            ),
+            onRetry: () {
+              ref.invalidate(alertsFeedProvider);
+              ref.invalidate(localNewsSource);
+              ref.invalidate(followingFeedProvider);
+            },
             child: Column(
-              children: jobItems
+              children: localUpdates
+                  .take(5)
                   .map(
                     (item) => Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(24),
-                        onTap: () => context.go('/jobs'),
-                        child: AppCard(
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 52,
-                                height: 52,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEEF2FF),
-                                  borderRadius: BorderRadius.circular(18),
-                                ),
-                                child: const Icon(
-                                  Icons.work_outline_rounded,
-                                  color: AppColors.primaryPurple,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.title,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      item.location ??
-                                          [
-                                            area,
-                                            town,
-                                          ].whereType<String>().join(', '),
-                                      style: const TextStyle(
-                                        color: AppColors.mutedText,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      item.compensation ?? 'Pay not listed',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      child: LocalUpdateCard(
+                        title: item.title,
+                        source: item.source,
+                        type: item.type,
+                        route: item.route,
+                        time: item.time,
+                        status: item.status,
                       ),
                     ),
                   )
@@ -669,55 +597,286 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          newsFeed.when(
-            data: (items) => NewsFeedSection(
-              title: 'Local news',
-              subtitle:
-                  'Aggregated local stories with clear source attribution.',
-              items: items.take(3).toList(),
-              horizontal: true,
-            ),
-            loading: () => const LoadingSkeleton(height: 180),
-            error: (error, _) => EmptyStateView(
-              title: 'News unavailable',
-              body: 'Please try again in a moment.',
-              action: AppButton(
-                label: 'Retry',
-                expanded: false,
-                variant: AppButtonVariant.secondary,
-                onPressed: () => ref.invalidate(localNewsSource),
-              ),
+          HomeSection(
+            eyebrow: 'Follow',
+            title: followedItems.isNotEmpty
+                ? 'Followed organizations'
+                : 'Suggested organizations',
+            actionLabel: 'Manage',
+            onAction: () => context.go('/following-organizations'),
+            isLoading: followingFeed.isLoading,
+            errorText: followingFeed.hasError
+                ? 'Followed updates are unavailable right now.'
+                : null,
+            emptyTitle: null,
+            onRetry: () => ref.invalidate(followingFeedProvider),
+            child: Column(
+              children: (followedItems.isNotEmpty
+                      ? followedItems
+                      : _suggestedOrganizations)
+                  .map(
+                    (item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _FollowTile(
+                        title: item['title']?.toString() ?? 'Suggested organization',
+                        body:
+                            item['body']?.toString() ??
+                            'Official and trusted local voices will appear here.',
+                        badge:
+                            item['badge']?.toString() ??
+                            item['status']?.toString() ??
+                            'Following',
+                        route: item['route']?.toString() ??
+                            '/following-organizations',
+                        subtitle:
+                            item['category']?.toString() ??
+                            item['location']?.toString() ??
+                            item['subtitle']?.toString() ??
+                            'Suggested for your feed',
+                        tone: item['badge'] == null
+                            ? AppBadgeTone.success
+                            : AppBadgeTone.accent,
+                      ),
+                    ),
+                  )
+                  .toList(),
             ),
           ),
-          const SizedBox(height: 20),
-          AppCard(
-            child: Row(
+        ],
+      ),
+    );
+  }
+}
+
+const _suggestedOrganizations = [
+  {
+    'title': 'Town notices',
+    'body':
+        'Follow municipal announcements, service notices, and verified public updates.',
+    'badge': 'Official',
+    'subtitle': 'Suggested for your feed',
+    'route': '/following-organizations',
+  },
+  {
+    'title': 'Community groups',
+    'body':
+        'See updates from local organizers, projects, and public-interest initiatives.',
+    'badge': 'Community',
+    'subtitle': 'Suggested for your feed',
+    'route': '/following-organizations',
+  },
+  {
+    'title': 'Trusted businesses',
+    'body':
+        'Keep nearby service providers and verified local brands in your regular feed.',
+    'badge': 'Business',
+    'subtitle': 'Suggested for your feed',
+    'route': '/directory',
+  },
+];
+
+String _formatRoleLabel(String role) {
+  final words = role.split('_').where((part) => part.isNotEmpty);
+  return words
+      .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
+      .join(' ');
+}
+
+class _PulseStat extends StatelessWidget {
+  const _PulseStat({
+    required this.label,
+    required this.value,
+    required this.detail,
+    required this.icon,
+    required this.iconBackground,
+    required this.iconColor,
+  });
+
+  final String label;
+  final String value;
+  final String detail;
+  final IconData icon;
+  final Color iconBackground;
+  final Color iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 156,
+      child: LokalsSurfaceTile(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Text(label, style: AppTextStyles.bodyMuted),
+                      const SizedBox(height: 8),
                       Text(
-                        'Explore more in your area',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
+                        value,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.deepCharcoal,
                         ),
-                      ),
-                      SizedBox(height: 6),
-                      Text(
-                        'Browse more local services, shops, directory entries, and updates.',
-                        style: TextStyle(color: AppColors.mutedText),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                AppButton(
-                  label: 'More',
-                  expanded: false,
-                  variant: AppButtonVariant.secondary,
-                  onPressed: () => context.go('/more'),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: iconBackground,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(icon, color: iconColor),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              detail,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.bodyMuted,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CommandActionTile extends StatelessWidget {
+  const _CommandActionTile({
+    required this.label,
+    required this.detail,
+    required this.route,
+    required this.icon,
+    required this.iconBackground,
+    required this.iconColor,
+  });
+
+  final String label;
+  final String detail;
+  final String route;
+  final IconData icon;
+  final Color iconBackground;
+  final Color iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 164,
+      child: LokalsSurfaceTile(
+        onTap: () => context.go(route),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: iconBackground,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon, color: iconColor),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                color: AppColors.deepCharcoal,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              detail,
+              style: AppTextStyles.bodyMuted,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AlertAnnouncementTile extends StatelessWidget {
+  const _AlertAnnouncementTile({
+    required this.title,
+    required this.body,
+    required this.location,
+    required this.severity,
+    this.route = '/alerts',
+  });
+
+  final String title;
+  final String body;
+  final String location;
+  final String severity;
+  final String route;
+
+  @override
+  Widget build(BuildContext context) {
+    return LokalsSurfaceTile(
+      onTap: () => context.go(route),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: _severityBackground(severity),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              Icons.notifications_active_outlined,
+              color: _severityColor(severity),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    AppBadge(
+                      label: severity,
+                      tone: _severityTone(severity),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        location,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.bodyMuted,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.deepCharcoal,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  body,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodyMuted,
                 ),
               ],
             ),
@@ -725,5 +884,118 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
       ),
     );
+  }
+}
+
+class _FollowTile extends StatelessWidget {
+  const _FollowTile({
+    required this.title,
+    required this.body,
+    required this.badge,
+    required this.route,
+    required this.subtitle,
+    required this.tone,
+  });
+
+  final String title;
+  final String body;
+  final String badge;
+  final String route;
+  final String subtitle;
+  final AppBadgeTone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    return LokalsSurfaceTile(
+      onTap: () => context.go(route),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.purpleSoftAlt,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              Icons.groups_2_outlined,
+              color: AppColors.primaryPurple,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.deepCharcoal,
+                        ),
+                      ),
+                    ),
+                    AppBadge(label: badge, tone: tone),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(body, style: AppTextStyles.bodyMuted),
+                const SizedBox(height: 8),
+                Text(
+                  subtitle,
+                  style: AppTextStyles.bodyMuted.copyWith(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+AppBadgeTone _severityTone(String severity) {
+  switch (severity.toLowerCase()) {
+    case 'critical':
+    case 'high':
+    case 'urgent':
+      return AppBadgeTone.danger;
+    case 'medium':
+      return AppBadgeTone.warning;
+    default:
+      return AppBadgeTone.info;
+  }
+}
+
+Color _severityBackground(String severity) {
+  switch (severity.toLowerCase()) {
+    case 'critical':
+    case 'high':
+    case 'urgent':
+      return AppColors.dangerSoft;
+    case 'medium':
+      return AppColors.warningSoft;
+    default:
+      return AppColors.infoSoft;
+  }
+}
+
+Color _severityColor(String severity) {
+  switch (severity.toLowerCase()) {
+    case 'critical':
+    case 'high':
+    case 'urgent':
+      return AppColors.danger;
+    case 'medium':
+      return AppColors.warning;
+    default:
+      return AppColors.softBlue;
   }
 }

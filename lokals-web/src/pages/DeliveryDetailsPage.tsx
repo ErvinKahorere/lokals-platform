@@ -1,4 +1,4 @@
-import { AlertCircle, Package, ShieldCheck, Star } from 'lucide-react'
+import { AlertCircle, AlertTriangle, Package, ShieldCheck, Star } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import type { AxiosError } from 'axios'
@@ -255,11 +255,23 @@ export function DeliveryDetailsPage() {
                 {activeTab === 'contact' ? (
                   <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
                     <div className="rounded-[28px] border border-lokals-purple/10 bg-white p-5 shadow-card">
-                      <p className="font-semibold text-lokals-charcoal">{delivery.driver?.name ?? 'Courier operator pending'}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-semibold text-lokals-charcoal">{delivery.driver?.name ?? 'Courier operator pending'}</p>
+                        {delivery.courier_profile?.is_verified ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-lokals-green-soft px-2.5 py-1 text-[11px] font-semibold text-lokals-green">
+                            <ShieldCheck className="h-3.5 w-3.5" />
+                            Verified
+                          </span>
+                        ) : null}
+                      </div>
                       <p className="mt-1 text-sm text-lokals-muted">{delivery.driver?.phone ?? 'A courier contact will appear here once the request is accepted.'}</p>
                       {delivery.courier_profile?.vehicle_type ? <p className="mt-3 text-sm text-lokals-muted">Vehicle: {delivery.courier_profile.vehicle_type}</p> : null}
                       {delivery.courier_profile?.vehicle_registration ? <p className="mt-1 text-sm text-lokals-muted">Plate: {delivery.courier_profile.vehicle_registration}</p> : null}
                       {delivery.courier_profile?.rating != null ? <p className="mt-1 text-sm text-lokals-muted">Courier rating: {delivery.courier_profile.rating}/5</p> : null}
+                      <div className="mt-4 rounded-[22px] bg-slate-50 p-4">
+                        <p className="font-semibold text-lokals-charcoal">Safe handling note</p>
+                        <p className="mt-1 text-sm text-lokals-muted">Confirm the courier, vehicle, and parcel handoff details before releasing the package.</p>
+                      </div>
                       <div className="mt-4">
                         <ContactActions
                           className="flex flex-wrap gap-2"
@@ -271,13 +283,17 @@ export function DeliveryDetailsPage() {
                           whatsappMessage={`Hi, I am checking on delivery ${delivery.reference_code ?? delivery.id}.`}
                         />
                       </div>
+                      <div className="mt-3">
+                        <Link to="/sos"><Button variant="danger"><AlertTriangle className="h-4 w-4" />Emergency shortcut</Button></Link>
+                      </div>
                     </div>
                     <TransportSummaryCard
-                      title="Sender context"
+                      title="Parcel trust"
                       items={[
                         { label: 'Sender', value: delivery.user?.name ?? 'Resident' },
                         { label: 'Parcel size', value: delivery.parcel_size ?? 'Medium' },
                         { label: 'Current status', value: formatTransportStatus(delivery.tracking_status ?? delivery.status, delivery.status_label), accent: true },
+                        { label: 'Tracking', value: delivery.reference_code ?? 'Reference shown when available' },
                       ]}
                     />
                   </div>

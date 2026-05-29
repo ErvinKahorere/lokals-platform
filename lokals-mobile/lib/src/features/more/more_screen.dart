@@ -274,7 +274,7 @@ class MoreScreen extends ConsumerWidget {
           20,
           20,
           20,
-          MediaQuery.viewPaddingOf(context).bottom + 88,
+          24,
         ),
         children: [
           const SectionTitle(

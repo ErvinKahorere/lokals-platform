@@ -14,6 +14,7 @@ class HomeSection extends StatelessWidget {
     this.errorText,
     this.emptyTitle,
     this.emptyBody,
+    this.emptyAction,
     this.onRetry,
     required this.child,
   });
@@ -26,6 +27,7 @@ class HomeSection extends StatelessWidget {
   final String? errorText;
   final String? emptyTitle;
   final String? emptyBody;
+  final Widget? emptyAction;
   final VoidCallback? onRetry;
   final Widget child;
 
@@ -55,7 +57,11 @@ class HomeSection extends StatelessWidget {
               ),
       );
     } else if (emptyTitle != null) {
-      body = EmptyStateView(title: emptyTitle!, body: emptyBody ?? 'Nothing here yet.');
+      body = EmptyStateView(
+        title: emptyTitle!,
+        body: emptyBody ?? 'Nothing here yet.',
+        action: emptyAction,
+      );
     }
 
     return Column(

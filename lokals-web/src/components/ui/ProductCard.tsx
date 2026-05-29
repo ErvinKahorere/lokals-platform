@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom'
 import type { Product } from '../../types'
 import { getDisplayPrice, resolveMediaUrl } from '../../lib/display'
 import { addProductToOrderCart } from '../../lib/orderCart'
+import { ContactActions } from '../experience/ContactActions'
 import { SaveButton } from '../experience/SaveButton'
-import { QuickCallButton } from '../experience/QuickCallButton'
 import { Button } from './Button'
 import { Badge } from './Badge'
 import { Card } from './Card'
@@ -21,10 +21,12 @@ export function ProductCard({
   const locationLabel = [product.area, product.town].filter(Boolean).join(', ') || 'Okahandja'
   const image = resolveMediaUrl(product.image_url) ?? product.image_url
   const sellerPhone = product.business?.phone ?? product.user?.phone ?? undefined
+  const sellerWhatsapp = product.business?.whatsapp ?? product.user?.whatsapp ?? product.user?.phone ?? undefined
   const deliveryFee = Number(product.business?.delivery_fee ?? product.delivery_fee ?? 0)
   const deliveryEta = Number(product.business?.delivery_eta_minutes ?? product.delivery_eta_minutes ?? 0)
   const rating = Number(product.business?.rating ?? product.rating ?? 4.5)
   const availabilityLabel = product.business?.availability_status ?? product.availability_status
+  const reviewCount = Number(product.business?.review_count ?? product.review_count ?? 0)
 
   return (
     <Card className="overflow-hidden bg-white p-0">
@@ -46,8 +48,9 @@ export function ProductCard({
         </div>
         <p className="mt-2 line-clamp-1 text-sm font-medium text-lokals-charcoal">{sellerName}</p>
         <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-lokals-muted">
+          {product.business?.is_verified ? <Badge tone="success">Verified seller</Badge> : null}
           {availabilityLabel ? <Badge tone={product.open_now ? 'success' : 'neutral'}>{availabilityLabel}</Badge> : null}
-          <span>{rating.toFixed(1)} rating</span>
+          <span>{rating.toFixed(1)} rating{reviewCount ? ` (${reviewCount})` : ''}</span>
           {deliveryEta ? <span>{deliveryEta} min</span> : null}
           {deliveryFee ? <span>{getDisplayPrice(deliveryFee, 'N$')} delivery</span> : null}
         </div>
@@ -55,14 +58,27 @@ export function ProductCard({
           <MapPin className="h-4 w-4" />
           {locationLabel}
         </p>
+        {!compact ? <p className="mt-2 text-xs text-lokals-muted">Meet in a safe local spot and confirm the item before payment.</p> : null}
         {!compact ? <p className="mt-3 line-clamp-2 text-sm text-lokals-muted">{product.description ?? 'Local product listing.'}</p> : null}
         <div className="mt-4 flex gap-2">
           <Button variant="secondary" className="flex-1" onClick={() => addProductToOrderCart(product, 1)}>Add</Button>
           <Link to={`/store/${product.id}`} className="flex-1">
-            <Button className="w-full">{compact ? 'Open' : 'View'}</Button>
+            <Button className="w-full">{compact ? 'View details' : 'View details'}</Button>
           </Link>
         </div>
-        {!compact ? <div className="mt-2"><QuickCallButton phone={sellerPhone} className="w-full" /></div> : null}
+        {!compact ? (
+          <div className="mt-3">
+            <ContactActions
+              name={sellerName}
+              phone={sellerPhone}
+              whatsapp={sellerWhatsapp}
+              conversationUserId={product.user?.id}
+              conversationSubject={product.title}
+              conversationContext="marketplace"
+              className="grid gap-2 sm:grid-cols-3"
+            />
+          </div>
+        ) : null}
       </div>
     </Card>
   )

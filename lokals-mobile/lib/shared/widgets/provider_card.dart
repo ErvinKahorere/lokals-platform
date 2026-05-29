@@ -5,10 +5,10 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../src/core/experience_helpers.dart';
 import '../../src/core/models.dart';
+import '../../src/services/contact_action_service.dart';
 import 'app_badge.dart';
 import 'app_button.dart';
 import 'app_card.dart';
-import 'experience/quick_call_button.dart';
 import 'experience/trust_row.dart';
 
 class ProviderCard extends StatelessWidget {
@@ -19,6 +19,8 @@ class ProviderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activeServices = provider.services.where((service) => service.isActive).toList();
+    final contactPhone = provider.phone;
+    final whatsappPhone = provider.whatsapp ?? provider.phone;
     final fromPrice = activeServices.fold<num?>(
       null,
       (lowest, service) {
@@ -38,6 +40,10 @@ class ProviderCard extends StatelessWidget {
         ? 'Open now'
         : provider.availabilityStatus ??
             (provider.availabilitySlots.isNotEmpty ? 'Available today' : getResponseTimeLabel(provider.responseTimeLabel));
+    final locationLabel =
+        provider.area ??
+        provider.town ??
+        getDisplayDistance(provider.distanceKm, provider.location);
 
     return AppCard(
       variant: AppCardVariant.service,
@@ -73,6 +79,13 @@ class ProviderCard extends StatelessWidget {
                         style: AppTextStyles.caption.copyWith(color: AppColors.primaryPurple),
                       ),
                     ),
+                    if (provider.isVerified) ...[
+                      const SizedBox(height: 8),
+                      const AppBadge(
+                        label: 'Verified',
+                        tone: AppBadgeTone.success,
+                      ),
+                    ],
                     const SizedBox(height: 4),
                     Text(provider.name, style: AppTextStyles.h3),
                   ],
@@ -97,7 +110,7 @@ class ProviderCard extends StatelessWidget {
               _MiniInfo(
                 icon: Icons.place_outlined,
                 iconColor: AppColors.primaryPurple,
-                label: provider.area ?? provider.town ?? getDisplayDistance(provider.distanceKm, provider.location),
+                label: locationLabel,
               ),
             ],
           ),
@@ -120,16 +133,52 @@ class ProviderCard extends StatelessWidget {
             style: AppTextStyles.h3.copyWith(fontSize: 15),
           ),
           const SizedBox(height: 14),
-          Row(
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 2.6,
             children: [
-              Expanded(
-                child: AppButton(
-                  label: 'Book',
-                  onPressed: () => context.push('/book/${provider.id}'),
-                ),
+              AppButton(
+                label: 'View details',
+                expanded: true,
+                onPressed: () => context.push('/services/${provider.id}'),
               ),
-              const SizedBox(width: 10),
-              QuickCallButton(phone: provider.phone),
+              AppButton(
+                label: 'Call',
+                expanded: true,
+                variant: AppButtonVariant.secondary,
+                onPressed: contactPhone == null || contactPhone.isEmpty
+                    ? null
+                    : () => ContactActionService().call(context, contactPhone),
+              ),
+              AppButton(
+                label: 'WhatsApp',
+                expanded: true,
+                variant: AppButtonVariant.secondary,
+                onPressed: whatsappPhone == null || whatsappPhone.isEmpty
+                    ? null
+                    : () => ContactActionService().openWhatsApp(
+                          context,
+                          phone: whatsappPhone,
+                          name: provider.name,
+                          message:
+                              'Hello ${provider.name}, I found your service on LOKALS and would like more details.',
+                        ),
+              ),
+              AppButton(
+                label: 'Directions',
+                expanded: true,
+                variant: AppButtonVariant.secondary,
+                onPressed: provider.location.trim().isEmpty
+                    ? null
+                    : () => ContactActionService().openMaps(
+                          context,
+                          query: provider.location,
+                        ),
+              ),
             ],
           ),
         ],
